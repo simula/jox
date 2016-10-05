@@ -19,4 +19,3 @@ JOX is composed of the following parts:
     ├── build_jox
     └── tools
         └── build_helper
-
