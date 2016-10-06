@@ -4,7 +4,7 @@ JOX is composed of the following directories:
 |   |-- bundle
 |   |  |-- oai-nfv-rf
 |   |  |-- oai-nfv-rrh 
-|   |-- oai-nfv-sim
+|   |  |-- oai-nfv-sim
 |   |-- trusty
 |   |   |-- oai-enb
 |   |   |-- oai-epc
