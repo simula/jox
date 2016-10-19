@@ -1,5 +1,4 @@
 JOX is composed of the following directories: 
-
 |-- charms
 |   |-- bundle
 |   |  |-- oai-nfv-rf
@@ -16,6 +15,10 @@ JOX is composed of the following directories:
 |   |-- xenial
 |-- README.md
 |-- scripts
-    |-- build_jox
-    |-- tools
-        |-- build_helper
+|   |-- build_jox
+|   |-- tools
+|       |-- build_helper
+|-- test
+    |--jox_test.py
+    |--configs.py
+    |--setings.py
