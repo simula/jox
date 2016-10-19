@@ -30,7 +30,7 @@
 #
 ################################################################################
 # file epc-relation-changed 
-# brief called when the enb-epc relation is changed 
+# brief called when the enb-mme relation is changed 
 # author  navid.nikaein@eurecom.fr and A. B. Molini 
 set -ex
 source $CHARM_DIR/utils/common

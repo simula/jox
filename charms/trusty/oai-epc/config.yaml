@@ -2,7 +2,7 @@ options:
    branch:
      default: "v0.3.2-branch"
      description: |
-       branch indicates which installation you want to do. If you want a stable installation, change this option to "master". 
+       branch indicates which installation you want to do. 
      type: string
    revision: 
      default: "HEAD"   

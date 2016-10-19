@@ -1,4 +1,3 @@
-#!/bin/bash
 ################################################################################
 #
 # Copyright (c) 2016, EURECOM (www.eurecom.fr)
@@ -29,10 +28,33 @@
 # either expressed or implied, of the FreeBSD Project.
 #
 ################################################################################
-# file hss-relation-broken 
-# brief called when the hss and mme relation is broken 
-# author navid.nikein@eurecom.fr
+# file settings.py
+# brief requited setting
+# author  navid.nikaein@eurecom.fr
+
+import os 
+
+"""Juju simple orchstrator settings."""
+
+# The base charm store API URL containing information about charms and bundles.
+CHARMSTORE_API = 'https://api.jujucharms.com/charmstore/v4/'
+
+# The URL of jujucharms.com, the home of Juju.
+JUJUCHARMS_URL = 'https://jujucharms.com/'
+
+# Retrieve the current juju-core home.
+JUJU_HOME = os.getenv('JUJU_HOME', '~/.juju')
+
+# The name of the Juju GUI charm.
+JUJU_GUI_CHARM_NAME = 'juju-gui'
 
 
-#$CHARM_DIR/hooks/upgrade-charm
-$CHARM_DIR/hooks/config-changed
+log_color = [{'level':' error',  'color': '\033[91m'}, # debug level 0
+             {'level': 'warn' ,  'color': '\033[93m'},  # debug level 1
+             {'level': 'notice', 'color': '\033[92m'},  # debug level 2
+             {'level': 'info',   'color': '\033[0m'},   # debug level 3
+             {'level': 'debug',  'color': '\033[0m'}]   # debug level 4
+
+
+
+

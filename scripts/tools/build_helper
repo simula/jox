@@ -171,7 +171,8 @@ remove_jox_packages(){
 
     $SUDO pip uninstall  \
     	 puka \ 
-	 watchdog 
+	 watchdog \
+	 pyyaml
 
     $SUDO update-rc.d juju remove  
     $SUDO update-rc.d juju-jon-sample-machine-agent remove 
@@ -233,7 +234,7 @@ check_install_juju(){
     #The new USRP repository
     $SUDO add-apt-repository $OPTION ppa:juju/stable 
     $SUDO apt-get update
-    $SUDO apt-get $OPTION install juju-core 
+    $SUDO apt-get $OPTION install juju-core charm-tools juju-quickstart 
     $SUDO apt-get $OPTION install $specific_packages 
       
 }
@@ -250,10 +251,12 @@ check_install_jox() {
     	  python \
     	  python-pip \
     	  python-pexpect \
-    	  python-jujuclient 
+    	  python-jujuclient  
 
     $SUDO pip install  puka 
     $SUDO pip install  watchdog 
+    $SUDO pip install  pyyaml
+
 	 
  #jujuclient
            

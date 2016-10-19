@@ -1,0 +1,16 @@
+
+export JOX_HOME=$(pwd)
+export CHARMS_DIR=$JOX_HOME/charms
+
+echo "JOX_HOME=$JOX_HOME"
+
+export JUJU_REPOSITORY=$CHARMS_DIR
+export JUJU_CLI_VERSION=2
+
+#export PATH=$PATH:$JOX_HOME/bin 
+
+alias  jox='cd $JOX_HOME'
+alias  cs='cd $CHARMS_DIR'
+alias  cst='cd $CHARMS_DIR/trusty'
+alias  csx='cd $CHARMS_DIR/xenial'
+alias  csb='cd $CHARMS_DIR/bundle'

@@ -30,7 +30,7 @@
 #
 ################################################################################
 # file config-change
-# brief manage the config changes of oai-enb service, and occurs everytime a new configuration value is updated (juju set)
+# brief manage the config changes of oai-spgw service, and occurs everytime a new configuration value is updated (juju set)
 # author navid.nikaein@eurecom.fr and A. B. Molini  
 
 set -ux

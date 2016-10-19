@@ -30,7 +30,7 @@
 #
 ################################################################################
 # file hss-relation-departed
-# brief called when the hss-epc relation is removed 
+# brief called when the hss-mme relation is removed 
 # author  navid.nikaein@eurecom.fr and A. B. Molini 
 
 set -eux

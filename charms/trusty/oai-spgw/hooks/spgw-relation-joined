@@ -29,8 +29,8 @@
 # either expressed or implied, of the FreeBSD Project.
 #
 ################################################################################
-# file hss-relation-joined 
-# brief called when the hss-epc relation is created 
+# file spgw-relation-joined 
+# brief called when the spgw-mme relation is joined
 # author navid.nikaein@eurecom.fr and A. B. Molini  
 
 set -eux

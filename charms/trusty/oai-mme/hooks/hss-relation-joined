@@ -30,7 +30,7 @@
 #
 ################################################################################
 # file hss-relation-joined 
-# brief called when the hss-epc relation is created 
+# brief called when the hss-mme relation is created 
 # author navid.nikaein@eurecom.fr and A. B. Molini  
 
 set -eux

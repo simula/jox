@@ -30,7 +30,7 @@
 #
 ################################################################################
 # file install
-# brief install the oai-epc from the openairinterface git repository
+# brief install the oai-spgw from the openair-cn git repository
 # author  navid.nikaein@eurecom.fr and A. B. Molini   
 
 install_packages(){

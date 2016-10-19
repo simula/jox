@@ -30,7 +30,7 @@
 #
 ################################################################################
 # file hss-relation-changed 
-# brief called when the hss-epc relation is changed 
+# brief called when the hss-mme relation is changed 
 # author  navid.nikaein@eurecom.fr and A. B. Molini 
 set -eux
 source $CHARM_DIR/utils/common

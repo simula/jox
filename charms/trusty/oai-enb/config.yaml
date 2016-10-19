@@ -1,8 +1,8 @@
 options:
    branch:
-     default: "develop"
+     default: "v0.1"
      description: |
-       branch indicates which installation you want to do. If you want an stable installation, change this option to "default". 
+       branch indicates which installation you want to do. 
      type: string
    revision: 
      default: "HEAD"

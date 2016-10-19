@@ -30,8 +30,8 @@
 #
 ################################################################################
 # file install
-# brief install the oai-epc from the openairinterface git repository
-# author  navid.nikaein@eurecom.fr and A. B. Molini   
+# brief install the oai-mme from the openairinterface git repository
+# author  navid.nikaein@eurecom.fr 
 
 install_packages(){
     status-set maintenance "Installing some dependencies"
@@ -79,7 +79,7 @@ juju_install_kernel(){
 }
 
 clone_repo(){
-    status-set maintenance "Fetching OpenAirInterface HSS"
+    status-set maintenance "Fetching OpenAir-CN/MME"
     echo -n | openssl s_client -showcerts -connect gitlab.eurecom.fr:443 2>/dev/null | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' >> /etc/ssl/certs/ca-certificates.crt
 
     if [ -d "$openair_path"  ]; then
@@ -114,7 +114,7 @@ update_hostname(){
   echo "127.0.0.1 `hostname`" > /etc/hosts
 }
 
-conigure_hosts(){
+configure_hosts(){
   realm=`config-get realm`
   #define fqdn for MME
   if [ -z "$(grep -o "`hostname`.$realm" /etc/hosts)" ]; then
@@ -178,7 +178,7 @@ install_packages
 clone_repo
 juju_install_kernel
 
-conigure_hosts
+configure_hosts
 
 build_mme
 configure_mme
