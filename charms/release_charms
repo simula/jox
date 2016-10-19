@@ -1,0 +1,25 @@
+#!/bin/bash
+
+declare -a charms=("oai-enb" "oai-epc" "oai-hss" "oaisim-enb-ue")
+declare -a series=("trusty")
+
+for s in "${series[@]}"
+do 
+    cd $s
+    echo "series: " $s
+    for k in "${charms[@]}"
+    do
+	cd $k
+	echo "charm: " $k
+	url=`/usr/bin/charm push . cs:~navid-nikaein/trusty/$k | grep url | cut -f2 -d' '`
+	echo "pushed url: $url"
+	
+	/usr/bin/charm release $url
+	/usr/bin/charm grant $url everyone
+	cd ..
+    done
+    cd .. 
+    
+done 
+
+
