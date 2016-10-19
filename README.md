@@ -1,9 +1,10 @@
-JOX is composed of the following parts: 
+JOX is composed of the following directories: 
+
 |-- charms
 |   |-- bundle
 |   |  |-- oai-nfv-rf
 |   |  |-- oai-nfv-rrh 
-|   |-- oai-nfv-sim
+|   |  |-- oai-nfv-sim
 |   |-- trusty
 |   |   |-- oai-enb
 |   |   |-- oai-epc
