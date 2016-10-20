@@ -152,9 +152,11 @@ class JujuAgent(object):
             self.services = configs.cran1
         elif template == 'cran2' :
             self.services = configs.cran2
+        elif template == 'test' : 
+            self.services = configs.test
         else:
-            print('unknown service template')
-            exit()
+            self.services = configs.none
+            print('no service template is defined')
             
         if juju_gui :
              self.services.append('juju-gui')
@@ -164,7 +166,7 @@ class JujuAgent(object):
         print('template is set to : ' + str(self.services))
         print('cs repository is set to : ' + str(self.repository))
         print('log level is set to : ' + str(self.log_level))
-
+        
 
     def init_logger(self):
         """initializing the pythong logger """
@@ -239,12 +241,13 @@ class JujuAgent(object):
         self.log.info('closing juju env: ' + str(self.env_name))
         self.env.close()
     
-    def reset_jenv(env):
+    def reset_jenv(self):
         env_status=self.env.status()
         self.env.destroy_machines(
             sorted(env_status['Machines'].keys())[1:],force=True)
         for instance in env_status['Services'].keys():
             self.env.destroy_service(instance)
+            self.log.debug('destroying the service ' + str(instance))
 
     def env_info(self):
         print json.dumps(self.env.info(), indent=2)  # same as before but beautiful
@@ -828,8 +831,11 @@ if __name__ == '__main__':
                         required=False, default='local',
                         help='set the url of the message bus: local(default),  url')
     parser.add_argument('--template', metavar='[option]', action='store', 
-                        type=str,required=False, default='dran1',
-                        help='set the serivce topology template (see config.py): test, sim1, sim2,dran1(default),dran2,cran1,cran2')
+                        type=str,required=False, default='none',
+                        help='set the serivce topology template (see config.py): none(default), test, sim1, sim2,dran1,dran2,cran1,cran2')
+    parser.add_argument('--reset-env',  action='store_true', dest='reset_env',
+                        required=False, default=False, 
+                        help='reset the instantiated juju services and units')
     parser.add_argument('--version', action='version', version='%(prog)s 1.0')
     args = parser.parse_args()
     ja = JujuAgent(jenv=args.jenv,
@@ -840,7 +846,16 @@ if __name__ == '__main__':
                    log_level=args.log)
     ja.init_logger()
     ja.setup_jenv()
+
+    if args.reset_env:
+        ja.log.info('resetting the juju env')
+        ja.reset_jenv()
+    
+    if args.template == 'none' :
+        exit()                 
+        
     ja.env_info()
+
     if ja.msgbus:
         ja.setup_channels()
         ja.listen()
@@ -858,7 +873,7 @@ if __name__ == '__main__':
         observer.start()
         try:
             while True:
-                time.sleep(10)
+                time.sleep(1)
                 service_status= ja.details()
                 ja.log.debug(service_status)
                 # take actions: like resolve

@@ -48,6 +48,7 @@ MAX_UNIT = 2
 Service topology template defining the service paramters, which might be overloaded during the init_service
 """
 
+none=['none']
 test=['mysql']
 sim1=['mysql', 'oai-hss', 'oai-epc','oaisim-enb-ue']
 sim2=['mysql', 'oai-hss', 'oai-mme','oai-spgw','oaisim-enb-ue']
@@ -77,7 +78,7 @@ Service configuration template for any service topology
 """
 service_config = {
     'oai-epc' : {'eth': 'eth0', 'gummei_tai_mnc':'95','DEFAULT_DNS_SEC_IPV4_ADDRESS': '192.168.12.100', 'DEFAULT_DNS_IPV4_ADDRESS':'192.168.12.100'},
-    'oai-enb' : { 'eth': 'eth1', 'rrh_active': 'no', 'rrh_if_name': 'eth0', 'downlink_frequency': '2680000000L', 'uplink_frequency_offset': '-120000000', 'eutra_band': '7', 'remote_monitoring': 'no' },
+    'oai-enb' : { 'eth': 'eth5', 'rrh_active': 'no', 'rrh_if_name': 'eth0', 'downlink_frequency': '2680000000L', 'uplink_frequency_offset': '-120000000', 'eutra_band': '7', 'remote_monitoring': 'no' },
     'oaisim-enb-ue' : { 'eth': 'eth1'},
     'oai-rrh' : { 'fronthaul_if': 'eth0'},
     'oai-mme' : { 'eth': 'eth0', 'gummei_tai_mcc': '208', 'gummei_tai_mnc':'95'},
