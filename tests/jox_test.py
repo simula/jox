@@ -114,7 +114,7 @@ class JujuAgent(object):
        slave: under the control of a higher level orchestration receiving the lifecycle commands and sending back the results
     """
 
-    def __init__(self, jenv='manual', message_bus='local',template='dran1', repository='remote',log_level='info'):
+    def __init__(self, jenv='manual', message_bus='local',template='dran1', juju_gui=False, repository='remote',log_level='info'):
         super(JujuAgent, self).__init__()
         if message_bus == 'local':
             self.msgbus = None
@@ -155,13 +155,16 @@ class JujuAgent(object):
         else:
             print('unknown service template')
             exit()
-                
+            
+        if juju_gui :
+             self.services.append('juju-gui')
+             
         print('jenv is set to : ' + str(self.env_name))
         print('mbus is set to : ' + str(self.msgbus))
         print('template is set to : ' + str(self.services))
         print('cs repository is set to : ' + str(self.repository))
         print('log level is set to : ' + str(self.log_level))
-        
+
 
     def init_logger(self):
         """initializing the pythong logger """
@@ -818,6 +821,9 @@ if __name__ == '__main__':
     parser.add_argument('--log',  metavar='[level]', action='store', type=str,
                         required=False, default='info', 
                         help='set the log level: debug, info (default), warning, error, critical')
+    parser.add_argument('--juju-gui',  action='store_true', dest='juju_gui',
+                        required=False, default=False, 
+                        help='add juju gui to the service topology')
     parser.add_argument('--mbus', metavar='[url]', type=str, action='store', 
                         required=False, default='local',
                         help='set the url of the message bus: local(default),  url')
@@ -829,6 +835,7 @@ if __name__ == '__main__':
     ja = JujuAgent(jenv=args.jenv,
                    message_bus=args.mbus, 
                    template=args.template,
+                   juju_gui=args.juju_gui,
                    repository=args.cs,
                    log_level=args.log)
     ja.init_logger()
