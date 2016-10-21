@@ -1,0 +1,10 @@
+name: dtn
+summary: a DTN module for LTE
+maintainer: eryk.schiller@unibe.ch
+description: |
+   this module store and broadcast data across the network
+tags:
+  - LTE
+  - DTN
+  
+subordinate: false

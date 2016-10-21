@@ -69,6 +69,35 @@ from jujuclient import Environment
 import settings
 import configs 
 
+import os
+import time
+
+
+class time_meas_extended:
+    Events = {}
+    start = 0
+
+    def beginning(self):
+        self.start = time.time()
+
+    def print_beginning(self):
+        print(self.start)
+
+    def push_event(self, unit_name, event_name):
+        if unit_name not in self.Events.keys():
+            self.Events[unit_name] = {}
+        if event_name not in self.Events[unit_name].keys():
+            self.Events[unit_name][event_name] = time.time()
+
+    def print_events(self):
+        print "*** Execution stats ***"
+
+        for key_outer in self.Events.keys():
+            for key_inner in self.Events[key_outer]:
+                print key_outer, key_inner, self.Events[key_outer][key_inner] - self.start
+
+        print "*** Execution stats ***"
+
 class time_meas:
     start   = 0
     diff = 0
@@ -87,10 +116,10 @@ class time_meas:
         
     def start_meas(self):
         self.trials+=1
-        self.start=time.clock()
+        self.start=time.time()
         
     def stop_meas(self):
-        out= time.clock()
+        out= time.time()
         self.diff_now = out - self.start
         self.diff += self.diff_now
         self.diff_square += (self.diff_now)*(self.diff_now)
@@ -122,6 +151,7 @@ class JujuAgent(object):
             self.msgbus = message_bus 
             #self.msgbus = 'amqp://goqtukir:2O2ATnF0kiCsFdYafrLUpjCkKeFdE0ee@spotted-monkey.rmq.cloudamqp.com/goqtukir'
         
+        self.timelog = time_meas_extended()
         self.attempts = 10
         self.sleepy = 0
         self.msgbus_client = None
@@ -292,6 +322,14 @@ class JujuAgent(object):
             return None
         else:
             return self.env.status()['Services'][service]['Units'][self.service_unit(service)].values()[6]
+
+    def agent_info(self, service=None):
+        if service is None:
+            self.log.warn('No Service is defined')
+            return None
+        else:
+            return self.env.status()['Services'][service]['Units'][self.service_unit(service)]['UnitAgent']['Info']
+
 
     # TODO: to be updated
     def setup_machine(self, param=None):
@@ -675,6 +713,10 @@ class JujuAgent(object):
 
                 unit_name=str(self.service_unit(instance))
                 agent_status=str(self.agent_status(instance))
+                agent_info=str(self.agent_info(instance))
+                if agent_info != "":
+                    self.timelog.push_event(unit_name, agent_info)
+
                 # need to be refined
                 if agent_status != 'error' : #and agent_status != 'None':
                     try:
@@ -837,6 +879,7 @@ if __name__ == '__main__':
                         required=False, default=False, 
                         help='reset the instantiated juju services and units')
     parser.add_argument('--version', action='version', version='%(prog)s 1.0')
+
     args = parser.parse_args()
     ja = JujuAgent(jenv=args.jenv,
                    message_bus=args.mbus, 
@@ -863,10 +906,13 @@ if __name__ == '__main__':
         # orchestrator logic when deployed in standalone mode
         #ja.deploy(service={'mysql'})
         ja.log.info('Services are : ' + str(ja.services))
+        # request juju to perfrom the following operations 
+        ja.timelog.beginning()
         ja.deploy(repository=ja.repository)
         ja.configure()
         ja.provision()
         ja.chain()
+        # end of request
         event_handler = ja.env_watcher()
         observer = Observer()
         observer.schedule(event_handler, path='.', recursive=False)
@@ -877,10 +923,11 @@ if __name__ == '__main__':
                 service_status= ja.details()
                 ja.log.debug(service_status)
                 # take actions: like resolve
-                #ja.env_status()
+                ja.env_status()
         except KeyboardInterrupt:
             observer.stop()
             ja.dispose(unchain=False)
+            ja.timelog.print_events()
             ja.close_jenv()
         observer.join()
 
