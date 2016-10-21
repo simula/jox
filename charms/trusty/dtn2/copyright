@@ -1,13 +1,13 @@
 Format: http://dep.debian.net/deps/dep5/
 
 Files: *
-Copyright: Copyright 2010-2016, Eurecom, All Rights Reserved.
+Copyright: Copyright 2010-2016, Eurecom-UBERN, All Rights Reserved.
 License: Apache License, Version 2.0
- Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
+ Licensed to the this charm under one or more
  contributor license agreements.  See the NOTICE file distributed with
  this work for additional information regarding copyright ownership.
- The OpenAirInterface Software Alliance licenses this file to You under 
- the Apache License, Version 2.0  (the "License"); you may not use this file
+ The software licenses this file to You under the Apache License, 
+ Version 2.0  (the "License"); you may not use this file
  except in compliance with the License.  
  You may obtain a copy of the License at
  
@@ -19,6 +19,6 @@ License: Apache License, Version 2.0
  See the License for the specific language governing permissions and
  limitations under the License.
  
- For more information about the OpenAirInterface (OAI) Software Alliance:
-       contact@openairinterface.org
+ For more information about the charm:
+       jox@lists.eurecom.fr
 
