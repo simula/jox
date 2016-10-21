@@ -101,28 +101,32 @@ clone_repro(){
 juju_install_kernel(){
 
     juju-log "Check the kernel and update if required"
-
-    if [ "$machine_type"  == "lxc" -o "$machine_type" == "docker" ]; then 
-	juju-log "Can't install the required kernel in $machine_type env. Either deploy oai-epc with kvm or make sure that the host has the required version and kernel modules".
-	status-set error "Can't install the required kernel 3.19"
-    else 
-	if  [ "$machine_type"  == "" ] ; then 
-	    juju-log "Please install kerenel version 3.19 on the host".
+    check_current_kernel
+    if [[ $REQUIRED_KERNEL_IS_INSTALLED == true ]]; then
+	status-set maintenance "required kernel is already installed"
+    else	
+	if [ "$machine_type"  == "lxc" -o "$machine_type" == "docker" ]; then 
+	    juju-log "Can't install the required kernel in $machine_type env. Either deploy oai-epc with kvm or make sure that the host has the required version and kernel modules".
+	    status-set error "Can't install the required kernel 3.19"
 	else 
-	    check_current_kernel
-	    if [[ $REQUIRED_KERNEL_IS_INSTALLED == false ]]; then
-		if [ "$(cat $CHARM_DIR/.reboot)" != "reboot" ]; then  
-		    juju-log "installing the required kernel and reboot"
-		    status-set maintenance "installing the required kernel and rebooting"
-		    install_required_kernel
-  		    echo "reboot" > $CHARM_DIR/.reboot 
-		    juju-reboot --now
-		else 
-		    juju-log "Can't install the required kernel."
-		    status-set error "Can't install the required kernel"
-		fi 
-	    fi
-	fi 
+	    if  [ "$machine_type"  == "" ] ; then 
+		juju-log "Please install kerenel version 3.19 on the host".
+	    else 
+		check_current_kernel
+		if [[ $REQUIRED_KERNEL_IS_INSTALLED == false ]]; then
+		    if [ "$(cat $CHARM_DIR/.reboot)" != "reboot" ]; then  
+			juju-log "installing the required kernel and reboot"
+			status-set maintenance "installing the required kernel and rebooting"
+			install_required_kernel
+  			echo "reboot" > $CHARM_DIR/.reboot 
+			juju-reboot --now
+		    else 
+			juju-log "Can't install the required kernel."
+			status-set error "Can't install the required kernel"
+		    fi 
+		fi
+	    fi 
+	fi
     fi
 }
 
@@ -144,7 +148,7 @@ configure_hosts(){
 
 build_epc(){
     juju-log "Build EPC and install required packages"
-
+    status-set maintenance "Build EPC and install required packages"
     $build_run_scripts/build_epc -c -i -f >& /srv/.build_epc_install.log
     #$build_run_scripts/build_epc -t -f 
     
