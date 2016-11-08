@@ -139,6 +139,7 @@ update_hostname(){
 
 configure_hosts(){
   realm=`config-get realm`
+  echo $realm > $CHARM_DIR/.realm
   #define fqdn for MME
   if [ -z "$(grep -o "`hostname`.$realm" /etc/hosts)" ]; then
      echo 127.0.0.1 localhost > /etc/hosts

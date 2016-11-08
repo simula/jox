@@ -199,6 +199,8 @@ else
     return 0
 fi 
 
+}
+
 get_eth_ip(){
   echo `ip addr show $1 | grep -o 'inet [0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | grep -o [0-9].*`
 }

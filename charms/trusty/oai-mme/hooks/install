@@ -85,8 +85,9 @@ clone_repo(){
     if [ -d "$openair_path"  ]; then
         juju-log "Updating the installation directory"
         cd $openair_path 
+        git fetch --all 
+	git reset --hard origin/master
         git checkout $branch 
-        git pull 
         if [ "$revision" != "head" ]; then 
         git checkout $revision
         cd -

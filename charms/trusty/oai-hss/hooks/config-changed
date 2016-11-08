@@ -54,9 +54,10 @@ if [ "$(config-get realm)" != "$(cat $CHARM_DIR/.realm)" ]; then
     #elif [ -d /usr/local/lib/freeDiameter ]; then
     #    FREEDIAMETER_PREFIX=/usr/local
     #fi
+    if [ -d $freediameter_conf_path ]; then
+	rm $freediameter_conf_path/hss.*.pem 
+    fi 
     
-    rm $freediameter_conf_path/hss.*.pem
-
     fqdn=`hostname --fqdn`
     $build_run_scripts/check_hss_s6a_certificate $freediameter_conf_path $fqdn
 
