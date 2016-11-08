@@ -29,43 +29,22 @@
 # either expressed or implied, of the FreeBSD Project.
 #
 ################################################################################
-# file stop 
-# brief stop the oai-mme service, this happens when the service is stopped/disabled
-# author  navid.nikaein@eurecom.fr and A. B. Molini   
+# file update-status
+# brief called to provide a feedback to the user about the status of the service
+# author  navid.nikaein@eurecom.fr 
 
 set -eux
 source $CHARM_DIR/utils/common
-set_env_paths
+if [ ! -z "$(relation-ids hss)" ]; then
+    check_epc_process
+    if [ $status -eq 1 ]; then
+	juju-log "OAI MME is not running"
+	#status-set blocked "EPC is not running anymore, trying to restart"
+	#service mme_gw restart
+  	#$CHARM_DIR/actions/restart
+	#exit 1
+    else 
+	status-set active "OAI MME is running"
+    fi   
+fi 
 
-juju-log "Stopping MME service in this unit"
-service mme stop || true
-
-juju-log "Deleting the MME stdout and stderr files"
-rm -f /srv/mme.out /srv/mme.err
-
-
-juju-log "Cleaning up the openair-cn installation directory..."
-rm -rf $openair_path
-juju-log "Openair-cn removed"
-
-
-juju-log "Removing MME final executable..."
-rm -f /usr/local/bin/$epc_exec_name
-juju-log "Removing configuration file installed along side the system..."
-rm -rf /usr/local/etc/oai/
-juju-log "Done"
-
-if [ -d /usr/lib/freeDiameter ]; then
-      FREEDIAMETER_PREFIX=/usr
-  elif [ -d /usr/local/lib/freeDiameter ]; then
-      FREEDIAMETER_PREFIX=/usr/local
-fi
-juju-log "Removing EPC freediameter files"
-
-rm -f $FREEDIAMETER_PREFIX/etc/freeDiameter/mme*    2>&1
-
-juju-log "Restoring previous /etc/hosts file..."
-install -o root -g root -m 0644 /home/hosts /etc/
-
-juju-log "Removing Upstart script from the system..."
-rm -f /etc/init/mme_gw.conf

@@ -53,10 +53,10 @@ check_epc_process(){
   IS_RUNNING=`service mme status`
 
   if [[ $IS_RUNNING =~ .*running.* ]]; then
-     juju-log "EPC is running...let's check if it is connected to HSS"
+     juju-log "MME is running...let's check if it is connected to HSS"
      status=0
   else
-     juju-log "EPC is not running..."
+     juju-log "MME is not running..."
      status=1
   fi
 }
@@ -67,8 +67,8 @@ check_epc_connection(){
   while [ $COUNTER -lt 30 ]; do
      sleep 1
      if [ "$(grep -c "is now connected" /srv/mme.out)" -gt 0 ]; then
-        juju-log "EPC is running and connected to HSS"
-        status-set active "EPC is running and connected to HSS"
+        juju-log "MME is running and connected to HSS"
+        status-set active "MME is running and connected to HSS"
         break
      fi
      COUNTER=$((COUNTER+1))

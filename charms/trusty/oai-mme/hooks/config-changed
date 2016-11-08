@@ -82,15 +82,15 @@ if [ "$realm" != "$(cat $CHARM_DIR/.realm)"  ]; then
 fi
 
 if [ -z "$(relation-ids hss)" ]; then
-    juju-log "EPC is built, but is waiting for active connection to gather the last info"
-    juju-log "no HSS is found, so EPC is not going to be run"
+    juju-log "MME is built, but is waiting for active connection to gather the last info"
+    juju-log "no HSS is found, so MME is not going to be run"
 else
     hss_id=`relation-ids hss`
     hss_unit=`relation-list -r $hss_id`
     if [ "$(relation-get -r $hss_id hss_running $hss_unit)" == "yes" ]; then
-        juju-log "Relation with HSS exists and it is running so run EPC software"
+        juju-log "Relation with HSS exists and it is running so run MME software"
         $CHARM_DIR/hooks/start
-        status-set active "EPC is running and connected to HSS"
+        status-set active "MME is running and connected to HSS"
         #se ce la relazione con oaisim allora faccio il set di epc_running=yes
            #if hss relation exists
         for epc_id in $(relation-ids epc); do
@@ -99,8 +99,8 @@ else
            relation-set -r $epc_id epc_running=yes
         done
     else
-        juju-log "Hss relation exists, but it is not running because there no database"
-        status-set blocked "Add db relation to hss to get epc run.."
+        juju-log "HSS relation exists, but it is not running because there no database"
+        status-set blocked "Add db relation to hss to get MME run.."
     fi
 fi
 

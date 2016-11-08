@@ -84,7 +84,7 @@ db_host=`relation-get -r "$db_id" user $db_unit`
 
 while [ $COUNTER -lt 30 ]; do
    sleep 1
-   if [ "$(grep -c ".*db.*DONE" /srv/hss.out)" -gt 0 ]; then
+   if [ "$(grep -c ".*db.*DONE" /srv/.out)" -gt 0 ]; then
       juju-log "Connection to db...Established"
       break
    fi
@@ -109,7 +109,7 @@ COUNTER=0
 juju-log "Checking s6a layer initialization"
 while [ $COUNTER -lt 30 ]; do
    sleep 1
-   if [ "$(grep -c "Core state: 1 -> 2" /srv/hss.out)" -gt 0 ]; then
+   if [ "$(grep -c "Core state: 1 -> 2" /srv/.out)" -gt 0 ]; then
       juju-log "s6a layer initialized......HSS ready"
       status-set active "OAI HSS is running"
       break

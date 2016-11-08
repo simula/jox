@@ -41,7 +41,7 @@ juju-log "Stopping HSS service in this unit"
 service oai_hss stop || true
 
 juju-log "Deleting the HSS stdout file"
-rm -f /srv/hss.out
+rm -f /srv/.out
 
 juju-log "Cleaning up the openair-cn installation directory..."
 rm -rf $openair_path

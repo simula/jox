@@ -51,8 +51,8 @@ fi
 service mme restart || service mme start
 check_epc_process
 if [ $status -eq 1 ]; then
-   juju-log "Troubles in running EPC...try to upgrade the charm"
-   status-set blocked "Troubles in running EPC...try to upgrade the charm"
+   juju-log "Troubles in running MME...try to upgrade the charm"
+   status-set blocked "Troubles in running MME...try to upgrade the charm"
    exit 1
 fi
 check_epc_connection
