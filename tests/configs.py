@@ -62,13 +62,14 @@ Service descriptor template, which might be overloaded during the init_service
 """
 service_descriptor = [{'service': 'juju-gui','series': 'trusty', 'charm': 'cs:trusty/juju-gui-130',              'num_units': 1, 'max_unit': 2, 'constraints': {'cpu-cores': 1, 'mem': 1}, 'machine_spec': 'kvm:0', 'parent_id': '','container_type': 'kvm'},
                       {'service': 'mysql',   'series': 'trusty', 'charm': 'cs:trusty/mysql-55',                  'num_units': 1, 'max_unit': 2, 'constraints': {'cpu-cores': 1, 'mem': 1}, 'machine_spec': 'kvm:0', 'parent_id': '','container_type': 'lxc'},
-                      {'service': 'oai-hss', 'series': 'trusty', 'charm': 'cs:~navid-nikaein/trusty/oai-hss-14', 'num_units': 1, 'max_unit': 2, 'constraints': {'cpu-cores': 1, 'mem': 1}, 'machine_spec': 'kvm:0', 'parent_id': '','container_type': 'kvm'},
-                      {'service': 'oai-epc', 'series': 'trusty', 'charm': 'cs:~navid-nikaein/trusty/oai-epc-26', 'num_units': 1, 'max_unit': 2, 'constraints': {'cpu-cores': 1, 'mem': 2}, 'machine_spec': 'kvm:0', 'parent_id': '','container_type': 'kvm'},
+                      {'service': 'oai-hss', 'series': 'trusty', 'charm': 'cs:~navid-nikaein/trusty/oai-hss-15', 'num_units': 1, 'max_unit': 2, 'constraints': {'cpu-cores': 1, 'mem': 1}, 'machine_spec': 'kvm:0', 'parent_id': '','container_type': 'kvm'},
+                      {'service': 'oai-epc', 'series': 'trusty', 'charm': 'cs:~navid-nikaein/trusty/oai-epc-27', 'num_units': 1, 'max_unit': 2, 'constraints': {'cpu-cores': 1, 'mem': 2}, 'machine_spec': 'kvm:0', 'parent_id': '','container_type': 'kvm'},
                       {'service': 'oai-enb', 'series': 'trusty', 'charm': 'cs:~navid-nikaein/trusty/oai-enb-19', 'num_units': 1, 'max_unit': 2, 'constraints': {'cpu-cores': 4, 'mem': 8}, 'machine_spec': '0', 'parent_id': '','container_type': ''},
                       {'service': 'oaisim-enb-ue', 'series': 'trusty', 'charm': 'cs:~navid-nikaein/trusty/oaisim-enb-ue-8', 'num_units': 1, 'max_unit': 2, 'constraints': {'cpu-cores': 4, 'mem': 8}, 'machine_spec': '0', 'parent_id': '','container_type': ''},
                       {'service': 'oai-rrh', 'series': 'trusty', 'charm': 'cs:~navid-nikaein/trusty/oai-rrh-10',  'num_units': 1, 'max_unit': 2, 'constraints': {'cpu-cores': 2, 'mem': 8}, 'machine_spec': '0', 'parent_id': '','container_type': ''},
                       {'service': 'oai-mme', 'series': 'trusty', 'charm': 'cs:~navid-nikaein/trusty/oai-mme-1',  'num_units': 1, 'max_unit': 2, 'constraints': {'cpu-cores': 1, 'mem': 2}, 'machine_spec': 'kvm:0', 'parent_id': '','container_type': ''},
-                      {'service': 'oai-spgw', 'series': 'trusty', 'charm': 'cs:~navid-nikaein/trusty/oai-spgw-1',  'num_units': 1, 'max_unit': 2, 'constraints': {'cpu-cores': 1, 'mem': 2}, 'machine_spec': 'kvm:0', 'parent_id': '','container_type': ''}
+                      {'service': 'oai-spgw', 'series': 'trusty', 'charm': 'cs:~navid-nikaein/trusty/oai-spgw-1',  'num_units': 1, 'max_unit': 2, 'constraints': {'cpu-cores': 1, 'mem': 2}, 'machine_spec': 'kvm:0', 'parent_id': '','container_type': ''},
+                      {'service': 'dtn2', 'series': 'trusty', 'charm': 'cs:~navid-nikaein/trusty/dtn2-0',  'num_units': 1, 'max_unit': 2, 'constraints': {'cpu-cores': 1, 'mem': 2}, 'machine_spec': 'kvm:0', 'parent_id': '','container_type': ''}
 
 ]
 
@@ -78,11 +79,12 @@ Service configuration template for any service topology
 """
 service_config = {
     'oai-epc' : {'eth': 'eth0', 'gummei_tai_mnc':'95','DEFAULT_DNS_SEC_IPV4_ADDRESS': '192.168.12.100', 'DEFAULT_DNS_IPV4_ADDRESS':'192.168.12.100'},
-    'oai-enb' : { 'eth': 'eth5', 'rrh_active': 'no', 'rrh_if_name': 'eth0', 'downlink_frequency': '2680000000L', 'uplink_frequency_offset': '-120000000', 'eutra_band': '7', 'remote_monitoring': 'no' },
+    'oai-enb' : { 'eth': 'eth1', 'rrh_active': 'no', 'rrh_if_name': 'eth0', 'downlink_frequency': '2680000000L', 'uplink_frequency_offset': '-120000000', 'eutra_band': '7', 'remote_monitoring': 'no' },
     'oaisim-enb-ue' : { 'eth': 'eth1'},
     'oai-rrh' : { 'fronthaul_if': 'eth0'},
     'oai-mme' : { 'eth': 'eth0', 'gummei_tai_mcc': '208', 'gummei_tai_mnc':'95'},
-    'oai-spgw' : { 'sgw-eth': 'eth0', 'pgw-eth':'eth0','DEFAULT_DNS_SEC_IPV4_ADDRESS': '192.168.12.100', 'DEFAULT_DNS_IPV4_ADDRESS':'192.168.12.100'}
+    'oai-spgw' : { 'sgw-eth': 'eth0', 'pgw-eth':'eth0','DEFAULT_DNS_SEC_IPV4_ADDRESS': '192.168.12.100', 'DEFAULT_DNS_IPV4_ADDRESS':'192.168.12.100'},
+    'dtn2' : { 'eth': 'eth0'}
 }
 
 """

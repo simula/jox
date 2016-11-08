@@ -145,6 +145,10 @@ configure_mme(){
 configure_network(){
     #allow dhcp
     local eth=$1
+    if [ "$eth" = "eth0" ]; then
+        echo "Ignore interface eth0"
+        return
+    fi
     local file=/etc/network/interfaces.d/${eth}.cfg
     cp ./files/eth1_tpl.cfg $file
     sed -i -e "s/eth1/$eth/g" $file

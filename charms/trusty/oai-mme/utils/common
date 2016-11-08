@@ -127,14 +127,14 @@ user_conf(){
   #NETWORK CONFIG
   juju-log "Setting up network configuration in the epc.conf file"
 
-  ipv4=`ifconfig $iface | egrep -o "inet addr:[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | egrep -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"`
+  ipv4=`get_eth_ip_net $iface`
 
   #INTERFACES
   sed -r -i "/MME_INTERFACE_NAME_FOR_S1_MME/ s/\".*\"/\"$iface\"/" $epc_conf_path/mme.conf
-  sed -r -i "/MME_IPV4_ADDRESS_FOR_S1_MME/ s-\".*\"-\"$ipv4/24\"-" $epc_conf_path/mme.conf
+  sed -r -i "/MME_IPV4_ADDRESS_FOR_S1_MME/ s-\".*\"-\"$ipv4\"-" $epc_conf_path/mme.conf
 
   sed -r -i "/MME_INTERFACE_NAME_FOR_S11_MME/ s/\".*\"/\"$iface\"/" $epc_conf_path/mme.conf
-  sed -r -i "/MME_IPV4_ADDRESS_FOR_S11_MME/ s-\".*\"-\"$ipv4/24\"-" $epc_conf_path/mme.conf
+  sed -r -i "/MME_IPV4_ADDRESS_FOR_S11_MME/ s-\".*\"-\"$ipv4\"-" $epc_conf_path/mme.conf
 
   sed -r -i "/OUTPUT/ s/\".*\"/\"CONSOLE\"/" $epc_conf_path/mme.conf
 
@@ -220,5 +220,9 @@ get_ip_address(){
 }
 
 get_eth_ip(){
-  echo `ifconfig $1 | egrep -o "inet addr:[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | egrep -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"`
+  echo `ip addr show $1 | grep -o 'inet [0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | grep -o [0-9].*`
+}
+
+get_eth_ip_net(){
+  echo `ip addr show $1 | grep -o 'inet [0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+/[0-9]\+' | grep -o [0-9].*`
 }

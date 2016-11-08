@@ -79,9 +79,8 @@ clone_repro(){
     else
 	#Save the current hosts file
 	cp -f /etc/hosts /home
-	git clone https://gitlab.eurecom.fr/oai/openair-cn.git $openair_path
+	git clone --branch $branch https://gitlab.eurecom.fr/oai/openair-cn.git $openair_path
 	cd $openair_path
-	git checkout $branch
 	shopt -s nocasematch
 	if [[ "$revision" != "HEAD" ]]; then 
 	    git checkout $revision
@@ -148,16 +147,39 @@ configure_hosts(){
 }
 
 build_hss(){
-    juju-log "Build HSS and install required packages"
-    status-set maintenance "Build HSS and install required packages"
-    
-    $build_run_scripts/build_hss -c -i -F
-    
-    #I need to avoid to execute create_hss_database because I don't need it
-    #so in files direcotry inside my charm I have the right cmakelists file
-    #cp $CHARM_DIR/files/CMakeLists.txt $hss_path/CMakeLists.txt
-    install -o root -g root -m 0644 $CHARM_DIR/files/CMakeLists.txt $hss_path/CMakeLists.txt
-    $build_run_scripts/build_hss -c -d
+  $build_run_scripts/build_hss -c -i -F
+}
+
+configure_hss(){
+  juju-log "Add oai_hss init script"
+  cp $CHARM_DIR/files/oai_hss /etc/init/oai_hss.conf
+
+  $build_run_scripts/build_hss
+  cp $openair_path/ETC/hss.conf $hss_conf/hss.conf
+  cp $openair_path/ETC/hss_fd.conf $freediameter_conf_path/hss_fd.conf
+  cp $openair_path/ETC/acl.conf $freediameter_conf_path/acl.conf
+
+  # generate cert
+  fqdn=`hostname --fqdn`
+  $build_run_scripts/check_hss_s6a_certificate $freediameter_conf_path $fqdn
+}
+
+configure_network(){
+  #allow dhcp
+  local eth=$1
+  if [ "$eth" = "eth0" ]; then
+    echo "Ignore interface eth0"
+    return
+  fi
+  local file=/etc/network/interfaces.d/${eth}.cfg
+  cp ./files/eth1_tpl.cfg $file
+  sed -i -e "s/eth1/$eth/g" $file
+
+  #prevent dhcp gateway
+  local hook=/etc/dhcp/dhclient-enter-hooks.d/net-${eth}
+  cp ./files/dhclient_hook_tpl $hook
+  sed -i -e "s/eth1/$eth/g" $hook
+  chmod +x $hook
 }
 
 set -eux
@@ -178,7 +200,7 @@ update_hostname
 install_packages
 machine_type=`virt-what`
 
-install_packages
+configure_network `config-get eth`
 
 clone_repro
 
@@ -187,17 +209,7 @@ juju_install_kernel
 configure_hosts
 
 build_hss
-
-#add the oai_hss init
-juju-log "Add oai_hss init script"
-cp $CHARM_DIR/files/oai_hss /etc/init/oai_hss.conf
-
-
-if [ ! -f /usr/local/bin/oai_hss ] ; then
- status-set error "HSS compilation failed! Try increasing the size of Virtual Memory if only 512M and retry!"
- exit  1
-fi
-
+configure_hss
 
 status-set blocked "Waiting for a mysql/db relation to start"
 

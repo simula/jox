@@ -923,7 +923,8 @@ if __name__ == '__main__':
                 service_status= ja.details()
                 ja.log.debug(service_status)
                 # take actions: like resolve
-                ja.env_status()
+                if args.log == 'debug' :
+                    ja.env_status()
         except KeyboardInterrupt:
             observer.stop()
             ja.dispose(unchain=False)

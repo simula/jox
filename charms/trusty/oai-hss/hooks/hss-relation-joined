@@ -39,7 +39,10 @@ source $CHARM_DIR/utils/common
 juju-log "Setting up HSS relation info for EPC"
 relation-set hss_hostname=`hostname --fqdn`
 
-hss_public_ip=`unit-get public-address`
+hss_iface=`config-get eth`
+hss_public_unit_ip=`unit-get public-address`
+hss_public_ip=`get_eth_ip $hss_iface`
+
 get_ip_address $hss_public_ip
 status=$?
 if [ "$status" == "1" ] ; then

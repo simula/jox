@@ -41,7 +41,7 @@ juju-log "Stopping HSS service in this unit"
 service oai_hss stop || true
 
 juju-log "Deleting the HSS stdout file"
-rm -f /srv/.out
+rm -f /srv/hss.out
 
 juju-log "Cleaning up the openair-cn installation directory..."
 rm -rf $openair_path
@@ -54,15 +54,15 @@ juju-log "Removing configuration file installed along side the system..."
 rm -rf /usr/local/etc/oai/
 juju-log "Done"
 
-if [ -d /usr/lib/freeDiameter ]; then
-      FREEDIAMETER_PREFIX=/usr
-  elif [ -d /usr/local/lib/freeDiameter ]; then
-      FREEDIAMETER_PREFIX=/usr/local
-fi
+#if [ -d /usr/lib/freeDiameter ]; then
+#      FREEDIAMETER_PREFIX=/usr
+#  elif [ -d /usr/local/lib/freeDiameter ]; then
+#      FREEDIAMETER_PREFIX=/usr/local
+#fi
 
 juju-log "Removing HSS freediameter files..."
-rm -f $FREEDIAMETER_PREFIX/etc/freeDiameter/hss*     2>&1
-rm -f $FREEDIAMETER_PREFIX/etc/freeDiameter/acl.conf 2>&1
+rm -f $freediameter_conf_path/hss*     2>&1
+rm -f $freediameter_conf_path/acl.conf 2>&1
 
 juju-log "Restoring previous /etc/hosts file..."
 install -o root -g root -m 0644 /home/hosts /etc/

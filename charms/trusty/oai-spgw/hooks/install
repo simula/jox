@@ -84,8 +84,9 @@ clone_repo(){
     if [ -d "$openair_path"  ]; then
         juju-log "Updating the installation directory"
         cd $openair_path 
+        git fetch --all
+        git reset --hard origin/master
         git checkout $branch 
-        git pull 
         if [ "$revision" != "head" ]; then 
         git checkout $revision
         cd -
@@ -133,27 +134,28 @@ build_spgw(){
 }
 
 configure_spgw(){
-  cp $CHARM_DIR/files/spgw /etc/init/spgw.conf
+  cp $CHARM_DIR/files/spgw.conf /etc/init/spgw.conf
 
   mkdir -p $epc_conf_path
   cp $openair_path/ETC/spgw.conf $epc_conf_path/spgw.conf
 }
 
 configure_network(){
-    #allow dhcp
-    local eth=$1
-    if [ "$eth" = "eth0" ]; then
-      return
-    fi
-    local file=/etc/network/interfaces.d/${eth}.cfg
-    cp ./files/eth1_tpl.cfg $file
-    sed -i -e "s/eth1/$eth/g" $file
+  #allow dhcp
+  local eth=$1
+  if [ "$eth" = "eth0" ]; then
+    echo "Ignore interface eth0"
+    return
+  fi
+  local file=/etc/network/interfaces.d/${eth}.cfg
+  cp ./files/eth1_tpl.cfg $file
+  sed -i -e "s/eth1/$eth/g" $file
 
-    #prevent dhcp gateway
-    local hook=/etc/dhcp/dhclient-enter-hooks.d/net-${eth}
-    cp ./files/dhclient_hook_tpl $hook
-    sed -i -e "s/eth1/$eth/g" $hook
-    chmod +x $hook
+  #prevent dhcp gateway
+  local hook=/etc/dhcp/dhclient-enter-hooks.d/net-${eth}
+  cp ./files/dhclient_hook_tpl $hook
+  sed -i -e "s/eth1/$eth/g" $hook
+  chmod +x $hook
 }
 
 set -eux
@@ -163,6 +165,7 @@ source $CHARM_DIR/utils/common
 set_env_paths
 
 open-port 2152/udp
+open-port 2123/udp
 
 branch=`config-get branch`
 revision=`config-get revision`
