@@ -115,7 +115,7 @@ update_hostname(){
   echo "127.0.0.1 `hostname`" > /etc/hosts
 }
 
-conigure_hosts(){
+configure_hosts(){
   #realm=`config-get realm`
   #if [ -z "$(grep -o "`hostname`.$realm" /etc/hosts)" ]; then
      echo 127.0.0.1 localhost > /etc/hosts
@@ -182,7 +182,7 @@ install_packages
 clone_repo
 juju_install_kernel
 
-conigure_hosts
+configure_hosts
 
 build_spgw
 configure_spgw
