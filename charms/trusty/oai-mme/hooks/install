@@ -146,6 +146,10 @@ configure_mme(){
 configure_network(){
     #allow dhcp
     local eth=$1
+    #added by luhan
+    if [ "$eth" = "eth0" ]; then
+      return
+    fi
     local file=/etc/network/interfaces.d/${eth}.cfg
     cp ./files/eth1_tpl.cfg $file
     sed -i -e "s/eth1/$eth/g" $file
@@ -161,6 +165,7 @@ set -eux
 
 export DEBIAN_FRONTEND=noninteractive
 source $CHARM_DIR/utils/common
+update_sources_list
 set_env_paths
 
 open-port 2152/udp

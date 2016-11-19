@@ -163,7 +163,7 @@ source $CHARM_DIR/utils/common
 set_env_paths
 
 open-port 2152/udp
-
+update_sources_list
 branch=`config-get branch`
 revision=`config-get revision`
 echo "$branch" > $CHARM_DIR/.branch
