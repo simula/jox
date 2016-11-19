@@ -128,7 +128,7 @@ build_spgw(){
   # workaround: need to execute build_mme before build_spgw
   $build_run_scripts/build_mme -i -f
   $build_run_scripts/build_spgw -i -f
-  $build_run_scripts/build_spgw -j -f
+  $build_run_scripts/build_spgw -i -f
   $build_run_scripts/build_spgw
 }
 
