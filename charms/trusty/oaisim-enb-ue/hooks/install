@@ -40,7 +40,7 @@ source $CHARM_DIR/utils/common
 set_env_paths
 
 open-port 2152/udp
-
+update_sources_list
 branch=`config-get branch`
 revision=`config-get revision`
 echo "$branch" > $CHARM_DIR/.branch
@@ -90,6 +90,7 @@ else
     cd -
 fi
 
+sed -i 's/\$SUDO add-apt-repository \"deb http:\/\/archive.ubuntu.com\/ubuntu trusty-backports universe\"/\#\$SUDO add-apt-repository \"deb http:\/\/archive.ubuntu.com\/ubuntu trusty-backports universe\"/' $openair_path/cmake_targets/tools/build_helper
 
 if [ -f /tmp/$file_config ]; then
     juju-log "Retrieve the saved config file"
