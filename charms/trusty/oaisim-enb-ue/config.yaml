@@ -1,6 +1,6 @@
 options:
    branch:
-     default: "opnfv-juju-stable"
+     default: "master"
      description: |
        branch indicates which installation you want to do. If you want an stable installation, change this option to "default". 
      type: string
