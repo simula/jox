@@ -125,6 +125,7 @@ configure_hosts(){
 
 build_mme(){
   status-set maintenance "Building mme"
+  $build_run_scripts/build_spgw -i -f
   $build_run_scripts/build_mme -i -f
   $build_run_scripts/build_mme
 }

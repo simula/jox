@@ -112,15 +112,16 @@ user_conf(){
 }
 
 install_required_kernel(){
-  version=3.19
-  wget -r -e robots=off --accept-regex "(.*lowlatency.*amd64)|(all).deb" http://kernel.ubuntu.com/~kernel-ppa/mainline/v${version}-vivid/
-  dpkg -i kernel.ubuntu.com/*/*/*/*deb
+  version=4.7
+  #wget -r -e robots=off --accept-regex "(.*lowlatency.*amd64)|(all).deb" http://kernel.ubuntu.com/~kernel-ppa/mainline/v${version}-vivid/
+  wget -P /srv/kernel/ http://han.kuwan.space/kernel/linux-image-4.7.7-oaiepc_4.7.7-oaiepc-10.00.Custom_amd64.deb
+  dpkg -i /srv/kernel/*deb
 }
 
 check_current_kernel(){
 
   #required_kern_release=$(cat $tools_path/build_helper | egrep -o "check_kernel_release_and_install_xtables_addons_oai .+" | cut -d ' ' -f2)
-  required_kern_release=3.19
+  required_kern_release=4.7
   required_kern_version=`echo $required_kern_release | cut -d '.' -f1`
   required_kern_major_revision=`echo $required_kern_release | cut -d '.' -f2`
   current_kern_release=`uname -r`
