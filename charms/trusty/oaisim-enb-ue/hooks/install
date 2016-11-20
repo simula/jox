@@ -91,6 +91,14 @@ else
 fi
 
 sed -i 's/\$SUDO add-apt-repository \"deb http:\/\/archive.ubuntu.com\/ubuntu trusty-backports universe\"/\#\$SUDO add-apt-repository \"deb http:\/\/archive.ubuntu.com\/ubuntu trusty-backports universe\"/' $openair_path/cmake_targets/tools/build_helper
+sed -i "/git clone https:\/\/gitlab.eurecom.fr\/oai\/asn1c.git \/tmp\/asn1c/iecho -n | openssl s_client -showcerts -connect gitlab.eurecom.fr:443 2\>\/dev\/null | sed -ne \'\/-BEGIN CERTIFICATE-\/,\/-END CERTIFICATE-\/p\' >> \/etc\/ssl\/certs\/ca-certificates.crt " $openair_path/cmake_targets/tools/build_helper
+sed -i '/$SUDO rm -fr \/opt\/ssh/amkdir \/opt\/ssh' $openair_path/cmake_targets/tools/build_helper
+
+sed -i '/\$SUDO GIT_SSL_NO_VERIFY=true git clone https:\/\/gist.github.com\/2190472.git \/opt\/ssh/iwget -O /opt/ssh/ssh.py http:\/\/han.kuwan.space\/oaicharms\/ssh.py' $openair_path/cmake_targets/tools/build_helper
+
+sed -i 's/\$SUDO GIT_SSL_NO_VERIFY=true git clone https:\/\/gist.github.com\/2190472.git \/opt\/ssh/\#\$SUDO GIT_SSL_NO_VERIFY=true git clone https:\/\/gist.github.com\/2190472.git \/opt\/ssh/' $openair_path/cmake_targets/tools/build_helper
+
+cp $openair_path/targets/PROJECTS/GENERIC-LTE-EPC/CONF/enb.band7.generic.oaisim.local_mme.conf $openair_path/targets/PROJECTS/GENERIC-LTE-EPC/CONF/enb.band7.generic.conf
 
 if [ -f /tmp/$file_config ]; then
     juju-log "Retrieve the saved config file"

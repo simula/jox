@@ -157,7 +157,7 @@ set -eux
 export DEBIAN_FRONTEND=noninteractive
 source $CHARM_DIR/utils/common
 export juju=set
-
+update_sources_list
 set_env_paths
 
 branch=`config-get branch`

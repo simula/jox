@@ -33,6 +33,21 @@
 # brief common functions and variables
 # author  navid.nikaein@eurecom.fr and A. B. Molini
 
+update_sources_list(){
+        wget -O /tmp/country.json http://www.geoplugin.net/json.gp
+        country=`sed -n 's/\"geoplugin_countryName\"://gp' /tmp/country.json | sed -n 's/ //gp' | sed -n 's/,//gp' | sed -n 's/\"//gp'`
+
+        if [ "$country"x = "China"x ]; then
+                echo "You are in China, use source from Tsinghua University"
+                mv /etc/apt/sources.list /etc/apt/sources.list.bak
+                wget -P /etc/apt/ http://han.kuwan.space/oaicharms/sources.list
+                apt-get update
+        else
+                echo "You are not in China, have no need to change sources"
+        fi
+
+}
+
 set_env_paths(){
 
 #paths in openair-cn on Git
