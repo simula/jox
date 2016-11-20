@@ -84,10 +84,10 @@ if [ -z "$(grep -o "$hss_fqdn" /etc/hosts)" ]; then
    echo "$ip_address_hss $hss_fqdn hss" >> /etc/hosts
 fi
 #####added by luhan
-sed -r -i "s/No_SCTP/No_TCP/g" $epc_conf_path/freeDiameter/mme_fd.conf
+#sed -r -i "s/No_SCTP/No_TCP/g" $epc_conf_path/freeDiameter/mme_fd.conf
 #sed -r -i "s/Prefer_TCP/#Prefer_TCP/" $epc_conf_path/freeDiameter/mme_fd.conf
-sed -r -i "s/Prefer_TCP;/ /" $epc_conf_path/freeDiameter/mme_fd.conf
-sed -r -i "s/Prefer_TCP/ /" $epc_conf_path/freeDiameter/mme_fd.conf
+#sed -r -i "s/Prefer_TCP;/ /" $epc_conf_path/freeDiameter/mme_fd.conf
+#sed -r -i "s/Prefer_TCP/ /" $epc_conf_path/freeDiameter/mme_fd.conf
 
 echo "$hss_fqdn" > $CHARM_DIR/.hss_fqdn
 ./hooks/config-changed

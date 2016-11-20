@@ -94,6 +94,14 @@ clone_repro(){
     sed -i '/phpmyadmin/d' $tools_path/build_helper
     #we don't either want the low latency kernel for HSS
     sed -i -r "s/(check_kernel_release_and_install_xtables_addons_oai[^()]+)/#\1/" $tools_path/build_helper  
+    echo "luhanluhan"
+    if [ ! -f /usr/local/etc/oai/hss.conf ]; then
+       mkdir -p /usr/local/etc/oai
+       cp -upv $openair_path/ETC/hss.conf    /usr/local/etc/oai
+    fi
+    mkdir -p /usr/local/etc/oai/freeDiameter
+    cp -upv $openair_path/ETC/acl.conf    /usr/local/etc/oai/freeDiameter
+    cp -upv $openair_path/ETC/hss_fd.conf /usr/local/etc/oai/freeDiameter
     
 }
 
@@ -148,7 +156,7 @@ build_hss(){
     #I need to avoid to execute create_hss_database because I don't need it
     #so in files direcotry inside my charm I have the right cmakelists file
     #cp $CHARM_DIR/files/CMakeLists.txt $hss_path/CMakeLists.txt
-    install -o root -g root -m 0644 $CHARM_DIR/files/CMakeLists.txt $hss_path/CMakeLists.txt
+    #install -o root -g root -m 0644 $CHARM_DIR/files/CMakeLists.txt $hss_path/CMakeLists.txt
     $build_run_scripts/build_hss -c -d
 }
 

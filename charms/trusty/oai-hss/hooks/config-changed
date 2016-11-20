@@ -58,13 +58,13 @@ if [ "$(config-get realm)" != "$(cat $CHARM_DIR/.realm)" ]; then
         FREEDIAMETER_PREFIX=/usr/local
     fi
     fqdn=`hostname --fqdn`
-    
+    FREEDIAMETER_PREFIX=/usr/local 
     $openair_path/SCRIPTS/check_hss_s6a_certificate $FREEDIAMETER_PREFIX $fqdn
     #sed the new identity in acl.conf and hss_fd.conf
-    sed -r -i  "s/(Identity[ ]*=[ ]*)\".*\"/\1\"$fqdn\"/" $FREEDIAMETER_PREFIX/etc/freeDiameter/hss_fd.conf
-    sed -r -i  "s/(Realm[ ]*=[ ]*)\".*\"/\1\"$realm\"/" $FREEDIAMETER_PREFIX/etc/freeDiameter/hss_fd.conf
-    sed -r -i  "s/(^ALLOW_OLD_TLS[ ]*).*/\1*.$realm/" $FREEDIAMETER_PREFIX/etc/freeDiameter/hss_fd.conf
-
+    sed -r -i  "s/(Identity[ ]*=[ ]*)\".*\"/\1\"$fqdn\"/" $FREEDIAMETER_PREFIX/etc/oai/freeDiameter/hss_fd.conf
+    sed -r -i  "s/(Realm[ ]*=[ ]*)\".*\"/\1\"$realm\"/" $FREEDIAMETER_PREFIX/etc/oai/freeDiameter/hss_fd.conf
+    sed -r -i  "s/(^ALLOW_OLD_TLS[ ]*).*/\1*.$realm/" $FREEDIAMETER_PREFIX/etc/oai/freeDiameter/hss_fd.conf
+    $build_run_scripts/check_hss_s6a_certificate $FREEDIAMETER_PREFIX/etc/oai/freeDiameter $fqdn
 fi
 
 
