@@ -91,6 +91,9 @@ juju-log "Inserting the MME info in the mmeidentity table of oai_db database"
 /usr/bin/mysql -u $db_user --password=$db_password -h $db_host $db_database << EOF 
 INSERT INTO mmeidentity (\`idmmeidentity\`, \`mmehost\`, \`mmerealm\`, \`UE-Reachability\`) VALUES ('$primary_key', '$mme_fqdn', '$realm_mme', 0);
 EOF
+/usr/bin/mysql -u $db_user --password=$db_password -h $db_host $db_database << EOF 
+UPDATE users SET \`mmeidentity_idmmeidentity\`=$primary_key WHERE imsi='208930100001111'
+EOF
 
 fi
 

@@ -54,13 +54,13 @@ options:
      description: TAI=MCC.MNC:TAC. MCC is the Mobile Country Code. Must be three digits.
      type: string 
    gummei_tai_mnc:
-     default: "95"
+     default: "93"
      description: TAI=MCC.MNC:TAC. MNC is the Mobile Network Code. Must be two or three digits.
      type: string
-#   gummei_tai_tac:
-#     default: "1"
-#     description: TAI=MCC.MNC:TAC. TAC is the Tracking Area Code.
-#     type: string
+   gummei_tai_tac:
+     default: "1"
+     description: TAI=MCC.MNC:TAC. TAC is the Tracking Area Code.
+     type: string
    ipv4_list_start:
      default: "192.188.1.0/24"
      description: First IP address pool that will be assigned to UEs.

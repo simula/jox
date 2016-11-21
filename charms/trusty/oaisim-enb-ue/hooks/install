@@ -98,8 +98,8 @@ sed -i '/\$SUDO GIT_SSL_NO_VERIFY=true git clone https:\/\/gist.github.com\/2190
 
 sed -i 's/\$SUDO GIT_SSL_NO_VERIFY=true git clone https:\/\/gist.github.com\/2190472.git \/opt\/ssh/\#\$SUDO GIT_SSL_NO_VERIFY=true git clone https:\/\/gist.github.com\/2190472.git \/opt\/ssh/' $openair_path/cmake_targets/tools/build_helper
 
-cp $openair_path/targets/PROJECTS/GENERIC-LTE-EPC/CONF/enb.band7.generic.oaisim.local_mme.conf $openair_path/targets/PROJECTS/GENERIC-LTE-EPC/CONF/enb.band7.generic.conf
-
+#cp $openair_path/targets/PROJECTS/GENERIC-LTE-EPC/CONF/enb.band7.generic.oaisim.local_mme.conf $openair_path/targets/PROJECTS/GENERIC-LTE-EPC/CONF/enb.band7.generic.conf
+cp $CHARM_DIR/files/enb.band7.generic.conf $openair_path/targets/PROJECTS/GENERIC-LTE-EPC/CONF/enb.band7.generic.conf
 if [ -f /tmp/$file_config ]; then
     juju-log "Retrieve the saved config file"
     mv /tmp/$file_config $conf_path/
@@ -127,7 +127,6 @@ status-set maintenance "Erase all files made by previous compilations, installat
 #add the oaisim init
 juju-log "Add oaisim init script"
 cp $CHARM_DIR/files/oaisim /etc/init/oaisim.conf
-
 $build_path/build_oai --oaisim --cflags_processor "-mssse3 -msse4.1"
 
 
