@@ -7,7 +7,7 @@ source $CHARM_DIR/utils/common
 if [ -f $CHARM_DIR/.dtn_running ]; then
   dtn_running=`cat $CHARM_DIR/.dtn_running`
 else
-  dtn_running="no"
+  dtn_running="0"
 fi
 
 if [ "$dtn_running" == "1" ] ; then 

@@ -29,59 +29,18 @@
 # either expressed or implied, of the FreeBSD Project.
 #
 ################################################################################
-# file config-change
-# brief manage the config changes of oai-enb service, and occurs everytime a new configuration value is updated (juju set)
-# author navid.nikaein@eurecom.fr and A. B. Molini 
+# file update-status
+# brief called to provide a feedback to the user about the status of the service
+# author  navid.nikaein@eurecom.fr 
 
 set -eux
 source $CHARM_DIR/utils/common
-set_env_paths
 
-
-service oai_hss stop || true
-
-
-if [ "$(config-get branch)" != "$(cat $CHARM_DIR/.branch)" ]; then
-    $CHARM_DIR/hooks/upgrade-charm
+check_rtc_process
+if [ $status -eq 1 ]; then
+    juju-log "rtc is not running"
+else 
+    status-set active "rtc is running"
 fi
-
-if [ "$(config-get realm)" != "$(cat $CHARM_DIR/.realm)" ]; then
-    realm=`config-get realm` 
  
-    sed -i "s/`hostname --fqdn`/`hostname`.$realm/" /etc/hosts
-    #if [ -d /usr/lib/freeDiameter ]; then
-    #    FREEDIAMETER_PREFIX=/usr
-    #elif [ -d /usr/local/lib/freeDiameter ]; then
-    #    FREEDIAMETER_PREFIX=/usr/local
-    #fi
-    if [ -d $freediameter_conf_path ]; then
-		rm $freediameter_conf_path/hss.*.pem 
-    fi 
-    
-    fqdn=`hostname --fqdn`
-    $build_run_scripts/check_hss_s6a_certificate $freediameter_conf_path $fqdn
-
-    #sed the new identity in acl.conf and hss_fd.conf
-    sed -r -i  "s/(Identity[ ]*=[ ]*)\".*\"/\1\"$fqdn\"/" $freediameter_conf_path/hss_fd.conf
-    sed -r -i  "s/(Realm[ ]*=[ ]*)\".*\"/\1\"$realm\"/" $freediameter_conf_path/hss_fd.conf
-    sed -r -i  "s/(^ALLOW_OLD_TLS[ ]*).*/\1*.$realm/" $freediameter_conf_path/acl.conf
-
-fi
-
-if [ -z "$(relation-ids db)" ]; then
-   juju-log "HSS is built, but is waiting for active connection to gather the last info"
-   juju-log "no db is found, so HSS process is not going to be run" 
-else
-   $CHARM_DIR/hooks/start
-   #if hss relation exists
-   for hss_id in $(relation-ids hss); do
-       restart=`relation-get -r $hss_id trigger_restart $JUJU_UNIT_NAME`
-       relation-set -r $hss_id trigger_restart=$(($((restart + 1)) % 10))
-       relation-set -r $hss_id hss_running=yes
-   done
-
-fi
-
-
-
 

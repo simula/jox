@@ -56,7 +56,7 @@ install_packages(){
     apt install -y mysql-client
 }
 
-clone_repro(){
+clone_repo(){
 
     juju-log "Fetching and installing OpenAirInterface HSS"
     status-set maintenance "Fetching and installing OpenAirInterface HSS"
@@ -68,9 +68,10 @@ clone_repro(){
 	#   rm -rf $openair_path
 	juju-log "Updating the installation directory"
 	cd $openair_path
+	git fetch --all
 	git reset --hard HEAD 
 	git checkout $branch 
-	git pull 
+	#git pull 
 	shopt -s nocasematch
 	if [[ "$revision" != "HEAD" ]]; then 
 	    git checkout $revision
@@ -203,7 +204,7 @@ machine_type=`virt-what`
 
 configure_network `config-get eth`
 
-clone_repro
+clone_repo
 
 juju_install_kernel
 

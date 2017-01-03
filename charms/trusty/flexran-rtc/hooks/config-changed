@@ -30,58 +30,50 @@
 #
 ################################################################################
 # file config-change
-# brief manage the config changes of oai-enb service, and occurs everytime a new configuration value is updated (juju set)
-# author navid.nikaein@eurecom.fr and A. B. Molini 
+# brief manage the config changes of flexran-rtc service, and occurs everytime a new configuration value is updated (juju set)
+# author navid.nikaein@eurecom.fr
 
 set -eux
+
 source $CHARM_DIR/utils/common
 set_env_paths
 
-
-service oai_hss stop || true
-
+RTC_UNIT_RUNNING=0
 
 if [ "$(config-get branch)" != "$(cat $CHARM_DIR/.branch)" ]; then
+    juju-log "branch name changed"
     $CHARM_DIR/hooks/upgrade-charm
 fi
 
-if [ "$(config-get realm)" != "$(cat $CHARM_DIR/.realm)" ]; then
-    realm=`config-get realm` 
- 
-    sed -i "s/`hostname --fqdn`/`hostname`.$realm/" /etc/hosts
-    #if [ -d /usr/lib/freeDiameter ]; then
-    #    FREEDIAMETER_PREFIX=/usr
-    #elif [ -d /usr/local/lib/freeDiameter ]; then
-    #    FREEDIAMETER_PREFIX=/usr/local
-    #fi
-    if [ -d $freediameter_conf_path ]; then
-		rm $freediameter_conf_path/hss.*.pem 
-    fi 
-    
-    fqdn=`hostname --fqdn`
-    $build_run_scripts/check_hss_s6a_certificate $freediameter_conf_path $fqdn
-
-    #sed the new identity in acl.conf and hss_fd.conf
-    sed -r -i  "s/(Identity[ ]*=[ ]*)\".*\"/\1\"$fqdn\"/" $freediameter_conf_path/hss_fd.conf
-    sed -r -i  "s/(Realm[ ]*=[ ]*)\".*\"/\1\"$realm\"/" $freediameter_conf_path/hss_fd.conf
-    sed -r -i  "s/(^ALLOW_OLD_TLS[ ]*).*/\1*.$realm/" $freediameter_conf_path/acl.conf
-
+if [ "$(config-get revision)" != "$(cat $CHARM_DIR/.revision)" ]; then
+    $CHARM_DIR/hooks/upgrade-charm
+    juju-log "revision changed"
 fi
 
-if [ -z "$(relation-ids db)" ]; then
-   juju-log "HSS is built, but is waiting for active connection to gather the last info"
-   juju-log "no db is found, so HSS process is not going to be run" 
-else
-   $CHARM_DIR/hooks/start
-   #if hss relation exists
-   for hss_id in $(relation-ids hss); do
-       restart=`relation-get -r $hss_id trigger_restart $JUJU_UNIT_NAME`
-       relation-set -r $hss_id trigger_restart=$(($((restart + 1)) % 10))
-       relation-set -r $hss_id hss_running=yes
-   done
-
+if [ "$(config-get kernel)" != "$(cat $CHARM_DIR/.kernel)" ]; then
+    $CHARM_DIR/hooks/upgrade-charm
+    juju-log "kernel changed"
 fi
 
+bind_if=`config-get bind_if`
+if [ "$bind_if" != "$(cat $CHARM_DIR/.bind_if)" ]; then
+    juju-log "changing bind if is not yet supported for RTC" 
+    #service rtc restart
+fi
 
+bind_port=`config-get bind_port`
+if [ "$bind_port" != "$(cat $CHARM_DIR/.bind_port)" ]; then
+    juju-log "changing bind port number is not yet supported for RTC" 
+    #service rtc restart
+fi
+
+iface=`config-get eth`
+
+if [ -n "$iface" ]; then
+   ipv4=`ifconfig $iface | egrep -o "inet addr:[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | egrep -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"`
+   
+   juju-log "eth interface is $iface"
+
+fi
 
 
