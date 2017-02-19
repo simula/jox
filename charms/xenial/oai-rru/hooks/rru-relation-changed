@@ -1,0 +1,107 @@
+#!/bin/bash
+################################################################################
+#
+# Copyright (c) 2016, EURECOM (www.eurecom.fr)
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# The views and conclusions contained in the software and documentation are those
+# of the authors and should not be interpreted as representing official policies,
+# either expressed or implied, of the FreeBSD Project.
+#
+################################################################################
+# file rru-relation-changed
+# brief called when a relation between an eNB and RRU is changed 
+# author  navid.nikaein@eurecom.fr 
+
+set -ex
+source $CHARM_DIR/utils/common
+set_env_paths
+
+node_func=`config-get node_function`
+
+    juju-log "RRU relation changed for $node_func"
+
+    rel_ids=`relation-ids rru`
+    if [ -z "$rel_ids" ];then
+	juju-log "Data not available yet, exit silently"
+	exit 0
+    fi
+
+    hw=`relation-get -r $rel_ids TARGET_HARDWARE`
+    fh_tr_mode=`relation-get -r $rel_ids TRANSPORT_MODE`
+   
+
+    if [ -z "$hw" ]; then
+	juju-log "Data not available yet, exit silently"
+	exit 0
+    fi
+
+    if [ -z "$fh_tr_mode" ]; then
+	juju-log "Data not available yet, exit silently"
+	exit 0
+    fi
+
+
+	fh_if=`config-get fh_if_name`
+
+	echo "$fh_if"  >  $CHARM_DIR/.fh_if
+	cp  $CHARM_DIR/.fh_if      $openair_path
+
+	if [ "$fh_tr_mode" == "udp" ]  || [ "$fh_tr_mode" == "udp_if4p5" ] ; then 
+
+	    rru_public_ip=`unit-get public-address`
+	    get_ip_address $rru_public_ip
+	    status=$?
+	    if [ "$status" == "1" ] ; then
+		status-set blocked "nslookup failed for the rru host name ($rru_public_ip)"
+		relation-set RRU_PUBLIC_IP=$rru_public_ip
+	    else
+		relation-set RRU_PUBLIC_IP=$validated_public_ip
+		status-set maintenance "Joined the RRU relation"
+	    fi
+	    
+	elif [ "$fh_tr_mode" == "raw" ]  || [ "$fh_tr_mode" == "raw_if4p5" ] ; then 
+	    fh_mac_addr=`ip link show $fh_if | awk '/ether/ {print $2}' `
+	    # originally there was a new var named RH_MAC_ADDRESS
+	    relation-set RRU_PUBLIC_IP=$fh_mac_addr
+	else
+	    juju-log "unknown fronthaul transport mode ($fh_tr_mode)"
+	fi 
+
+	 #locally selected hardware target
+	hw_config=`cat $CHARM_DIR/.hw`
+   
+	# this happens when the enb changes the target hardware
+	if [ "$hw_config" != "$hw" ]; then
+	    juju-log "Configured RF ($hw) does not corresponds ($hw_config), change the config file"
+	    status-set maintenance "Configured RF ($hw) does not corresponds ($hw_config), change the config file"
+	    cat $hw_config > $CHARM_DIR/.hw
+	fi 
+    
+	cp  $CHARM_DIR/.fh_tr_mode $openair_path
+	cp  $CHARM_DIR/.hw      $openair_path
+    
+	$CHARM_DIR/hooks/start
+
+
+

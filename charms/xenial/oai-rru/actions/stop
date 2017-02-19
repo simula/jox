@@ -1,0 +1,5 @@
+#!/bin/bash
+
+
+service rru stop || true
+status-set blocked "oaisim software not running"

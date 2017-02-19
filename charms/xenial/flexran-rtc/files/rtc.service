@@ -1,0 +1,11 @@
+[Unit]
+Description=MOSIAC RTC Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/srv/mosaic-5g/controller/build/rt_controller
+
+[Install]
+WantedBy=multi-user.target
+Alias=rtcd.service
