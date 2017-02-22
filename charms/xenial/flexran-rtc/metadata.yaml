@@ -8,8 +8,8 @@ tags:
   - 4G, 5G, LTE
   - Base Station
   - eNodeB, eNB
-  - OpenAirInterface
-  - FLEXRAN
+  - OpenAirInterface, OAI
+  - MOSAIC-5G, FLEXRAN
   - Realtime Controller
 subordinate: false
 provides:

@@ -29,19 +29,25 @@
 # either expressed or implied, of the FreeBSD Project.
 #
 ################################################################################
-# file rtc-relation-departed
-# brief called when the enb-rtc relation is removed 
-# author  navid.nikaein@eurecom.fr 
+# file stop 
+# brief stop the oai-enb service, this happens when the service is stopped/disabled
+# author  navid.nikaein@eurecom.fr and A. B. Molini   
 
 set -eux
+
 source $CHARM_DIR/utils/common
 set_env_paths
 
-juju-log "stopping eNB service and waiting for a RTC relation to be restablished"
-service rtc stop || true
+juju-log "Stopping OAIENB service in this unit"
+service oaieNB stop || true
+juju-log "Done"
 
-relation-set RTC_RUNNING=no
+juju-log "Cleaning up the openair5G installation directory..."
+rm -rf $openair_path
+juju-log "Openair5G removed"
 
-echo "no" > $CHARM_DIR/.rtc_running
+juju-log "Removing Upstart script from the system..."
+rm -f /etc/systemd/system/oaieNB.service
+juju-log "Done"
 
-status-set blocked "Waiting for RTC relation"
+

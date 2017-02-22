@@ -81,7 +81,6 @@ if [ "$TAC" != "$(cat $CHARM_DIR/tac_$name)" ]; then
         if [ "$(egrep -c "MCC[ ]*=[ ]*\"$(config-get gummei_tai_mcc)\"[ ]*;[ ]*MNC[ ]*=[ ]*\"$(config-get gummei_tai_mnc)\"[ ]*;[ ]*TAC[ ]*=[ ]*\"[0-9]*\"" $mme_conf_path/mme.conf)" -gt 1 ]; then
             sed -r -i "/MCC[ ]*=[ ]*\"$(config-get gummei_tai_mcc)\"[ ]*;[ ]*MNC[ ]*=[ ]*\"$(config-get gummei_tai_mnc)\"[ ]*;[ ]*TAC[ ]*=[ ]*\"$old_tac\"/ d" $mme_conf_path/mme.conf
         fi
-
     fi
 
     echo "$TAC" > $CHARM_DIR/tac_$name
@@ -107,6 +106,7 @@ if [ -z "$(grep "$JUJU_REMOTE_UNIT" $CHARM_DIR/.tac_list)"  ]; then
        echo "$JUJU_REMOTE_UNIT" >> $CHARM_DIR/.tac_list
        if [ -z "$(egrep "MCC[ ]*=[ ]*\"$(config-get gummei_tai_mcc)\"[ ]*;[ ]*MNC[ ]*=[ ]*\"$(config-get gummei_tai_mnc)\"[ ]*;[ ]*TAC[ ]*=[ ]*\"$TAC\"" $mme_conf_path/mme.conf)" ]; then
            sed -r -i "/TAI_LIST/a {MCC=\"$(config-get gummei_tai_mcc)\" ; MNC=\"$(config-get gummei_tai_mnc)\";  TAC = \"$TAC\";}," $mme_conf_path/mme.conf
+	    sed -r -i "/GUMMEI_LIST/a {MCC=\"$(config-get gummei_tai_mcc)\" ; MNC=\"$(config-get gummei_tai_mnc)\";  MME_GID = \"4\"; MME_CODE =\"1\"; }," $mme_conf_path/mme.conf
        fi
 
 

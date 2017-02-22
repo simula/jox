@@ -155,11 +155,14 @@ set_build_args(){
     fi 
     
     if [ "$node_func" == "eNodeB_3GPP_BBU" ] || [ "$node_func" == "NGFI_RCC_IF4p5" ]; then 
-	relations="RRU:MME"
 	build_args="$build_args --eNB -t ETHERNET -w None -c -C "
 	echo "$build_args"  > $CHARM_DIR/.build_args
 	cp $CHARM_DIR/.build_args $openair_path
-	
+
+    elif [ "$node_func" == "NGFI_RRU_IF5" ] || [ "$node_func" == "NGFI_RRU_IF4p5" ]; then 
+	build_args="$build_args --eNB -t ETHERNET -w $build_oai_for_hw -c -C "
+	echo "$build_args"  > $CHARM_DIR/.build_args
+	cp $CHARM_DIR/.build_args $openair_path
     elif [ "$node_func" == "eNodeB_3GPP_IP" ]; then
 	build_args="$build_args --eNB --noS1 -w $build_oai_for_hw -c -C "
 	echo "$build_args"  > $CHARM_DIR/.build_args
@@ -168,8 +171,7 @@ set_build_args(){
 	if [ "$node_func" != "eNodeB_3GPP" ]; then 
 	    juju-log "Unknown node fucntion ($node_func), setting the node to eNodeB_3GPPP"
 	    node_func="eNodeB_3GPPP"
-	fi
-	relations="MME"
+	fi 
 	build_args="$build_args --eNB -w $build_oai_for_hw -c -C "
 	echo "$build_args"  > $CHARM_DIR/.build_args
 	cp $CHARM_DIR/.build_args $openair_path
@@ -179,7 +181,6 @@ set_build_args(){
     if [ "$agent_active" == "yes" ]; then
 	juju-log "Enable RAN agent"
 	open-port 2210/tcp
-	relations="$relations:RTC"
 	build_args="$build_args -a "
 	echo "$build_args"  > $CHARM_DIR/.build_args
 	cp $CHARM_DIR/.build_args $openair_path
@@ -200,16 +201,18 @@ set_config_file(){
     if [ "$config_file" == "default" ]; then 
 	
 	if [ "$node_func" == "eNodeB_3GPP_BBU" ]; then 
-	    #config_file_name="rcc.band${band}.tm1.if5.${bw}PRB.${config_oai_for_hw}.conf"
-	    config_file_name="rcc.band7.tm1.if5.${bw}PRB.${config_oai_for_hw}.conf"
+	    config_file_name="rcc.band${band}.tm1.if5.${bw}PRB.${config_oai_for_hw}.conf"
 	    
 	elif  [ "$node_func" == "NGFI_RCC_IF4p5" ]; then 
-	    #config_file_name="rcc.band${band}.tm1.if4p5.${bw}PRB.${config_oai_for_hw}.conf"
-	    config_file_name="rcc.band7.tm1.if4p5.${bw}PRB.${config_oai_for_hw}.conf"
+	    config_file_name="rcc.band${band}.tm1.if4p5.${bw}PRB.${config_oai_for_hw}.conf"
 	    
+	elif [ "$node_func" == "NGFI_RRU_IF5" ]; then
+	    config_file_name="rru.band${band}.tm1.if5.${bw}PRB.${config_oai_for_hw}.conf"
+	    
+	elif [ "$node_func" == "NGFI_RRU_IF4p5" ]; then 
+	    config_file_name="rru.band${band}.tm1.if4p5.${bw}PRB.${config_oai_for_hw}.conf"
 	else
-	    #config_file_name="enb.band${band}.tm1.${bw}PRB.${config_oai_for_hw}.conf"
-	    config_file_name="enb.band7.tm1.${bw}PRB.${config_oai_for_hw}.conf"
+	    config_file_name="enb.band${band}.tm1.${bw}PRB.${config_oai_for_hw}.conf"
 	fi 
 	
 	if [ ! -f $conf_path/$config_file_name ]; then 
@@ -270,7 +273,7 @@ build_enb(){
     cp $CHARM_DIR/.fh_if_name $openair_path
     	
     
-    if  [ "$node_func" == "eNodeB_3GPP_BBU" ] || [ "$node_func" == "eNodeB_RCC_IF4p5" ] ; then
+    if  [ "$node_func" == "eNodeB_3GPP_BBU" ] || [ "$node_func" == "eNodeB_RCC_IF4p5" ] || [ "$node_func" == "eNodeB_RRU_IF4p5" ] || [  "$node_func" == "eNodeB_RRU_IF5" ]  ; then
 	
 	juju-log "setting the configuration file $config_file_name with Fronthaul"
 
@@ -322,7 +325,7 @@ build_enb(){
 set_exec_args(){
 
     if [ "$rtmon" == "yes" ]; then
-	exec_args=" --T-nowait -V "
+	exec_args=" --T-no-wait -V "
     fi
     
     exec_args="$exec_args -O $conf_path/$config_file_name -S --ulsch-max-errors 1000"
@@ -341,6 +344,7 @@ branch=`config-get branch`
 revision=`config-get revision`
 kernel=`config-get kernel`
 node_func=`config-get node_function`
+#S1=`config-get S1_interface`
 hw=`config-get target_hardware`
 config_file=`config-get config_file`
 agent_active=`config-get agent_active`
@@ -359,7 +363,7 @@ rtmon=`config-get remote_monitoring`
 band=`config-get eutra_band`
 bw=`config-get N_RB_DL`
 
-relations=""	
+	
 
 echo "$branch" > $CHARM_DIR/.branch
 echo "$revision" > $CHARM_DIR/.revision
@@ -371,7 +375,7 @@ echo "$rtmon"      >  $CHARM_DIR/.rtmon
 
 echo "no"  > $CHARM_DIR/.rtc_running
 echo "no"  > $CHARM_DIR/.rru_running
-echo "no"  > $CHARM_DIR/.mme_running
+echo "no"  > $CHARM_DIR/.epc_running
 
 build_args=""
 exec_args=""
@@ -400,10 +404,10 @@ build_enb
 set_exec_args
 
 
-juju-log "Add OAI eNB systemd upstart"
-cp $CHARM_DIR/files/enb.service /etc/systemd/system/
+#add the oaieNB init
+juju-log "Add oaieNB init script"
+cp $CHARM_DIR/files/oaieNB /etc/systemd/system/
 
 juju-log "build_args $CHARM_DIR/.build_args"
 juju-log "exec_args $CHARM_DIR/.exec_args"
-
-status-set blocked "Waiting for the $relations relation(s)"
+status-set blocked "Waiting for EPC connection"

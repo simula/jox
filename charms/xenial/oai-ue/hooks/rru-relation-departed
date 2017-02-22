@@ -29,19 +29,34 @@
 # either expressed or implied, of the FreeBSD Project.
 #
 ################################################################################
-# file rtc-relation-departed
-# brief called when the enb-rtc relation is removed 
-# author  navid.nikaein@eurecom.fr 
+# file rrh-relation-departed
+# brief called when the RRH relation between an eNB and RRH is removed 
+# author  navid.nikaein@eurecom.fr
+
 
 set -eux
 source $CHARM_DIR/utils/common
 set_env_paths
+file_config=`cat $CHARM_DIR/.config_file`
+node_func=`config-get node_function`
 
-juju-log "stopping eNB service and waiting for a RTC relation to be restablished"
-service rtc stop || true
+juju-log "stopping eNB service and waiting for a RRU relation to be restablished"
+service oaieNB stop || true
+ 
+if [ "$node_func" == "eNodeB_3GPP_BBU" ] || [ "$node_func" == "NGFI_RCC_IF4p5" ]; then
+   
+    echo "no" > $CHARM_DIR/.rrh_gw_running
 
-relation-set RTC_RUNNING=no
+    status-set blocked "Waiting for the RRU relation ($node_func)"
 
-echo "no" > $CHARM_DIR/.rtc_running
+elif [ "$node_func" == "NGFI_RRU_IF5" ] || [ "$node_func" == "NGFI_RRU_IF4p5" ]; then 
+    relation-set RRH_GW_RUNNING=no
+    echo "no" > $CHARM_DIR/.rru_running
+    status-set blocked "Waiting for the RRU relation ($node_func)"
+        
+else
+    juju-log "Nothing to be done for $node_func"
+    
+fi
 
-status-set blocked "Waiting for RTC relation"
+    

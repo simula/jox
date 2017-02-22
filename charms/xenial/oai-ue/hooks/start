@@ -29,19 +29,32 @@
 # either expressed or implied, of the FreeBSD Project.
 #
 ################################################################################
-# file rtc-relation-departed
-# brief called when the enb-rtc relation is removed 
-# author  navid.nikaein@eurecom.fr 
+# file start 
+# brief start oai-enb service, this happens after install or config changed hooks
+# author  navid.nikaein@eurecom.fr and  A. B. Molini   
 
 set -eux
+
 source $CHARM_DIR/utils/common
-set_env_paths
+rrh_active=`config-get rrh_active`
+rrh_rel=`relation-ids rrh`
+if [ -f $CHARM_DIR/.rrh_gw_running ]; then
+  rrh_gw_running=`cat $CHARM_DIR/.rrh_gw_running`
+else
+  rrh_gw_running="no"
+fi
 
-juju-log "stopping eNB service and waiting for a RTC relation to be restablished"
-service rtc stop || true
+if [ ! -z "$(relation-ids epc)" ]; then
+  if [ "$rrh_active" == "no" ] || ([ "$rrh_active" == "yes" ] && [ "$rrh_gw_running" == "yes" ] && [  -n "$rrh_rel" ]); then
+    service oaieNB restart || service oaieNB start
+    check_oaieNB_process
+    if [ $status -eq 1 ]; then
+       juju-log "Trouble with OAIENB upstart file...try to upgrade the charm"
+       status-set blocked "Trouble with OAIENB upstart file...try to upgrade the charm"
+       exit 1
+    fi 
+  fi
+   #check connection with MME   check_oaieNB_connection 
 
-relation-set RTC_RUNNING=no
+fi
 
-echo "no" > $CHARM_DIR/.rtc_running
-
-status-set blocked "Waiting for RTC relation"

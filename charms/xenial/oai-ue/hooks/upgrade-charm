@@ -29,19 +29,16 @@
 # either expressed or implied, of the FreeBSD Project.
 #
 ################################################################################
-# file rtc-relation-departed
-# brief called when the enb-rtc relation is removed 
-# author  navid.nikaein@eurecom.fr 
+# file upgrade-charm
+# brief called when each time a charm is upgraded after the new charm
+# contents have been unpacked
+# author  navid.nikaein@eurecom.fr and A. B. Molini 
 
-set -eux
-source $CHARM_DIR/utils/common
-set_env_paths
+# Best practice suggests you execute the hooks/install and
+# hooks/config-changed to ensure all updates are processed
 
-juju-log "stopping eNB service and waiting for a RTC relation to be restablished"
-service rtc stop || true
 
-relation-set RTC_RUNNING=no
+service oaieNB stop || true # Stop the service
+$CHARM_DIR/hooks/install  
 
-echo "no" > $CHARM_DIR/.rtc_running
 
-status-set blocked "Waiting for RTC relation"

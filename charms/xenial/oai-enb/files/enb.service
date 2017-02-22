@@ -9,4 +9,4 @@ ExecStart=/bin/bash -c '/srv/openair5G/targets/bin/$(cat /srv/openair5G/.execute
 
 [Install]
 WantedBy=multi-user.target
-Alias=mmed.service
+Alias=enbd.service

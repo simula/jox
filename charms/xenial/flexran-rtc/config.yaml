@@ -9,11 +9,11 @@ options:
      description: get a specific revison from the openairinterface5G git repository. 
      type: string
    user_name: 
-     default: "nikaeinn"
+     default: "user"
      description: get a valid user name to clone the repository. 
      type: string
    passwd: 
-     default: "halazun;:"
+     default: "password"
      description: get a valid passwd to clone the repository. 
      type: string
    kernel: 

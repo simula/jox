@@ -29,19 +29,24 @@
 # either expressed or implied, of the FreeBSD Project.
 #
 ################################################################################
-# file rtc-relation-departed
-# brief called when the enb-rtc relation is removed 
+# file update-status
+# brief called to provide a feedback to the user about the status of the service
 # author  navid.nikaein@eurecom.fr 
 
 set -eux
 source $CHARM_DIR/utils/common
-set_env_paths
 
-juju-log "stopping eNB service and waiting for a RTC relation to be restablished"
-service rtc stop || true
+if [ ! -z "$(relation-ids epc)" ]; then
+    check_oaieNB_process
+    if [ $status -eq 1 ]; then
+	juju-log "OAI eNB is not running"
+	#status-set blocked "eNB is not running anymore, trying to restart"
+	#service oaieNB restart 
+	#$CHARM_DIR/actions/restart
+	#exit 1
+    else 
+	status-set active "OAI eNB is running"
+	#application-version-set oai-enb-version
+    fi
+fi 
 
-relation-set RTC_RUNNING=no
-
-echo "no" > $CHARM_DIR/.rtc_running
-
-status-set blocked "Waiting for RTC relation"
