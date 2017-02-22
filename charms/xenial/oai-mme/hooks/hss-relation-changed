@@ -56,7 +56,7 @@ fi
 if [ "$hss_running" == "no" ]; then
     check_mme_process || true
     if [ $status -eq 0 ]; then
-       service mme stop
+	systemctl stop mme
        juju-log "The database relation is broken...MME is stopped...and waiting for db"
        status-set blocked "Add the db relation"
        if [ -n "$(relation-ids mme)" ]; then

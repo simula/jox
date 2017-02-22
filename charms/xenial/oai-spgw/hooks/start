@@ -44,7 +44,7 @@ fi
 
 if [ "$spgw_running_flag" == "yes" ] ; then
     
-    service spgw restart || service spgw start || true
+    systemctl restart spgw  || true
     check_spgw_process || true
     if [ $status -eq 1 ]; then
 	juju-log "Troubles in running SPGW...try to upgrade the charm"

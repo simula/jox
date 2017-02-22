@@ -41,5 +41,5 @@ file_config=`cat $CHARM_DIR/.config_file`
 node_func=`config-get node_function`
 
 juju-log "stopping eNB service and waiting for a RRU relation to be restablished"
-service enb stop || true
+systemctl stop enb.service || true
  

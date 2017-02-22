@@ -39,7 +39,7 @@ source $CHARM_DIR/utils/common
 set_env_paths
 
 juju-log "Stopping OAI RRU  service in this unit"
-service rru stop || true
+systemctl stop  rru || true
 juju-log "Done"
 
 juju-log "Cleaning up the openair5G installation directory..."

@@ -43,7 +43,7 @@ else
 fi
 
 if [ "$rru_running_flag" == "yes" ] ; then
-    service rru restart || service rru start || true
+    systemctl restart  rru || true
 
     check_rru_process || true
     if [ $status -eq 1 ]; then

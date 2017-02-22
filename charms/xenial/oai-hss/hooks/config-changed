@@ -37,8 +37,7 @@ set -eux
 source $CHARM_DIR/utils/common
 set_env_paths
 
-
-service oai_hss stop || true
+systemctl stop oai_hss || true
 
 
 if [ "$(config-get branch)" != "$(cat $CHARM_DIR/.branch)" ]; then

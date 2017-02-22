@@ -39,7 +39,7 @@ set_env_paths
 file_config=`cat $CHARM_DIR/.config_file`
 
 juju-log "stopping eNB service and waiting for a MME relation to be restablished"
-service enb stop || true
+systemctl stop enb.service || true
 
 #I can remove from Hss the entry of the IMSI in the case we put from here and not from 
 #PHPOMYADMIN

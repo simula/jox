@@ -53,7 +53,7 @@ if [ "$(cat $CHARM_DIR/.spgw_running)" != "yes" ] ;then
 fi
 
 
-service mme restart || service mme start || true
+systemctl restart mme  || true
 check_mme_process || true
 if [ $status -eq 1 ]; then
    juju-log "Troubles in running MME...try to upgrade the charm"

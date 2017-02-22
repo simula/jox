@@ -33,6 +33,5 @@
 # brief called when each time a charm is upgraded after the new charm
 # contents have been unpacked
 # author  navid.nikaein@eurecom.fr
-
-service rtc stop || true # Stop the service
+systemctl stop rtc || true
 $CHARM_DIR/hooks/install  

@@ -107,7 +107,7 @@ fi
 
 start_enb_process(){
 
-    service enb restart || service enb start || true
+    systemctl restart enb.service || true
     check_enb_process || true
     if [ $status -eq 1 ]; then
        juju-log "Trouble with OAI ENB upstart file...try to upgrade the charm"

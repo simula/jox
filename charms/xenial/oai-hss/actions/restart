@@ -1,6 +1,6 @@
 #!/bin/bash
 
 set -eux
-service oai_hss stop || true
+systemctl stop oai_hss || true
 $CHARM_DIR/hooks/start
-status-set active "HSS software is running"
+status-set active "HSS is running"

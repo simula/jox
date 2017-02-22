@@ -60,6 +60,5 @@ machine_type=`virt-what`
 ##############################################################################################
 
 user_conf
-
-service spgw stop || true
+systemctl stop spgw || true
 $CHARM_DIR/hooks/start

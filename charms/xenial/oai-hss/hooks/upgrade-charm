@@ -38,8 +38,7 @@
 # hooks/config-changed to ensure all updates are processed
 
 set -eux
-
-service oai_hss stop || true
+systemctl stop  oai_hss || true
 $CHARM_DIR/hooks/install #Re-run install 
 
 if [ -z "$(relation-ids db)" ]; then

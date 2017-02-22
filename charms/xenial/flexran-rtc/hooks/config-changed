@@ -56,13 +56,13 @@ fi
 bind_if=`config-get bind_if`
 if [ "$bind_if" != "$(cat $CHARM_DIR/.bind_if)" ]; then
     juju-log "changing bind if is not yet supported for RTC" 
-    service rtc restart
+    systemctl restart rtc || true
 fi
 
 bind_port=`config-get bind_port`
 if [ "$bind_port" != "$(cat $CHARM_DIR/.bind_port)" ]; then
     juju-log "changing bind port number is not yet supported for RTC" 
-    service rtc restart
+    systemctl restart rtc || true
 fi
 
 iface=`config-get eth`

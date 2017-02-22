@@ -37,8 +37,7 @@
 # Best practice suggests you execute the hooks/install and
 # hooks/config-changed to ensure all updates are processed
 
-
-service rru stop || true # Stop the service
+systemctl stop  rru || true
 $CHARM_DIR/hooks/install  
 
 

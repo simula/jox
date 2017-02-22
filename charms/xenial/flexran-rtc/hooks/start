@@ -44,7 +44,7 @@ else
 fi
 
 if [ "$rtc_running_flag" == "yes" ] ; then 
-    service rtc restart || service rtc start || true 
+    systemctl restart rtc || true 
     
     check_rtc_process || true 
     if [ $status -eq 1 ]; then

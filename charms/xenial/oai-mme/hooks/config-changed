@@ -74,8 +74,7 @@ spgw_s11_ipv4=`cat $CHARM_DIR/.spgw_s11_ipv4`
 ##############################################################################################
 
 user_conf
-
-service mme stop
+systemctl stop mme
 
 if [ "$realm" != "$(cat $CHARM_DIR/.realm)"  ]; then
     rm $freediameter_conf_path/mme.*.pem

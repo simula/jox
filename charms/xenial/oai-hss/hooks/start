@@ -40,7 +40,7 @@ source $CHARM_DIR/utils/common
 
 if [ -n "$(relation-ids db)" ]; then
    juju-log "Running HSS"
-   service oai_hss restart || service oai_hss start
+   systemctl restart oai_hss || true 
    check_hss_process || true
    if [ $status -eq 1 ]; then
        juju-log "Troubles in running HSS...try to upgrade the charm"

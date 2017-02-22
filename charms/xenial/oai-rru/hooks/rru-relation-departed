@@ -41,7 +41,7 @@ file_config=`cat $CHARM_DIR/.config_file`
 node_func=`config-get node_function`
 
 juju-log "stopping eNB service and waiting for a RRU relation to be restablished"
-service rru stop || true
+systemctl stop  rru || true 
 relation-set RRU_RUNNING=no
 echo "no" > $CHARM_DIR/.rru_running
 status-set blocked "Waiting for the RRU relation"

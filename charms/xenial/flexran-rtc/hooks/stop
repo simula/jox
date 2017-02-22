@@ -39,7 +39,7 @@ source $CHARM_DIR/utils/common
 set_env_paths
 
 juju-log "Stopping rtc service in this unit"
-service rtc stop || true
+systemctl stop rtc || true
 juju-log "rtc stop done"
 
 juju-log "Cleaning up the mosaic-5g installation directory..."

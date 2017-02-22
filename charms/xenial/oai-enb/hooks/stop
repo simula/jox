@@ -39,7 +39,8 @@ source $CHARM_DIR/utils/common
 set_env_paths
 
 juju-log "Stopping OAI ENB service in this unit"
-service enb stop || true
+systemctl stop enb.service || true
+
 juju-log "Done"
 
 juju-log "Cleaning up the openair5G installation directory..."

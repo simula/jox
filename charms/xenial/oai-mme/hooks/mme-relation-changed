@@ -40,7 +40,7 @@ DEBUG_RESTART=`relation-get DEBUG_RESTART`
 
 if [ -n "$DEBUG_RESTART" ]; then
   juju-log "mme restart is requested"
-  service mme stop || true
+  systemctl stop mme || true
   $CHARM_DIR/hooks/start
   exit 0
 fi

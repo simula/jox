@@ -5,7 +5,7 @@ set_env_paths
 
 
 juju-log "Stopping HSS, database is departing and maybe doesn't exist anymore"
-service oai_hss stop || true
+systemctl stop oai_hss || true
 
 juju-log "Delete the trace of the relation data "
 db_data_in_config_file "" "" "" ""

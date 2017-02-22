@@ -38,7 +38,7 @@ source $CHARM_DIR/utils/common
 set_env_paths
 
 juju-log "Stopping HSS service in this unit"
-service oai_hss stop || true
+systemctl stop  oai_hss || true 
 
 juju-log "Deleting the HSS stdout file"
 rm -f /srv/.out

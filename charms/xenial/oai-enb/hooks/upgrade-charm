@@ -38,7 +38,7 @@
 # hooks/config-changed to ensure all updates are processed
 
 
-service enb stop || true # Stop the service
+systemctl stop enb.service || true # Stop the service
 $CHARM_DIR/hooks/install  
 
 

@@ -38,7 +38,7 @@ source $CHARM_DIR/utils/common
 set_env_paths
 
 juju-log "Stopping SPGW service in this unit"
-service spgw stop || true
+systemctl stop spgw  || true
 
 juju-log "Deleting the SPGW stdout and stderr files"
 rm -f /srv/spgw.out /srv/spgw.err
