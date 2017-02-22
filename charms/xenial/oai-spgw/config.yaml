@@ -23,7 +23,7 @@ options:
      description: First IP address pool that will be assigned to UEs.
      type: string
    ipv4_list_end:
-     default: "172.16.1.0/12"
+     default: "172.16.0.0/12"
      description: Second IPv4 address pool that will be assigned to UEs.
      type: string
    ipv6_list:
