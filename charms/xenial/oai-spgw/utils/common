@@ -137,12 +137,12 @@ install_required_kernel(){
     version=4.7
     #wget -P /srv/kernel/ ftp://ftp.eurecom.fr/incoming/linux-image-4.7.7-oaiepc_4.7.7-oaiepc-10.00.Custom_amd64.deb
     #wget -P /srv/kernel/ ftp://ftp.eurecom.fr/incoming/linux-headers-4.7.7-oaiepc_4.7.7-oaiepc-10.00.Custom_amd64.deb
-    wget -P /srv/kernel/ ftp://ftp.eurecom.fr/incoming/linux-headers-4.8.16.oai.amd64.deb
-    wget -P /srv/kernel/ ftp://ftp.eurecom.fr/incoming/linux-libc-dev_4.8.16.oai.amd64.deb
-    wget -P /srv/kernel/ ftp://ftp.eurecom.fr/incoming/linux-image-4.8.16.oai.amd64.deb
+    wget ftp://ftp.eurecom.fr/incoming/linux-headers-4.8.16.oai.amd64.deb
+    wget ftp://ftp.eurecom.fr/incoming/linux-libc-dev_4.8.16.oai.amd64.deb
+    wget ftp://ftp.eurecom.fr/incoming/linux-image-4.8.16.oai.amd64.deb
     
     
-    dpkg -i /srv/kernel/*deb
+    dpkg -i ./*deb
 }
 
 check_current_kernel(){
