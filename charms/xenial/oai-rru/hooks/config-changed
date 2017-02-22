@@ -88,16 +88,16 @@ if [ "$fh_if_name" != "$(cat $CHARM_DIR/.fh_if_name)" ]; then
     sed -r -i "/local_if_name/ s/\".+\"/\"$fh_if_name\"/" $conf_path/$file_config
     if [ "$fh_tr_mode" == "raw" ] || [ "$fh_tr_mode" == "raw_if4p5" ]; then 
 	read mac_addr </sys/class/net/$fh_if_name/address
-	sed -r -i "/local_address/ s/\".+\"/\"$mac_addr\"/" $conf_path/$config_file
+	sed -r -i "/local_address/ s/\".+\"/\"$mac_addr\"/" $conf_path/$file_config
 	
-    elif [ "$tr_mode" == "udp" ] || [ "$fh_tr_mode" == "udp_if4p5" ]; then 
+    elif [ "$fh_tr_mode" == "udp" ] || [ "$fh_tr_mode" == "udp_if4p5" ]; then 
 	enb_public_ip=`unit-get public-address`
 	get_ip_address $enb_public_ip
 	status=$?
 	if [ "$status" == "1" ] ; then
 	    status-set blocked "nslookup failed for the eNB host name ($enb_public_ip)"
 	else
-	    sed -r -i "/local_address/ s/\".+\"/\"$validated_public_ip\"/" $conf_path/$config_file 
+	    sed -r -i "/local_address/ s/\".+\"/\"$validated_public_ip\"/" $conf_path/$file_config
 	fi 
 	
     else 
