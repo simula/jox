@@ -79,23 +79,19 @@ juju_install_kernel(){
 	juju-log "Can't install the required kernel in $machine_type env. Proceed with the current kernel."
 	juju-log "Please install kerenel version 4.7 or higher with GTP module enabled on the host".
     else
-	if  [ "$machine_type"  == "" ] ; then 
-	    juju-log "Please install kerenel version 4.7 or higher with GTP module enabled on the host".
-	else 
-	    check_current_kernel
-	    if [[ $REQUIRED_KERNEL_IS_INSTALLED == false ]]; then
-		if [ "$(cat $CHARM_DIR/.reboot)" != "reboot" ]; then  
-		    juju-log "installing the required kernel and reboot"
-		    status-set maintenance "installing the required kernel and rebooting"
-		    install_required_kernel
-  		    echo "reboot" > $CHARM_DIR/.reboot 
-		    juju-reboot --now
-		else 
-		    juju-log "Can't install the required kernel. Proceed with the current kernel."
-		fi 
-	    fi
-	fi 
-    fi
+	check_current_kernel
+	if [[ $REQUIRED_KERNEL_IS_INSTALLED == false ]]; then
+	    if [ "$(cat $CHARM_DIR/.reboot)" != "reboot" ]; then  
+		juju-log "installing the required kernel and reboot"
+		status-set maintenance "installing the required kernel and rebooting"
+		install_required_kernel
+  		echo "reboot" > $CHARM_DIR/.reboot 
+		juju-reboot --now
+	    else 
+		juju-log "Can't install the required kernel. Proceed with the current kernel."
+	    fi 
+	fi
+    fi 
     
     sed -i -r "s/(check_kernel_release_and_install_xtables_addons_oai[^()]+)/#\1/" $tools_path/build_helper
 }

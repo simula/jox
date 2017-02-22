@@ -111,7 +111,7 @@ user_conf(){
   
   #update sgw
   if [ "$spgw_s11_ipv4" != "" ]; then  
-    sed -r -i  "s/SGW_IPV4_ADDRESS_FOR_S11=.*;/SGW_IPV4_ADDRESS_FOR_S11=\"$spgw_s11_ipv4\/24\";/" $mme_conf_path/mme.conf
+    sed -r -i  "s/SGW_IPV4_ADDRESS_FOR_S11=.*;/SGW_IPV4_ADDRESS_FOR_S11=\"$spgw_s11_ipv4\/8\";/" $mme_conf_path/mme.conf
 
     sed -r -i  "s/mnc...\.mcc.../mnc$MNC\.mcc$MCC/" $mme_conf_path/mme.conf
     # add a new element if hanvn't done before

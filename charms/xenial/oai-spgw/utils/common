@@ -121,7 +121,7 @@ user_conf(){
       sed -r -i "/UE_MTU/ s/[0-9]+/$ue_mtu/" $spgw_conf_path/spgw.conf      
   fi
 
-  if [ "$machine_type"  == "lxc" ] || [ "$machine_type" == "docker" ] || [ "$machine_type" == "" ] || [ "$machine_type"  == "lxd" ]; then
+  if [ "$machine_type"  == "lxc" ] || [ "$machine_type" == "docker" ] || [ "$machine_type"  == "lxd" ]; then
 
       MODULE="gtp"
       MODEXIST=`/sbin/lsmod | grep "$MODULE"`
