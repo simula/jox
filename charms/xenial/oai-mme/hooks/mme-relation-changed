@@ -104,12 +104,16 @@ if [ -z "$(grep "$JUJU_REMOTE_UNIT" $CHARM_DIR/.tac_list)"  ]; then
 
        echo "$TAC 1" >> $CHARM_DIR/.tac_list
        echo "$JUJU_REMOTE_UNIT" >> $CHARM_DIR/.tac_list
+       sed -r -i  "s/MNC=[^;]*;/MNC=\"$(config-get gummei_tai_mnc)\";/" $mme_conf_path/mme.conf
+       sed -r -i  "s/MCC=[^;]*;/MNC=\"$(config-get gummei_tai_mcc)\";/" $mme_conf_path/mme.conf
+
        if [ -z "$(egrep "MCC[ ]*=[ ]*\"$(config-get gummei_tai_mcc)\"[ ]*;[ ]*MNC[ ]*=[ ]*\"$(config-get gummei_tai_mnc)\"[ ]*;[ ]*TAC[ ]*=[ ]*\"$TAC\"" $mme_conf_path/mme.conf)" ]; then
-           sed -r -i "/TAI_LIST/a {MCC=\"$(config-get gummei_tai_mcc)\" ; MNC=\"$(config-get gummei_tai_mnc)\";  TAC = \"$TAC\";}," $mme_conf_path/mme.conf
-	    sed -r -i "/GUMMEI_LIST/a {MCC=\"$(config-get gummei_tai_mcc)\" ; MNC=\"$(config-get gummei_tai_mnc)\";  MME_GID = \"4\"; MME_CODE =\"1\"; }," $mme_conf_path/mme.conf
+	   
+	   sed -r -i "/TAI_LIST/a {MCC=\"$(config-get gummei_tai_mcc)\" ; MNC=\"$(config-get gummei_tai_mnc)\";  TAC = \"$TAC\";}," $mme_conf_path/mme.conf
+	   #sed -r -i "/GUMMEI_LIST/a {MCC=\"$(config-get gummei_tai_mcc)\" ; MNC=\"$(config-get gummei_tai_mnc)\";  MME_GID = \"4\"; MME_CODE =\"1\"; }," $mme_conf_path/mme.conf
+	   
        fi
-
-
+       
        #dovrei fare anche qua il controllo sull'unita perche gli mme and hss relation hooks possono runnare intrecciati come avveniva per l hss charm con
        #hss and db relation hooks
        hss_id=`relation-ids hss`
