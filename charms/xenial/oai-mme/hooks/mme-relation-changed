@@ -105,7 +105,7 @@ if [ -z "$(grep "$JUJU_REMOTE_UNIT" $CHARM_DIR/.tac_list)"  ]; then
        echo "$TAC 1" >> $CHARM_DIR/.tac_list
        echo "$JUJU_REMOTE_UNIT" >> $CHARM_DIR/.tac_list
        sed -r -i  "s/MNC=[^;]*;/MNC=\"$(config-get gummei_tai_mnc)\";/" $mme_conf_path/mme.conf
-       sed -r -i  "s/MCC=[^;]*;/MNC=\"$(config-get gummei_tai_mcc)\";/" $mme_conf_path/mme.conf
+       sed -r -i  "s/MCC=[^;]*;/MCC=\"$(config-get gummei_tai_mcc)\";/" $mme_conf_path/mme.conf
 
        if [ -z "$(egrep "MCC[ ]*=[ ]*\"$(config-get gummei_tai_mcc)\"[ ]*;[ ]*MNC[ ]*=[ ]*\"$(config-get gummei_tai_mnc)\"[ ]*;[ ]*TAC[ ]*=[ ]*\"$TAC\"" $mme_conf_path/mme.conf)" ]; then
 	   
