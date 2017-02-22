@@ -1,17 +1,19 @@
 #!/bin/bash
 
-declare -a charms=("oai-enb" "oai-epc" "oai-hss" "oaisim-enb-ue")
-declare -a series=("trusty")
+#declare -a charms=("oai-enb" "oai-epc" "oai-hss" "oaisim-enb-ue")
+declare -a charms=("flexran-rtc" "oai-enb" "oai-mme" "oai-spgw" "oai-hss" "oai-rru")
+declare -a charms=("oai-mme")
+declare -a series=("trusty" "xenial")
 
 for s in "${series[@]}"
 do 
-    cd $s
+    cd xenial  #$s
     echo "series: " $s
     for k in "${charms[@]}"
     do
 	cd $k
 	echo "charm: " $k
-	url=`/usr/bin/charm push . cs:~navid-nikaein/trusty/$k | grep url | cut -f2 -d' '`
+	url=`/usr/bin/charm push . cs:~navid-nikaein/$s/$k | grep url | cut -f2 -d' '`
 	echo "pushed url: $url"
 	
 	/usr/bin/charm release $url
