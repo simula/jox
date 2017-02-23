@@ -48,7 +48,7 @@ if [ "$node_func" == "eNodeB_3GPP_BBU" ] || [ "$node_func" == "NGFI_RCC_IF4p5" ]
     fh_tr_mode=`config-get fh_transport_mode`
     
     #this var is used for both ip address in case of UDP tr_mode and MAC address in case RAW
-    rru_addr=`relation-get RRU_PUBLIC_IP`
+    rru_addr=`relation-get RRU_ADDRESS`
     rru_port=`relation-get RRU_PORT`
     rru_running=`relation-get RRU_RUNNING`
 

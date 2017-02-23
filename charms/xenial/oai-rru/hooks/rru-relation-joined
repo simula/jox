@@ -50,6 +50,6 @@ fi
 
 relation-set RRU_RUNNING=$rru_running
 relation-set RRU_PORT=`config-get fh_local_port`
-relation-set FH_ADDRESS=$fh_address
+relation-set RRU_ADDRESS=$fh_address
 
 juju-log "Joining RRU relation ($rru_running)"

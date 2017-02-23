@@ -35,13 +35,11 @@
 
 set -eux
 source $CHARM_DIR/utils/common
-if [ ! -z "$(relation-ids hss)" ]; then
-    check_spgw_process || true
-    if [ $status -eq 1 ]; then
-	juju-log "OAI SPGW is not running"
-	status-set maintenance "OAI SPGW is not running"
-    else 
-	status-set active "OAI SPGW is running"
-    fi   
-fi 
+check_spgw_process || true
+if [ $status -eq 1 ]; then
+    juju-log "OAI SPGW is not running"
+    status-set maintenance "OAI SPGW is not running"
+else 
+    status-set active "OAI SPGW is running"
+fi   
 

@@ -50,6 +50,7 @@ file_config=`cat $CHARM_DIR/.config_file`
 
     hw=`relation-get -r $rel_ids TARGET_HARDWARE`
     fh_tr_mode=`relation-get -r $rel_ids TRANSPORT_MODE`
+    # RCC or RAU address
     fh_address=`relation-get -r $rel_ids FH_ADDRESS`
     
 
