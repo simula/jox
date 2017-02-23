@@ -344,6 +344,10 @@ build_enb(){
 
 set_exec_args(){
 
+    if [ "$agent_active" == "yes" ]; then
+       $tools_path/make_agent_cache || true
+    fi
+
     if [ "$rtmon" == "yes" ]; then
 	exec_args=" --T-nowait -V "
     fi

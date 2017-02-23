@@ -61,6 +61,12 @@ if [ "$node_func" != "$(cat $CHARM_DIR/.node_func)" ]; then
     juju-log "node function changed"
 fi
 
+if [ "$(config-get agent_active)" != "$(cat $CHARM_DIR/.agent_active)" ]; then
+    $CHARM_DIR/hooks/upgrade-charm
+    juju-log "agent active changes"
+fi
+
+
 if [ "$(config-get target_hardware)" != "$(cat $CHARM_DIR/.hw)" ]; then
     juju-log "hw name changed"
     $CHARM_DIR/hooks/upgrade-charm
