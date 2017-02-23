@@ -86,7 +86,7 @@ if [ "$node_func" == "eNodeB_3GPP_BBU" ] || [ "$node_func" == "NGFI_RCC_IF4p5" ]
 
     echo "yes" > $CHARM_DIR/.rru_active
 
-    fh_tr_mode=`config-get rru_transport_mode`
+    fh_tr_mode=`config-get fh_transport_mode`
     if [ "$fh_tr_mode" != "$(cat $CHARM_DIR/.fh_tr_mode)" ]; then 
         juju-log "fronthaul tr_mode changed"
     	$CHARM_DIR/hooks/upgrade-charm
