@@ -96,22 +96,40 @@ if [ "$node_func" == "eNodeB_3GPP_BBU" ] || [ "$node_func" == "NGFI_RCC_IF4p5" ]
     if [ "$fh_if_name" != "$(cat $CHARM_DIR/.fh_if_name)" ]; then
 	sed -r -i "/local_if_name/ s/\".+\"/\"$fh_if_name\"/" $conf_path/$file_config
 	if [ "$fh_tr_mode" == "raw" ] || [ "$fh_tr_mode" == "raw_if4p5" ]; then 
-	    read mac_addr </sys/class/net/$fh_if_name/address
-	    sed -r -i "/local_address/ s/\".+\"/\"$mac_addr\"/" $conf_path/$config_file
-	    
-    	elif [ "$tr_mode" == "udp" ] || [ "$fh_tr_mode" == "udp_if4p5" ]; then 
-	    enb_public_ip=`unit-get public-address`
-	    get_ip_address $enb_public_ip
-	    status=$?
-	    if [ "$status" == "1" ] ; then
-	    	status-set blocked "nslookup failed for the eNB host name ($enb_public_ip)"
+	     check_ifup $fh_if_name
+             status=$?
+             if [ "$status" == "0" ] ; then
+	        read mac_addr </sys/class/net/$fh_if_name/address
+                echo "$mac_addr"  > $CHARM_DIR/.fh_address
+	        sed -r -i "/local_address/ s/\".+\"/\"$mac_addr\"/" $conf_path/$config_file
 	    else
-	    	sed -r -i "/local_address/ s/\".+\"/\"$validated_public_ip\"/" $conf_path/$config_file 
-	    fi 
+		 juju-log -l WARNING "fh_if_name interface $fh_if_name does not exist"
+                 status-set blocked "fh_if_name interface $fh_if_name does not exist"
+            fi
+  
+    	elif [ "$tr_mode" == "udp" ] || [ "$fh_tr_mode" == "udp_if4p5" ]; then 
 	    
-    	else 
-	    status-set blocked "unsupported/invalid fronthaul transport mode"
-    	fi        
+            if [ -n "$fh_if_name" ]; then
+                check_ifup $fh_if_name
+                status=$?
+                if [ "$status" == "0" ] ; then
+
+                fh_ipv4=`ifconfig $fh_if_name | egrep -o "inet addr:[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | egrep -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"`
+                if  [ -n "$fh_ipv4" ]; then
+                   echo "$fh_ipv4"  > $CHARM_DIR/.fh_address
+                   sed -r -i "/local_address/ s/\".+\"/\"$fh_ipv4\"/" $conf_path/$config_file_name
+
+                else
+                  juju-log -l WARNING "The fh_if_name $fh_if_name has to be specified before the relation with MME can be added"
+                  status-set blocked "Can't get the ipv4 address of $fh_if_name"
+                fi
+          else
+             juju-log -l WARNING "fh_if_name interface $fh_if_name does not exist"
+             status-set blocked "fh_if_name interface $fh_if_name does not exist"
+          fi
+        else
+            status-set blocked "invalide Fronthaul transport mode"
+        fi
     fi
     
     fh_local_port=`config-get fh_local_port`
@@ -219,17 +237,25 @@ esac
 iface=`config-get eth`
 
 if [ -n "$iface" ]; then
-   ipv4=`ifconfig $iface | egrep -o "inet addr:[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | egrep -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"`
-   if  [ -n "$ipv4" ]; then
+   check_ifup $iface
+   status=$?
+   if [ "$status" == "0" ] ; then 
+	
+   	ipv4=`ifconfig $iface | egrep -o "inet addr:[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | egrep -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"`
+  	if  [ -n "$ipv4" ]; then
    #INTERFACES
-       sed -r -i "/ENB_INTERFACE_NAME_FOR_S1_MME/ s/\".+\"/\"$iface\"/" $conf_path/$file_config
-       sed -r -i "/ENB_INTERFACE_NAME_FOR_S1U/ s/\".+\"/\"$iface\"/" $conf_path/$file_config
+       	   sed -r -i "/ENB_INTERFACE_NAME_FOR_S1_MME/ s/\".+\"/\"$iface\"/" $conf_path/$file_config
+       	   sed -r -i "/ENB_INTERFACE_NAME_FOR_S1U/ s/\".+\"/\"$iface\"/" $conf_path/$file_config
        #ADDRESSES
-       sed -r -i "/ENB_IPV4_ADDRESS_FOR_S1_MME/ s-\".+\"-\"$ipv4/24\"-" $conf_path/$file_config
-       sed -r -i "/ENB_IPV4_ADDRESS_FOR_S1U/ s-\".+\"-\"$ipv4/24\"-" $conf_path/$file_config
-   else 
-       juju-log -l WARNING "The S1 ethernet interface has to be specified before the relation with MME can be added"
-   fi 
+           sed -r -i "/ENB_IPV4_ADDRESS_FOR_S1_MME/ s-\".+\"-\"$ipv4/24\"-" $conf_path/$file_config
+           sed -r -i "/ENB_IPV4_ADDRESS_FOR_S1U/ s-\".+\"-\"$ipv4/24\"-" $conf_path/$file_config
+        else 
+           juju-log -l WARNING "The S1 ethernet interface has to be specified before the relation with MME can be added"
+        fi
+   else
+	juju-log -l WARNING "eth interface $iface does not exist" 
+        status-set blocked "eth interface $iface does not exist"        
+   fi
 else
    juju-log -l WARNING "The S1 ethernet interface has to be specified before the relation with MME can be added"
 fi

@@ -262,3 +262,13 @@ else
     return 0
 fi
 }
+
+check_ifup(){
+    if [[ ! -d /sys/class/net/${1} ]]; then
+        return 1
+    elif [[ $(</sys/class/net/${1}/operstate) == up ]]; then 
+	return 0
+    else	
+	return 1
+    fi
+}

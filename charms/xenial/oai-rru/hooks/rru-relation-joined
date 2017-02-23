@@ -40,9 +40,16 @@ if [ -f $CHARM_DIR/.rru_running_flag ]; then
 else
   rru_running="no"
 fi
+if [ -f $CHARM_DIR/.fh_address ]; then
+  fh_address=`cat $CHARM_DIR/.fh_address`
+else
+  fh_address="no"
+fi
+
+
 
 relation-set RRU_RUNNING=$rru_running
 relation-set RRU_PORT=`config-get fh_local_port`
-
+relation-set FH_ADDRESS=$fh_address
 
 juju-log "Joining RRU relation ($rru_running)"

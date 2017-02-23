@@ -87,9 +87,17 @@ fh_if_name=`config-get fh_if_name`
 if [ "$fh_if_name" != "$(cat $CHARM_DIR/.fh_if_name)" ]; then
     sed -r -i "/local_if_name/ s/\".+\"/\"$fh_if_name\"/" $conf_path/$file_config
     if [ "$fh_tr_mode" == "raw" ] || [ "$fh_tr_mode" == "raw_if4p5" ]; then 
-	read mac_addr </sys/class/net/$fh_if_name/address
-	sed -r -i "/local_address/ s/\".+\"/\"$mac_addr\"/" $conf_path/$file_config
-	
+	check_ifup $fh_if_name
+        status=$?
+        if [ "$status" == "0" ] ; then
+	   read mac_addr </sys/class/net/$fh_if_name/address
+	   echo "$mac_addr"  > $CHARM_DIR/.fh_address
+	   sed -r -i "/local_address/ s/\".+\"/\"$mac_addr\"/" $conf_path/$file_config
+	else
+           juju-log -l WARNING "fh_if_name interface $fh_if_name does not exist"
+           status-set blocked "fh_if_name interface $fh_if_name does not exist"
+        fi
+
     elif [ "$fh_tr_mode" == "udp" ] || [ "$fh_tr_mode" == "udp_if4p5" ]; then 
 	enb_public_ip=`unit-get public-address`
 	get_ip_address $enb_public_ip
@@ -97,6 +105,7 @@ if [ "$fh_if_name" != "$(cat $CHARM_DIR/.fh_if_name)" ]; then
 	if [ "$status" == "1" ] ; then
 	    status-set blocked "nslookup failed for the eNB host name ($enb_public_ip)"
 	else
+	    echo "$validated_public_ip"  > $CHARM_DIR/.fh_address
 	    sed -r -i "/local_address/ s/\".+\"/\"$validated_public_ip\"/" $conf_path/$file_config
 	fi 
 	

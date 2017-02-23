@@ -38,6 +38,7 @@ source $CHARM_DIR/utils/common
 set_env_paths
 
 node_func=`config-get node_function`
+file_config=`cat $CHARM_DIR/.config_file`
 
     juju-log "RRU relation changed for $node_func"
 
@@ -49,44 +50,34 @@ node_func=`config-get node_function`
 
     hw=`relation-get -r $rel_ids TARGET_HARDWARE`
     fh_tr_mode=`relation-get -r $rel_ids TRANSPORT_MODE`
-   
+    fh_address=`relation-get -r $rel_ids FH_ADDRESS`
+    
 
     if [ -z "$hw" ]; then
-	juju-log "Data not available yet, exit silently"
+	juju-log "HW not available yet, exit silently"
 	exit 0
     fi
 
     if [ -z "$fh_tr_mode" ]; then
-	juju-log "Data not available yet, exit silently"
+	juju-log "FH TR Mode not available yet, exit silently"
 	exit 0
     fi
 
+    if [ -z "$fh_address" ]; then
+        juju-log "FH address not available yet, exit silently"
+        exit 0
+    fi
+    
+   sed -r -i "/remote_address/ s/\".+\"/\"$rru_addr\"/"  $conf_path/$file_config
+	
+	tr_mode_config=`cat $CHARM_DIR/.fh_tr_mode`
+        if [ "$tr_mode_config" != "$fh_tr_mode" ]; then
+            juju-log "FH transport mode does not match"
+            status-set maintenance "FH transport mode does not match"
+            cat $hw_config > $CHARM_DIR/.hw
+        fi
 
-	fh_if=`config-get fh_if_name`
 
-	echo "$fh_if"  >  $CHARM_DIR/.fh_if
-	cp  $CHARM_DIR/.fh_if      $openair_path
-
-	if [ "$fh_tr_mode" == "udp" ]  || [ "$fh_tr_mode" == "udp_if4p5" ] ; then 
-
-	    rru_public_ip=`unit-get public-address`
-	    get_ip_address $rru_public_ip
-	    status=$?
-	    if [ "$status" == "1" ] ; then
-		status-set blocked "nslookup failed for the rru host name ($rru_public_ip)"
-		relation-set RRU_PUBLIC_IP=$rru_public_ip
-	    else
-		relation-set RRU_PUBLIC_IP=$validated_public_ip
-		status-set maintenance "Joined the RRU relation"
-	    fi
-	    
-	elif [ "$fh_tr_mode" == "raw" ]  || [ "$fh_tr_mode" == "raw_if4p5" ] ; then 
-	    fh_mac_addr=`ip link show $fh_if | awk '/ether/ {print $2}' `
-	    # originally there was a new var named RH_MAC_ADDRESS
-	    relation-set RRU_PUBLIC_IP=$fh_mac_addr
-	else
-	    juju-log "unknown fronthaul transport mode ($fh_tr_mode)"
-	fi 
 
 	 #locally selected hardware target
 	hw_config=`cat $CHARM_DIR/.hw`

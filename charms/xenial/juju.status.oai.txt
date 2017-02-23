@@ -1,0 +1,33 @@
+Model    Controller         Cloud/Region  Version
+default  maas/172.27.61.55  prodmaas      2.0.3
+
+App       Version  Status  Scale  Charm     Store       Rev  OS      Notes
+mysql     5.7.17   active      1  mysql     jujucharms   56  ubuntu  
+oai-enb            active      1  oai-enb   jujucharms    1  ubuntu  
+oai-hss            active      1  oai-hss   jujucharms    0  ubuntu  
+oai-mme            active      1  oai-mme   jujucharms    1  ubuntu  
+oai-spgw           active      1  oai-spgw  jujucharms    1  ubuntu  
+
+Unit         Workload  Agent  Machine   Public address  Ports              Message
+mysql/4*     active    idle   12/lxd/4  172.27.61.80    3306/tcp           Ready
+oai-enb/1*   active    idle   14        172.27.61.74    2152/udp           OAI ENB is running
+oai-hss/4*   active    idle   12/lxd/3  172.27.61.84                       OAI HSS is running
+oai-mme/3*   active    idle   12/lxd/5  172.27.61.83    2123/udp,2152/udp  OAI MME is running
+oai-spgw/2*  active    idle   11/kvm/1  172.27.61.81    2123/udp,2152/udp  OAI SPGW is running
+
+Machine   State    DNS           Inst id               Series  AZ
+11        started  172.27.61.67  x434ym                xenial  zone1
+11/kvm/1  started  172.27.61.81  juju-801ef3-11-kvm-1  xenial  
+12        started  172.27.61.75  k8erx3                xenial  zone2
+12/lxd/3  started  172.27.61.84  juju-801ef3-12-lxd-3  xenial  
+12/lxd/4  started  172.27.61.80  juju-801ef3-12-lxd-4  xenial  
+12/lxd/5  started  172.27.61.83  juju-801ef3-12-lxd-5  xenial  
+14        started  172.27.61.74  na8h6t                xenial  zone1
+
+Relation  Provides  Consumes  Type
+cluster   mysql     mysql     peer
+db        mysql     oai-hss   regular
+mme       oai-enb   oai-mme   regular
+hss       oai-hss   oai-mme   regular
+spgw      oai-mme   oai-spgw  regular
+

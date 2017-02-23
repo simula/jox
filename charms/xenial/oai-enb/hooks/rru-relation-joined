@@ -37,6 +37,11 @@ set -eux
 
 node_func=`config-get node_function`
 
+if [ -f $CHARM_DIR/.fh_address ]; then
+fh_address=`cat $CHARM_DIR/.fh_address`
+else
+fh_address="no"
+fi 
 
 if [ "$node_func" == "eNodeB_3GPP_BBU" ] || [ "$node_func" == "NGFI_RCC_IF4p5" ]; then
     
@@ -46,6 +51,7 @@ if [ "$node_func" == "eNodeB_3GPP_BBU" ] || [ "$node_func" == "NGFI_RCC_IF4p5" ]
 #	relation-set RRU_ACTIVE="yes"
 	relation-set TARGET_HARDWARE=`config-get target_hardware`
 	relation-set TRANSPORT_MODE=`config-get fh_transport_mode`
+	relation-set FH_ADDRESS=$fh_address
 	
     else
 	juju-log "Probably node func changed (rru_active is no), upgrade the charm"
