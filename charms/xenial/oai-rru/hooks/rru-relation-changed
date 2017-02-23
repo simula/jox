@@ -69,7 +69,7 @@ file_config=`cat $CHARM_DIR/.config_file`
         exit 0
     fi
     
-   sed -r -i "/remote_address/ s/\".+\"/\"$rru_addr\"/"  $conf_path/$file_config
+   sed -r -i "/remote_address/ s/\".+\"/\"$fh_addr\"/"  $conf_path/$file_config
 	
 	tr_mode_config=`cat $CHARM_DIR/.fh_tr_mode`
         if [ "$tr_mode_config" != "$fh_tr_mode" ]; then
