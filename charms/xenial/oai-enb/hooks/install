@@ -309,19 +309,24 @@ build_enb(){
                 status=$?
                 if [ "$status" == "0" ] ; then
 
-                fh_ipv4=`ifconfig $fh_if_name | egrep -o "inet addr:[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | egrep -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"`
-                if  [ -n "$fh_ipv4" ]; then
-		   echo "$fh_ipv4"  > $CHARM_DIR/.fh_address	
-		   sed -r -i "/local_address/ s/\".+\"/\"$fh_ipv4\"/" $conf_path/$config_file_name 
+                  fh_ipv4=`ifconfig $fh_if_name | egrep -o "inet addr:[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | egrep -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"`
+                  if  [ -n "$fh_ipv4" ]; then
+	             echo "$fh_ipv4"  > $CHARM_DIR/.fh_address	
+		     sed -r -i "/local_address/ s/\".+\"/\"$fh_ipv4\"/" $conf_path/$config_file_name 
                 
-                else
-                  juju-log -l WARNING "The fh_if_name $fh_if_name has to be specified before the relation with MME can be added"
-                  status-set blocked "Can't get the ipv4 address of $fh_if_name"
-                fi
-          else
-             juju-log -l WARNING "fh_if_name interface $fh_if_name does not exist"
-             status-set blocked "fh_if_name interface $fh_if_name does not exist"
-          fi
+                  else
+                    juju-log -l WARNING "The fh_if_name $fh_if_name has to be specified before the relation with MME can be added"
+                    status-set blocked "Can't get the ipv4 address of $fh_if_name"
+                  fi
+               else
+                 juju-log -l WARNING "fh_if_name interface $fh_if_name does not exist"
+                 status-set blocked "fh_if_name interface $fh_if_name does not exist"
+               fi
+           else 
+		juju-log -l WARNING "fh_if_name undefined"
+                 status-set blocked "fh_if_name undefined"
+           fi
+
 	else 
 	    status-set blocked "invalide Fronthaul transport mode"
 	fi 
