@@ -270,7 +270,7 @@ build_enb(){
     cp $CHARM_DIR/.fh_if_name $openair_path
     	
     
-    if  [ "$node_func" == "eNodeB_3GPP_BBU" ] || [ "$node_func" == "eNodeB_RCC_IF4p5" ] ; then
+    if  [ "$node_func" == "eNodeB_3GPP_BBU" ] || [ "$node_func" == "NGFI_RCC_IF4p5" ] ; then
 	
 	juju-log "setting the configuration file $config_file_name with Fronthaul"
 
