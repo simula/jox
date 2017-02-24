@@ -115,10 +115,24 @@ set_args(){
  
     if [ "$kernel" == "generic" ]; then 
 	build_args="$build_args -DLOWLATENCY=OFF"
-	echo "$build_args"  > $CHARM_DIR/.build_args
-	cp $CHARM_DIR/.build_args $mosaic_path
     fi
+   
+    if [ -z $bind_port ] ; then 
+	exec_args="-p $bind_port"	
+    fi 
+
+    if [ -z $rest_port ] ; then
+        exec_args="$exec_args -n $rest_port"
+    fi
+
     
+    echo "$build_args"  > $CHARM_DIR/.build_args
+    cp $CHARM_DIR/.build_args $mosaic_path
+
+    echo "$exec_args"  > $CHARM_DIR/.exec_args
+    cp $CHARM_DIR/.exec_args $mosaic_path
+	
+ 
 }
 
 
@@ -153,15 +167,18 @@ user=`config-get user_name`
 passwd=`config-get passwd`
 bind_if=`config-get bind_if`
 bind_port=`config-get bind_port`
+rest_port=`config-get rest_api_port`
+
 
 open-port $bind_port/tcp
-
+open-port $rest_port/tcp
 
 echo "$branch" > $CHARM_DIR/.branch
 echo "$revision" > $CHARM_DIR/.revision
 echo "$kernel"      >  $CHARM_DIR/.kernel
 echo "$bind_if"      >  $CHARM_DIR/.bind_if
 echo "$bind_port"      >  $CHARM_DIR/.bind_port
+echo "$rest_port"      >  $CHARM_DIR/.rest_port
 # status var
 echo "no"  > $CHARM_DIR/.rtc_running_flag
 

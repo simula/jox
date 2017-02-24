@@ -56,21 +56,33 @@ fi
 bind_if=`config-get bind_if`
 if [ "$bind_if" != "$(cat $CHARM_DIR/.bind_if)" ]; then
     juju-log "changing bind if is not yet supported for RTC" 
-    systemctl restart rtc || true
 fi
 
+
 bind_port=`config-get bind_port`
+rest_port=`config-get rest_api_port`
+
 if [ "$bind_port" != "$(cat $CHARM_DIR/.bind_port)" ]; then
-    juju-log "changing bind port number is not yet supported for RTC" 
-    systemctl restart rtc || true
+    juju-log "changing the agent bind port number to $bind_port"
+    exec_args="-p $bind_port -n $rest_api" 
+    echo "$exec_args"  > $CHARM_DIR/.exec_args
+    cp $CHARM_DIR/.exec_args $mosaic_path
 fi
+
+if [ "$rest_port" != "$(cat $CHARM_DIR/.rest_port)" ]; then
+    juju-log "changing the REST bind port number to $rest_port"
+    exec_args="-p $bind_port -n $rest_api"
+    echo "$exec_args"  > $CHARM_DIR/.exec_args
+    cp $CHARM_DIR/.exec_args $mosaic_path
+fi
+
 
 iface=`config-get eth`
 
 if [ -n "$iface" ]; then
    ipv4=`ifconfig $iface | egrep -o "inet addr:[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | egrep -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"`
-   juju-log "eth interface is $iface"
+   juju-log "eth interface is $iface with ip address $ipv4"
 
 fi
 
-
+systemctl restart rtc || true
