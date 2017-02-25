@@ -85,4 +85,5 @@ if [ -n "$iface" ]; then
 
 fi
 
-systemctl restart rtc || true
+#$CHARM_DIR/hooks/start
+

@@ -39,6 +39,7 @@ source $CHARM_DIR/utils/common
 check_rru_process || true
 if [ $status -eq 1 ]; then
     juju-log "OAI RRU is not running"
+    status-set blocked "OAI RRU is not running"
     #exit 1
 else 
     status-set active "OAI RRU is running"

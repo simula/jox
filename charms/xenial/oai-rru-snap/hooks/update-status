@@ -54,7 +54,7 @@ if [ -z "$rru_ip" ]; then
     exit 0
 fi
 
-sshpass -p $passwd ssh $user_name@$rru_ip -o StrictHostKeyChecking=no "ps -e -o comm,stat | grep oai-rru" > $CHARM_DIR/.rru_running_status
+ sshpass -p $passwd ssh $user_name@$rru_ip -o StrictHostKeyChecking=no "pgrep lte-softmodem" > $CHARM_DIR/.rru_running_status
 
 if [ -s $CHARM_DIR/.rru_running_status ] ; then 
     
@@ -62,5 +62,5 @@ if [ -s $CHARM_DIR/.rru_running_status ] ; then
     status-set active "OAI RRU snap is running"
 else
     echo "no"  > $CHARM_DIR/.rru_running
-    status-set active "OAI RRU snap is not running"
+    status-set blocked "OAI RRU snap is not running"
 fi 

@@ -56,8 +56,8 @@ fi
 
 juju-log "Stopping OAI RRU snap service in this unit"
 
-sshpass -p $passwd ssh $user_name@$rru_ip -o StrictHostKeyChecking=no "sudo pkill -f oai-rru.lte-softmodem"
-sshpass -p $passwd ssh $user_name@$rru_ip -o StrictHostKeyChecking=no "sudo snap remove oai-rru"
+sshpass -p $passwd ssh $user_name@$rru_ip -o StrictHostKeyChecking=no "sudo pkill -f eurecom.oai-rru"
+sshpass -p $passwd ssh $user_name@$rru_ip -o StrictHostKeyChecking=no "sudo snap remove eurecom"
 
 echo "no"  > $CHARM_DIR/.rru_running
 juju-log "Stopping oai-rru snap done"

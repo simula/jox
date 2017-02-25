@@ -30,7 +30,7 @@ options:
         defines the network interface port to connect to the RRU.
      type: int
    rru_ip:
-     default: "192.168.12.99"
+     default: "172.27.61.4"
      description: |
         defines the ip address of the RRU machine. This is the same address as the one used for fronthaul.
      type: string

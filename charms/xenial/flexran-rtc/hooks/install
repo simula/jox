@@ -92,29 +92,25 @@ juju_install_kernel(){
     if [ "$machine_type"  == "lxc" -o "$machine_type" == "docker" ]; then
 	juju-log "Can't install the required kernel in $machine_type env. Proceed with the current kernel."
     else  
-	if  [ "$machine_type"  == "" ] ; then 
-	    juju-log "Please install kerenel version 3.19 on the host".
-	else 
-	    check_current_kernel
-	    if [[ $REQUIRED_KERNEL_IS_INSTALLED == false ]]; then
-		if [ "$(cat $CHARM_DIR/.reboot)" != "reboot" ]; then  
-		    juju-log "installing the required kernel and reboot"
-		    status-set maintenance "installing the required kernel and rebooting"
-		    install_required_kernel
-  		    echo "reboot" > $CHARM_DIR/.reboot 
-		    juju-reboot --now
-		else 
-		    juju-log "Can't install the required kernel. Proceed with the current kernel."
-		fi 
-	    fi
-	fi 
+	check_current_kernel
+	if [[ $REQUIRED_KERNEL_IS_INSTALLED == false ]]; then
+	    if [ "$(cat $CHARM_DIR/.reboot)" != "reboot" ]; then  
+		juju-log "installing the required kernel and reboot"
+		status-set maintenance "installing the required kernel and rebooting"
+		install_required_kernel
+  		echo "reboot" > $CHARM_DIR/.reboot 
+		juju-reboot --now
+	    else 
+		juju-log "Can't install the required kernel. Proceed with the current kernel."
+	    fi 
+	fi
     fi 
 }
 
 set_args(){
  
     if [ "$kernel" == "generic" ]; then 
-	build_args="$build_args -DLOWLATENCY=OFF"
+	build_args="$build_args -r"
     fi
    
     if [ -z $bind_port ] ; then 
@@ -137,18 +133,10 @@ set_args(){
 
 
 build_flexran_rtc(){
-    juju-log " installing the required packages for Flexrna RTC"
-    status-set maintenance " installing the required packages for Flexran RTC"
-    $rtc_path/tools/install_dependencies
-
-    juju-log " Building the Flexran RTC"
-    status-set maintenance " Building the Flexran RTC"
-
-    cd $rtc_path
-    cmake $build_args . 
-    make -j`nproc`
-    cd -
-
+    juju-log "Installing and building the Flexran RTC"
+    status-set maintenance "Installing and building the Flexran RTC"
+    $rtc_path/build_flexran_rtc.sh $build_args
+    
 }
 run_rtc(){
 # just a flag for start script to run the service 

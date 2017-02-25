@@ -67,17 +67,22 @@ else
     rru_running_flag="no"
 fi
 
-
 if [ "$rru_running_flag" == "yes" ] ; then
     
     juju-log "installing oai-rru-snap on the remote machine"
-    sshpass -p $passwd ssh $user_name@$rru_ip -o StrictHostKeyChecking=no "sudo snap install oai-rru_0.1_amd64.snap --devmode"
+    sshpass -p $passwd ssh $user_name@$rru_ip -o StrictHostKeyChecking=no "sudo snap install eurecom_1.0_amd64.snap --devmode"
     juju-log "running oai-rru-snap with the config file $file_config"
-    sshpass -p $passwd ssh $user_name@$rru_ip -o StrictHostKeyChecking=no "sudo -E oai-rru.lte-softmodem -O $file_config"
 
-    # ps -e -o comm,stat 
-    sshpass -p $passwd ssh $user_name@$rru_ip -o StrictHostKeyChecking=no "ps -e -o comm,stat | grep oai-rru" > $CHARM_DIR/.rru_running_status
+    sshpass -p $passwd ssh $user_name@$rru_ip -o StrictHostKeyChecking=no "pgrep lte-softmodem" > $CHARM_DIR/.rru_running_status
+
+    if [ -s $CHARM_DIR/.rru_running_status ] ; then 
+	sshpass -p $passwd ssh $user_name@$rru_ip -o StrictHostKeyChecking=no "sudo pkill -f eurecom.oai-rru"
+	rm $CHARM_DIR/.rru_running_status
+    fi 
     
+    sshpass -p $passwd ssh $user_name@$rru_ip -o StrictHostKeyChecking=no "nohup sudo -E eurecom.oai-rru -O $file_config > /dev/null 2>&1 &"
+    sshpass -p $passwd ssh $user_name@$rru_ip -o StrictHostKeyChecking=no "pgrep lte-softmodem" > $CHARM_DIR/.rru_running_status
+
     if [ -s $CHARM_DIR/.rru_running_status ] ; then 
 	
 	echo "yes"  > $CHARM_DIR/.rru_running

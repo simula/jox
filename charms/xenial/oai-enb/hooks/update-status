@@ -36,17 +36,12 @@
 set -eux
 source $CHARM_DIR/utils/common
 
-if [ ! -z "$(relation-ids mme)" ]; then
-    check_enb_process || true
-    if [ $status -eq 1 ]; then
-	juju-log "OAI eNB is not running"
-	#status-set blocked "eNB is not running anymore, trying to restart"
-	#service enb restart 
-	#$CHARM_DIR/actions/restart
-	#exit 1
-    else 
-	status-set active "OAI eNB is running"
-	#application-version-set oai-enb-version
-    fi
-fi 
+check_enb_process || true
+if [ $status -eq 1 ]; then
+    juju-log "OAI eNB is not running"
+    status-set blocked "OAI eNB is not running"
+else 
+    status-set active "OAI eNB is running"
+    #application-version-set oai-enb-version
+fi
 

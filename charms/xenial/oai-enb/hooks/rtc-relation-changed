@@ -41,9 +41,6 @@ rtc_port=`relation-get RTC_PORT`
 rtc_ip=`relation-get RTC_PUBLIC_IP`
 agnet_if=`config-get agent_if_name`
 
-echo "$rtc_running" >  $CHARM_DIR/.rtc_running
-
-
 if [ -z "$rtc_running" ]; then
    juju-log "rtc is not running yet, exit silently"
    exit 0
@@ -56,6 +53,8 @@ if [ -z "$rtc_ip" ]; then
    juju-log "rtc ip not available yet, exit silently"
    exit 0
 fi
+
+echo "$rtc_running" >  $CHARM_DIR/.rtc_running
 
 file_config=`cat $CHARM_DIR/.config_file`
 

@@ -39,6 +39,7 @@ source $CHARM_DIR/utils/common
 check_rtc_process || true
 if [ $status -eq 1 ]; then
     juju-log "RTC is not running"
+    status-set blocked  "RTC is not running"
 else 
     status-set active "RTC is running"
 fi

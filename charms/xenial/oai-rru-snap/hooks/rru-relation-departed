@@ -54,7 +54,8 @@ if [ -z "$rru_ip" ]; then
 fi
 
 juju-log "stopping eNB service and waiting for a RRU relation to be restablished"
-sshpass -p $passwd ssh $user_name@$rru_ip -o StrictHostKeyChecking=no "sudo pkill -f oai-rru"
+sshpass -p $passwd ssh $user_name@$rru_ip -o StrictHostKeyChecking=no "sudo pkill -f eurecom.oai-rru"
+
 relation-set RRU_RUNNING=no
 echo "no" > $CHARM_DIR/.rru_running
 status-set blocked "Waiting for the RRU relation"

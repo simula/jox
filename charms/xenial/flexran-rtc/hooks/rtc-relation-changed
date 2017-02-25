@@ -54,31 +54,23 @@ fi
 
 if [ "$agent_active" == "yes" ]; then  
 
+    echo "$agent_active" >  $CHARM_DIR/.agent_active
     relation-set RTC_PORT=`config-get bind_port`
-
-    bind_if=`config-get bind_if`
-    echo "$bind_if"  >  $CHARM_DIR/.bind_if
-    cp  $CHARM_DIR/.bind_if   $mosaic_path
-
-
+    
     rtc_public_ip=`unit-get public-address`
     get_ip_address $rtc_public_ip
     status=$?
 	  
     if [ "$status" == "1" ] ; then
-      status-set error "nslookup failed for the rrh host name ($rtc_public_ip)"
-      relation-set RTC_PUBLIC_IP=$rtc_public_ip
+	status-set error "nslookup failed for the rru host name ($rtc_public_ip)"
+	relation-set RTC_PUBLIC_IP=$rtc_public_ip
     else
-      relation-set RTC_PUBLIC_IP=$validated_public_ip
-      status-set maintenance "Joined the RTC relation"
+	relation-set RTC_PUBLIC_IP=$validated_public_ip
+	status-set maintenance "Joined the RTC relation"
     fi 
-
-
-    echo "$agent_active" >  $CHARM_DIR/.agent_active
-
     
     $CHARM_DIR/hooks/start
 
 else 
-    status-set blocked "RAN/eNB Agent is not active"
+    status-set blocked "RAN/eNB Agent is not yet active"
 fi

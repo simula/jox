@@ -38,7 +38,7 @@ source $CHARM_DIR/utils/common
 check_spgw_process || true
 if [ $status -eq 1 ]; then
     juju-log "OAI SPGW is not running"
-    status-set maintenance "OAI SPGW is not running"
+    status-set blocked "OAI SPGW is not running"
 else 
     status-set active "OAI SPGW is running"
 fi   

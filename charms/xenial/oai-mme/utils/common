@@ -54,15 +54,15 @@ check_mme_process(){
 #if [[ $IS_RUNNING =~ .*running.* ]]; then
 #fi
 
-  IS_ACTIVE=`systemctl is-active mme.service`
-
-  if [ "$IS_ACTIVE" == "active" ]; then
-     juju-log "OAI MME is running" 
-     status=0
-  else
-     juju-log "OAI MME is not running"
-     status=1
-  fi
+    IS_ACTIVE=`systemctl is-active mme.service`
+    
+    if [ "$IS_ACTIVE" == "active" ]; then
+	juju-log "OAI MME is running" 
+	status=0
+    else
+	juju-log "OAI MME is not running"
+	status=1
+    fi
 }
 
 check_mme_connection(){
