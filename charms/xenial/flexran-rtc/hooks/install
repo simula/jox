@@ -64,10 +64,10 @@ clone_repro(){
 
     #everytime refresh the installation 
     if [ -d "$mosaic_path" ]; then  
-	cd $mosaic_path 
+	cd $rtc_path 
 	git reset --hard HEAD 
 	git checkout $branch 
-	if [[ "$revision" != "$(cat $CHARM_DIR/.revision)" ]]; then 
+	if [ "$revision" !=  "head" ]; then 
 	    git checkout $revision
 	fi 
 	cd -

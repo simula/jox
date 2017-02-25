@@ -1,6 +1,6 @@
 options:
    branch:
-     default: "master"
+     default: "test-features"
      description: |
        branch indicates which installation you want to do. 
      type: string
