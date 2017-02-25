@@ -288,6 +288,7 @@ source /$CHARM_DIR/utils/common
 set_env_paths
 
 open-port 2152/udp
+
 branch=`config-get branch`
 revision=`config-get revision`
 kernel=`config-get kernel`
@@ -305,6 +306,8 @@ config_file=`config-get config_file`
 fh_tr_mode=`config-get fh_transport_mode`
 fh_if_name=`config-get fh_if_name`
 fh_local_port=`config-get fh_local_port`
+
+open-port $fh_local_port/udp
 
 rru_tx_shift=`config-get rru_tx_shift`
 rru_tx_sampleadvance=`config-get rru_tx_sampleadvance`
