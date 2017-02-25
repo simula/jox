@@ -1,13 +1,14 @@
 #!/bin/bash
 
-#declare -a charms=("oai-enb" "oai-epc" "oai-hss" "oaisim-enb-ue")
-declare -a charms=("flexran-rtc" "oai-enb" "oai-mme" "oai-spgw" "oai-hss" "oai-rru")
-declare -a charms=("oai-mme")
+cd ..
+source /home/$USER/mosaic-5g/jox/joxenv
+cd -
+declare -a charms=("flexran-rtc" "oai-enb" "oai-mme" "oai-spgw" "oai-hss" "oai-rru" "oai-rru-snap")
 declare -a series=("trusty" "xenial")
 
 for s in "${series[@]}"
 do 
-    cd xenial  #$s
+    cd $JUJU_REPOSITORY/xenial  #$s
     echo "series: " $s
     for k in "${charms[@]}"
     do
@@ -15,7 +16,9 @@ do
 	echo "charm: " $k
 	url=`/usr/bin/charm push . cs:~navid-nikaein/$s/$k | grep url | cut -f2 -d' '`
 	echo "pushed url: $url"
-	
+        revision=`echo $url | awk '{split($0,a,"-"); print a[4]}'`
+        echo "setting the $k revision to $revision"	
+	echo $revision > $JUJU_REPOSITORY/$s/$k/revision 
 	/usr/bin/charm release $url
 	/usr/bin/charm grant $url everyone
 	cd ..
