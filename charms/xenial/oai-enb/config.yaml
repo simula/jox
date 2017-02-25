@@ -113,7 +113,7 @@ options:
         defines the network interface name to connect to the controller. 
      type: string
    fh_if_name:
-     default: ":eth0"
+     default: "eth0"
      description: |
         defines the network interface name to connect to the RRU. This required a dedicated fronthaul link between eNB and RRU and must not use the same interface as for the EPC.  
      type: string
