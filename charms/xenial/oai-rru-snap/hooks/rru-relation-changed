@@ -40,17 +40,16 @@ set -ex
 node_func=`config-get node_function`
 file_config=`cat $CHARM_DIR/.config_file`
 
-hw=`relation-get -r $rel_ids TARGET_HARDWARE`
-fh_tr_mode=`relation-get -r $rel_ids TRANSPORT_MODE`
-# RCC or RAU address
-fh_address=`relation-get -r $rel_ids FH_ADDRESS`
-
-
 rel_ids=`relation-ids rru`
 if [ -z "$rel_ids" ];then
     juju-log "Data not available yet, exit silently"
     exit 0
 fi    
+
+hw=`relation-get -r $rel_ids TARGET_HARDWARE`
+fh_tr_mode=`relation-get -r $rel_ids TRANSPORT_MODE`
+# RCC or RAU address
+fh_address=`relation-get -r $rel_ids FH_ADDRESS`
 
 if [ -z "$hw" ]; then
     juju-log "HW not available yet, exit silently"

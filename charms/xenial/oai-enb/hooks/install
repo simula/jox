@@ -389,7 +389,6 @@ echo "$hw" > $CHARM_DIR/.hw
 echo "$kernel"      >  $CHARM_DIR/.kernel
 echo "$node_func" > $CHARM_DIR/.node_func
 echo "$agent_active" >  $CHARM_DIR/.agent_active
-echo "$agent_port" >  $CHARM_DIR/.agent_port
 echo "$rtmon"      >  $CHARM_DIR/.rtmon
 
 echo "no"  > $CHARM_DIR/.rtc_running

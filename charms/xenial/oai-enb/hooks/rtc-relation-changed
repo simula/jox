@@ -64,21 +64,14 @@ echo "$rtc_running" >  $CHARM_DIR/.rtc_running
 
 file_config=`cat $CHARM_DIR/.config_file`
 
-
-if [ -f $CHARM_DIR/.rtc_port ]; then
-  rtc_port_config=`cat $CHARM_DIR/.rtc_port`
-else 
-  rtc_port_config=""	
-fi 
-
 if [ "$rtc_port_config" != "$rtc_port" ] ; then 
   open-port $rtc_port/udp
   if [ "$rtc_port_config" != "" ] ; then 
-     close-port $rtc_port_config/udp
+     close-port $rtc_port_config/udp || true
   fi 
 fi   
 
-cat $rtc_port > $CHARM_DIR/.rtc_port 
+echo "$rtc_port" > $CHARM_DIR/.rtc_port 
 
 add_rtc_ip $agnet_if $rtc_ip $rtc_port
 

@@ -54,7 +54,7 @@ if [ -z "$rru_ip" ]; then
     exit 0
 fi
 
- sshpass -p $passwd ssh $user_name@$rru_ip -o StrictHostKeyChecking=no "pgrep lte-softmodem" > $CHARM_DIR/.rru_running_status
+sshpass -p $passwd ssh $user_name@$rru_ip -o StrictHostKeyChecking=no "pgrep lte-softmodem" > $CHARM_DIR/.rru_running_status || true 
 
 if [ -s $CHARM_DIR/.rru_running_status ] ; then 
     
