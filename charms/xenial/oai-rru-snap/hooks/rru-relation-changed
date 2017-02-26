@@ -95,6 +95,7 @@ else
     rru_running="no"
     status-set maintenance "Trouble with rru upstart file...upgrading the charm"
     $CHARM_DIR/hooks/upgrade-charm
+    exit 0 
 fi
 
 if [ -f $CHARM_DIR/.rru_ip ]; then

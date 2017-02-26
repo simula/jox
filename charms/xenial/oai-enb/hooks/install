@@ -342,7 +342,8 @@ set_exec_args(){
     fi
 
     if [ "$rtmon" == "yes" ]; then
-	exec_args=" --T-nowait -V "
+	exec_args=" --T_nowait"
+        open-port 2021/udp
     fi
     
     exec_args="$exec_args -O $conf_path/$config_file_name -S --ulsch-max-errors 1000"

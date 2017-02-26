@@ -58,8 +58,8 @@ fi
 if [ -z $file_config ]; then
     juju-log "configuration file not available yet, exit silently"
     exit 0
-fi 
- 
+fi  
+
 
 if [ -f $CHARM_DIR/.rru_running_flag ]; then
     rru_running_flag=`cat $CHARM_DIR/.rru_running_flag`
@@ -67,7 +67,7 @@ else
     rru_running_flag="no"
 fi
 
-if [ "$rru_running_flag" == "yes" ] ; then
+if [ "$rru_running_flag" == "yes" ] && [ -n "$(relation-ids rru)" ] ; then
     
     juju-log "installing oai-rru-snap on the remote machine"
     sshpass -p $passwd ssh $user_name@$rru_ip -o StrictHostKeyChecking=no "sudo snap install eurecom_1.0_amd64.snap --devmode"
@@ -89,9 +89,9 @@ if [ "$rru_running_flag" == "yes" ] ; then
 	status-set active "OAI RRU snap is running"
     else
 	 echo "no"  > $CHARM_DIR/.rru_running
-	 status-set active "OAI RRU snap is not running"
+	 status-set blocked "OAI RRU snap is not running"
     fi 
 else 
     echo "no"  > $CHARM_DIR/.rru_running
-    status-set active "OAI RRU snap is not running"
+    status-set blocked "OAI RRU snap is waiting for the RRU relation"
 fi 
