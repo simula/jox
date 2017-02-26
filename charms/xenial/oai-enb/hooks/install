@@ -369,6 +369,8 @@ fh_tr_mode=`config-get fh_transport_mode`
 fh_if_name=`config-get fh_if_name`
 fh_local_port=`config-get fh_local_port`
 
+open-port $fh_local_port/udp
+
 rru_tx_shift=`config-get rru_tx_shift`
 rru_tx_sampleadvance=`config-get rru_tx_sampleadvance`
 rru_tx_schedadvance=`config-get rru_tx_schedadvance`
@@ -387,6 +389,7 @@ echo "$hw" > $CHARM_DIR/.hw
 echo "$kernel"      >  $CHARM_DIR/.kernel
 echo "$node_func" > $CHARM_DIR/.node_func
 echo "$agent_active" >  $CHARM_DIR/.agent_active
+echo "$agent_port" >  $CHARM_DIR/.agent_port
 echo "$rtmon"      >  $CHARM_DIR/.rtmon
 
 echo "no"  > $CHARM_DIR/.rtc_running

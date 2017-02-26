@@ -36,6 +36,12 @@
 set -ex
 source $CHARM_DIR/utils/common
 
+if [ -f $CHARM_DIR/.rtc_port ]; then
+  rtc_port_config=`cat $CHARM_DIR/.rtc_port`
+else
+  rtc_port_config=""
+fi
+
 rtc_running=`relation-get RTC_RUNNING`
 rtc_port=`relation-get RTC_PORT`
 rtc_ip=`relation-get RTC_PUBLIC_IP`
@@ -59,10 +65,26 @@ echo "$rtc_running" >  $CHARM_DIR/.rtc_running
 file_config=`cat $CHARM_DIR/.config_file`
 
 
-if [ -z "$(grep "$rtc_ip" $CHARM_DIR/rtc_ip)"  ]; then
-    add_rtc_ip $agnet_if $rtc_ip $rtc_port
+if [ -f $CHARM_DIR/.rtc_port ]; then
+  rtc_port_config=`cat $CHARM_DIR/.rtc_port`
+else 
+  rtc_port_config=""	
 fi 
 
+if [ "$rtc_port_config" != "$rtc_port" ] ; then 
+  open-port $rtc_port/udp
+  if [ "$rtc_port_config" != "" ] ; then 
+     close-port $rtc_port_config/udp
+  fi 
+fi   
+
+cat $rtc_port > $CHARM_DIR/.rtc_port 
+
+add_rtc_ip $agnet_if $rtc_ip $rtc_port
+
+#if [ -z "$(grep "$rtc_ip" $CHARM_DIR/rtc_ip)"  ]; then
+#    add_rtc_ip $agnet_if $rtc_ip $rtc_port
+#fi 
 
 $CHARM_DIR/hooks/start
 

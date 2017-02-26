@@ -243,7 +243,6 @@ esac
 
 #############################################################################
 
-
 ##I should change the s1-u and s1-mme
 iface=`config-get eth`
 
