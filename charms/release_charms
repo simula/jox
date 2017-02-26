@@ -1,5 +1,6 @@
 #!/bin/bash
 
+revision=$1
 cd ..
 source /home/$USER/mosaic-5g/jox/joxenv
 cd -
@@ -12,16 +13,20 @@ do
     echo "series: " $s
     for k in "${charms[@]}"
     do
-	cd $k
-	echo "charm: " $k
-	url=`/usr/bin/charm push . cs:~navid-nikaein/$s/$k | grep url | cut -f2 -d' '`
-	echo "pushed url: $url"
-        revision=`echo $url | awk '{split($0,a,"-"); print a[4]}'`
-        echo "setting the $k revision to $revision"	
-	echo $revision > $JUJU_REPOSITORY/$s/$k/revision 
-	/usr/bin/charm release $url
-	/usr/bin/charm grant $url everyone
-	cd ..
+	if [ -d $k ] ; then 	
+          cd $k
+	  echo "charm: " $k
+	  url=`/usr/bin/charm push . cs:~navid-nikaein/$s/$k | grep url | cut -f2 -d' '`
+	  echo "pushed url: $url"
+          if [ "$1" == "revision" ] ; then 
+		revision=`echo $url | awk '{split($0,a,"-"); print a[4]}'`
+          	echo "setting the $k revision to $revision"	
+	  	echo $revision > $JUJU_REPOSITORY/$s/$k/revision 
+	  fi 
+	  /usr/bin/charm release $url
+	  /usr/bin/charm grant $url everyone
+	  cd ..
+	fi 
     done
     cd .. 
     

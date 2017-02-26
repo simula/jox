@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/srv/mosaic-5g/controller/run_flexran_rtc.sh $(cat /srv/mosaic-5g/.exec_args)> /srv/rtc.out 2> /srv/rtc.err'
+ExecStart=/bin/bash -c '/srv/mosaic-5g/controller/build/rt_controller $(cat /srv/mosaic-5g/.exec_args) > /srv/rtc.out 2> /srv/rtc.err'
 
 [Install]
 WantedBy=multi-user.target

@@ -73,11 +73,12 @@ clone_repro(){
 	cd -
     else
 	pushd . 
-	git clone --branch $branch https://gitlab.eurecom.fr/mosaic-5g/mosaic-5g.git $mosaic_path
+	git clone https://gitlab.eurecom.fr/mosaic-5g/mosaic-5g.git $mosaic_path
 	cd $mosaic_path 
 	git submodule init
 	git submodule update controller
-	cd controller 
+	cd controller
+	git checkout $branch 
 	if [ "$revision" != "head" ]; then 
 	    git checkout $revision
 	fi 
@@ -135,8 +136,10 @@ set_args(){
 build_flexran_rtc(){
     juju-log "Installing and building the Flexran RTC"
     status-set maintenance "Installing and building the Flexran RTC"
-    $rtc_path/build_flexran_rtc.sh $build_args
-    
+    cd $rtc_path
+    ./tools/install_dependencies
+    ./build_flexran_rtc.sh $build_args
+    cd -
 }
 run_rtc(){
 # just a flag for start script to run the service 
