@@ -34,28 +34,7 @@
 # author  navid.nikaein@eurecom.fr
 
 set -eux
-
-if [ -f $CHARM_DIR/.rru_running_flag ]; then
-  rru_running=`cat $CHARM_DIR/.rru_running_flag`
-else
-  rru_running="no"
-fi
-
-if [ -f $CHARM_DIR/.rru_ip ]; then
-  rru_ip=`cat $CHARM_DIR/.rru_ip`
-else
-  rru_ip=""
-fi
-
-if [ -f $CHARM_DIR/.rru_port ]; then
-  rru_port=`cat $CHARM_DIR/.rru_port`
-else
-  rru_port=50000 # default
-fi
-
+rru_running="no"
 
 relation-set RRU_RUNNING=$rru_running
-relation-set RRU_PORT=$rru_port
-relation-set RRU_ADDRESS=$rru_ip
-
 juju-log "Joining RRU relation ($rru_running)"

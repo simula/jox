@@ -37,10 +37,10 @@ set -ex
 source $CHARM_DIR/utils/common
 set_env_paths
 
+juju-log "RRU relation changed for $node_func"
+
 node_func=`config-get node_function`
 file_config=`cat $CHARM_DIR/.config_file`
-
-juju-log "RRU relation changed for $node_func"
 
 rel_ids=`relation-ids rru`
 if [ -z "$rel_ids" ];then
@@ -52,7 +52,6 @@ hw=`relation-get -r $rel_ids TARGET_HARDWARE`
 fh_tr_mode=`relation-get -r $rel_ids TRANSPORT_MODE`
 # RCC or RAU address
 fh_address=`relation-get -r $rel_ids FH_ADDRESS`
-
 
 if [ -z "$hw" ]; then
     juju-log "HW not available yet, exit silently"
@@ -93,7 +92,30 @@ fi
 cp  $CHARM_DIR/.fh_tr_mode $openair_path
 cp  $CHARM_DIR/.hw      $openair_path
 
+# start the RRU
 $CHARM_DIR/hooks/start
 
+# now start the eNB if rru is running
+if [ -f $CHARM_DIR/.rru_running ]; then
+  rru_running=`cat $CHARM_DIR/.rru_running`
+else
+  rru_running="no"
+  #$CHARM_DIR/hooks/upgrade-charm
+  if [ "$(cat $CHARM_DIR/.rru_running_flag)" == "yes" ]; then
+      status-set maintenance "Trouble with rru upstart file...reconfiguring the charm"
+      $CHARM_DIR/hooks/config-changed
+  else
+      status-set maintenance "Trouble with rru upstart file...upgrading the charm"
+      $CHARM_DIR/hooks/upgrade-charm
+  fi 
+fi
 
+if [ -f $CHARM_DIR/.fh_address ]; then
+    fh_address=`cat $CHARM_DIR/.fh_address`
+else
+    fh_address="no"
+fi
 
+relation-set RRU_RUNNING=$rru_running
+relation-set RRU_PORT=`config-get fh_local_port`
+relation-set RRU_ADDRESS=$fh_address

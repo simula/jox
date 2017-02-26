@@ -29,7 +29,7 @@
 # either expressed or implied, of the FreeBSD Project.
 #
 ################################################################################
-# file rrh-relation-joined
+# file rru-relation-joined
 # brief called when a relation betwen an eNB and RRU is created 
 # author  navid.nikaein@eurecom.fr
 
