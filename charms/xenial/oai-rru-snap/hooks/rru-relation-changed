@@ -86,7 +86,29 @@ if [ "$hw_config" != "$hw" ]; then
     cat $hw_config > $CHARM_DIR/.hw
 fi 
 
+# start the RRU
 $CHARM_DIR/hooks/start
 
+# now start the eNB/RCC
+if [ -f $CHARM_DIR/.rru_running ]; then
+    rru_running=`cat $CHARM_DIR/.rru_running`
+else
+    rru_running="no"
+    status-set maintenance "Trouble with rru upstart file...upgrading the charm"
+    $CHARM_DIR/hooks/upgrade-charm
+fi
 
+if [ -f $CHARM_DIR/.rru_ip ]; then
+    rru_ip=`cat $CHARM_DIR/.rru_ip`
+else
+    rru_ip=""
+fi
 
+if [ -f $CHARM_DIR/.rru_port ]; then
+    rru_port=`cat $CHARM_DIR/.rru_port`
+else
+    rru_port=50000 # default
+fi
+relation-set RRU_RUNNING=$rru_running
+relation-set RRU_PORT=$rru_port
+relation-set RRU_ADDRESS=$rru_ip
