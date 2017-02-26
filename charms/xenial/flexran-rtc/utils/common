@@ -40,6 +40,7 @@ set_env_paths(){
 
     mosaic_path=/srv/mosaic-5g
     rtc_path=$mosaic_path/controller
+    rtc_exec=$rtc_path/build
     build_path=$mosaic_path
     tools_path=$mosaic_path/tools
     rtc_exec_name=rt_controller

@@ -137,6 +137,8 @@ build_flexran_rtc(){
     juju-log "Installing and building the Flexran RTC"
     status-set maintenance "Installing and building the Flexran RTC"
     cd $rtc_path
+    export FLEXRAN_RTC_HOME=$rtc_path
+    export FLEXRAN_RTC_EXEC=$rtc_exec
     ./tools/install_dependencies
     ./build_flexran_rtc.sh $build_args
     cd -

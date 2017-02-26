@@ -92,5 +92,6 @@ else
     
 fi
 
-
+#wait for the oai-rru to start properly
+sleep 11
 $CHARM_DIR/hooks/start
