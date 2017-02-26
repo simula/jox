@@ -71,9 +71,9 @@ recover_config_file(){
 clone_repro(){
     juju-log  "Fetching and installing Openair5G for $hw"
     status-set maintenance "Fetching and installing Openair5G for $hw"
-
+    
     echo -n | openssl s_client -showcerts -connect gitlab.eurecom.fr:443 2>/dev/null | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' >> /etc/ssl/certs/ca-certificates.crt
-
+    
     #everytime refresh the installation 
     if [ -d "$openair_path" ]; then  
 	#juju-log "Removing the installation directory"
@@ -102,7 +102,7 @@ clone_repro(){
 juju_install_kernel(){
     status-set maintenance "Check the kernel and update if required"
     juju-log "Check the kernel and update if required"
-
+    
     if [ "$machine_type"  == "lxc" -o "$machine_type" == "docker" ]; then
 	juju-log "Can't install the required kernel in $machine_type env. Proceed with the current kernel."
     else  
@@ -126,16 +126,16 @@ juju_install_kernel(){
 }
 
 set_build_args(){
- 
+    
     if [ "$kernel" == "lowlatency" ]; then
 	juju-log "Enable low-latency (SCHED_DEADLINE) kernel if applies"
 	build_args="$build_args --disable-cpu-affinity --enable-deadline "
 	echo "$build_args"  > $CHARM_DIR/.build_args
 	cp $CHARM_DIR/.build_args $openair_path
     fi
-
+    
     juju-log "Enable OAI node $node_func for $hw"
-
+    
     if [ "$hw" == "usrp_b200" ]; then
 	build_oai_for_hw="USRP"
 	config_oai_for_hw="usrpb210"
@@ -291,7 +291,7 @@ build_enb(){
 	sed -r -i "/local_if_name/ s/\".+\"/\"$fh_if_name\"/" $conf_path/$config_file_name
 	
 	if [ "$fh_tr_mode" == "raw" ] || [ "$fh_tr_mode" == "raw_if4p5" ] ; then 
-	    check_ifup $fh_if_name
+	    check_ifup $fh_if_name || true
             status=$?
             if [ "$status" == "0" ] ; then
     		read mac_addr </sys/class/net/$fh_if_name/address
@@ -300,52 +300,45 @@ build_enb(){
 	    else
                 juju-log -l WARNING "fh_if_name interface $fh_if_name does not exist"
                 status-set blocked "fh_if_name interface $fh_if_name does not exist"
-          fi
-
+            fi
+	    
 	elif [ "$fh_tr_mode" == "udp" ] || [ "$fh_tr_mode" == "udp_if4p5" ] ; then 
-	   
+	    
             if [ -n "$fh_if_name" ]; then
                 check_ifup $fh_if_name
                 status=$?
                 if [ "$status" == "0" ] ; then
-
-                  fh_ipv4=`ifconfig $fh_if_name | egrep -o "inet addr:[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | egrep -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"`
-                  if  [ -n "$fh_ipv4" ]; then
-	             echo "$fh_ipv4"  > $CHARM_DIR/.fh_address	
-		     sed -r -i "/local_address/ s/\".+\"/\"$fh_ipv4\"/" $conf_path/$config_file_name 
-                
-                  else
-                    juju-log -l WARNING "The fh_if_name $fh_if_name has to be specified before the relation with MME can be added"
-                    status-set blocked "Can't get the ipv4 address of $fh_if_name"
-                  fi
-               else
-                 juju-log -l WARNING "fh_if_name interface $fh_if_name does not exist"
-                 status-set blocked "fh_if_name interface $fh_if_name does not exist"
-               fi
-           else 
+		    
+                    fh_ipv4=`ifconfig $fh_if_name | egrep -o "inet addr:[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | egrep -o "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"`
+                    if  [ -n "$fh_ipv4" ]; then
+			echo "$fh_ipv4"  > $CHARM_DIR/.fh_address	
+			sed -r -i "/local_address/ s/\".+\"/\"$fh_ipv4\"/" $conf_path/$config_file_name 
+		    else
+			juju-log -l WARNING "The fh_if_name $fh_if_name has to be specified before the relation with MME can be added"
+			status-set blocked "Can't get the ipv4 address of $fh_if_name"
+                    fi
+		else
+                    juju-log -l WARNING "fh_if_name interface $fh_if_name does not exist"
+                    status-set blocked "fh_if_name interface $fh_if_name does not exist"
+		fi
+            else 
 		juju-log -l WARNING "fh_if_name undefined"
-                 status-set blocked "fh_if_name undefined"
-           fi
-
+                status-set blocked "fh_if_name undefined"
+            fi
 	else 
 	    status-set blocked "invalide Fronthaul transport mode"
 	fi 
-	
-		
     else
 	juju-log "setting the configuration file $config_file_name for 3GPPP eNB"
-	
 	sed -r -i  "s/(rrh_gw_active[ ]*=[ ]*)\"[a-zA-Z]+\"/\1\"no\"/" $conf_path/$config_file_name
 	echo 1 > $openair_path/.local_remote_rf
-	
     fi 
-    
 }
 
 set_exec_args(){
 
     if [ "$agent_active" == "yes" ]; then
-       $tools_path/make_agent_cache || true
+	$tools_path/make_agent_cache || true
     fi
 
     if [ "$rtmon" == "yes" ]; then
@@ -355,7 +348,7 @@ set_exec_args(){
     exec_args="$exec_args -O $conf_path/$config_file_name -S --ulsch-max-errors 1000"
     echo "$exec_args"  > $CHARM_DIR/.exec_args
     cp $CHARM_DIR/.exec_args $openair_path
-
+    
 }
 
 set -eux
