@@ -48,6 +48,10 @@ install_packages(){
     if [ ! $virtwhatAlreadyInstalled -eq 1 ]; then 
 	apt-get install -y --force-yes virt-what
     fi
+    cpufreqAlreadyInstalled=$(dpkg --get-selections cpufrequtils 2>/dev/null | grep -c 'install') || true
+    if [ ! $virtwhatAlreadyInstalled -eq 1 ]; then 
+	apt-get install -y --force-yes cpufrequtils
+    fi
 }
 
 save_config_file(){
@@ -102,27 +106,52 @@ clone_repro(){
 juju_install_kernel(){
     status-set maintenance "Check the kernel and update if required"
     juju-log "Check the kernel and update if required"
-
-    if [ "$machine_type"  == "lxc" -o "$machine_type" == "docker" ]; then
-	juju-log "Can't install the required kernel in $machine_type env. Proceed with the current kernel."
-    else  
-	if  [ "$machine_type"  == "" ] ; then 
-	    juju-log "Please install kerenel version 3.19 on the host".
-	else 
-	    check_current_kernel
-	    if [[ $REQUIRED_KERNEL_IS_INSTALLED == false ]]; then
-		if [ "$(cat $CHARM_DIR/.reboot)" != "reboot" ]; then  
-		    juju-log "installing the required kernel and reboot"
-		    status-set maintenance "installing the required kernel and rebooting"
-		    install_required_kernel
-  		    echo "reboot" > $CHARM_DIR/.reboot 
-		    juju-reboot --now
-		else 
-		    juju-log "Can't install the required kernel. Proceed with the current kernel."
-		fi 
+    check_current_kernel
+    
+    if [ "$machine_type"  == "lxc" -o "$machine_type"  == "lxd" -o "$machine_type" == "docker" ]; then
+	if [[ $REQUIRED_KERNEL_IS_INSTALLED == false ]]; then
+	    status-set blocked "Install the required kernel or deploy the service in a VM" 
+	    juju-log "Install the required kernel or deploy the service in a VM" 
+	elif [ "$(cat $CHARM_DIR/.kernel)" == "lowlatency" ]; then
+	    
+	    if [[ $LOWLATENCY_KERNEL_IS_INSTALLED == false ]]; then
+		juju-log "Can't install the lowlatency kernel in $machine_type env. Proceed with the current kernel."
+		status-set maintenance "Proceed with the current kernel ($machine_type)"
+		echo "generic"      >  $CHARM_DIR/.kernel
+	    else 
+		juju-log "Required kernel is installed"
+		echo "lowlatency"      >  $CHARM_DIR/.kernel
 	    fi
+	else
+	    status-set maintenance "Proceed with the current kernel ($machine_type)"
+	    juju-log "Required kernel is installed"
 	fi 
+    else  
+	if [[ $REQUIRED_KERNEL_IS_INSTALLED == false ]]; then
+	    if [ "$(cat $CHARM_DIR/.reboot)" != "reboot" ]; then  
+		juju-log "installing the required kernel and reboot"
+		status-set maintenance "installing the required kernel and rebooting"
+		install_required_kernel
+  		echo "reboot" > $CHARM_DIR/.reboot 
+		juju-reboot --now
+	    else 
+		juju-log "Can't install the required kernel. Proceed with the current kernel."
+	    fi 
+	fi
     fi 
+}
+
+set_cpu_freq(){
+#getconf _NPROCESSORS_CONF
+    num_cpu=`nproc`
+    num_cpu=$((num_cpu-1))
+    for i in `seq 0 $num_cpu`;
+    do 
+	cpufreq-set -g performance -c $i || true 
+    done 
+    lsmod | grep intel_powerclamp
+    [ $? -eq 0 ] && (rmmod intel_powerclamp || true)
+    
 }
 
 set_build_args(){
@@ -339,6 +368,8 @@ save_config_file
 clone_repro
 
 juju_install_kernel
+
+set_cpu_freq
 
 recover_config_file
 

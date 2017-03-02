@@ -42,7 +42,7 @@ install_packages(){
     if [ ! $sshAlreadyInstalled -eq 1 ]; then 
 	apt-get install -y --force-yes sshpass 
     fi
-
+    
 }
 
 set_args(){

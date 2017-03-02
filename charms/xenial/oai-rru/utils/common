@@ -57,35 +57,70 @@ config_file_sodera_5mhz_wb=enb_sodera_lowband_Wrx_5MHz_rx19dB_txfull.ini
 config_file_sodera_10mhz_wb=enb_sodera_lowband_Wrx_10MHz_rx19dB_txfull.ini
 
 }
-
+get_series(){
+local series=$(lsb_release -sc)
+if [ -n "$series" ] ; then
+    echo $series
+else
+    echo "unknown"
+fi
+}
+get_kernel_name(){
+local series=$(get_series)
+case "$series" in
+    "trusty") echo "vivid" ; return ;;
+    "xenial") echo "xenial" ; return  ;;
+    "yakkety") echo "yakkety" ; return ;;
+    "zesty") echo "" ; return ;;
+esac
+echo "vivid"
+}
+get_kernel_version(){
+local series=$(get_series)
+case "$series" in
+    "trusty") echo "3.19" ; return ;;
+    "xenial") echo "4.4.14"  ; return ;;
+    "yakkety") echo "4.5.7" ; return ;;
+    "zesty") echo "4.8.17"   ; return ;;
+esac
+echo  "4.4.14"
+}
 
 install_required_kernel(){
-version=3.19
+version=$(get_kernel_version)
+name=$(get_kernel_name)
 if [ "$(cat $CHARM_DIR/.kernel)" == "lowlatency" ]; then 
-    wget -r -e robots=off --accept-regex "(.*lowlatency.*amd64)|(all).deb" http://kernel.ubuntu.com/~kernel-ppa/mainline/v${version}-vivid/
+    wget -r -e robots=off --accept-regex "(.*lowlatency.*amd64)|(all).deb" http://kernel.ubuntu.com/~kernel-ppa/mainline/v${version}-${name}/
 else
-    wget -r -e robots=off --accept-regex "(.*generic.*amd64)|(all).deb" http://kernel.ubuntu.com/~kernel-ppa/mainline/v${version}-vivid/
+    wget -r -e robots=off --accept-regex "(.*generic.*amd64)|(all).deb" http://kernel.ubuntu.com/~kernel-ppa/mainline/v${version}-${name}/
 fi 
 dpkg -i kernel.ubuntu.com/*/*/*/*deb
 }
 
 check_current_kernel(){
 
-required_kern_release="3.19"
-required_kern_version=`echo $required_kern_release | cut -d '.' -f1`
-required_kern_major_revision=`echo $required_kern_release | cut -d '.' -f2`
+required_kern_version=$(get_kernel_version)
+required_kern_major=`echo $required_kern_version | cut -d '.' -f1`
+required_kern_minor=`echo $required_kern_version | cut -d '.' -f2`
 current_kern_release=`uname -r`
-current_kern_version=`echo $current_kern_release | cut -d '.' -f1`
-current_kern_major_revision=`echo $current_kern_release | cut -d '.' -f2`
-if [ "$current_kern_version" -gt "$required_kern_version" ]; then
-     REQUIRED_KERNEL_IS_INSTALLED="true"
-elif [ "$current_kern_version" -eq "$required_kern_version" ] && [ "$current_kern_major_revision" -ge "$required_kern_major_revision" ]; then
+current_kern_major=`echo $current_kern_release | cut -d '.' -f1`
+current_kern_minor=`echo $current_kern_release | cut -d '.' -f2`
+
+echo $current_kern_release | grep lowlatency
+if [ $? -eq 0  ]; then
+    LOWLATENCY_KERNEL_IS_INSTALLED="true"
+else 
+    LOWLATENCY_KERNEL_IS_INSTALLED="false"
+fi 
+
+if [ $current_kern_major -eq $required_kern_major ] && [ $current_kern_minor -ge $required_kern_minor ]; then
      REQUIRED_KERNEL_IS_INSTALLED="true"
 else
      REQUIRED_KERNEL_IS_INSTALLED="false"
 fi
 
 }
+
 
 check_rru_process(){
 

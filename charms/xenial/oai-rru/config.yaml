@@ -9,7 +9,7 @@ options:
      description: get a specific revison from the openairinterface5G git repository. 
      type: string
    kernel: 
-     default: "generic"
+     default: "lowlatency"
      description: set the default kerenl, generic or lowlatency. 
      type: string
    node_function: 
