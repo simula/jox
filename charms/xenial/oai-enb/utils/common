@@ -107,8 +107,7 @@ current_kern_release=`uname -r`
 current_kern_major=`echo $current_kern_release | cut -d '.' -f1`
 current_kern_minor=`echo $current_kern_release | cut -d '.' -f2`
 
-echo $current_kern_release | grep lowlatency
-if [ $? -eq 0  ]; then
+if [[ "$current_kern_release" =~ .*lowlatency.* ]]; then
     LOWLATENCY_KERNEL_IS_INSTALLED="true"
 else 
     LOWLATENCY_KERNEL_IS_INSTALLED="false"
