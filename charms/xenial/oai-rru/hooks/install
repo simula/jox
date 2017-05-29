@@ -101,6 +101,8 @@ clone_repro(){
 	fi 
 	cd -
     fi
+    sed -i -r "s/(exit 1)/#\1/" $build_path/tools/fix_asn1
+
 }
 
 juju_install_kernel(){
