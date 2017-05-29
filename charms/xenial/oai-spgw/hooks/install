@@ -156,7 +156,7 @@ configure_spgw(){
     
 
     mkdir -p $spgw_conf_path
-    cp $openair_path/ETC/spgw.conf $spgw_conf_path/spgw.conf
+    cp $openair_path/etc/spgw.conf $spgw_conf_path/spgw.conf
 }
 
 configure_network(){

@@ -38,11 +38,11 @@ set_env_paths(){
   #paths in openair-cn on Git
 
   openair_path=/srv/openair-cn
-  build_path=$openair_path/BUILD
-  hss_path=$build_path/HSS
-  spgw_path=$build_path/SPGW
-  build_run_scripts=$openair_path/SCRIPTS
-  tools_path=$build_path/TOOLS
+  build_path=$openair_path/build
+  hss_path=$build_path/hss
+  spgw_path=$build_path/spgw
+  build_run_scripts=$openair_path/scripts
+  tools_path=$build_path/tools
   spgw_conf_path=/usr/local/etc/oai
   spgw_exec_name=spgw
   freediameter_conf_path=$spgw_conf_path/freeDiameter
@@ -137,12 +137,14 @@ install_required_kernel(){
     version=4.7
     #wget -P /srv/kernel/ ftp://ftp.eurecom.fr/incoming/linux-image-4.7.7-oaiepc_4.7.7-oaiepc-10.00.Custom_amd64.deb
     #wget -P /srv/kernel/ ftp://ftp.eurecom.fr/incoming/linux-headers-4.7.7-oaiepc_4.7.7-oaiepc-10.00.Custom_amd64.deb
-    wget ftp://ftp.eurecom.fr/incoming/linux-headers-4.8.16.oai.amd64.deb
-    wget ftp://ftp.eurecom.fr/incoming/linux-libc-dev_4.8.16.oai.amd64.deb
-    wget ftp://ftp.eurecom.fr/incoming/linux-image-4.8.16.oai.amd64.deb
-    
-    
-    dpkg -i ./*deb
+    #wget ftp://ftp.eurecom.fr/incoming/linux-headers-4.8.16.oai.amd64.deb
+    #wget ftp://ftp.eurecom.fr/incoming/linux-libc-dev_4.8.16.oai.amd64.deb
+    #wget ftp://ftp.eurecom.fr/incoming/linux-image-4.8.16.oai.amd64.deb
+    #dpkg -i ./*deb
+    git clone https://gitlab.eurecom.fr/oai/linux-4.7.x.git
+    cd linux-4.7.x
+    sudo dpkg -i linux-headers-4.7.7-oaiepc_4.7.7-oaiepc-10.00.Custom_amd64.deb linux-image-4.7.7-oaiepc_4.7.7-oaiepc-10.00.Custom_amd64.deb
+    cd -
 }
 
 check_current_kernel(){

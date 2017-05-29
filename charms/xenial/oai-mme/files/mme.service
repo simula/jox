@@ -6,7 +6,7 @@ After=network.target
 [Service]
 Type=simple
 EnvironmentFile=-/usr/local/etc/oai
-ExecStart=/bin/bash -c '/srv/openair-cn/SCRIPTS/run_mme > /srv/mme.out 2> /srv/mme.err'
+ExecStart=/bin/bash -c '/srv/openair-cn/scripts/run_mme > /srv/mme.out 2> /srv/mme.err'
 
 [Install]
 WantedBy=multi-user.target

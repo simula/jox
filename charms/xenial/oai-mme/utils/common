@@ -38,11 +38,11 @@ set_env_paths(){
 #paths in openair-cn on Git
 
   openair_path=/srv/openair-cn
-  build_path=$openair_path/BUILD
-  hss_path=$build_path/HSS
-  mme_path=$build_path/MME
-  build_run_scripts=$openair_path/SCRIPTS
-  tools_path=$build_path/TOOLS
+  build_path=$openair_path/build
+  hss_path=$build_path/hss
+  mme_path=$build_path/mme
+  build_run_scripts=$openair_path/scripts
+  tools_path=$build_path/tools
   mme_conf_path=/usr/local/etc/oai
   mme_exec_name=mme
   freediameter_conf_path=$mme_conf_path/freeDiameter

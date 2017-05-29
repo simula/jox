@@ -38,11 +38,10 @@ set_env_paths(){
 #paths in openair-cn on Git
 
   openair_path=/srv/openair-cn
-  build_path=$openair_path/BUILD
-  hss_path=$build_path/HSS
-  epc_path=$build_path/EPC
-  build_run_scripts=$openair_path/SCRIPTS
-  tools_path=$build_path/TOOLS
+  build_path=$openair_path/build
+  hss_path=$build_path/hss
+  build_run_scripts=$openair_path/scripts
+  tools_path=$build_path/tools
   hss_conf=/usr/local/etc/oai
   hss_exec_name=oai_hss
   freediameter_conf_path=$hss_conf/freeDiameter

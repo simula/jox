@@ -24,7 +24,7 @@ db_data_in_config_file $host $user $password $database
 if $(/usr/bin/mysql -u $user --password=$password -h $host $database -e "show tables;" | grep -q users); then
     echo "Database already there"
 else
-    /usr/bin/mysql -u $user --password=$password -h $host $database < $openair_path/SRC/OAI_HSS/db/oai_db.sql
+    /usr/bin/mysql -u $user --password=$password -h $host $database < $openair_path/src/oai_hss/db/oai_db.sql
 fi
 
 #this can be start even if the EPC relation is not established 

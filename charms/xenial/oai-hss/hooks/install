@@ -177,9 +177,9 @@ configure_hss(){
       mkdir -p $freediameter_conf_path
   fi
   
-  cp -upv $openair_path/ETC/hss.conf $hss_conf
-  cp -upv $openair_path/ETC/hss_fd.conf $freediameter_conf_path
-  cp -upv $openair_path/ETC/acl.conf $freediameter_conf_path
+  cp -upv $openair_path/etc/hss.conf $hss_conf
+  cp -upv $openair_path/etc/hss_fd.conf $freediameter_conf_path
+  cp -upv $openair_path/etc/acl.conf $freediameter_conf_path
 
   # generate cert
   fqdn=`hostname --fqdn`
