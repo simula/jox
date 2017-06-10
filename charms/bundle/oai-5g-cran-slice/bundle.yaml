@@ -1,10 +1,10 @@
 series: xenial
 services: 
   "oai-enb": 
-    charm: "cs:~navid-nikaein/xenial/oai-enb-22"
+    charm: "cs:~navid-nikaein/xenial/oai-enb-24"
     num_units: 1
     options: 
-      branch: "various-l2-fixes-187"
+      branch: "develop"
       N_RB_DL: 25
       downlink_frequency: "751000000L"
       eutra_band: 13
@@ -21,10 +21,10 @@ services:
     to: 
       - "1"
   "oai-rru": 
-    charm: "cs:~navid-nikaein/xenial/oai-rru-14"
+    charm: "cs:~navid-nikaein/xenial/oai-rru-15"
     num_units: 1
     options:
-      branch: "various-l2-fixes-187"
+      branch: "develop"
       fh_if_name: "br-eth0"
       node_function: "NGFI_RRU_IF4p5"
       eutra_band: 13
@@ -38,10 +38,10 @@ services:
     to: 
       - "2"
   "flexran-rtc": 
-    charm: "cs:~navid-nikaein/xenial/flexran-rtc-13"
+    charm: "cs:~navid-nikaein/xenial/flexran-rtc-14"
     num_units: 1
     options:
-      branch: "test-features"
+      branch: "develop"
       user_name: "your_user_name"
       passwd: "your_passwd"
     annotations: 
@@ -50,10 +50,10 @@ services:
     to: 
       - "lxd:3"
   "oai-mme": 
-    charm: "cs:~navid-nikaein/xenial/oai-mme-15"
+    charm: "cs:~navid-nikaein/xenial/oai-mme-16"
     num_units: 1
     options:
-      branch: "mme_scenario_player"
+      branch: "develop"
       eth: "eth0"
     annotations: 
       "gui-x": "412.0322265625"
@@ -61,10 +61,10 @@ services:
     to: 
       - "lxd:3"      
   "oai-hss": 
-    charm: "cs:~navid-nikaein/xenial/oai-hss-7"
+    charm: "cs:~navid-nikaein/xenial/oai-hss-8"
     num_units: 1
     options:
-      branch: "mme_scenario_player"
+      branch: "develop"
       eth: "eth0"
     annotations: 
       "gui-x": "5.1247406005859375"
@@ -80,10 +80,10 @@ services:
     to: 
       - "lxd:3"
   "oai-spgw":
-    charm: "cs:~navid-nikaein/xenial/oai-spgw"
+    charm: "cs:~navid-nikaein/xenial/oai-spgw-13"
     num_units: 1
     options:
-      branch: "mme_scenario_player"
+      branch: "develop"
       sgw-eth: "br-eth0"
       pgw-eth: "br-eth0"
       DEFAULT_DNS_IPV4_ADDRESS: "172.27.61.254"
