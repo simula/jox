@@ -150,8 +150,9 @@ set_cpu_freq(){
     do 
 	cpufreq-set -g performance -c $i || true 
     done 
-    lsmod | grep intel_powerclamp
-    [ $? -eq 0 ] && (rmmod intel_powerclamp || true)
+    #lsmod | grep intel_powerclamp
+    #[ $? -eq 0 ] && (rmmod intel_powerclamp || true)
+    rmmod intel_powerclamp || true
     
 }
 
