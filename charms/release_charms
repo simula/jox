@@ -4,7 +4,8 @@ revision=$1
 cd ..
 source /home/$USER/mosaic-5g/jox/joxenv
 cd -
-declare -a charms=("flexran-rtc" "oai-enb" "oai-mme" "oai-spgw" "oai-hss" "oai-rru" "oai-rru-snap")
+#declare -a charms=("flexran-rtc" "oai-enb" "oai-mme" "oai-spgw" "oai-hss" "oai-rru" "oai-rru-snap")
+declare -a charms=("oai-enb")
 declare -a series=("trusty" "xenial")
 
 for s in "${series[@]}"
@@ -23,7 +24,8 @@ do
           	echo "setting the $k revision to $revision"	
 	  	echo $revision > $JUJU_REPOSITORY/$s/$k/revision 
 	  fi 
-	  /usr/bin/charm release $url
+	  #/usr/bin/charm release $url
+	  /usr/bin/charm publish $url
 	  /usr/bin/charm grant $url everyone
 	  cd ..
 	fi 
