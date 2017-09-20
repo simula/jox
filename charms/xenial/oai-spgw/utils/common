@@ -33,6 +33,8 @@
 # brief common functions and variables
 # author  navid.nikaein@eurecom.fr and A. B. Molini
 
+ubuntu_dist=$(lsb_release -si)$(lsb_release -sr)
+
 set_env_paths(){
 
   #paths in openair-cn on Git
@@ -53,16 +55,44 @@ check_spgw_process(){
   #IS_RUNNING=`systemctl status spgw.service`
   #if [[ $IS_RUNNING =~ .*running.* ]]; then
   #fi
+    if [[ $ubuntu_dist == *"14"* ]]; then 
+	IS_ACTIVE=`service spgw status`
+    else
+	IS_ACTIVE=`systemctl is-active spgw.service`
+    fi 
 
-  IS_ACTIVE=`systemctl is-active spgw.service`
+
 
   if [ "$IS_ACTIVE" == "active" ]; then
      juju-log "OAI SPGW is running" 
      status=0
+  elif [[ $IS_ACTIVE =~ .*running.* ]]; then
+    juju-log "OAI SPGW is running"
+    status=0
   else
      juju-log "OAI SPGW is not running" 
      status=1
   fi
+}
+
+start_spgw(){
+
+if [[ $ubuntu_dist == *"14"* ]]; then 
+    service spgw restart || service spgw start || true
+else
+    systemctl restart spgw || true 
+fi 
+
+}
+
+stop_spgw(){
+
+if [[ $ubuntu_dist == *"14"* ]]; then 
+    service spgw stop || true
+else
+    systemctl stop spgw || true 
+fi 
+
 }
 
 check_spgw_connection(){

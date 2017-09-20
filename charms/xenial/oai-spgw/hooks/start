@@ -35,6 +35,7 @@
 
 set -eux
 source $CHARM_DIR/utils/common
+status-set maintenance "Running start hook"
 
 if [ -f $CHARM_DIR/.spgw_running_flag ]; then
     spgw_running_flag=`cat $CHARM_DIR/.spgw_running_flag`
@@ -44,7 +45,7 @@ fi
 
 if [ "$spgw_running_flag" == "yes" ] ; then
     
-    systemctl restart spgw  || true
+    start_spgw
     check_spgw_process || true
     if [ $status -eq 1 ]; then
 	juju-log "Troubles in running SPGW...try to upgrade the charm"

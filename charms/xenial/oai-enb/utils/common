@@ -34,6 +34,7 @@
 # author  navid.nikaein@eurecom.fr and A. B. Molini
 
 #oai-enb-version="2.0"
+ubuntu_dist=$(lsb_release -si)$(lsb_release -sr)
 
 set_env_paths(){
 
@@ -126,22 +127,47 @@ check_enb_process(){
 #IS_RUNNING=`systemctl status enb.service`
 #if [[ $IS_RUNNING =~ .*running.* ]]; then
 #fi
+    if [[ $ubuntu_dist == *"14"* ]]; then 
+	IS_ACTIVE=`service oaieNB status`
+    else
+	IS_ACTIVE=`systemctl is-active enb.service`
+    fi 
 
-IS_ACTIVE=`systemctl is-active enb.service`
 
-if [ "$IS_ACTIVE" == "active" ]; then
-   juju-log "OAI eNB is running"
-   status=0
+    if [ "$IS_ACTIVE" == "active" ]; then
+	juju-log "OAI eNB is running"
+	status=0
+    elif [[ $IS_ACTIVE =~ .*running.* ]]; then
+	juju-log "OAI HSS is running"
+	status=0
+    else
+	juju-log "OAI eNB is not running" 
+	status=1
+    fi
+
+}
+start_enb(){
+
+if [[ $ubuntu_dist == *"14"* ]]; then 
+    service oaieNB restart || service oaieNB start || true
 else
-   juju-log "OAI eNB is not running" 
-   status=1
-fi
+    systemctl restart enb.service || true 
+fi 
 
 }
 
+stop_enb(){
+
+    if [[ $ubuntu_dist == *"14"* ]]; then 
+	service oaieNB stop || true
+    else
+	systemctl stop enb.service  || true 
+    fi 
+
+}
 start_enb_process(){
 
-    systemctl restart enb.service || true
+    start_enb
     check_enb_process || true
     if [ $status -eq 1 ]; then
        juju-log "Trouble with OAI ENB upstart file...try to upgrade the charm"

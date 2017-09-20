@@ -33,6 +33,8 @@
 # brief common functions and variables
 # author  navid.nikaein@eurecom.fr and A. B. Molini
 
+ubuntu_dist=$(lsb_release -si)$(lsb_release -sr)
+
 set_env_paths(){
 
 #paths in openair-cn on Git
@@ -53,10 +55,17 @@ check_mme_process(){
 #  IS_RUNNING=`systemctl status mme.service`
 #if [[ $IS_RUNNING =~ .*running.* ]]; then
 #fi
+    if [[ $ubuntu_dist == *"14"* ]]; then 
+	IS_ACTIVE=`service mme status`
+    else 
+	IS_ACTIVE=`systemctl is-active mme.service`
+	
+    fi 
 
-    IS_ACTIVE=`systemctl is-active mme.service`
-    
     if [ "$IS_ACTIVE" == "active" ]; then
+	juju-log "OAI MME is running" 
+	status=0
+    elif [[ $IS_ACTIVE =~ .*running.* ]]; then
 	juju-log "OAI MME is running" 
 	status=0
     else
@@ -64,6 +73,26 @@ check_mme_process(){
 	status=1
     fi
 }
+start_mme(){
+
+if [[ $ubuntu_dist == *"14"* ]]; then 
+    service mme restart || service mme start || true
+else
+    systemctl restart mme || true 
+fi 
+
+}
+
+stop_mme(){
+
+if [[ $ubuntu_dist == *"14"* ]]; then 
+    service mme stop || true
+else
+    systemctl stop mme || true 
+fi 
+
+}
+
 
 check_mme_connection(){
 

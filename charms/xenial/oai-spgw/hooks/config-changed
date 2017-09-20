@@ -37,6 +37,8 @@ set -ux
 source $CHARM_DIR/utils/common
 set_env_paths
 
+status-set maintenance "Configuring $spgw_exec_name"
+
 if [ "$(config-get branch)" != "$(cat $CHARM_DIR/.branch)" ]; then
     $CHARM_DIR/hooks/upgrade-charm
 fi
@@ -60,5 +62,5 @@ machine_type=`virt-what`
 ##############################################################################################
 
 user_conf
-systemctl stop spgw || true
+stop_spgw
 $CHARM_DIR/hooks/start

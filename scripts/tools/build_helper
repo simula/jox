@@ -107,14 +107,15 @@ clean_juju_env(){
     $SUDO rm -rf /etc/init/juju*
     $SUDO rm -rf /var/lib/juju
     $SUDO rm -rf ~/.juju/
-    juju generate-config
+    $SUDO rm -rf ~/.local/share/juju
     sudo pkill jujud
     sudo pkill mongod
-    
+    juju generate-config
+
     if [ "$1" == "local" ]; then
       echo_info "switching to local environment, and bootstrapping"
-      juju switch local
-      juju bootstrap 	
+      #juju switch local
+      #juju bootstrap 	
     else 
     	 if [ "$1" == "manual" ]; then	
        	    echo_info "switching to manual environment"

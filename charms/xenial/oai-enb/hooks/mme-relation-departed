@@ -38,8 +38,10 @@ source $CHARM_DIR/utils/common
 set_env_paths
 file_config=`cat $CHARM_DIR/.config_file`
 
+status-set maintenance "running mme-relation-departed relation"
+
 juju-log "stopping eNB service and waiting for a MME relation to be restablished"
-systemctl stop enb.service || true
+stop_enb
 
 #I can remove from Hss the entry of the IMSI in the case we put from here and not from 
 #PHPOMYADMIN
@@ -54,4 +56,4 @@ sed -r -i  "s/(mobile_network_code[ ]*=[ ]*)\"[0-9]*\"/\1\"0\"/" $conf_path/$fil
 mmeipv4=`relation-get mme_ip`
 remove_mme_ip $mmeipv4
 
-status-set blocked "Waiting for MME relation"
+#

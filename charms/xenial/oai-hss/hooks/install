@@ -34,7 +34,7 @@
 # author  navid.nikaein@eurecom.fr and A. B. Molini   
 
 install_packages(){
-    status-set maintenance "Installing some dependencies"
+
     
     gitAlreadyInstalled=$(dpkg --get-selections git 2>/dev/null | grep -c 'install') || true
     if [ ! $gitAlreadyInstalled -eq 1 ]; then # If git is NOT installed
@@ -59,7 +59,7 @@ install_packages(){
 clone_repo(){
 
     juju-log "Fetching and installing OpenAirInterface HSS"
-    status-set maintenance "Fetching and installing OpenAirInterface HSS"
+    #status-set maintenance "Fetching and installing OpenAirInterface HSS"
     
     echo -n | openssl s_client -showcerts -connect gitlab.eurecom.fr:443 2>/dev/null | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' >> /etc/ssl/certs/ca-certificates.crt
     
@@ -116,7 +116,7 @@ juju_install_kernel(){
     check_current_kernel
     if [[ $REQUIRED_KERNEL_IS_INSTALLED == true ]]; then
 	juju-log "required kernel is already installed"
-	status-set maintenance "required kernel is already installed"
+	#status-set maintenance "required kernel is already installed"
     else	
 	if [ "$machine_type"  == "lxc" -o "$machine_type" == "docker" ]; then
 	    juju-log "Can't install the required kernel in $machine_type env. Proceed with the current kernel."
@@ -130,7 +130,7 @@ juju_install_kernel(){
 		    if [ "$(cat $CHARM_DIR/.reboot)" != "reboot" ]; then  
 			echo "reboot" > $CHARM_DIR/.reboot 
 			juju-log "installing the required kernel and reboot"
-			status-set maintenance "installing the required kernel and rebooting"
+			#status-set maintenance "installing the required kernel and rebooting"
 			install_required_kernel
     			juju-reboot --now
 		    else 
@@ -166,7 +166,12 @@ build_hss(){
 
 configure_hss(){
   juju-log "Add oai_hss service"
-  cp $CHARM_DIR/files/oai_hss.service /etc/systemd/system/
+
+  if [[ $ubuntu_dist == *"14"* ]]; then 
+      cp $CHARM_DIR/files/oai_hss /etc/init/oai_hss.conf
+  else
+      cp $CHARM_DIR/files/oai_hss.service /etc/systemd/system/
+  fi 
 
   $build_run_scripts/build_hss
   
@@ -203,15 +208,15 @@ configure_network(){
   sed -i -e "s/eth1/$eth/g" $hook
   chmod +x $hook
 }
-
-set -eux
-
 export DEBIAN_FRONTEND=noninteractive
 source $CHARM_DIR/utils/common
 export juju=set
+set -eux
+set_env_paths
+
+status-set maintenance "Installing support packages and $hss_exec_name"
 
 update_sources_list
-set_env_paths
 
 branch=`config-get branch`
 revision=`config-get revision`
@@ -234,7 +239,7 @@ configure_hosts
 build_hss
 configure_hss
 
-status-set blocked "Waiting for a mysql/db relation to start"
+#status-set blocked "Waiting for a mysql/db relation to start"
 
 
 

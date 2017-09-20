@@ -37,6 +37,8 @@ set -ux
 source $CHARM_DIR/utils/common
 set_env_paths
 
+status-set maintenance "Configuring $mme_exec_name"
+
 if [ "$(config-get branch)" != "$(cat $CHARM_DIR/.branch)" ]; then
     $CHARM_DIR/hooks/upgrade-charm
     juju-log "branch changed"
@@ -74,7 +76,8 @@ spgw_s11_ipv4=`cat $CHARM_DIR/.spgw_s11_ipv4`
 ##############################################################################################
 
 user_conf
-systemctl stop mme
+mme_stop
+
 
 if [ "$realm" != "$(cat $CHARM_DIR/.realm)"  ]; then
     rm $freediameter_conf_path/mme.*.pem
@@ -104,6 +107,6 @@ else
         done
     else
         juju-log "HSS relation exists, but it is not running because there no database"
-        status-set blocked "Add db relation to hss to get MME run.."
+        #status-set blocked "Add db relation to hss to get MME run.."
     fi
 fi

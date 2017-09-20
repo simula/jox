@@ -1,5 +1,6 @@
 #!/bin/bash
 
 set -eux
-service oai_hss stop || true
-status-set blocked "HSS software is not running"
+source $CHARM_DIR/utils/common
+stop_hss 
+status-set blocked "HSS is not running"

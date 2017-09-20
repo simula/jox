@@ -37,8 +37,10 @@ set -eux
 source $CHARM_DIR/utils/common
 set_env_paths
 
+status-set maintenance "Running stop hook"
+
 juju-log "Stopping HSS service in this unit"
-service oai_hss stop || true
+stop_hss 
 
 juju-log "Deleting the HSS stdout file"
 rm -f /srv/.out
@@ -68,4 +70,8 @@ juju-log "Restoring previous /etc/hosts file..."
 install -o root -g root -m 0644 /home/hosts /etc/
 
 juju-log "Removing Upstart script from the system..."
-rm -f /etc/init/oai_hss.conf
+if [[ $ubuntu_dist == *"14"* ]]; then 
+    rm -f /etc/init/oai_hss.conf
+else
+    rm -f /etc/systemd/system/oai_hss.service
+fi 

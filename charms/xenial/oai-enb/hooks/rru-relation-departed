@@ -37,9 +37,11 @@
 set -eux
 source $CHARM_DIR/utils/common
 set_env_paths
+status-set maintenance "running rru-relation-departed relation"
+
 file_config=`cat $CHARM_DIR/.config_file`
 node_func=`config-get node_function`
 
 juju-log "stopping eNB service and waiting for a RRU relation to be restablished"
-systemctl stop enb.service || true
+stop_enb
  

@@ -39,7 +39,7 @@ source $CHARM_DIR/utils/common
 check_enb_process || true
 if [ $status -eq 1 ]; then
     juju-log "OAI eNB is not running"
-    status-set blocked "OAI eNB is not running"
+    status-set maintenance "OAI eNB is not running"
 else 
     status-set active "OAI eNB is running"
     #application-version-set oai-enb-version

@@ -35,6 +35,7 @@
 set -eux
 source $CHARM_DIR/utils/common
 set_env_paths
+status-set maintenance "Running hss-relation-changed hook"
 
 #Gather everything HSS charm puts on the wire on S6a-mme interface
 juju-log "Retrieving HSS relation info"
@@ -56,9 +57,9 @@ fi
 if [ "$hss_running" == "no" ]; then
     check_mme_process || true
     if [ $status -eq 0 ]; then
-	systemctl stop mme
+	stop_mme 
        juju-log "The database relation is broken...MME is stopped...and waiting for db"
-       status-set blocked "Add the db relation"
+       #status-set blocked "Add the db relation"
        if [ -n "$(relation-ids mme)" ]; then
           for mme_id in $(relation-ids mme); do
               juju-log ""$mme_id""
@@ -67,7 +68,7 @@ if [ "$hss_running" == "no" ]; then
        fi
     else
        juju-log "Wait for db relation before starting MME software"
-       status-set blocked "Add the db relation"
+       #status-set blocked "Add the db relation"
     fi
     exit 0
 fi

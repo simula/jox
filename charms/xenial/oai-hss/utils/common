@@ -33,6 +33,9 @@
 # brief common functions and variables
 # author  navid.nikaein@eurecom.fr and A. B. Molini
 
+ubuntu_dist=$(lsb_release -si)$(lsb_release -sr)
+
+
 set_env_paths(){
 
 #paths in openair-cn on Git
@@ -48,6 +51,7 @@ set_env_paths(){
   oai_op_key="11111111111111111111111111111111"
   oai_opc_key="8E27B6AF0E692E750F32667A3B14605D"
 }
+
 
 db_data_in_config_file(){
 
@@ -66,15 +70,42 @@ check_hss_process(){
 #if [[ $IS_RUNNING =~ .*running.* ]]; then
 #fi
 
-IS_ACTIVE=`systemctl is-active oai_hss.service`
+    if [[ $ubuntu_dist == *"14"* ]]; then 
+	IS_ACTIVE=`service oai_hss status`
+    else
+	IS_ACTIVE=`systemctl is-active oai_hss.service`
+    fi 
+    
+    if [ "$IS_ACTIVE" == "active"]; then
+	juju-log "OAI HSS is running"
+	status=0
+    elif [[ $IS_ACTIVE =~ .*running.* ]]; then
+	juju-log "OAI HSS is running"
+	status=0
+    else
+	juju-log "OAI HSS is not running"
+	status=1
+    fi
+}
 
-if [ "$IS_ACTIVE" == "active" ]; then
-   juju-log "OAI HSS is running"
-   status=0
+start_hss(){
+
+if [[ $ubuntu_dist == *"14"* ]]; then 
+    service oai_hss restart || service oai_hss start || true
 else
-   juju-log "OAI HSS is not running"
-   status=1
-fi
+    systemctl restart oai_hss || true 
+fi 
+
+}
+
+stop_hss(){
+
+if [[ $ubuntu_dist == *"14"* ]]; then 
+    service oai_hss stop || true
+else
+    systemctl stop oai_hss || true 
+fi 
+
 }
 
 check_hss_connection_to_db(){
@@ -128,6 +159,8 @@ if [ "$COUNTER" -eq 30 ]; then
 fi
 
 }
+
+
 
 install_required_kernel(){
 version=3.19

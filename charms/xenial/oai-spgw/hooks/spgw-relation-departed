@@ -38,7 +38,7 @@ source $CHARM_DIR/utils/common
 set_env_paths
 
 juju-log "stopping SPGW service and waiting for a spgw relation to be restablished"
-systemctl stop spgw || true
+stop_spgw
 
 relation-set SPGW_RUNNING=no
 

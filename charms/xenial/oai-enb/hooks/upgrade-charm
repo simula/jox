@@ -37,8 +37,9 @@
 # Best practice suggests you execute the hooks/install and
 # hooks/config-changed to ensure all updates are processed
 
+status-set maintenance "Running upgrade-charm hook"
 
-systemctl stop enb.service || true # Stop the service
+stop_enb
 $CHARM_DIR/hooks/install  
 
 

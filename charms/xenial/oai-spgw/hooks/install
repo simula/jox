@@ -34,7 +34,7 @@
 # author  navid.nikaein@eurecom.fr and A. B. Molini   
 
 install_packages(){
-    status-set maintenance "Installing some dependencies"
+    #status-set maintenance "Installing some dependencies"
 
     gitAlreadyInstalled=$(dpkg --get-selections git 2>/dev/null | grep -c 'install') || true
     if [ ! $gitAlreadyInstalled -eq 1 ]; then # If git is NOT installed
@@ -72,7 +72,7 @@ update_sources_list(){
 }
 
 juju_install_kernel(){
-    status-set maintenance "Check the kernel and update if required"
+    #status-set maintenance "Check the kernel and update if required"
     juju-log "Check the kernel and update if required"
 
     if [ "$machine_type"  == "lxc" -o "$machine_type" == "docker" ]; then
@@ -152,8 +152,11 @@ build_spgw(){
 }
 
 configure_spgw(){
-    cp $CHARM_DIR/files/spgw.service /etc/systemd/system/
-    
+    if [[ $ubuntu_dist == *"14"* ]]; then 
+	cp $CHARM_DIR/files/spgw.conf /etc/init/spgw.conf
+    else
+	cp $CHARM_DIR/files/spgw.service /etc/systemd/system/
+    fi
 
     mkdir -p $spgw_conf_path
     cp $openair_path/etc/spgw.conf $spgw_conf_path/spgw.conf
@@ -189,6 +192,8 @@ source $CHARM_DIR/utils/common
 update_sources_list
 set_env_paths
 
+status-set maintenance "Installing support packages and $spgw_exec_name"
+
 open-port 2152/udp
 open-port 2123/udp
 
@@ -214,4 +219,4 @@ build_spgw
 configure_spgw
 run_spgw
 
-status-set active "SPGW Ready to start"
+#status-set active "SPGW Ready to start"

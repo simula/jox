@@ -35,6 +35,7 @@
 
 set -eux
 source $CHARM_DIR/utils/common
+status-set maintenance "Running start hook"
 
 MME_UNIT_RUNNING=0
 MME_UNIT_PRESENT=0

@@ -74,7 +74,7 @@ recover_config_file(){
 
 clone_repro(){
     juju-log  "Fetching and installing Openair5G for $hw"
-    status-set maintenance "Fetching and installing Openair5G for $hw"
+    #status-set maintenance "Fetching and installing Openair5G for $hw"
     
     echo -n | openssl s_client -showcerts -connect gitlab.eurecom.fr:443 2>/dev/null | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' >> /etc/ssl/certs/ca-certificates.crt
     
@@ -105,7 +105,7 @@ clone_repro(){
 }
 
 juju_install_kernel(){
-    status-set maintenance "Check the kernel and update if required"
+    #status-set maintenance "Check the kernel and update if required"
     juju-log "Check the kernel and update if required"
     check_current_kernel
     
@@ -124,14 +124,14 @@ juju_install_kernel(){
 		echo "lowlatency"      >  $CHARM_DIR/.kernel
 	    fi
 	else
-	    status-set maintenance "Proceed with the current kernel ($machine_type)"
+	    #status-set maintenance "Proceed with the current kernel ($machine_type)"
 	    juju-log "Required kernel is installed"
 	fi 
     else  
 	if [[ $REQUIRED_KERNEL_IS_INSTALLED == false ]]; then
 	    if [ "$(cat $CHARM_DIR/.reboot)" != "reboot" ]; then  
 		juju-log "installing the required kernel and reboot"
-		status-set maintenance "installing the required kernel and rebooting"
+		#status-set maintenance "installing the required kernel and rebooting"
 		install_required_kernel
   		echo "reboot" > $CHARM_DIR/.reboot 
 		juju-reboot --now
@@ -276,7 +276,7 @@ set_config_file(){
 build_enb(){
     # IF
     juju-log "Building OAI $node_func for SDR $build_oai_for_hw"
-    status-set maintenance "Building OAI $node_func for SDR $build_oai_for_hw"
+    #status-set maintenance "Building OAI $node_func for SDR $build_oai_for_hw"
     $build_path/build_oai -I -w $build_oai_for_hw
     juju-log  "$build_path/build_oai `echo $build_args`"
     echo "$build_path/build_oai `echo $build_args`"
@@ -388,6 +388,8 @@ export DEBIAN_FRONTEND=noninteractive
 source /$CHARM_DIR/utils/common
 set_env_paths
 
+status-set maintenance "Installing support packages and $oaieNB_exec_name"
+
 open-port 2152/udp
 branch=`config-get branch`
 revision=`config-get revision`
@@ -457,9 +459,13 @@ set_exec_args
 
 
 juju-log "Add OAI eNB systemd upstart"
-cp $CHARM_DIR/files/enb.service /etc/systemd/system/
-
+  
+if [[ $ubuntu_dist == *"14"* ]]; then 
+    cp $CHARM_DIR/files/oaieNB /etc/init/oaieNB.conf
+else
+    cp $CHARM_DIR/files/enb.service /etc/systemd/system/
+fi 
 juju-log "build_args $CHARM_DIR/.build_args"
 juju-log "exec_args $CHARM_DIR/.exec_args"
 
-status-set blocked "Waiting for the $relations relation(s)"
+#status-set blocked "Waiting for the $relations relation(s)"

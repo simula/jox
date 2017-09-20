@@ -34,7 +34,7 @@
 # author  navid.nikaein@eurecom.fr 
 
 install_packages(){
-    status-set maintenance "Installing some dependencies"
+    #status-set maintenance "Installing some dependencies"
 
     gitAlreadyInstalled=$(dpkg --get-selections git 2>/dev/null | grep -c 'install') || true
     if [ ! $gitAlreadyInstalled -eq 1 ]; then # If git is NOT installed
@@ -69,7 +69,7 @@ update_sources_list(){
 }
 
 juju_install_kernel(){
-    status-set maintenance "Check the kernel and update if required"
+    #status-set maintenance "Check the kernel and update if required"
     juju-log "Check the kernel and update if required"
 
     #we don't either want the low latency kernel for MME
@@ -146,7 +146,11 @@ build_mme(){
 }
 
 configure_mme(){
-  cp $CHARM_DIR/files/mme.service /etc/systemd/system/
+  if [[ $ubuntu_dist == *"14"* ]]; then 
+      cp $CHARM_DIR/files/mme /etc/init/mme.conf
+  else 
+      cp $CHARM_DIR/files/mme.service /etc/systemd/system/
+  fi
 
   # copy config templates
   mkdir -p $mme_conf_path
@@ -183,6 +187,8 @@ source $CHARM_DIR/utils/common
 
 update_sources_list
 set_env_paths
+
+status-set maintenance "Installing support packages and $mme_exec_name"
 
 open-port 2152/udp
 open-port 2123/udp

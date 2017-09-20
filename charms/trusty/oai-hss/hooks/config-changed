@@ -1,7 +1,7 @@
 #!/bin/bash
 ################################################################################
 #
-# Copyright (c) 2016, EURECOM (www.eurecom.fr)
+# Copyright (c) 2017, EURECOM (www.eurecom.fr)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,8 +37,9 @@ set -eux
 source $CHARM_DIR/utils/common
 set_env_paths
 
+status-set maintenance "Configuring $hss_exec_name"
 
-service oai_hss stop || true
+stop_hss
 
 
 if [ "$(config-get branch)" != "$(cat $CHARM_DIR/.branch)" ]; then
@@ -55,7 +56,7 @@ if [ "$(config-get realm)" != "$(cat $CHARM_DIR/.realm)" ]; then
     #    FREEDIAMETER_PREFIX=/usr/local
     #fi
     if [ -d $freediameter_conf_path ]; then
-		rm $freediameter_conf_path/hss.*.pem 
+	rm $freediameter_conf_path/hss.*.pem 
     fi 
     
     fqdn=`hostname --fqdn`
@@ -66,6 +67,7 @@ if [ "$(config-get realm)" != "$(cat $CHARM_DIR/.realm)" ]; then
     sed -r -i  "s/(Realm[ ]*=[ ]*)\".*\"/\1\"$realm\"/" $freediameter_conf_path/hss_fd.conf
     sed -r -i  "s/(^ALLOW_OLD_TLS[ ]*).*/\1*.$realm/" $freediameter_conf_path/acl.conf
 
+    $build_run_scripts/check_hss_s6a_certificate $freediameter_conf_path $fqdn
 fi
 
 if [ -z "$(relation-ids db)" ]; then
@@ -82,6 +84,6 @@ else
 
 fi
 
-
+sed -r -i "s/(OPERATOR_key[^\"]*)\".*\"/\1\"$oai_op_key\"/" $hss_conf/hss.conf
 
 

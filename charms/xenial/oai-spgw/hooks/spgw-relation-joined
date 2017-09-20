@@ -36,6 +36,8 @@
 set -eux
 source $CHARM_DIR/utils/common
 
+status-set maintenance "Running spgw-relation-joined hook"
+
 if [ -f $CHARM_DIR/.spgw_running_flag ]; then
   spgw_running=`cat $CHARM_DIR/.spgw_running_flag`
 else

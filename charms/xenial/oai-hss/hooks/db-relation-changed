@@ -3,6 +3,8 @@ set -eux
 
 source $CHARM_DIR/utils/common
 
+status-set maintenance "Running db-relation-changed hook"
+
 database=`relation-get database`
 user=`relation-get user`
 password=`relation-get password`

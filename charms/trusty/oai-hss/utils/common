@@ -33,21 +33,25 @@
 # brief common functions and variables
 # author  navid.nikaein@eurecom.fr and A. B. Molini
 
+ubuntu_dist=$(lsb_release -si)$(lsb_release -sr)
+
+
 set_env_paths(){
 
 #paths in openair-cn on Git
 
   openair_path=/srv/openair-cn
-  build_path=$openair_path/BUILD
-  hss_path=$build_path/HSS
-  epc_path=$build_path/EPC
-  build_run_scripts=$openair_path/SCRIPTS
-  tools_path=$build_path/TOOLS
+  build_path=$openair_path/build
+  hss_path=$build_path/hss
+  build_run_scripts=$openair_path/scripts
+  tools_path=$build_path/tools
   hss_conf=/usr/local/etc/oai
   hss_exec_name=oai_hss
   freediameter_conf_path=$hss_conf/freeDiameter
-
+  oai_op_key="11111111111111111111111111111111"
+  oai_opc_key="8E27B6AF0E692E750F32667A3B14605D"
 }
+
 
 db_data_in_config_file(){
 
@@ -62,15 +66,45 @@ sed -r -i "s/(MYSQL_db[^\"]*)\".*\"/\1\"$4\"/" $hss_conf/hss.conf
 
 check_hss_process(){
 
-IS_RUNNING=`service oai_hss status`
+#IS_RUNNING=`systemctl status oai_hss.service`
+#if [[ $IS_RUNNING =~ .*running.* ]]; then
+#fi
 
-if [[ $IS_RUNNING =~ .*running.* ]]; then
+check_ubuntu_dist
+
+if [[ $ubuntu_dist == *"14"* ]]; then 
+    IS_ACTIVE=`service oai_hss status`
+else
+    IS_ACTIVE=`systemctl is-active oai_hss.service`
+fi 
+
+if [ "$IS_ACTIVE" == "active" ]; then
    juju-log "OAI HSS is running"
    status=0
 else
    juju-log "OAI HSS is not running"
    status=1
 fi
+}
+
+start_hss(){
+
+if [[ $ubuntu_dist == *"14"* ]]; then 
+    service oai_hss restart || service oai_hss start
+else
+    systemctl restart oai_hss || true 
+fi 
+
+}
+
+stop_hss(){
+
+if [[ $ubuntu_dist == *"14"* ]]; then 
+    service oai_hss stop || true
+else
+    systemctl stop oai_hss || true 
+fi 
+
 }
 
 check_hss_connection_to_db(){
@@ -124,6 +158,8 @@ if [ "$COUNTER" -eq 30 ]; then
 fi
 
 }
+
+
 
 install_required_kernel(){
 version=3.19

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+status-set maintenance "Running spgw-relation-changed hook"
+
 juju-log "Retrieving SPGW relation info"
 spgw_running=`relation-get SPGW_RUNNING`
 spgw_s11_ipv4=`relation-get spgw_s11_ipv4`

@@ -34,7 +34,7 @@
 # author  navid.nikaein@eurecom.fr and A. B. Molini   
 
 install_packages(){
-    status-set maintenance "Installing some dependencies"
+
     
     gitAlreadyInstalled=$(dpkg --get-selections git 2>/dev/null | grep -c 'install') || true
     if [ ! $gitAlreadyInstalled -eq 1 ]; then # If git is NOT installed
@@ -59,7 +59,7 @@ install_packages(){
 clone_repo(){
 
     juju-log "Fetching and installing OpenAirInterface HSS"
-    status-set maintenance "Fetching and installing OpenAirInterface HSS"
+    #status-set maintenance "Fetching and installing OpenAirInterface HSS"
     
     echo -n | openssl s_client -showcerts -connect gitlab.eurecom.fr:443 2>/dev/null | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' >> /etc/ssl/certs/ca-certificates.crt
     
@@ -72,8 +72,7 @@ clone_repo(){
 	git reset --hard HEAD 
 	git checkout $branch 
 	#git pull 
-	shopt -s nocasematch
-	if [[ "$revision" != "HEAD" ]]; then 
+	if [ "$revision" != "head" ]; then 
 	    git checkout $revision
 	fi 
 	cd -
@@ -82,8 +81,7 @@ clone_repo(){
 	cp -f /etc/hosts /home
 	git clone --branch $branch https://gitlab.eurecom.fr/oai/openair-cn.git $openair_path
 	cd $openair_path
-	shopt -s nocasematch
-	if [[ "$revision" != "HEAD" ]]; then 
+	if [ "$revision" != "head" ]; then 
 	    git checkout $revision
 	fi 
 	cd -
@@ -94,6 +92,21 @@ clone_repo(){
     sed -i '/phpmyadmin/d' $tools_path/build_helper
     #we don't either want the low latency kernel for HSS
     sed -i -r "s/(check_kernel_release_and_install_xtables_addons_oai[^()]+)/#\1/" $tools_path/build_helper  
+
+}
+
+update_sources_list(){
+    wget -O /tmp/country.json http://www.geoplugin.net/json.gp
+    country=`sed -n 's/\"geoplugin_countryName\"://gp' /tmp/country.json | sed -n 's/ //gp' | sed -n 's/,//gp' | sed -n 's/\"//gp'`
+
+    if [ "$country"x = "China"x ]; then
+        juju-log "China, get use source from Tsinghua University"
+        mv /etc/apt/sources.list /etc/apt/sources.list.bak
+        wget -P /etc/apt/ http://han.kuwan.space/oaicharms/sources.list
+        apt-get update
+    else
+        juju-log "proceed normally"
+    fi
     
 }
 
@@ -103,7 +116,7 @@ juju_install_kernel(){
     check_current_kernel
     if [[ $REQUIRED_KERNEL_IS_INSTALLED == true ]]; then
 	juju-log "required kernel is already installed"
-	status-set maintenance "required kernel is already installed"
+	#status-set maintenance "required kernel is already installed"
     else	
 	if [ "$machine_type"  == "lxc" -o "$machine_type" == "docker" ]; then
 	    juju-log "Can't install the required kernel in $machine_type env. Proceed with the current kernel."
@@ -117,7 +130,7 @@ juju_install_kernel(){
 		    if [ "$(cat $CHARM_DIR/.reboot)" != "reboot" ]; then  
 			echo "reboot" > $CHARM_DIR/.reboot 
 			juju-log "installing the required kernel and reboot"
-			status-set maintenance "installing the required kernel and rebooting"
+			#status-set maintenance "installing the required kernel and rebooting"
 			install_required_kernel
     			juju-reboot --now
 		    else 
@@ -140,7 +153,6 @@ update_hostname(){
 
 configure_hosts(){
   realm=`config-get realm`
-  echo $realm > $CHARM_DIR/.realm
   #define fqdn for MME
   if [ -z "$(grep -o "`hostname`.$realm" /etc/hosts)" ]; then
      echo 127.0.0.1 localhost > /etc/hosts
@@ -153,13 +165,26 @@ build_hss(){
 }
 
 configure_hss(){
-  juju-log "Add oai_hss init script"
-  cp $CHARM_DIR/files/oai_hss /etc/init/oai_hss.conf
+  juju-log "Add oai_hss service"
+
+  if [[ $ubuntu_dist == *"14"* ]]; then 
+      cp $CHARM_DIR/files/oai_hss /etc/init/oai_hss.conf
+  else
+      cp $CHARM_DIR/files/oai_hss.service /etc/systemd/system/
+  fi 
 
   $build_run_scripts/build_hss
-  cp $openair_path/ETC/hss.conf $hss_conf/hss.conf
-  cp $openair_path/ETC/hss_fd.conf $freediameter_conf_path/hss_fd.conf
-  cp $openair_path/ETC/acl.conf $freediameter_conf_path/acl.conf
+  
+  if [ ! -d $hss_conf ]; then
+      mkdir -p $hss_conf
+  fi
+  if [ ! -d $freediameter_conf_path ]; then
+      mkdir -p $freediameter_conf_path
+  fi
+  
+  cp -upv $openair_path/etc/hss.conf $hss_conf
+  cp -upv $openair_path/etc/hss_fd.conf $freediameter_conf_path
+  cp -upv $openair_path/etc/acl.conf $freediameter_conf_path
 
   # generate cert
   fqdn=`hostname --fqdn`
@@ -184,12 +209,14 @@ configure_network(){
   chmod +x $hook
 }
 
+status-set maintenance "Installing support packages and $hss_exec_name"
 set -eux
 
 export DEBIAN_FRONTEND=noninteractive
 source $CHARM_DIR/utils/common
 export juju=set
 
+update_sources_list
 set_env_paths
 
 branch=`config-get branch`
@@ -213,7 +240,7 @@ configure_hosts
 build_hss
 configure_hss
 
-status-set blocked "Waiting for a mysql/db relation to start"
+#status-set blocked "Waiting for a mysql/db relation to start"
 
 
 

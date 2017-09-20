@@ -36,6 +36,7 @@
 set -eux
 source $CHARM_DIR/utils/common
 
+status-set maintenance "Running start hook"
 
 if [ -z "$(relation-ids hss)" ]; then
     status-set blocked "Hss is not attached"
@@ -53,7 +54,7 @@ if [ "$(cat $CHARM_DIR/.spgw_running)" != "yes" ] ;then
 fi
 
 
-systemctl restart mme  || true
+start_mme 
 check_mme_process || true
 if [ $status -eq 1 ]; then
    juju-log "Troubles in running MME...try to upgrade the charm"

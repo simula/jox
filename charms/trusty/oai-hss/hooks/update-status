@@ -37,18 +37,17 @@
 set -eux
 source $CHARM_DIR/utils/common
 
+status-set maintenance "Running update-status hook"
 
-if [ -n "$(relation-ids db)" ]; then
-   check_hss_process
-   if [ $status -eq 1 ]; then
-       	juju-log "OAI HSS is not running"
-       	#status-set blocked "Troubles in running HSS, trying to restart the service"  
-       	#service oai_hss restart
-	#$CHARM_DIR/actions/restart	
-       	#exit 1
-   else 
-       	status-set active "OAI HSS is running"
-   fi  
+check_hss_process || true
+if [ $status -eq 1 ]; then
+    juju-log "OAI HSS is not running"
+    status-set blocked "OAI HSS in not running HSS"  
+    #service oai_hss restart
+    #$CHARM_DIR/actions/restart	
+    #exit 1
+else 
+    status-set active "OAI HSS is running"
 fi
 
 

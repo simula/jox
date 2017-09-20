@@ -35,6 +35,8 @@
 
 set -eux
 source $CHARM_DIR/utils/common
+status-set maintenance "Running update-status hook"
+
 check_mme_process || true
 if [ $status -eq 1 ]; then
     juju-log "OAI MME is not running"

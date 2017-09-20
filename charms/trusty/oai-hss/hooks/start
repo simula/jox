@@ -37,11 +37,12 @@
 set -eux
 source $CHARM_DIR/utils/common
 
+status-set maintenance "Running start hook"
 
 if [ -n "$(relation-ids db)" ]; then
    juju-log "Running HSS"
-   service oai_hss restart || service oai_hss start
-   check_hss_process
+   start_hss 
+   check_hss_process || true
    if [ $status -eq 1 ]; then
        juju-log "Troubles in running HSS...try to upgrade the charm"
        status-set blocked "Troubles in running HSS...try to upgrade the charm"

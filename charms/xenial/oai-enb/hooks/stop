@@ -39,7 +39,7 @@ source $CHARM_DIR/utils/common
 set_env_paths
 
 juju-log "Stopping OAI ENB service in this unit"
-systemctl stop enb.service || true
+stop_enb
 
 juju-log "Done"
 
@@ -48,7 +48,13 @@ rm -rf $openair_path
 juju-log "Openair5G removed"
 
 juju-log "Removing Upstart script from the system..."
-rm -f /etc/systemd/system/enb.service
-juju-log "Done"
+
+if [[ $ubuntu_dist == *"14"* ]]; then 
+    rm -f /etc/init/oaieNB.conf
+else
+    rm -f /etc/systemd/system/enb.service\
+fi 
+
+
 
 

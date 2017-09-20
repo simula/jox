@@ -34,9 +34,10 @@
 # author  navid.nikaein@eurecom.fr 
 
 set -eux
+status-set maintenance "running rtc-relation-departed relation"
 
 juju-log "stopping eNB service and waiting for a RTC relation to be restablished"
-systemctl stop enb.service || true
+stop_enb
 
 echo "no" > $CHARM_DIR/.rtc_running
 

@@ -35,6 +35,8 @@
 
 set -ex
 
+status-set maintenance "Running hss-relation-changed hook"
+
 juju-log "Retrieving MME relation info"
 mme_fqdn=`relation-get mme_hostname`
 IP_mme=`relation-get ip_address_mme`

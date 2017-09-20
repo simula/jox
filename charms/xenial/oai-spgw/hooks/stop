@@ -37,8 +37,10 @@ set -eux
 source $CHARM_DIR/utils/common
 set_env_paths
 
+status-set maintenance "Running stop hook"
+
 juju-log "Stopping SPGW service in this unit"
-systemctl stop spgw  || true
+stop_spgw
 
 juju-log "Deleting the SPGW stdout and stderr files"
 rm -f /srv/spgw.out /srv/spgw.err
@@ -59,4 +61,8 @@ juju-log "Restoring previous /etc/hosts file..."
 install -o root -g root -m 0644 /home/hosts /etc/
 
 juju-log "Removing Upstart script from the system..."
-rm -f /etc/systemd/system/spgw.service
+if [[ $ubuntu_dist == *"14"* ]]; then 
+    rm -f /etc/init/spgw.conf
+else
+    rm -f /etc/systemd/system/spgw.service
+fi 

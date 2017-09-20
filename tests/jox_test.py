@@ -75,6 +75,7 @@ import time
 
 class time_meas_extended:
     Events = {}
+    Status = {}
     start = 0
 
     def beginning(self):
@@ -89,12 +90,22 @@ class time_meas_extended:
         if event_name not in self.Events[unit_name].keys():
             self.Events[unit_name][event_name] = time.time()
 
+    def push_status(self, unit_name, status_name):
+        if unit_name not in self.Status.keys():
+            self.Status[unit_name] = {}
+        if status_name not in self.Status[unit_name].keys():
+            self.Status[unit_name][status_name] = time.time()
+
     def print_events(self):
         print "*** Execution stats ***"
 
         for key_outer in self.Events.keys():
             for key_inner in self.Events[key_outer]:
                 print key_outer, key_inner, self.Events[key_outer][key_inner] - self.start
+
+        for key_outer in self.Status.keys():
+            for key_inner in self.Status[key_outer]:
+                print key_outer, key_inner, self.Status[key_outer][key_inner] - self.start
 
         print "*** Execution stats ***"
 
@@ -143,7 +154,7 @@ class JujuAgent(object):
        slave: under the control of a higher level orchestration receiving the lifecycle commands and sending back the results
     """
 
-    def __init__(self, jenv='manual', message_bus='local',template='dran1', juju_gui=False, repository='remote',log_level='info'):
+    def __init__(self, jenv='manual', message_bus='local',template='dran1', juju_gui=False, repository='remote',log_level='info', series="xenial"):
         super(JujuAgent, self).__init__()
         if message_bus == 'local':
             self.msgbus = None
@@ -169,6 +180,7 @@ class JujuAgent(object):
         self.log = None
         self.console = None
         self.repository=repository
+        self.series=series
         # there must be a better way to do this
         if  template == 'sim1' :
             self.services = configs.sim1
@@ -184,6 +196,8 @@ class JujuAgent(object):
             self.services = configs.cran2
         elif template == 'test' : 
             self.services = configs.test
+        elif template == 'test1' : 
+            self.services = configs.test1
         else:
             self.services = configs.none
             print('no service template is defined')
@@ -299,7 +313,7 @@ class JujuAgent(object):
 
     #add local charm to the env
     # TODO : make a list of charm dir
-    def env_charm_dir(self,charm_dir='~/charmstore',charm_name='',series='trusty'):
+    def env_charm_dir(self,charm_dir='~/charmstore',charm_name='',series='xenial'):
         self.charm = self.env.add_local_charm_dir(charm_dir+'/'+series+'/'+charm_name,series)
 
     def service_unit(self, service=None):
@@ -316,7 +330,7 @@ class JujuAgent(object):
         else:
              return self.env.status()['Services'][service]['Status'].values()[0]
 
-    def agent_status(self, service=None):
+    def agent_status2(self, service=None):
         if service is None:
             self.log.warn('No Service is defined')
             return None
@@ -329,6 +343,27 @@ class JujuAgent(object):
             return None
         else:
             return self.env.status()['Services'][service]['Units'][self.service_unit(service)]['UnitAgent']['Info']
+
+    def agent_status(self, service=None):
+        if service is None:
+            self.log.warn('No Service is defined')
+            return None
+        else:
+            return self.env.status()['Services'][service]['Units'][self.service_unit(service)]['UnitAgent']['Status']
+
+    def agent_wl_info(self, service=None):
+        if service is None:
+            self.log.warn('No Service is defined')
+            return None
+        else:
+            return self.env.status()['Services'][service]['Units'][self.service_unit(service)]['Workload']['Info']
+
+    def agent_wl_status(self, service=None):
+        if service is None:
+            self.log.warn('No Service is defined')
+            return None
+        else:
+            return self.env.status()['Services'][service]['Units'][self.service_unit(service)]['Workload']['Status']
 
 
     # TODO: to be updated
@@ -441,7 +476,7 @@ class JujuAgent(object):
                                                                      body=json.dumps(message)))
 
 
-    def deploy(self,service='all', repository='remote', series='trusty'):
+    def deploy(self,service='all', repository='remote', series='xenial'):
         self.log.debug('Deploying the stack ' + str(self.stack_id))
 
         deploy_state = 0
@@ -451,6 +486,7 @@ class JujuAgent(object):
             services = self.services
         else:
             services = service
+        print 'services : ' +  str(services)
         # add local charm store (lcs) if the repository is set to local
         if repository == 'local' : 
             try:  
@@ -468,6 +504,7 @@ class JujuAgent(object):
             # TODO make single tenant request to juju to create OAI stack
             # XXX either return to the SO the ID of the stack that is created or create and mange one here
             for instance in services:
+                
                 if repository == 'remote' : 
                     index = self.find_index(configs.service_descriptor,'service',instance)
                     service_name=configs.service_descriptor[index]['service']
@@ -475,10 +512,12 @@ class JujuAgent(object):
                 else :
                     # instance assumed to be the name of directory 
                     charm_dir=lcs+'/'+series+'/'+instance
-                    lcs_info=self.env.add_local_charm_dir(charm_dir, series) 
                     self.log.debug('charm dir for ' + str(instance) + ' is: ' + str(charm_dir))
+                    lcs_info=self.env.add_local_charm_dir(lcs, series) 
                     service_name=instance
-                    charm_url=lcs_info['CharmURL']
+                    #charm_url=lcs_info['CharmURL']
+                    charm_url='local:'+series+'/'+instance
+                    print 'charm url : '  + str (charm_url)
                 #print str(index)+'. ' + str(instance)
                 self.log.debug('deploying ' + str(service_name) + ' with the following URL ' + str(charm_url))
                 try:
@@ -714,8 +753,19 @@ class JujuAgent(object):
                 unit_name=str(self.service_unit(instance))
                 agent_status=str(self.agent_status(instance))
                 agent_info=str(self.agent_info(instance))
+                agent_wl_status=str(self.agent_wl_status(instance))
+                agent_wl_info=str(self.agent_wl_info(instance))
                 if agent_info != "":
                     self.timelog.push_event(unit_name, agent_info)
+                
+                if agent_wl_info != "":
+                    self.timelog.push_event(unit_name, agent_wl_info)
+
+                if agent_status != "":
+                    self.timelog.push_status(unit_name, agent_status)
+
+                if agent_wl_status != "":
+                    self.timelog.push_status(unit_name, agent_wl_status)
 
                 # need to be refined
                 if agent_status != 'error' : #and agent_status != 'None':
@@ -829,7 +879,7 @@ class JujuAgent(object):
                     except:
                         self.log.warn('Service ' + instance + ' does not exist or already removed')
 
-                self.state = 0
+                #self.state = 0
 
         if dispose_state == len(services):
             self.stack_state = 'DISPOSE_COMPLETE'
@@ -866,6 +916,9 @@ if __name__ == '__main__':
     parser.add_argument('--log',  metavar='[level]', action='store', type=str,
                         required=False, default='info', 
                         help='set the log level: debug, info (default), warning, error, critical')
+    parser.add_argument('--series',  metavar='[option]', action='store', type=str,
+                        required=False, default='xenial', 
+                        help='set the log level: debug, info (default), warning, error, critical')
     parser.add_argument('--juju-gui',  action='store_true', dest='juju_gui',
                         required=False, default=False, 
                         help='add juju gui to the service topology')
@@ -886,7 +939,9 @@ if __name__ == '__main__':
                    template=args.template,
                    juju_gui=args.juju_gui,
                    repository=args.cs,
-                   log_level=args.log)
+                   log_level=args.log,
+                   series=args.series
+                  )
     ja.init_logger()
     ja.setup_jenv()
 
@@ -903,6 +958,11 @@ if __name__ == '__main__':
         ja.setup_channels()
         ja.listen()
     else:
+        event_handler = ja.env_watcher()
+        observer = Observer()
+        observer.schedule(event_handler, path='.', recursive=False)
+        observer.start()        
+        time.sleep(2)
         # orchestrator logic when deployed in standalone mode
         #ja.deploy(service={'mysql'})
         ja.log.info('Services are : ' + str(ja.services))
@@ -911,12 +971,9 @@ if __name__ == '__main__':
         ja.deploy(repository=ja.repository)
         ja.configure()
         ja.provision()
-        ja.chain()
+        ja.chain() 
         # end of request
-        event_handler = ja.env_watcher()
-        observer = Observer()
-        observer.schedule(event_handler, path='.', recursive=False)
-        observer.start()
+       
         try:
             while True:
                 time.sleep(1)
@@ -926,9 +983,12 @@ if __name__ == '__main__':
                 if args.log == 'debug' :
                     ja.env_status()
         except KeyboardInterrupt:
-            observer.stop()
-            ja.dispose(unchain=False)
+           
+            ja.dispose(unchain=False)  
+            ja.log.debug(service_status)
             ja.timelog.print_events()
+            
+            observer.stop()
             ja.close_jenv()
         observer.join()
 

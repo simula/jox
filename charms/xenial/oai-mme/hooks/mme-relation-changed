@@ -35,12 +35,13 @@
 set -ex
 source $CHARM_DIR/utils/common
 set_env_paths
+status-set maintenance "Running mme-relation-changed hook"
 
 DEBUG_RESTART=`relation-get DEBUG_RESTART`
 
 if [ -n "$DEBUG_RESTART" ]; then
   juju-log "mme restart is requested"
-  systemctl stop mme || true
+  stop_mme 
   $CHARM_DIR/hooks/start
   exit 0
 fi

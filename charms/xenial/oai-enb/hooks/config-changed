@@ -38,6 +38,8 @@ set -eux
 source $CHARM_DIR/utils/common
 set_env_paths
 
+status-set maintenance "Configuring $oaieNB_exec_name"
+
 node_func=`config-get node_function`
 file_config=`cat $CHARM_DIR/.config_file`
 

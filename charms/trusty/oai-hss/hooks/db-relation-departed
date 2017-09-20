@@ -3,16 +3,15 @@ set -eux
 source $CHARM_DIR/utils/common
 set_env_paths
 
+status-set blocked "running db-relation-departed"
 
 juju-log "Stopping HSS, database is departing and maybe doesn't exist anymore"
-service oai_hss stop || true
+stop_hss
 
 juju-log "Delete the trace of the relation data "
 db_data_in_config_file "" "" "" ""
 #it is not stricly necessary because when I will add another relation
 #this same file will be overwritten by new database relation data.
-
-status-set blocked "Waiting for database relation"
 
 if [ -n "$(relation-ids hss)" ]; then
     for hss_id in $(relation-ids hss); do

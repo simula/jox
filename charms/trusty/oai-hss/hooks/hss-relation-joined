@@ -57,7 +57,7 @@ fi
     #add a check if it is really running
     #maybe we add a hss relation and right after a db relation and so
     #we have the db relation, but not HSS running yet.
-    check_hss_process
+    check_hss_process || true
     if [ "$status" -eq 0 ]; then
        relation-set hss_running=yes
     else
