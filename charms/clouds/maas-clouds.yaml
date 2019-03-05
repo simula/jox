@@ -1,9 +1,0 @@
-clouds:
-   devmaas:
-      type: maas
-      auth-types: [oauth1]
-      endpoint: http://172.27.60.1/MAAS
-   prodmaas:
-      type: maas
-      auth-types: [oauth1]
-      endpoint: http://172.27.60.1/MAAS

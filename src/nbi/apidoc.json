@@ -1,0 +1,35 @@
+{
+  "name": "JOX",
+  "description": "JOX northbound API documentation\n",
+  "title": "JOX NBI",
+  "url" : "http://JOX-URL:PORT",
+  "order": [
+    "GroupJox",
+    "GetJoxHomepage",
+    "GetJoxCapabilities",
+    "GetJoxlist",
+    "GetJoxLs",
+    "GetJoxShow",
+    "GroupSlice",
+    "GetNsiAll",
+    "GetNsi",
+    "PutNsi",
+    "GetNsiNsiName",
+    "GroupSubSlice",
+    "GetNssiAll",
+    "GetNssi",
+    "GetNssiNsiName",
+    "GetNssiNsiNameNssiName",
+    "GetNssiNsiNameNssiNameNssiKey",
+    "GroupElasticsearch",
+    "GetEs",
+    "GetEsIndexPgae",
+    "GetEsIndexPgaeKeyVal",
+    "GroupMonitoring",
+    "GetNsiMonitor"
+  ],
+  "template": {
+  	"withCompare": true,
+  	"withGenerator": true
+  }
+}

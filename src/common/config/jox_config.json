@@ -1,0 +1,109 @@
+{
+  "jox version": 1,
+  "date": "01-03-2019",
+  "juju_version": 2.4,
+  "description": "Jox configuration file",
+  "authors-list": [
+    {
+      "name": "Eurecom",
+      "email": "contact@mosaic-5g.io"
+    }
+  ],
+
+  "rabbit-mq-config":{
+    "rabbit-mq-server-ip":"localhost",
+    "rabbit-mq-server-port":5672,
+    "rabbit-mq-queue":"QueueJox"
+  },
+
+  "flask-config":{
+    "flask-server": "localhost",
+    "flask-port": 5000,
+    "flask-debug": "FALSE"
+  },
+  "elasticsearch-config":{
+    "elasticsearch-host": "localhost",
+    "elasticsearch-port": "9200",
+    "elasticsearch-log-level": "error",
+    "elasticsearch-retry-on-conflict": 3
+  },
+
+  "vim-pop": {
+    "lxc": ["local"],
+    "kvm": ["local"]
+  },
+
+  "clouds-list": [
+    {
+      "cloud-name": "localhost",
+      "description": "name of you juju controller"
+    }
+  ],
+
+  "stats-timer":100,
+
+  "log-config":{
+    "log-level": "debug",
+    "log-file": "jox.log",
+    "log_colors": [
+      {
+        "name": "error",
+        "color": "\\033[91m",
+        "debug_level": 0
+      },
+      {
+        "name": "warn",
+        "color": "\\033[93m",
+        "debug_level": 1
+      },
+      {
+        "name": "notice",
+        "color": "\\033[92m",
+        "debug_level": 2
+      },
+      {
+            "name": "info",
+            "color": "\\033[0m",
+            "debug_level": 3
+      },
+      {
+        "name": "debug",
+        "color": "\\033[0m",
+        "debug_level": 4
+      }
+    ]
+  },
+  "http": {
+    "200": {
+      "ok":200,
+      "no-content":204
+    },
+    "400": {
+      "bad-request":400,
+      "not-found":404,
+      "method-failure":420,
+      "failed-dependency":424
+    }
+  },
+
+  "juju-config": {
+    "_Comment": "connect-model-available: define the parameters to access to a newly created model is available",
+    "connect-model-available-max-retry": 10,
+    "connect-model-available-interval": 10,
+    "_Comment_2": "connect-model-accessible: define parameters to access to already exist juju model",
+    "connect-model-accessible-max-retry": 50,
+    "connect-model-accessible-interval": 3
+  },
+  "ssh-config": {
+    "_Comment": "ssh connection is needed when adding kvm machines",
+    "ssh-key-directory": "/home/arouk/.ssh/",
+    "ssh-key-name": "id_juju",
+    "ssh-user": "ubuntu",
+    "ssh-password": "linux"
+  },
+  "store-config": {
+    "_Comment": "it is needed to store the onboarded packages to deploy slices later",
+    "store-directrory": "/mnt/jox_store"
+  },
+  "encoding-type":"utf-8"
+}
