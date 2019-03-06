@@ -8,4 +8,4 @@ sudo mount -o size=100m -t tmpfs none $DIR_JOX_STORE
 sudo chown -R $USER /tmp/jox_store
 sudo chown -R 777 /tmp/jox_store
 
-python3 src/jox.py
+python3 src/jox.py "$@"
