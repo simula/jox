@@ -34,7 +34,7 @@ logger = logging.getLogger('jox.templateManager')
 
 dir_path = os.path.dirname(os.path.abspath(__file__ + "/../../../"))
 import json, yaml
-from core.ro.plugins import es
+from src.core.ro.plugins import es
 from elasticsearch import Elasticsearch
 import datetime, time
 
@@ -90,9 +90,11 @@ class TemplateManager():
 		self.map_userNssiId_NssiId = {}
 		self.NSI_template = None
 		self.NSSI_template = list()
-		self.jesearch = None
-
-		es.del_all_from_es(self.es_host, self.es_port, 'slice_keys')
+		# self.jesearch = None
+		self.jesearch = es.JESearch(self.es_host, self.es_port, self.es_log_level)
+		self.jesearch.del_index_from_es('slice_keys')
+		
+		# es.del_all_from_es(self.es_host, self.es_port, 'slice_keys')
 		
 		self.logger = logging.getLogger('jox.TemplateManager')
 		self.log_config()
@@ -110,8 +112,6 @@ class TemplateManager():
 		else:
 			self.logger.setLevel(logging.INFO)
 	def build(self, slice_name_yml, nsi_dir, nssi_dir):
-
-                self.jesearch = es.JESearch(self.es_host, self.es_host, self.es_log_level)
                 slice_full_path = ''.join([nsi_dir, slice_name_yml])
                 try:
                         with open(slice_full_path) as stream:
@@ -297,15 +297,20 @@ class TemplateManager():
 							"machine_keys": [],
 							"service_keys": [],
 							"relation_keys": []} # Relation key not required for now
-		es.del_all_from_es(self.es_host, self.es_port, 'slice_keys_'+nsi_id.lower()) # this is per  slice index (runtime updates)
-		es.set_json_to_es(self.es_host, self.es_port, 'slice_keys_'+nsi_id.lower(), slice_skeleton)
-
-		es.del_all_from_es(self.es_host, self.es_port, 'slice_keys_tmp_'+nsi_id.lower()) # this is per  slice index (runtime updates)
-		es.set_json_to_es(self.es_host, self.es_port, 'slice_keys_tmp_'+nsi_id.lower(), slice_skeleton)
+		self.jesearch.del_index_from_es('slice_keys_'+nsi_id.lower())
+		# es.del_all_from_es(self.es_host, self.es_port, 'slice_keys_'+nsi_id.lower()) # this is per  slice index (runtime updates)
+		self.jesearch.set_json_to_es('slice_keys_'+nsi_id.lower(), slice_skeleton)
+		# es.set_json_to_es(self.es_host, self.es_port, 'slice_keys_'+nsi_id.lower(), slice_skeleton)
+		
+		self.jesearch.del_index_from_es('slice_keys_tmp_'+nsi_id.lower())
+		# es.del_all_from_es(self.es_host, self.es_port, 'slice_keys_tmp_'+nsi_id.lower()) # this is per  slice index (runtime updates)
+		# es.set_json_to_es(self.es_host, self.es_port, 'slice_keys_tmp_'+nsi_id.lower(), slice_skeleton)
+		self.jesearch.set_json_to_es('slice_keys_tmp_'+nsi_id.lower(), slice_skeleton)
 
 
 	def set_NSSI_monitor_index(self, nssi_id, nsi_id, list_services, list_machines):
-		es.del_all_from_es(self.es_host, self.es_port, 'slice_monitor_'+nssi_id.lower()) # this is per sub slice index (runtime updates)
+		self.jesearch.del_index_from_es('slice_monitor_'+nssi_id.lower())
+		# es.del_all_from_es(self.es_host, self.es_port, 'slice_monitor_'+nssi_id.lower()) # this is per sub slice index (runtime updates)
 		services_list = []
 		machines_list = []
 		relations_list = []
@@ -315,7 +320,8 @@ class TemplateManager():
 							"machine_status": [],
 							"service_status": [],
 							"relation_status": []}  # Create Empty container
-		es.set_json_to_es(self.es_host, self.es_port, 'slice_monitor_'+nssi_id.lower(), slice_skeleton)
+		# es.set_json_to_es(self.es_host, self.es_port, 'slice_monitor_'+nssi_id.lower(), slice_skeleton)
+		self.jesearch.set_json_to_es('slice_monitor_'+nssi_id.lower(), slice_skeleton)
 		service_list = list(list_services.keys())  # List of applications
 		ES = Elasticsearch([{'host': self.es_host, 'port': self.es_port, 'use_ssl': False}])
 		for service in range(len(service_list)):
@@ -401,24 +407,28 @@ class TemplateManager():
 
 
 	def update_slice_monitor_index(self, index_page, container_type, container_name, leaf_key, leaf_value, nsi_id):
-		slice_data = self.jesearch.get_json_from_es(self.es_host, self.es_port, index_page, container_type)
-		for machines in range(len(slice_data)):  # Update the container
-			machines_list = slice_data[machines]
-			machine = list(machines_list.keys())
-			for num in range(len(machine)):
-				if machine[num] == container_name:
-					slice_data[machines][container_name][0][leaf_key] = leaf_value
-		ES = Elasticsearch([{'host': self.es_host, 'port': self.es_port, 'use_ssl': False}])
-		ES.update(index=index_page, doc_type='post', id=1,  # Push the container with updates
-				  body={'doc': {container_type: slice_data}}, retry_on_conflict=0)
-
-		if container_type=="machine_keys":
-			machine_keys[nsi_id][0]['machine_keys'].clear()
-			for machine in range(len(slice_data)):
-				machine_keys[nsi_id][0]['machine_keys'].append(slice_data[machine])
-		if container_type=="service_keys":
-			service_keys[nsi_id][0]['service_keys'][0].clear()
-			for service in range(len(slice_data)):
-				service_keys[nsi_id][0]['service_keys'].append(slice_data[service])
-
+		# slice_data = self.jesearch.get_json_from_es(index_page, container_type)
+		# slice_data = es.set_json_to_es(self.es_host, self.es_port, index_page, container_type)
+		slice_data = self.jesearch.get_json_from_es(index_page, container_type)
+		if slice_data[0]:
+			slice_data = slice_data[1]
+			for machines in range(len(slice_data)):
+				machines_list = slice_data[machines]
+				machine = list(machines_list.keys())
+				for num in range(len(machine)):
+					if machine[num] == container_name:
+						slice_data[machines][container_name][0][leaf_key] = leaf_value
+			ES = Elasticsearch([{'host': self.es_host, 'port': self.es_port, 'use_ssl': False}])
+			ES.update(index=index_page, doc_type='post', id=1,  # Push the container with updates
+					  body={'doc': {container_type: slice_data}}, retry_on_conflict=0)
+	
+			if container_type=="machine_keys":
+				machine_keys[nsi_id][0]['machine_keys'].clear()
+				for machine in range(len(slice_data)):
+					machine_keys[nsi_id][0]['machine_keys'].append(slice_data[machine])
+			if container_type=="service_keys":
+				service_keys[nsi_id][0]['service_keys'][0].clear()
+				for service in range(len(slice_data)):
+					service_keys[nsi_id][0]['service_keys'].append(slice_data[service])
+	
 

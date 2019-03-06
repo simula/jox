@@ -40,30 +40,30 @@ from subprocess import check_output
 import asyncio
 import datetime
 dir_path = os.path.dirname(os.path.abspath(__file__ + "/../../../"))
-import common.config.gv as gv
-from core.nso.template_manager import template_manager
-
+from src.core.nso.template_manager import template_manager
+from src.common.config import gv as global_varialbles
 #
 class LxcDriver(object):
 	def __init__(self, driver_name, global_variable):
 		self.driver_name = driver_name # name of the vim driver, it is important epsecially when there are many vim drivers from the same type
 		self.machine_list = list()
-		self.max_retry = gv.JUJU_MAX_RETRY_CONNECTION_MODEL_ACCESSIBLE # number of tentative to connect to juju. every tentative is after one second
-		self.interval_access = gv.JUJU_INTERVAL_CONNECTION_MODEL_ACCESSIBLE
+		self.gv = global_variable
+		self.max_retry = self.gv.JUJU_MAX_RETRY_CONNECTION_MODEL_ACCESSIBLE # number of tentative to connect to juju. every tentative is after one second
+		self.interval_access = self.gv.JUJU_INTERVAL_CONNECTION_MODEL_ACCESSIBLE
 		self.logger = logging.getLogger('jox.LxcDriver.{}'.format(self.driver_name))
 		self.log_config()
 		self.template_manager = template_manager.TemplateManager(global_variable)
 
 	def log_config(self):
-		if gv.LOG_LEVEL == 'debug':
+		if self.gv.LOG_LEVEL == 'debug':
 			self.logger.setLevel(logging.DEBUG)
-		elif gv.LOG_LEVEL == 'info':
+		elif self.gv.LOG_LEVEL == 'info':
 			self.logger.setLevel(logging.INFO)
-		elif gv.LOG_LEVEL == 'warn':
+		elif self.gv.LOG_LEVEL == 'warn':
 			self.logger.setLevel(logging.WARNING)
-		elif gv.LOG_LEVEL == 'error':
+		elif self.gv.LOG_LEVEL == 'error':
 			self.logger.setLevel(logging.ERROR)
-		elif gv.LOG_LEVEL == 'critic':
+		elif self.gv.LOG_LEVEL == 'critic':
 			self.logger.setLevel(logging.CRITICAL)
 		else:
 			self.logger.setLevel(logging.INFO)
@@ -159,12 +159,12 @@ class LxcDriver(object):
 				else:
 					juju_machine = await model.add_machine(
 						constraints={
-							'mem': int(new_machine.memory) * gv.GB,
+							'mem': int(new_machine.memory) * self.gv.GB,
 							'tags': [new_machine.mid_user_defined],
 						},
 						disks=[{
 							'pool': 'rootfs',
-							'size': int(new_machine.disc_size) * gv.GB,
+							'size': int(new_machine.disc_size) * self.gv.GB,
 							'count': 1,
 						}],
 						series=new_machine.os_series,
@@ -177,9 +177,25 @@ class LxcDriver(object):
 			self.logger.info("The machine {} is added and its juju id is {}".format(new_machine.mid_user_defined, new_machine.mid_vnfm))
 			machine_id = new_machine.mid_vnfm
 
-			self.template_manager.update_slice_monitor_index("slice_monitor_"+slice_name.lower(), "machine_status", service_name, "juju_mid", str(machine_id), nsi_id)
-			self.template_manager.update_slice_monitor_index('slice_keys_'+nsi_id.lower(), "machine_keys", service_name, "juju_mid", str(machine_id), nsi_id)
-			self.template_manager.update_slice_monitor_index("slice_monitor_"+slice_name.lower(), "machine_status", service_name, "type","lxc", nsi_id)
+			
+			self.template_manager.update_slice_monitor_index("slice_monitor_"+slice_name.lower(),
+			                                                 "machine_status",
+			                                                 service_name,
+			                                                 "juju_mid",
+			                                                 str(machine_id),
+			                                                 nsi_id)
+			self.template_manager.update_slice_monitor_index('slice_keys_'+nsi_id.lower(),
+			                                                 "machine_keys",
+			                                                 service_name,
+			                                                 "juju_mid",
+			                                                 str(machine_id),
+			                                                 nsi_id)
+			self.template_manager.update_slice_monitor_index("slice_monitor_"+slice_name.lower(),
+			                                                 "machine_status",
+			                                                 service_name,
+			                                                 "type",
+			                                                 "lxc",
+			                                                 nsi_id)
 
 
 			self.logger.info("Deployed LXC Machine {} {} {}".format(new_machine.mid_vnfm, len(juju_machine.data), juju_machine.data))
@@ -289,10 +305,11 @@ class LxcDriver(object):
 class KvmDriver(object):
 	def __init__(self, driver_name, global_variable):
 		self.driver_name = driver_name
+		self.gv = global_variable
 		self.machine_list = list()
 		self.logger = logging.getLogger('jox.KvmDriver.{}'.format(self.driver_name))
-		self.max_retry = gv.JUJU_MAX_RETRY_CONNECTION_MODEL_ACCESSIBLE
-		self.interval_access = gv.JUJU_INTERVAL_CONNECTION_MODEL_ACCESSIBLE
+		self.max_retry = self.gv.JUJU_MAX_RETRY_CONNECTION_MODEL_ACCESSIBLE
+		self.interval_access = self.gv.JUJU_INTERVAL_CONNECTION_MODEL_ACCESSIBLE
 		self.template_manager = template_manager.TemplateManager(global_variable)
 
 	def get_machines_status(self):
@@ -336,7 +353,6 @@ class KvmDriver(object):
 			                  model_name,
 			                  mid_ro,
 			                  machine_config)
-			print("Launching KVM ")
 			loop.run(self.deploy_kvm(new_machine, service_name, subslice_name, nsi_id))
 			self.machine_list.append(new_machine)
 		except Exception as ex:
@@ -370,8 +386,8 @@ class KvmDriver(object):
 					app_values = model.applications.get(app)
 					machine_id_service = app_values.units[0].machine.id
 			if application_NotExist:
-				ssh_key_puplic = ''.join([gv.SSH_KEY_DIRECTORY, gv.SSH_KEY_NAME, '.pub'])
-				ssh_key_private = ''.join([gv.SSH_KEY_DIRECTORY, gv.SSH_KEY_NAME])
+				ssh_key_puplic = ''.join([self.gv.SSH_KEY_DIRECTORY, self.gv.SSH_KEY_NAME, '.pub'])
+				ssh_key_private = ''.join([self.gv.SSH_KEY_DIRECTORY, self.gv.SSH_KEY_NAME])
 				os.system("uvt-kvm create " +
 				          new_machine.mid_user_defined +
 				          " release=" + new_machine.os_series +
@@ -379,7 +395,7 @@ class KvmDriver(object):
 				          " --cpu " + str(new_machine.cpu) +
 				          " --disk " + str(new_machine.disc_size) +
 				          " --ssh-public-key-file " + ssh_key_puplic +
-                          " --password " + gv.SSH_PASSWORD)
+                          " --password " + self.gv.SSH_PASSWORD)
 				self.logger.debug("Trying to get KVM IP")
 				
 				cmd_wait = "uvt-kvm wait "+new_machine.mid_user_defined
@@ -389,7 +405,7 @@ class KvmDriver(object):
 				machine_ip = (output.decode("utf-8")).rstrip()
 				self.logger.debug("The ip address of the machine {} is {}".format(new_machine.mid_user_defined, machine_ip))
 				self.logger.info('Adding the kvm machine {} whose ip {} to juju'.format(new_machine.mid_user_defined, machine_ip))
-				juju_cmd = "".join(["ssh:", gv.SSH_USER, "@", machine_ip, ":", ssh_key_private])
+				juju_cmd = "".join(["ssh:", self.gv.SSH_USER, "@", machine_ip, ":", ssh_key_private])
 				juju_machine = await model.add_machine(juju_cmd,
 				                                       constraints={
 					                                       'tags': [new_machine.mid_user_defined]
@@ -399,7 +415,12 @@ class KvmDriver(object):
 				juju_machine = model.machines.get(machine_id_service)
 			new_machine.mid_vnfm = juju_machine.data["id"]  # This step taking longer time
 
-			self.template_manager.update_slice_monitor_index("slice_monitor_"+subslice_name.lower(), "machine_status", service_name, "juju_mid", str(new_machine.mid_vnfm),nsi_id)
+			self.template_manager.update_slice_monitor_index("slice_monitor_"+subslice_name.lower(),
+			                                                 "machine_status",
+			                                                 service_name,
+			                                                 "juju_mid",
+			                                                 str(new_machine.mid_vnfm),
+			                                                 nsi_id)
 			self.template_manager.update_slice_monitor_index('slice_keys_'+nsi_id.lower(), "machine_keys", service_name, "juju_mid", str(new_machine.mid_vnfm), nsi_id)
 			self.template_manager.update_slice_monitor_index("slice_monitor_"+subslice_name.lower(), "machine_status", service_name, "type","kvm", nsi_id)
 
@@ -513,7 +534,7 @@ class _VmKvm():
 			if machine_config['os']['distribution'] == "Ubuntu":
 				os_version = str(machine_config['os']['version'])
 				try:
-					self.os_series = gv.OS_SERIES[os_version]
+					self.os_series = global_varialbles.OS_SERIES[os_version]
 				except:
 					message = "The os version {} for the machine {} from the subslice {} is not defined. Please define it in gv file in the variable OS_SERIES".format(os_version, machine_config['machine_name'], subslice_name)
 					self.logger.debug(message)
@@ -577,7 +598,7 @@ class _VmLxc():
 			if machine_config['os']['distribution'] == "Ubuntu":
 				os_version = str(machine_config['os']['version'])
 				try:
-					self.os_series = gv.OS_SERIES[os_version]
+					self.os_series = global_varialbles.OS_SERIES[os_version]
 				except:
 					message = "The os version {} for the machine {} from the subslice {} is not defined. Please define it in gv file in the variable OS_SERIES".format(
 							os_version, machine_config['machine_name'], subslice_name)

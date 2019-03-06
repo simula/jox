@@ -30,7 +30,7 @@ import logging
 from juju.model import Model
 from json import JSONEncoder
 from juju import loop
-from core.nso.template_manager import template_manager
+from src.core.nso.template_manager import template_manager
 import traceback
 
 class JSlice(JSONEncoder):

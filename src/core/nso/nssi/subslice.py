@@ -30,7 +30,7 @@ import jsonpickle
 import json
 import logging
 
-from core.nso.nssi.model import JModel
+from src.core.nso.nssi.model import JModel
 from json import JSONEncoder
 from juju import loop
         

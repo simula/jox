@@ -49,27 +49,27 @@
       {
         "name": "error",
         "color": "\\033[91m",
-        "debug_level": 0
+        "debug-level": 0
       },
       {
         "name": "warn",
         "color": "\\033[93m",
-        "debug_level": 1
+        "debug-level": 1
       },
       {
         "name": "notice",
         "color": "\\033[92m",
-        "debug_level": 2
+        "debug-level": 2
       },
       {
             "name": "info",
             "color": "\\033[0m",
-            "debug_level": 3
+            "debug-level": 3
       },
       {
         "name": "debug",
         "color": "\\033[0m",
-        "debug_level": 4
+        "debug-level": 4
       }
     ]
   },
@@ -103,7 +103,7 @@
   },
   "store-config": {
     "_Comment": "it is needed to store the onboarded packages to deploy slices later",
-    "store-directrory": "/mnt/jox_store"
+    "store-directrory": "/tmp/jox_store/"
   },
   "encoding-type":"utf-8"
 }

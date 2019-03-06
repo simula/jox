@@ -28,7 +28,8 @@
 
 import logging
 import traceback
-from core.nso.nssi import subslice
+
+from src.core.nso.nssi import subslice
 logger = logging.getLogger('jox.nssiController')
 
 class SubSlicesController(object):
@@ -122,7 +123,7 @@ class SubSlicesController(object):
 		}
 		"""
 		try:
-			new_slice = jsubslice.JSubSlice(self.gv)
+			new_slice = subslice.JSubSlice(self.gv)
 			new_slice.build_jsubslice(subslice_config, self.resourceController, list_all_jujuModel_attachedWatcher)
 			self.subslices.append(new_slice)
 			logger.info("Slice %s was added", new_slice.subslice_name)

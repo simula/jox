@@ -25,14 +25,17 @@
  * \company: Eurecom
  * \email:contact@mosaic5g.io
 """
-import os
+import os, sys
+dir_root_path = os.path.dirname(os.path.abspath(__file__ + "/../../"))
+sys.path.append(dir_root_path)
+
 
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 dir_parent_path = os.path.dirname(os.path.abspath(__file__ + "/mnt"))
 
 import logging
-import tasks
+from src.nbi import tasks
 import json
 from flask import Flask, request,jsonify
 import datetime
@@ -74,6 +77,9 @@ standard_reqst = {
                 "es_key": None,
                 # juju
                 "juju_key_val": None,
+                # package onboarding
+                "package_onboard_data": None,
+                "package_name": None,
             }
         }
 
@@ -320,27 +326,27 @@ def jox_config():
                   "log_colors": [
                     {
                       "color": "\\033[91m",
-                      "debug_level": 0,
+                      "debug-level": 0,
                       "name": "error"
                     },
                     {
                       "color": "\\033[93m",
-                      "debug_level": 1,
+                      "debug-level": 1,
                       "name": "warn"
                     },
                     {
                       "color": "\\033[92m",
-                      "debug_level": 2,
+                      "debug-level": 2,
                       "name": "notice"
                     },
                     {
                       "color": "\\033[0m",
-                      "debug_level": 3,
+                      "debug-level": 3,
                       "name": "info"
                     },
                     {
                       "color": "\\033[0m",
-                      "debug_level": 4,
+                      "debug-level": 4,
                       "name": "debug"
                     }
                   ]
@@ -494,7 +500,7 @@ def list_of_templates(nsi_name=None):
     enquiry = standard_reqst
     current_time = datetime.datetime.now()
     enquiry["datetime"] = str(current_time)
-    enquiry["template_directory"] = request.args.get('url')
+    enquiry["parameters"]["template_directory"] = request.args.get('url')
     enquiry["request-uri"] = str(request.url_rule)
     enquiry["request-type"] = (request.method).lower()
     enquiry["parameters"]["nsi_name"] = nsi_name
@@ -521,9 +527,47 @@ def list_of_templates(nsi_name=None):
     logger.debug("response: {}".format(message))
     data = jsonify(data)
     return data, status_code
+
+@app.route('/onboard', methods=['PUT'])
+def jox_package_onboard():
+    """
+    @apiGroup GroupSlice
+    @apiName GetNsiAll
+
+    @api {put}  /onboard Onboarding
+    @apiDescription
+    """
+    enquiry = standard_reqst
+    current_time = datetime.datetime.now()
+    enquiry["datetime"] = str(current_time)
+    enquiry["request-uri"] = str(request.url_rule)
+    enquiry["request-type"] = (request.method).lower()
+    enquiry["parameters"]["template_directory"] = request.args.get('url')
+    enquiry["parameters"]["package_onboard_data"] = list(request.data)
+
+    logger.info("enquiry: {}".format(enquiry))
+    logger.debug("enquiry: {}".format(enquiry))
+    enquiry = json.dumps(enquiry)
+    # waiting for the response
+    response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+    data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+    data = json.loads(data)
+
+    status_code = data["status_code"]
+    data = data["data"]
+    data = {
+        "data": data,
+        "elapsed-time": str(datetime.datetime.now() - current_time),
+    }
+    logger.info("response: {}".format(data))
+    logger.debug("response: {}".format(data))
+    data = jsonify(data)
+    return data, status_code
+
+
 @app.route('/nsi/all', methods=['GET'])
-@app.route('/nsi', methods=['GET',   'PUT'])
-@app.route('/nsi/<string:nsi_name>', methods=['GET', 'POST', 'PUT', 'DELETE'])
+@app.route('/nsi', methods=['GET'])
+@app.route('/nsi/<string:nsi_name>', methods=['GET', 'POST', 'DELETE'])
 def network_slice(nsi_name=None):
     """
     @apiGroup GroupSlice
@@ -601,63 +645,32 @@ def network_slice(nsi_name=None):
     enquiry = standard_reqst
     current_time = datetime.datetime.now()
     enquiry["datetime"] = str(current_time)
-    enquiry["template_directory"] = request.args.get('url')
+    enquiry["parameters"]["template_directory"] = request.args.get('url')
     enquiry["request-uri"] = str(request.url_rule)
     enquiry["request-type"] = (request.method).lower()
-    enquiry["parameters"]["nsi_name"] = nsi_name
-    nsi_found = True
-    nssi_found = True
-    save_template_success = True
-    if (enquiry["request-type"] == "put"):
-        files = request.data
-        try:
-            with open('/proc/mounts', 'r') as f:
-                mounts = [line.split()[1] for line in f.readlines()]
-        
-            if listOfTasks.gv.STORE_DIR in mounts:
-                listOfTasks.gv.STORE_DIR = ''.join([listOfTasks.gv.STORE_DIR, '/'])
-            else:
-                message = "The directory {} is not mounted, and thus the templates can not be saved. You should firstly mount the directory {} \n\n".format(
-                    listOfTasks.gv.STORE_DIR, listOfTasks.gv.STORE_DIR)
-                logger.error(message)
-                return message, 400
-        except:
-            message = "The directory {} is not mounted, and thus the templates can not be saved. You should firstly mount the directory {}  \n\n".format(listOfTasks.gv.STORE_DIR, listOfTasks.gv.STORE_DIR)
-            logger.error(message)
-            return message, 400
-        
-        tar_file = open_tar_gz(files, enquiry)
-        enquiry = tar_file[0]
-        nsi_found = tar_file[1]
-        nssi_found = tar_file[2]
-        save_template_success = tar_file[3]
-        message = tar_file[4]
-    if nsi_found and nssi_found and save_template_success:
-        try:
-            logger.info(message)
-            logger.debug(message)
-        except:
-            pass
-        logger.info("enquiry: {}".format(enquiry))
-        logger.debug("enquiry: {}".format(enquiry))
-        enquiry = json.dumps(enquiry)
-        # waiting for the response
-        response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
-        data = response.decode(listOfTasks.gv.ENCODING_TYPE)
-        data = json.loads(data)
-    
-        status_code = data["status_code"]
-        data = data["data"]
-        data = {
-            "data": data,
-            "elapsed-time": str(datetime.datetime.now() - current_time),
-        }
-        logger.info("response: {}".format(data))
-        logger.debug("response: {}".format(data))
-        data = jsonify(data)
-        return data, status_code
+    if enquiry["request-type"] == 'post':
+        enquiry["parameters"]["package_name"] = nsi_name
     else:
-        return message, 400
+        enquiry["parameters"]["nsi_name"] = nsi_name
+
+    logger.info("enquiry: {}".format(enquiry))
+    logger.debug("enquiry: {}".format(enquiry))
+    enquiry = json.dumps(enquiry)
+    # waiting for the response
+    response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+    data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+    data = json.loads(data)
+
+    status_code = data["status_code"]
+    data = data["data"]
+    data = {
+        "data": data,
+        "elapsed-time": str(datetime.datetime.now() - current_time),
+    }
+    logger.info("response: {}".format(data))
+    logger.debug("response: {}".format(data))
+    data = jsonify(data)
+    return data, status_code
 
 @app.route('/nssi/all')
 @app.route('/nssi')# alias to the previous one
@@ -724,7 +737,7 @@ def network_sub_slice(nsi_name=None, nssi_name=None, nssi_key=None):
     enquiry = standard_reqst
     current_time = datetime.datetime.now()
     enquiry["datetime"] = str(current_time)
-    enquiry["template_directory"] = request.args.get('url')
+    enquiry["parameters"]["template_directory"] = request.args.get('url')
     enquiry["request-uri"] = str(request.url_rule)
     enquiry["request-type"] = (request.method).lower()
     enquiry["parameters"]["nsi_name"] = nsi_name
@@ -814,7 +827,7 @@ def monitor_es(es_index_page=None, es_key=None):
     enquiry = standard_reqst
     current_time = datetime.datetime.now()
     enquiry["datetime"] = str(current_time)
-    enquiry["template_directory"] = request.args.get('url')
+    enquiry["parameters"]["template_directory"] = request.args.get('url')
     enquiry["request-uri"] = str(request.url_rule)
     enquiry["request-type"] = (request.method).lower()
     enquiry["parameters"]["es_index_page"] = es_index_page
@@ -880,7 +893,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
     enquiry = standard_reqst
     current_time = datetime.datetime.now()
     enquiry["datetime"] = str(current_time)
-    enquiry["template_directory"] = request.args.get('url')
+    enquiry["parameters"]["template_directory"] = request.args.get('url')
     enquiry["request-uri"] = str(request.url_rule)
     enquiry["request-type"] = (request.method).lower()
     enquiry["parameters"]["nsi_name"] = nsi_name
@@ -912,7 +925,7 @@ def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key
     enquiry = standard_reqst
     current_time = datetime.datetime.now()
     enquiry["datetime"] = str(current_time)
-    enquiry["template_directory"] = request.args.get('url')
+    enquiry["parameters"]["template_directory"] = request.args.get('url')
     enquiry["request-uri"] = str(request.url_rule)
     enquiry["request-type"] = (request.method).lower()
     enquiry["parameters"]["nsi_name"] = nsi_name
@@ -945,7 +958,7 @@ def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_ke
     enquiry = standard_reqst
     current_time = datetime.datetime.now()
     enquiry["datetime"] = str(current_time)
-    enquiry["template_directory"] = request.args.get('url')
+    enquiry["parameters"]["template_directory"] = request.args.get('url')
     enquiry["request-uri"] = str(request.url_rule)
     enquiry["request-type"] = (request.method).lower()
     enquiry["parameters"]["nsi_name"] = nsi_name
@@ -981,7 +994,7 @@ def monitor_relation(nsi_name=None, nssi_name_source=None, service_name_source=N
     enquiry = standard_reqst
     current_time = datetime.datetime.now()
     enquiry["datetime"] = str(current_time)
-    enquiry["template_directory"] = request.args.get('url')
+    enquiry["parameters"]["template_directory"] = request.args.get('url')
     enquiry["request-uri"] = str(request.url_rule)
     enquiry["request-type"] = (request.method).lower()
     enquiry["parameters"]["nsi_name"] = nsi_name
@@ -1020,7 +1033,7 @@ def monitor_juju(juju_key_val=None):
     enquiry = standard_reqst
     current_time = datetime.datetime.now()
     enquiry["datetime"] = str(current_time)
-    enquiry["template_directory"] = request.args.get('url')
+    enquiry["parameters"]["template_directory"] = request.args.get('url')
     enquiry["request-uri"] = str(request.url_rule)
     enquiry["request-type"] = (request.method).lower()
     enquiry["parameters"]["juju_key_val"] = juju_key_val
@@ -1046,7 +1059,7 @@ def monitor_juju(juju_key_val=None):
 
 @app.errorhandler(Exception)
 def page_not_found(error):
-    return "\n !!!!"  + repr(error)
+    return "!!!!"  + repr(error) + "\n"
 
 @app.errorhandler(404)
 def page_not_found(e):

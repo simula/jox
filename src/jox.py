@@ -49,25 +49,22 @@ import atexit
 from os.path import expanduser
 from termcolor import colored
 import asyncio
-from core.ro.resource_controller import ResourcesController
+from src.core.ro.resource_controller import ResourcesController
 import traceback
 import logging
 import jsonschema
-from core.nso.nsi import nsi_controller
-from core.nso.nssi import nssi_controller
-from core.ro.plugins import es
-from common.config import gv
+from src.core.nso.nsi import nsi_controller
+from src.core.nso.nssi import nssi_controller
+from src.core.ro.plugins import es
 
+from src.common.config import gv
 import time
 import yaml, json
 import pika
 import pika.exceptions as pika_exceptions
 from juju import loop
-from core.ro.monitor import get_juju_status as jmonitor_get_juju_status
-
-# for NBI
-sys.path.append(dir_JOX_path)
-from nbi import *
+from src.core.ro.monitor import get_juju_status as jmonitor_get_juju_status
+import tarfile, io
 
 __author__ = "Eurecom"
 jox_version = '1.0'
@@ -235,7 +232,7 @@ class NFVO_JOX(object):
 		self.logger.info("Create resource Controller")
 		try:
 			self.resourceController = ResourcesController(self.gv)
-			self.resourceController.build(self.jox_config)
+			self.resourceController.build(self.jox_config, self.jesearch)
 			for pop_type in self.jox_config['vim-pop']:
 				for pop_name in self.jox_config['vim-pop'][pop_type]:
 					self.logger.info(
@@ -452,10 +449,10 @@ class server_RBMQ(object):
 		elif (enquiry["request-uri"] == '/list') \
 				or (enquiry["request-uri"] == '/ls') \
 				or (enquiry["request-uri"] == '/show/<string:nsi_name>'):
-			template_directory = enquiry["template_directory"]
 			# request_type = enquiry["request-type"]
 			parameters = enquiry["parameters"]
 			nsi_name = parameters["nsi_name"]
+			template_directory = parameters["template_directory"]
 			full_path = self.check_existence_path(template_directory, nsi_name)
 			
 			if full_path[0]:
@@ -470,9 +467,10 @@ class server_RBMQ(object):
 					self.logger.debug(message)
 					list_files = list()
 					for f in os.listdir(full_path):
-						if os.path.isfile(''.join([full_path, f])) and \
-								(f.endswith('.yaml') or f.endswith('.yml') or f.endswith('.json')):
-							list_files.append(f)
+						# if os.path.isfile(''.join([full_path, f])) and \
+						# 		(f.endswith('.yaml') or f.endswith('.yml') or f.endswith('.json')):
+						# 	list_files.append(f)
+						list_files.append(f)
 					res = list_files
 					response = {
 						"ACK": True,
@@ -544,8 +542,10 @@ class server_RBMQ(object):
 				}
 		elif enquiry["request-uri"] == "/nsi/<string:nsi_name>":
 			parameters = enquiry["parameters"]
-			template_directory = enquiry["template_directory"]
+			
+			package_name = parameters["package_name"]
 			nsi_name = parameters["nsi_name"]
+			template_directory = parameters["template_directory"]
 			nsi_directory_temp = parameters["nsi_directory"]
 			nssi_directory_temp = parameters["nssi_directory"]
 			request_type = enquiry["request-type"]
@@ -574,72 +574,49 @@ class server_RBMQ(object):
 							"data": res,
 							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 						}
-			elif (request_type == "post") or (request_type == "put"):
-					
-				if nsi_directory_temp is None:
-					if template_directory is None:
-						current_directory = self.nfvo_jox.dir_slice
-					else:
-						current_directory =  template_directory
-				else:
-					current_directory = nsi_directory_temp
-				if not current_directory.startswith('/'):
-					current_directory = '/' + current_directory
-				if not current_directory.endswith('/'):
-					current_directory = current_directory + '/'
-				nsi_name = ''.join([current_directory, nsi_name])
-				if nsi_name.endswith('.yaml') or nsi_name.endswith('.yml') or nsi_name.endswith('.json'):
-					
-					if os.path.exists(nsi_name):
-						if os.path.isdir(nsi_name):
-							message = "For method {} and the request {}, you should specify the template file".format(
-								request_type.upper(), enquiry["request-uri"])
-							res = message
+			elif (request_type == "post"):
+				package_path = ''.join([self.nfvo_jox.gv.STORE_DIR, package_name, '/'])
+				nsi_found = False
+				nssi_found = False
+				if os.path.exists(package_path):
+					nsi_dir = ''.join([package_path, 'nsi', '/'])
+					if os.path.exists(nsi_dir):
+						for f in os.listdir(nsi_dir):
+							if os.path.isfile(''.join([nsi_dir, f])) and \
+									(f.endswith('.yaml') or f.endswith('.yml')):
+								nsi_found = True
+								nsi_name = f
+					nssi_dir = ''.join([package_path, 'nssi', '/'])
+					if os.path.exists(nssi_dir):
+						for f in os.listdir(nssi_dir):
+							if os.path.isfile(''.join([nssi_dir, f])) and \
+									(f.endswith('.yaml') or f.endswith('.yml')):
+								nssi_found = True
+					if nsi_found and nssi_found:
+						nsi_deploy = self.nfvo_jox.add_slice(nsi_name, nsi_dir, nssi_dir)
+						if nsi_deploy[0]:
+							message = "Ceating/updating the slice {}".format(nsi_name)
+							response = {
+								"ACK": True,
+								"data": message,
+								"status_code": self.nfvo_jox.gv.HTTP_200_OK
+							}
 						else:
-							nsi_name_temp = nsi_name.split('/')
-							nsi_name = nsi_name_temp[len(nsi_name_temp) - 1]
-							nsi_directory = '/'.join(nsi_name_temp[x] for x in range(len(nsi_name_temp) - 1))
-							nsi_directory = nsi_directory + '/'
-							
-							if nssi_directory_temp is not None:
-								if not nssi_directory_temp.startswith('/'):
-									nssi_directory_temp = '/' + nssi_directory_temp
-								if not nssi_directory_temp.endswith('/'):
-									nssi_directory_temp = nssi_directory_temp + '/'
-									
-							nsi_deploy = self.nfvo_jox.add_slice(nsi_name, nsi_directory, nssi_directory_temp)
-							if nsi_deploy[0]:
-								message = "Ceating/updating the slice {}".format(nsi_name)
-								response = {
-									"ACK": True,
-									"data": message,
-									"status_code": self.nfvo_jox.gv.HTTP_200_OK
-								}
-							else:
-								res = nsi_deploy[1]
-								response = {
-									"ACK": False,
-									"data": res,
-									"status_code": self.nfvo_jox.gv.HTTP_420_METHOD_FAILURE
-								}
-								
-								
-					else:
-						message = "The following path does not exist: {} \n".format(nsi_name)
-						res = message
-						response = {
-							"ACK": False,
-							"data": res,
-							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-						}
+							res = nsi_deploy[1]
+							response = {
+								"ACK": False,
+								"data": res,
+								"status_code": self.nfvo_jox.gv.HTTP_420_METHOD_FAILURE
+							}
+					
 				else:
-					message = "You are requesting to deploy the following template: \n {} \n The format of the template is not supported, only .yaml, .yml, and .json are supported".format(nsi_name)
-					res = message
+					message = "package {} does not exists in {}".format(package_name, self.nfvo_jox.gv.STORE_DIR)
 					response = {
 						"ACK": False,
-						"data": res,
-						"status_code": self.nfvo_jox.gv.HTTP_400_BAD_REQUEST
+						"data": message,
+						"status_code": self.nfvo_jox.gv.HTTP_420_METHOD_FAILURE
 					}
+
 			elif request_type == "delete":
 				res = self.nfvo_jox.delete_slice(nsi_name)
 				if res[0]:
@@ -661,6 +638,29 @@ class server_RBMQ(object):
 					"ACK": False,
 					"data": res,
 					"status_code": self.nfvo_jox.gv.HTTP_400_BAD_REQUEST
+				}
+		elif (enquiry["request-uri"] == "/onboard"):
+			files = bytes(enquiry["parameters"]["package_onboard_data"])
+			onboard_files = self.onboard_jox_package(files)
+			if onboard_files[0]:
+				tar_file = self.open_save_tar_gz(files)
+				if tar_file[0]:
+					response = {
+						"ACK": True,
+						"data": tar_file[1],
+						"status_code": self.nfvo_jox.gv.HTTP_200_OK
+					}
+				else:
+					response = {
+						"ACK": False,
+						"data": tar_file[1],
+						"status_code": self.nfvo_jox.gv.HTTP_420_METHOD_FAILURE
+					}
+			else:
+				response = {
+					"ACK": False,
+					"data": onboard_files[1],
+					"status_code": self.nfvo_jox.gv.HTTP_420_METHOD_FAILURE
 				}
 		elif (enquiry["request-uri"] == "/nssi/all") or (enquiry["request-uri"] == "/nssi"):
 			res = self.nfvo_jox.get_subslices_context()
@@ -731,28 +731,43 @@ class server_RBMQ(object):
 		elif (enquiry["request-uri"] == "/es") \
 				or (enquiry["request-uri"] == "/es/<string:es_index_page>") \
 				or (enquiry["request-uri"] == "/es/<string:es_index_page>/<string:es_key>"):
-			template_directory = enquiry["template_directory"]
+			
 			# request_url = enquiry["request-uri"]
 			request_type = enquiry["request-type"]
 			parameters = enquiry["parameters"]
+			template_directory = parameters["template_directory"]
 			es_index_page = parameters["es_index_page"]
 			es_key = parameters["es_key"]
 			if request_type == "get":
 				if (es_index_page is None):
 					res = self.nfvo_jox.jesearch.get_all_indices_from_es()
-					response = {
-						"ACK": True,
-						"data": res,
-						"status_code": self.nfvo_jox.gv.HTTP_200_OK
-					}
+					if res[0]:
+						response = {
+							"ACK": True,
+							"data": res[1],
+							"status_code": self.nfvo_jox.gv.HTTP_200_OK
+						}
+					else:
+						response = {
+							"ACK": False,
+							"data": res[1],
+							"status_code": self.nfvo_jox.gv.HTTP_420_METHOD_FAILURE
+						}
 				else:
 					if (es_index_page == "_all") or (es_index_page == "all") or (es_index_page == "*"):
 						res = self.nfvo_jox.jesearch.get_all_indices_from_es()
-						response = {
-							"ACK": True,
-							"data": res,
-							"status_code": self.nfvo_jox.gv.HTTP_200_OK
-						}
+						if res[0]:
+							response = {
+								"ACK": True,
+								"data": res[1],
+								"status_code": self.nfvo_jox.gv.HTTP_200_OK
+							}
+						else:
+							response = {
+								"ACK": False,
+								"data": res[1],
+								"status_code": self.nfvo_jox.gv.HTTP_420_METHOD_FAILURE
+							}
 					else:
 						if es_key is None:
 							message = "get the index-page {} ".format(es_index_page)
@@ -1338,6 +1353,11 @@ class server_RBMQ(object):
 				}
 		else:
 			response = "Reqquest not supported"
+			response = {
+				"ACK": False,
+				"data": response,
+				"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+			}
 		print(" [*] enquiry(%s)" % enquiry)
 		print(colored(' [*] Waiting for messages. To exit press CTRL+C', 'green'))
 		response = json.dumps(response)
@@ -1355,7 +1375,8 @@ class server_RBMQ(object):
 	
 	def check_existence_path(self, file_directory, nsi_name):
 		if file_directory is None:
-			file_directory = self.nfvo_jox.dir_slice
+			# file_directory = self.nfvo_jox.dir_slice
+			file_directory = self.nfvo_jox.gv.STORE_DIR
 		if not os.path.exists(file_directory):
 			message = self.path_not_found(file_directory)
 			return [False, message]
@@ -1419,16 +1440,82 @@ class server_RBMQ(object):
 				return [False, message]
 		elif (temp_name == "yaml") or (temp_name == "yml"):
 			try:
-				with open(nsi_name) as f:  # Save TOSCA into json file
-					slice_data_file = json.loads(json.dumps(yaml.load(f)))
-					return [True, slice_data_file]
+				with open(nsi_name) as stream:
+					slice_data_file = yaml.safe_load(stream)
+				try:
+					slice_data_file['metadata']['date'] = str(slice_data_file['metadata']['date'])
+					slice_data_file = json.loads(json.dumps(slice_data_file))
+				except:
+					pass
+				return [True, slice_data_file]
 			except:
 				message = "Error while trying to open the file {}".format(nsi_name)
 				return [False, message]
 		else:
 			message = "The format of the file is not supported"
 			return [False, message]
+	def onboard_jox_package(self, files):
+		try:
+			with open('/proc/mounts', 'r') as f:
+				mounts = [line.split()[1] for line in f.readlines()]
+			
+			dir_temp = self.nfvo_jox.gv.STORE_DIR
+			
+			
+			dir_temp = dir_temp.split('/')
+			dir_temp = '/'.join(x for x in dir_temp if x != '')
+			dir_temp = ''.join(['/', dir_temp])
+			
+			if dir_temp not in mounts:
+				message = "The directory {} is not mounted, and thus the templates can not be saved. You should firstly mount the directory {} \n\n".format(
+					self.nfvo_jox.gv.STORE_DIR, self.nfvo_jox.gv.STORE_DIR)
+				logger.error(message)
+				return [False, message]
+		except:
+			message = "The directory {} is not mounted, and thus the templates can not be saved. You should firstly mount the directory {}  \n\n".format(
+				self.nfvo_jox.gv.STORE_DIR, self.nfvo_jox.gv.STORE_DIR)
+			logger.error(message)
+			return [False, message]
 		
+		message = "The file can be oppened"
+		return [True, message]
+
+	def open_save_tar_gz(self, files):
+		nsi_found = False
+		nssi_found = False
+		try:
+			with tarfile.open(mode='r', fileobj=io.BytesIO(files)) as tar:
+				for tarinfo in tar:
+					tarname = tarinfo.name
+					if str(tarname).endswith('yaml') or str(tarname).endswith('yaml'):
+						if 'nsi' in str(tarname):
+							nsi_found = True
+						if 'nssi' in str(tarname):
+							nssi_found = True
+				if nsi_found and nssi_found:
+					try:
+						tar.extractall(self.nfvo_jox.gv.STORE_DIR)
+						message = "The package was successfuly saved to the directory {}".format(self.nfvo_jox.gv.STORE_DIR)
+						return [True, message]
+					except:
+						message = "Error while trying to save the package to the directory {}".format(
+							self.nfvo_jox.gv.STORE_DIR)
+						return [False, message]
+				else:
+					if nssi_found:
+						message = "Error, there is no nsi in the package".format(
+							self.nfvo_jox.gv.STORE_DIR)
+					elif nsi_found:
+						message = "Error, there is no nsi in the package".format(
+							self.nfvo_jox.gv.STORE_DIR)
+					else:
+						message = "Error, there is no neither nsi nor nssi in the package".format(
+							self.nfvo_jox.gv.STORE_DIR)
+					return [False, message]
+		except Exception as ex:
+			message = "Error while opening the zip file: {}".format(str(ex.args[0]))
+			return [False, message]
+
 if __name__ == '__main__':
 	logger = logging.getLogger('proj.jox')
 	rmbq_server = server_RBMQ()

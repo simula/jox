@@ -30,13 +30,12 @@ import copy
 import json
 import jsonpickle
 import logging
-from core.nso.nssi import service
-#from src.core.RO import jtemplate
+from src.core.nso.nssi import service
 from json import JSONEncoder
 from juju.model import Model
 from juju import loop
 import datetime
-from core.nso.plugins.juju2_plugin import JujuModelServiceController
+from src.core.nso.plugins.juju2_plugin import JujuModelServiceController
 
 
 
@@ -212,7 +211,7 @@ class JModel(JSONEncoder):
     def add_service(self, service_config, machines_config, service_name, allocated_machine):
         """" Initial JService Deployment"""
         try:
-            new_service = jservice.JService(self.gv)
+            new_service = service.JService(self.gv)
             new_service.build(service_config, service_name)
             machine_key = allocated_machine
             new_service.to = machine_key

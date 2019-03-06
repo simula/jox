@@ -25,6 +25,9 @@
  * \company: Eurecom
  * \email:contact@mosaic5g.io
 """
+import os, sys
+dir_root_path = os.path.dirname(os.path.abspath(__file__ + "/../../"))
+sys.path.append(dir_root_path)
 
 import os, sys
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -32,7 +35,7 @@ dir_parent_path = os.path.dirname(os.path.abspath(__file__ + "/.."))
 
 gv_file = ''.join([dir_parent_path, '/common'])
 sys.path.append(gv_file)
-from config import gv as gv
+from src.common.config import gv as gv
 
 import pika
 import logging

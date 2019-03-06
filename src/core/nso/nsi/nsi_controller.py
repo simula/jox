@@ -27,7 +27,7 @@
 """
 
 import logging
-from core.nso.nsi.slice import JSlice
+from src.core.nso.nsi.slice import JSlice
 from juju import loop
 class NetworkSliceController(object):
 	def __init__(self, global_variables):

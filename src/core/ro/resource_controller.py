@@ -36,8 +36,9 @@ __description__ = "This responsible for managine the available resources"
 import logging
 import threading, time
 from juju import loop
-from core.ro import cloud
-from core.ro.vim_driver import vimdriver
+from src.core.ro import cloud
+
+from src.core.ro.vim_driver import vimdriver
 
 
 class ResourcesController(object):
@@ -52,6 +53,7 @@ class ResourcesController(object):
 		self.machine_id = 0
 		self.logger = logging.getLogger('jox.RO.rsourceController')
 		self.log_config()
+		self.jesearch = None
 	def log_config(self):
 		if self.gv.LOG_LEVEL == 'debug':
 			self.logger.setLevel(logging.DEBUG)
@@ -119,9 +121,10 @@ class ResourcesController(object):
 		self.machine_id = self.machine_id + 1
 		return ':'.join([str(self.machine_id), pop_type])
 	
-	def build(self, jox_config):
+	def build(self, jox_config, jesearch):
 		try:
 			self.jox_config = jox_config
+			self.jesearch = jesearch
 		except Exception as ex:
 			raise ex
 	def remove_machine(self, machine_config, service_config, slice_name, subslice_name):
@@ -245,7 +248,7 @@ class ResourcesController(object):
 	def add_cloud(self, config):
 		try:
 			new_jcloud = cloud.JCloud(self.gv)
-			new_jcloud.build_and_deploy(config)
+			new_jcloud.build_and_deploy(config, self.jesearch)
 			self.jclouds.append(new_jcloud)
 			self.logger.debug("jcloud {} was added to jox".format(new_jcloud.controller_name))
 		except Exception as ex:
