@@ -36,8 +36,8 @@ __email__ = 'contact@mosaic5g.io'
 __status__ = 'Development'
 __description__ = "The descripton goes here"
 
-
 import os, sys
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
 dir_parent_path = os.path.dirname(os.path.abspath(__file__ + "/../"))
 dir_JOX_path = os.path.dirname(os.path.abspath(__file__ + "/"))
@@ -70,25 +70,24 @@ __author__ = "Eurecom"
 jox_version = '1.0'
 jox_version_date = '2019-02-01'
 
+
 class NFVO_JOX(object):
 	def __init__(self, loop):
 		# TODO
-		atexit.register(self.goodbye)# register a message to print out when exit
+		atexit.register(self.goodbye)  # register a message to print out when exit
 		self.loop = loop
 		
-		
-		self.dir_slice = dir_path + '/common/template_slice/' # directory where the slice template should exist
+		self.dir_slice = dir_path + '/common/template_slice/'  # directory where the slice template should exist
 		self.dir_subslice = dir_path + '/common/template_slice/'
 		
-		
-		self.dir_config = dir_path + '/common/config/' # directory for the configurations needed by different modules
+		self.dir_config = dir_path + '/common/config/'  # directory for the configurations needed by different modules
 		self.dir_home = expanduser("~")
 		
 		self.start_time = time.time()  # start_time and end_time to calculate the time needed to start jox
 		self.end_time = 0
-		self.jox_config = "" # jox configuration, it exists in the file jox_config.json  in com/config
-		self.jesearch = None # to interact with Elasticsearch
-		self.gv = gv # the global variables of JOX
+		self.jox_config = ""  # jox configuration, it exists in the file jox_config.json  in com/config
+		self.jesearch = None  # to interact with Elasticsearch
+		self.gv = gv  # the global variables of JOX
 		# related to log
 		self.logger = logging.getLogger("jox")
 		self.file_handler = None
@@ -126,18 +125,23 @@ class NFVO_JOX(object):
 			self.gv.RBMQ_SERVER_PORT = self.jox_config['rabbit-mq-config']["rabbit-mq-server-port"]
 			self.gv.RBMQ_QUEUE = self.jox_config['rabbit-mq-config']["rabbit-mq-queue"]
 			# Elasticsearch configuration
-			self.gv.ELASTICSEARCH_HOSt                  = self.jox_config['elasticsearch-config']["elasticsearch-host"]
-			self.gv.ELASTICSEARCH_PORT                  = self.jox_config['elasticsearch-config']["elasticsearch-port"]
+			self.gv.ELASTICSEARCH_HOSt = self.jox_config['elasticsearch-config']["elasticsearch-host"]
+			self.gv.ELASTICSEARCH_PORT = self.jox_config['elasticsearch-config']["elasticsearch-port"]
 			self.gv.ELASTICSEARCH_LOG_LEVEL = self.jox_config['elasticsearch-config']["elasticsearch-log-level"]
-			self.gv.ELASTICSEARCH_RETRY_ON_CONFLICT = self.jox_config['elasticsearch-config']["elasticsearch-retry-on-conflict"]
+			self.gv.ELASTICSEARCH_RETRY_ON_CONFLICT = self.jox_config['elasticsearch-config'][
+				"elasticsearch-retry-on-conflict"]
 			# log config
-			self.gv.LOGFILE                             = self.jox_config['log-config']["log-file"]
-			self.gv.LOG_LEVEL                           = self.jox_config['log-config']["log-level"]
+			self.gv.LOGFILE = self.jox_config['log-config']["log-file"]
+			self.gv.LOG_LEVEL = self.jox_config['log-config']["log-level"]
 			# juju config
-			self.gv.JUJU_MAX_RETRY_CONNECTION_MODEL_AVAILABLE= self.jox_config['juju-config']["connect-model-available-max-retry"]
-			self.gv.JUJU_INTERVAL_CONNECTION_MODEL_AVAILABLE= self.jox_config['juju-config']["connect-model-available-interval"]
-			self.gv.JUJU_MAX_RETRY_CONNECTION_MODEL_ACCESSIBLE= self.jox_config['juju-config']["connect-model-accessible-max-retry"]
-			self.gv.JUJU_INTERVAL_CONNECTION_MODEL_ACCESSIBLE = self.jox_config['juju-config']["connect-model-accessible-interval"]
+			self.gv.JUJU_MAX_RETRY_CONNECTION_MODEL_AVAILABLE = self.jox_config['juju-config'][
+				"connect-model-available-max-retry"]
+			self.gv.JUJU_INTERVAL_CONNECTION_MODEL_AVAILABLE = self.jox_config['juju-config'][
+				"connect-model-available-interval"]
+			self.gv.JUJU_MAX_RETRY_CONNECTION_MODEL_ACCESSIBLE = self.jox_config['juju-config'][
+				"connect-model-accessible-max-retry"]
+			self.gv.JUJU_INTERVAL_CONNECTION_MODEL_ACCESSIBLE = self.jox_config['juju-config'][
+				"connect-model-accessible-interval"]
 			
 			# ssh config
 			self.gv.SSH_KEY_DIRECTORY = self.jox_config['ssh-config']["ssh-key-directory"]
@@ -148,9 +152,9 @@ class NFVO_JOX(object):
 			self.gv.STORE_DIR = self.jox_config['store-config']["store-directrory"]
 			self.gv.ENCODING_TYPE = self.jox_config['encoding-type']
 			
-			self.gv.STATS_TIMER                         = self.jox_config["stats-timer"]
-			
-
+			self.gv.STATS_TIMER = self.jox_config["stats-timer"]
+		
+		
 		except jsonschema.ValidationError as ex:
 			self.logger.error("Error happened while validating the jox config: {}".format(ex.message))
 			self.cleanup_and_exit(str(ex))
@@ -160,7 +164,7 @@ class NFVO_JOX(object):
 		else:
 			message = "Global variables are successfully loaded"
 			self.logger.info(message)
-			
+		
 		##########  STEP 2.2: Logging Configuration ##########
 		if gv.LOG_LEVEL == 'debug':
 			self.logger.setLevel(logging.DEBUG)
@@ -192,12 +196,12 @@ class NFVO_JOX(object):
 		# add the handlers to the logger
 		self.logger.addHandler(self.file_handler)
 		self.logger.addHandler(self.console)
-
-
+		
 		########## STEP 3.1: Configure elastcisearch ##########
 		self.logger.info("Configure elastcisearch if enabled")
 		if self.gv.ELASTICSEARCH_ENABLE:
-			self.jesearch = es.JESearch(self.gv.ELASTICSEARCH_HOSt, self.gv.ELASTICSEARCH_PORT, self.gv.ELASTICSEARCH_LOG_LEVEL)
+			self.jesearch = es.JESearch(self.gv.ELASTICSEARCH_HOSt, self.gv.ELASTICSEARCH_PORT,
+			                            self.gv.ELASTICSEARCH_LOG_LEVEL)
 			
 			if not self.jesearch.ping():
 				message = "Elasticsearch is not working while it is enabled. Either disable elasticsearch or run it"
@@ -206,8 +210,6 @@ class NFVO_JOX(object):
 			else:
 				message = "elasticsearch is now running"
 				self.logger.info(message)
-
-				
 		
 		######### STEP 4: Load JOX Configuration to ES ########
 		if self.gv.ELASTICSEARCH_ENABLE:
@@ -287,15 +289,20 @@ class NFVO_JOX(object):
 		else:
 			message = "JOX Web API loaded!"
 			self.logger.info(message)
+	
 	def register_pop(self, pop_name, pop_type):
 		try:
 			self.resourceController.pop_register(pop_name, pop_type)
 		except Exception as ex:
-			self.logger.debug("The following error raised while registering the pop {} of type {}: \n {}".format(pop_name, pop_type, ex))
+			self.logger.debug(
+				"The following error raised while registering the pop {} of type {}: \n {}".format(pop_name, pop_type,
+				                                                                                   ex))
 		else:
 			self.logger.debug("The pop {} of type {} is successfully regiestered".format(pop_name, pop_type))
+	
 	def get_list_pop(self):
 		return self.resourceController.get_list_all_pop()
+	
 	def add_cloud(self, cloud_config):
 		try:
 			self.resourceController.add_cloud(cloud_config)
@@ -307,18 +314,19 @@ class NFVO_JOX(object):
 		else:
 			self.logger.debug("The following cloud is successfully  added".format(cloud_config))
 	
-	
 	def add_slice(self, slice_name_yml, nsi_dir=None, nssi_dir=None):
 		self.logger.info("Adding the slice {}".format(slice_name_yml))
 		nsi_dir = self.dir_slice if nsi_dir == None else nsi_dir
 		nssi_dir = self.dir_subslice if nssi_dir == None else nssi_dir
-
+		
 		nsi_deploy = self.slices_controller.add_network_slice(slice_name_yml, self.subslices_controller, nsi_dir,
 		                                                      nssi_dir)
 		return nsi_deploy
+	
 	def delete_slice(self, slice_name):
 		res = self.slices_controller.remove_network_slice(slice_name, self.subslices_controller)
 		return res
+	
 	def add_sub_slice(self):
 		raise NotImplementedError
 	
@@ -342,7 +350,8 @@ class NFVO_JOX(object):
 									try:
 										return [True, subslice_data[entity]]
 									except:
-										message = "The key {} does not exist in the subslice {} attached to the slice {}".format(entity, sub_slice_name, slice_name)
+										message = "The key {} does not exist in the subslice {} attached to the slice {}".format(
+											entity, sub_slice_name, slice_name)
 										return [False, message]
 								else:
 									return [True, subslice_data]
@@ -360,12 +369,12 @@ class NFVO_JOX(object):
 						return [True, nssi_data]
 			else:
 				return [False, nssi_data[1]]
-				
+	
 	def get_subslices_context(self):
 		list_subslice_context = list()
 		nsi_data = self.slices_controller.get_slices_data()
 		for nsi_item in nsi_data:
-			slice_name  = nsi_data[nsi_item]["slice_name"]
+			slice_name = nsi_data[nsi_item]["slice_name"]
 			list_subslices = nsi_data[nsi_item]["sub_slices"]
 			subslice_data = {}
 			subslice_data[slice_name] = {}
@@ -374,10 +383,11 @@ class NFVO_JOX(object):
 				subslice_data[slice_name][item_nssi] = nssi_context
 			list_subslice_context.append(subslice_data)
 		return list_subslice_context
-		
+	
 	def get_subslice_context(self, sub_slice=None):
 		nssi_data = self.subslices_controller.get_subslice_runtime_data(sub_slice)
 		return nssi_data[1]
+	
 	def get_machines_status(self, pop_name, pop_type):
 		if pop_type == self.gv.LXC:
 			for pop_lxc in self.resourceController.pop_lxc_list:
@@ -391,9 +401,9 @@ class NFVO_JOX(object):
 					return machine_status
 		else:
 			return "Error; it is not supported type"
+	
 	def goodbye(self):
 		print("\n You are now leaving JOX ...")
-	
 	
 	def cleanup_and_exit(self, ex=None):
 		if ex:
@@ -401,17 +411,19 @@ class NFVO_JOX(object):
 		else:
 			sys.exit(0)
 
+
 class server_RBMQ(object):
 	def __init__(self):
 		loop = asyncio.get_event_loop()
 		self.nfvo_jox = NFVO_JOX(loop)
 		
-		self.host=self.nfvo_jox.gv.RBMQ_SERVER_IP
-		self.port=self.nfvo_jox.gv.RBMQ_SERVER_PORT
+		self.host = self.nfvo_jox.gv.RBMQ_SERVER_IP
+		self.port = self.nfvo_jox.gv.RBMQ_SERVER_PORT
 		self.connection = None
 		self.channel = None
 		self.queue_name = self.nfvo_jox.gv.RBMQ_QUEUE
 		self.logger = logging.getLogger("server_RBMQ")
+	
 	def run(self):
 		while True:
 			try:
@@ -434,6 +446,7 @@ class server_RBMQ(object):
 				time.sleep(0.5)
 			except KeyboardInterrupt:
 				exit()
+	
 	def on_request(self, ch, method, props, body):
 		enquiry = body.decode(self.nfvo_jox.gv.ENCODING_TYPE)
 		enquiry = json.loads(enquiry)
@@ -608,7 +621,7 @@ class server_RBMQ(object):
 								"data": res,
 								"status_code": self.nfvo_jox.gv.HTTP_420_METHOD_FAILURE
 							}
-					
+				
 				else:
 					message = "package {} does not exists in {}".format(package_name, self.nfvo_jox.gv.STORE_DIR)
 					response = {
@@ -616,7 +629,7 @@ class server_RBMQ(object):
 						"data": message,
 						"status_code": self.nfvo_jox.gv.HTTP_420_METHOD_FAILURE
 					}
-
+			
 			elif request_type == "delete":
 				res = self.nfvo_jox.delete_slice(nsi_name)
 				if res[0]:
@@ -631,9 +644,10 @@ class server_RBMQ(object):
 						"data": res[1],
 						"status_code": self.nfvo_jox.gv.HTTP_420_METHOD_FAILURE
 					}
-					
+			
 			else:
-				res = "The method {} for the request is not supported".format(request_type.upper(), enquiry["request-uri"])
+				res = "The method {} for the request is not supported".format(request_type.upper(),
+				                                                              enquiry["request-uri"])
 				response = {
 					"ACK": False,
 					"data": res,
@@ -670,7 +684,7 @@ class server_RBMQ(object):
 				"status_code": self.nfvo_jox.gv.HTTP_200_OK
 			}
 		elif (enquiry["request-uri"] == "/nssi/<string:nsi_name>") or \
-			(enquiry["request-uri"] == "/nssi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>"):
+				(enquiry["request-uri"] == "/nssi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>"):
 			parameters = enquiry["parameters"]
 			nsi_name = parameters["nsi_name"]
 			nssi_name = parameters["nssi_name"]
@@ -775,7 +789,6 @@ class server_RBMQ(object):
 							self.logger.debug(message)
 							res = self.nfvo_jox.jesearch.get_source_index(es_index_page)
 							
-							
 							if res[0]:
 								res = res[1]
 								response = {
@@ -790,8 +803,8 @@ class server_RBMQ(object):
 									"data": res,
 									"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 								}
-								
-							
+						
+						
 						else:
 							message = "get the key {} from the index-page {} ".format(es_key, es_index_page)
 							self.logger.info(message)
@@ -842,7 +855,8 @@ class server_RBMQ(object):
 						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 					}
 			elif request_type == "delete":
-				if (es_index_page is None) or (es_index_page == "_all") or (es_index_page == "all") or (es_index_page == "*"):
+				if (es_index_page is None) or (es_index_page == "_all") or (es_index_page == "all") or (
+						es_index_page == "*"):
 					res = self.nfvo_jox.jesearch.delete_all_indices_from_es()
 					if res[0]:
 						res = res[1]
@@ -958,7 +972,8 @@ class server_RBMQ(object):
 						"status_code": self.nfvo_jox.gv.HTTP_200_OK
 					}
 				else:
-					res = "The subslice {} does not exist or it is not attached to the slice {}".format(subslcie_name, nssi_name)
+					res = "The subslice {} does not exist or it is not attached to the slice {}".format(subslcie_name,
+					                                                                                    nssi_name)
 					response = {
 						"ACK": False,
 						"data": res,
@@ -1004,7 +1019,8 @@ class server_RBMQ(object):
 							"status_code": self.nfvo_jox.gv.HTTP_200_OK
 						}
 					else:
-						res = "The key entity {} of the subslice {} attached to slice {} does not exist".format(nssi_key, nssi_name, nsi_name)
+						res = "The key entity {} of the subslice {} attached to slice {} does not exist".format(
+							nssi_key, nssi_name, nsi_name)
 						response = {
 							"ACK": False,
 							"data": res,
@@ -1124,7 +1140,8 @@ class server_RBMQ(object):
 							"status_code": self.nfvo_jox.gv.HTTP_200_OK
 						}
 					else:
-						res = "The entity {} of the subslcie {} attached to the slice {} does not exist".format(service_name, subslcie_name, nsi_name)
+						res = "The entity {} of the subslcie {} attached to the slice {} does not exist".format(
+							service_name, subslcie_name, nsi_name)
 						response = {
 							"ACK": False,
 							"data": res,
@@ -1137,7 +1154,7 @@ class server_RBMQ(object):
 						"data": res,
 						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 					}
-					
+			
 			else:
 				res = slice_data[1]
 				response = {
@@ -1245,7 +1262,8 @@ class server_RBMQ(object):
 							"status_code": self.nfvo_jox.gv.HTTP_200_OK
 						}
 					else:
-						res = "The entity {} of the subslcie {} attached to the slice {} does not exist".format(machine_name, subslcie_name, nsi_name)
+						res = "The entity {} of the subslcie {} attached to the slice {} does not exist".format(
+							machine_name, subslcie_name, nsi_name)
 						response = {
 							"ACK": False,
 							"data": res,
@@ -1333,11 +1351,12 @@ class server_RBMQ(object):
 					"data": res,
 					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 				}
-		elif (enquiry["request-uri"] == '/monitor/juju') or (enquiry["request-uri"] == '/monitor/juju/<string:juju_key_val>'):
+		elif (enquiry["request-uri"] == '/monitor/juju') or (
+				enquiry["request-uri"] == '/monitor/juju/<string:juju_key_val>'):
 			parameters = enquiry["parameters"]
 			juju_key_val = parameters["juju_key_val"]
 			data = loop.run(jmonitor_get_juju_status(juju_key_val))
-			if  data[0]:
+			if data[0]:
 				res = data[1]
 				response = {
 					"ACK": False,
@@ -1397,7 +1416,7 @@ class server_RBMQ(object):
 						if os.path.isfile(full_path):
 							if full_path.endswith(".yaml") or full_path.endswith(
 									".yml") or full_path.endswith(
-									".json"):
+								".json"):
 								return [True, full_path]
 							else:
 								message = self.format_file_not_supported(full_path)
@@ -1408,6 +1427,7 @@ class server_RBMQ(object):
 					else:
 						message = self.path_not_found(full_path)
 						return [False, message]
+	
 	def request_not_supported(self, request_url, requesr_method):
 		message = "The method {} for the request {} is not supported".format(requesr_method, request_url)
 		self.logger.debug(message)
@@ -1425,6 +1445,7 @@ class server_RBMQ(object):
 		self.logger.debug(message)
 		self.logger.info(message)
 		return message
+	
 	def read_yaml_json(self, nsi_name):
 		temp_name = nsi_name.split('/')
 		temp_name = temp_name[len(temp_name) - 1]
@@ -1454,13 +1475,13 @@ class server_RBMQ(object):
 		else:
 			message = "The format of the file is not supported"
 			return [False, message]
+	
 	def onboard_jox_package(self, files):
 		try:
 			with open('/proc/mounts', 'r') as f:
 				mounts = [line.split()[1] for line in f.readlines()]
 			
 			dir_temp = self.nfvo_jox.gv.STORE_DIR
-			
 			
 			dir_temp = dir_temp.split('/')
 			dir_temp = '/'.join(x for x in dir_temp if x != '')
@@ -1479,7 +1500,7 @@ class server_RBMQ(object):
 		
 		message = "The file can be oppened"
 		return [True, message]
-
+	
 	def open_save_tar_gz(self, files):
 		nsi_found = False
 		nssi_found = False
@@ -1495,7 +1516,8 @@ class server_RBMQ(object):
 				if nsi_found and nssi_found:
 					try:
 						tar.extractall(self.nfvo_jox.gv.STORE_DIR)
-						message = "The package was successfuly saved to the directory {}".format(self.nfvo_jox.gv.STORE_DIR)
+						message = "The package was successfuly saved to the directory {}".format(
+							self.nfvo_jox.gv.STORE_DIR)
 						return [True, message]
 					except:
 						message = "Error while trying to save the package to the directory {}".format(
@@ -1515,6 +1537,7 @@ class server_RBMQ(object):
 		except Exception as ex:
 			message = "Error while opening the zip file: {}".format(str(ex.args[0]))
 			return [False, message]
+
 
 if __name__ == '__main__':
 	logger = logging.getLogger('proj.jox')

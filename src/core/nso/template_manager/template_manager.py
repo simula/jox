@@ -90,11 +90,9 @@ class TemplateManager():
 		self.map_userNssiId_NssiId = {}
 		self.NSI_template = None
 		self.NSSI_template = list()
-		# self.jesearch = None
-		self.jesearch = es.JESearch(self.es_host, self.es_port, self.es_log_level)
-		self.jesearch.del_index_from_es('slice_keys')
-		
-		# es.del_all_from_es(self.es_host, self.es_port, 'slice_keys')
+		self.jesearch = None
+
+		es.del_all_from_es(self.es_host, self.es_port, 'slice_keys')
 		
 		self.logger = logging.getLogger('jox.TemplateManager')
 		self.log_config()
@@ -112,56 +110,63 @@ class TemplateManager():
 		else:
 			self.logger.setLevel(logging.INFO)
 	def build(self, slice_name_yml, nsi_dir, nssi_dir):
-                slice_full_path = ''.join([nsi_dir, slice_name_yml])
-                try:
-                        with open(slice_full_path) as stream:
-                                slice_data_file = yaml.safe_load(stream)
-                except:
-                        message = "Error while trying to load the slice template {}".format(slice_full_path)
-                        self.logger.error(message)
-                        return [False, message]
-                
-                slice_data_file['metadata']['date'] = str(slice_data_file['metadata']['date'])
-                self.NSI_template = slice_data_file
-                self.NSI_ID = slice_data_file['metadata']['ID']
-                self.set_NSI_monitor_index(self.NSI_ID)
-                message = "Deleting the index {} from elasticsearch if alredy exist".format((self.NSI_ID).lower())
-                logger.info(message)
-                logger.debug(message)
-                self.jesearch.del_index_from_es((self.NSI_ID).lower())
-                message = "Saving the index {} to elasticsearch".format((self.NSI_ID).lower())
-                logger.info(message)
-                logger.debug(message)
-                self.jesearch.set_json_to_es(self.NSI_ID, slice_data_file)
 
-                for sub_slice in self.NSI_template['imports']:
-                        subslice_name_yml = ''.join([nssi_dir, sub_slice, '.', 'yaml'])
-                        try:
-                                with open(subslice_name_yml) as stream:
-                                        subslice_data_file = yaml.safe_load(stream)
-                        except:
-                                message = "Error while trying to load the subslice template {}".format(subslice_name_yml)
-                                self.logger.error(message)
-                                return [False, message]
+		self.jesearch = es.JESearch(self.es_host, self.es_port, self.es_log_level)
+		
+		slice_full_path = ''.join([nsi_dir, slice_name_yml])
+		try:
+			with open(slice_full_path) as stream:
+				slice_data_file = yaml.safe_load(stream)
+		except:
+			message = "Error while trying to load the slice template {}".format(slice_full_path)
+			self.logger.error(message)
+			return [False, message]
+		
+		slice_data_file['metadata']['date'] = str(slice_data_file['metadata']['date'])
+		
+		self.NSI_template = slice_data_file
+		self.NSI_ID = slice_data_file['metadata']['ID']
+		
+		self.set_NSI_monitor_index(self.NSI_ID)
+		message = "Deleting the index {} from elasticsearch if alredy exist".format((self.NSI_ID).lower())
+		logger.info(message)
+		logger.debug(message)
+		self.jesearch.del_index_from_es((self.NSI_ID).lower())    			# Adding slice data to elasticsearch
+		message = "Saving the index {} to elasticsearch".format((self.NSI_ID).lower())
+		logger.info(message)
+		logger.debug(message)
+		self.jesearch.set_json_to_es(self.NSI_ID, slice_data_file)
 
-                        subslice_data_file['metadata']['date'] = str(subslice_data_file['metadata']['date'])
-
-                        nssi_id = subslice_data_file['metadata']['ID']
-                        self.NSSI_template.append(subslice_data_file)
-                        self.NSSI_ID.append(nssi_id)
-
-                        message = "Deleting the index {} from elasticsearch if already exist".format(nssi_id)
-                        logger.info(message)
-                        logger.debug(message)
-                        self.jesearch.del_index_from_es(nssi_id)
-
-                        message = "Saving the index {} to elasticsearch".format(nssi_id)
-                        logger.info(message)
-                        logger.debug(message)
-                        self.jesearch.set_json_to_es(nssi_id, subslice_data_file)
-
-                message = "the slice {} is successfully deployed".format(slice_name_yml)
-                return [True, message]
+		for sub_slice in self.NSI_template['imports']:
+			subslice_name_yml = ''.join([nssi_dir, sub_slice, '.', 'yaml'])
+			try:
+				with open(subslice_name_yml) as stream:
+					subslice_data_file = yaml.safe_load(stream)
+			except:
+				message = "Error while trying to load the subslice template {}".format(subslice_name_yml)
+				self.logger.error(message)
+				return [False, message]
+			
+			subslice_data_file['metadata']['date'] = str(subslice_data_file['metadata']['date'])
+			
+			
+			nssi_id = subslice_data_file['metadata']['ID']
+			
+			self.NSSI_template.append(subslice_data_file)
+			self.NSSI_ID.append(nssi_id)
+			
+			message = "Deleting the index {} from elasticsearch if already exist".format(nssi_id)
+			logger.info(message)
+			logger.debug(message)
+			self.jesearch.del_index_from_es(nssi_id)
+			
+			message = "Saving the index {} to elasticsearch".format(nssi_id)
+			logger.info(message)
+			logger.debug(message)
+			self.jesearch.set_json_to_es(nssi_id, subslice_data_file)
+		
+		message = "the slice {} is successfully deployed".format(slice_name_yml)
+		return [True, message]
 	def get_NSSIs_ID(self): # return the IDs of the NSSI composing the NSI
 		return self.NSSI_ID
 	def get_NSI_ID(self): # return the ID of the NSI
@@ -297,20 +302,15 @@ class TemplateManager():
 							"machine_keys": [],
 							"service_keys": [],
 							"relation_keys": []} # Relation key not required for now
-		self.jesearch.del_index_from_es('slice_keys_'+nsi_id.lower())
-		# es.del_all_from_es(self.es_host, self.es_port, 'slice_keys_'+nsi_id.lower()) # this is per  slice index (runtime updates)
-		self.jesearch.set_json_to_es('slice_keys_'+nsi_id.lower(), slice_skeleton)
-		# es.set_json_to_es(self.es_host, self.es_port, 'slice_keys_'+nsi_id.lower(), slice_skeleton)
-		
-		self.jesearch.del_index_from_es('slice_keys_tmp_'+nsi_id.lower())
-		# es.del_all_from_es(self.es_host, self.es_port, 'slice_keys_tmp_'+nsi_id.lower()) # this is per  slice index (runtime updates)
-		# es.set_json_to_es(self.es_host, self.es_port, 'slice_keys_tmp_'+nsi_id.lower(), slice_skeleton)
-		self.jesearch.set_json_to_es('slice_keys_tmp_'+nsi_id.lower(), slice_skeleton)
+		es.del_all_from_es(self.es_host, self.es_port, 'slice_keys_' + nsi_id.lower()) # this is per  slice index (runtime updates)
+		es.set_json_to_es(self.es_host, self.es_port, 'slice_keys_' + nsi_id.lower(), slice_skeleton)
+
+		es.del_all_from_es(self.es_host, self.es_port, 'slice_keys_tmp_' + nsi_id.lower()) # this is per  slice index (runtime updates)
+		es.set_json_to_es(self.es_host, self.es_port, 'slice_keys_tmp_' + nsi_id.lower(), slice_skeleton)
 
 
 	def set_NSSI_monitor_index(self, nssi_id, nsi_id, list_services, list_machines):
-		self.jesearch.del_index_from_es('slice_monitor_'+nssi_id.lower())
-		# es.del_all_from_es(self.es_host, self.es_port, 'slice_monitor_'+nssi_id.lower()) # this is per sub slice index (runtime updates)
+		es.del_all_from_es(self.es_host, self.es_port, 'slice_monitor_' + nssi_id.lower()) # this is per sub slice index (runtime updates)
 		services_list = []
 		machines_list = []
 		relations_list = []
@@ -320,8 +320,7 @@ class TemplateManager():
 							"machine_status": [],
 							"service_status": [],
 							"relation_status": []}  # Create Empty container
-		# es.set_json_to_es(self.es_host, self.es_port, 'slice_monitor_'+nssi_id.lower(), slice_skeleton)
-		self.jesearch.set_json_to_es('slice_monitor_'+nssi_id.lower(), slice_skeleton)
+		es.set_json_to_es(self.es_host, self.es_port, 'slice_monitor_' + nssi_id.lower(), slice_skeleton)
 		service_list = list(list_services.keys())  # List of applications
 		ES = Elasticsearch([{'host': self.es_host, 'port': self.es_port, 'use_ssl': False}])
 		for service in range(len(service_list)):
@@ -407,28 +406,24 @@ class TemplateManager():
 
 
 	def update_slice_monitor_index(self, index_page, container_type, container_name, leaf_key, leaf_value, nsi_id):
-		# slice_data = self.jesearch.get_json_from_es(index_page, container_type)
-		# slice_data = es.set_json_to_es(self.es_host, self.es_port, index_page, container_type)
-		slice_data = self.jesearch.get_json_from_es(index_page, container_type)
-		if slice_data[0]:
-			slice_data = slice_data[1]
-			for machines in range(len(slice_data)):
-				machines_list = slice_data[machines]
-				machine = list(machines_list.keys())
-				for num in range(len(machine)):
-					if machine[num] == container_name:
-						slice_data[machines][container_name][0][leaf_key] = leaf_value
-			ES = Elasticsearch([{'host': self.es_host, 'port': self.es_port, 'use_ssl': False}])
-			ES.update(index=index_page, doc_type='post', id=1,  # Push the container with updates
-					  body={'doc': {container_type: slice_data}}, retry_on_conflict=0)
-	
-			if container_type=="machine_keys":
-				machine_keys[nsi_id][0]['machine_keys'].clear()
-				for machine in range(len(slice_data)):
-					machine_keys[nsi_id][0]['machine_keys'].append(slice_data[machine])
-			if container_type=="service_keys":
-				service_keys[nsi_id][0]['service_keys'][0].clear()
-				for service in range(len(slice_data)):
-					service_keys[nsi_id][0]['service_keys'].append(slice_data[service])
-	
+		slice_data = es.get_json_from_es(self.es_host, self.es_port, index_page, container_type)
+		for machines in range(len(slice_data)):  # Update the container
+			machines_list = slice_data[machines]
+			machine = list(machines_list.keys())
+			for num in range(len(machine)):
+				if machine[num] == container_name:
+					slice_data[machines][container_name][0][leaf_key] = leaf_value
+		ES = Elasticsearch([{'host': self.es_host, 'port': self.es_port, 'use_ssl': False}])
+		ES.update(index=index_page, doc_type='post', id=1,  # Push the container with updates
+				  body={'doc': {container_type: slice_data}}, retry_on_conflict=0)
+
+		if container_type=="machine_keys":
+			machine_keys[nsi_id][0]['machine_keys'].clear()
+			for machine in range(len(slice_data)):
+				machine_keys[nsi_id][0]['machine_keys'].append(slice_data[machine])
+		if container_type=="service_keys":
+			service_keys[nsi_id][0]['service_keys'][0].clear()
+			for service in range(len(slice_data)):
+				service_keys[nsi_id][0]['service_keys'].append(slice_data[service])
+
 

@@ -28,7 +28,6 @@
 
 import logging
 import traceback
-
 from src.core.nso.nssi import subslice
 logger = logging.getLogger('jox.nssiController')
 

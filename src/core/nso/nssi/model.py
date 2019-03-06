@@ -31,6 +31,7 @@ import json
 import jsonpickle
 import logging
 from src.core.nso.nssi import service
+#from src.core.ro import jtemplate
 from json import JSONEncoder
 from juju.model import Model
 from juju import loop

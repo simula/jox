@@ -208,7 +208,7 @@ class JSlice(JSONEncoder):
 		raise NotImplementedError()
 	
 	def delete_jmodel(self, model_name):
-		from  src.core.NSO.plugins.juju2_plugin import Model
+		from  src.core.nso.plugins.juju2_plugin import Model
 		jmodel = self.get_jmodel_object(model_name)
 		jmodel_uuid = jmodel.juju_model_uuid
 		loop.run(jmodel.jcloud.juju_controller.destroy_juju_model(jmodel_uuid))

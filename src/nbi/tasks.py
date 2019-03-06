@@ -26,10 +26,12 @@
  * \email:contact@mosaic5g.io
 """
 import os, sys
+
 dir_root_path = os.path.dirname(os.path.abspath(__file__ + "/../../"))
 sys.path.append(dir_root_path)
 
 import os, sys
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
 dir_parent_path = os.path.dirname(os.path.abspath(__file__ + "/.."))
 
@@ -40,120 +42,123 @@ from src.common.config import gv as gv
 import pika
 import logging
 import json
+
 logger = logging.getLogger('JOX.NBI')
 import uuid
 import time
 
+
 class listTasks(object):
-    def __init__(self):
-        self.jox_config = ""
-        self.gv = gv
-        logger = logging.getLogger("NBI.tasks")
-        ######## STEP 1: Load Configuration ########
-        try:
-            filename = ''.join([dir_parent_path, '/common/config/jox_config.json'])
-            print  (filename)
-            print (dir_parent_path)
-            with open(filename, 'r') as f:
-                self.jox_config = json.load(f)
-                self.gv.RBMQ_SERVER_IP = self.jox_config['rabbit-mq-config']['rabbit-mq-server-ip']
-                self.gv.RBMQ_SERVER_PORT = self.jox_config['rabbit-mq-config']['rabbit-mq-server-port']
-                self.gv.RBMQ_QUEUE = self.jox_config['rabbit-mq-config']['rabbit-mq-queue']
-                # flask
-                self.gv.FLASK_SERVER_IP = self.jox_config['flask-config']['flask-server']
-                self.gv.FLASK_SERVER_PORT = self.jox_config['flask-config']['flask-port']
-                self.gv.FLASK_SERVER_DEBUG = self.jox_config['flask-config']['flask-debug']
-                #
-                self.gv.STORE_DIR = self.jox_config['store-config']["store-directrory"]
-                self.gv.ENCODING_TYPE = self.jox_config['encoding-type']
-                
-                self.gv.LOG_FILE = self.jox_config['log-config']['log-file']
-                self.gv.LOG_LEVEL = self.jox_config['log-config']['log-level']
-
-        except IOError as ex:
-            message = "Could not load JOX Configuration file.I/O error({0}): {1}".format(ex.errno, ex.strerror)
-            logger.info(message)
-            logger.debug(message)
-        else:
-            message = "JOX Configuration file Loaded"
-            logger.info(message)
-            logger.debug(message)
-
-        #########  STEP 3: Logging Configuration ########
-        
-        if self.gv.LOG_LEVEL == 'debug':
-            logger.setLevel(logging.DEBUG)
-        elif self.gv.LOG_LEVEL == 'info':
-            logger.setLevel(logging.INFO)
-        elif self.gv.LOG_LEVEL == 'warn':
-            logger.setLevel(logging.WARNING)
-        elif self.gv.LOG_LEVEL == 'error':
-            logger.setLevel(logging.ERROR)
-        elif self.gv.LOG_LEVEL == 'critic':
-            logger.setLevel(logging.CRITICAL)
-        else:
-            logger.setLevel(logging.INFO)
-        # create file handler which logs even debug messages
-        LOGFILE = self.gv.LOG_FILE
-        
-        file_handler = logging.FileHandler(LOGFILE)
-        file_handler.setLevel(logging.DEBUG)
-
-        ### RabbitMQ  param ###
-        self.queue_name = self.gv.RBMQ_QUEUE
-        self.host_name = self.gv.RBMQ_SERVER_IP
-        self.port = self.gv.RBMQ_SERVER_PORT
-        
-        
-        self.connection = None
-        self.channel = None
-        self.result = None
-        self.callback_queue = None
-        
-        self.run()
-
-
-    def run(self, retry=False):
-        if retry:
-            self.connection.close()
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.host_name, port=self.port))
-        self.channel = self.connection.channel()
-
-        self.result = self.channel.queue_declare(exclusive=True)
-        self.callback_queue = self.result.method.queue
-
-        self.channel.basic_consume(self.on_response, no_ack=True,
-                                   queue=self.callback_queue)
-    """ Define list of tasks that can be invoked"""
-    def on_response(self, ch, method, props, body):
-        if self.corr_id == props.correlation_id:
-            self.response = body
-
-    def call(self, msg):
-        messahe_not_sent = True
-        while messahe_not_sent:
-            try:
-                self.response = None
-                self.corr_id = str(uuid.uuid4())
-                self.channel.basic_publish(exchange='',
-                                           routing_key=self.queue_name,
-                                           properties=pika.BasicProperties(
-                                                 reply_to = self.callback_queue,
-                                                 correlation_id = self.corr_id,
-                                                 ),
-                                           body=msg)
-                messahe_not_sent = False
-            except:
-                time.sleep(0.5)
-                self.run(True)
-        while self.response is None:
-            self.connection.process_data_events()
-        return self.response
-
-    def send_message(self):
-        self.channel.basic_publish(exchange='',
-                              routing_key=self.queue_name,
-                              body='Hello World from JOX 345678!')
-        logger.info(" [x] Sent 'Hello World!'")
-    def exit(self):
-        self.connection.close()
+	def __init__(self):
+		self.jox_config = ""
+		self.gv = gv
+		logger = logging.getLogger("NBI.tasks")
+		######## STEP 1: Load Configuration ########
+		try:
+			filename = ''.join([dir_parent_path, '/common/config/jox_config.json'])
+			print(filename)
+			print(dir_parent_path)
+			with open(filename, 'r') as f:
+				self.jox_config = json.load(f)
+				self.gv.RBMQ_SERVER_IP = self.jox_config['rabbit-mq-config']['rabbit-mq-server-ip']
+				self.gv.RBMQ_SERVER_PORT = self.jox_config['rabbit-mq-config']['rabbit-mq-server-port']
+				self.gv.RBMQ_QUEUE = self.jox_config['rabbit-mq-config']['rabbit-mq-queue']
+				# flask
+				self.gv.FLASK_SERVER_IP = self.jox_config['flask-config']['flask-server']
+				self.gv.FLASK_SERVER_PORT = self.jox_config['flask-config']['flask-port']
+				self.gv.FLASK_SERVER_DEBUG = self.jox_config['flask-config']['flask-debug']
+				#
+				self.gv.STORE_DIR = self.jox_config['store-config']["store-directrory"]
+				self.gv.ENCODING_TYPE = self.jox_config['encoding-type']
+				
+				self.gv.LOG_FILE = self.jox_config['log-config']['log-file']
+				self.gv.LOG_LEVEL = self.jox_config['log-config']['log-level']
+		
+		except IOError as ex:
+			message = "Could not load JOX Configuration file.I/O error({0}): {1}".format(ex.errno, ex.strerror)
+			logger.info(message)
+			logger.debug(message)
+		else:
+			message = "JOX Configuration file Loaded"
+			logger.info(message)
+			logger.debug(message)
+		
+		#########  STEP 3: Logging Configuration ########
+		
+		if self.gv.LOG_LEVEL == 'debug':
+			logger.setLevel(logging.DEBUG)
+		elif self.gv.LOG_LEVEL == 'info':
+			logger.setLevel(logging.INFO)
+		elif self.gv.LOG_LEVEL == 'warn':
+			logger.setLevel(logging.WARNING)
+		elif self.gv.LOG_LEVEL == 'error':
+			logger.setLevel(logging.ERROR)
+		elif self.gv.LOG_LEVEL == 'critic':
+			logger.setLevel(logging.CRITICAL)
+		else:
+			logger.setLevel(logging.INFO)
+		# create file handler which logs even debug messages
+		LOGFILE = self.gv.LOG_FILE
+		
+		file_handler = logging.FileHandler(LOGFILE)
+		file_handler.setLevel(logging.DEBUG)
+		
+		### RabbitMQ  param ###
+		self.queue_name = self.gv.RBMQ_QUEUE
+		self.host_name = self.gv.RBMQ_SERVER_IP
+		self.port = self.gv.RBMQ_SERVER_PORT
+		
+		self.connection = None
+		self.channel = None
+		self.result = None
+		self.callback_queue = None
+		
+		self.run()
+	
+	def run(self, retry=False):
+		if retry:
+			self.connection.close()
+		self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.host_name, port=self.port))
+		self.channel = self.connection.channel()
+		
+		self.result = self.channel.queue_declare(exclusive=True)
+		self.callback_queue = self.result.method.queue
+		
+		self.channel.basic_consume(self.on_response, no_ack=True,
+		                           queue=self.callback_queue)
+	
+	""" Define list of tasks that can be invoked"""
+	
+	def on_response(self, ch, method, props, body):
+		if self.corr_id == props.correlation_id:
+			self.response = body
+	
+	def call(self, msg):
+		messahe_not_sent = True
+		while messahe_not_sent:
+			try:
+				self.response = None
+				self.corr_id = str(uuid.uuid4())
+				self.channel.basic_publish(exchange='',
+				                           routing_key=self.queue_name,
+				                           properties=pika.BasicProperties(
+					                           reply_to=self.callback_queue,
+					                           correlation_id=self.corr_id,
+				                           ),
+				                           body=msg)
+				messahe_not_sent = False
+			except:
+				time.sleep(0.5)
+				self.run(True)
+		while self.response is None:
+			self.connection.process_data_events()
+		return self.response
+	
+	def send_message(self):
+		self.channel.basic_publish(exchange='',
+		                           routing_key=self.queue_name,
+		                           body='Hello World from JOX 345678!')
+		logger.info(" [x] Sent 'Hello World!'")
+	
+	def exit(self):
+		self.connection.close()

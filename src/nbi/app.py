@@ -26,10 +26,9 @@
  * \email:contact@mosaic5g.io
 """
 import os, sys
+
 dir_root_path = os.path.dirname(os.path.abspath(__file__ + "/../../"))
 sys.path.append(dir_root_path)
-
-
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 dir_parent_path = os.path.dirname(os.path.abspath(__file__ + "/mnt"))
@@ -37,9 +36,10 @@ dir_parent_path = os.path.dirname(os.path.abspath(__file__ + "/mnt"))
 import logging
 from src.nbi import tasks
 import json
-from flask import Flask, request,jsonify
+from flask import Flask, request, jsonify
 import datetime
 import tarfile, io
+
 SLICE_TEMPLATE_DIRECTORY_DEFAULT = ''.join([dir_parent_path, '/jox_store'])
 
 app = Flask(__name__)
@@ -50,39 +50,38 @@ logger.info('Staring JOX main thread')
 
 listOfTasks = tasks.listTasks()
 standard_reqst = {
-            "datetime": None,
-            "request-uri": None,
-            "request-type": None, # get, post; delete
-            "parameters":{
-                "template_directory": None,
-                "nsi_name": None,
-                "nssi_name": None,
-                "nsi_directory": None,
-                "nssi_directory": None,
-                "nssi_key": None,
-                "service_name": None,
-                # related to the relations between two services
-                "nssi_name_source": None,
-                "service_name_source": None,
-                "nssi_name_target": None,
-                "service_name_target": None,
-                #
-                "machine_name": None,
-                "relation": None,
-                "service_key": None,
-                "machine_key": None,
-                "relation_key": None,
-                #
-                "es_index_page": None,
-                "es_key": None,
-                # juju
-                "juju_key_val": None,
-                # package onboarding
-                "package_onboard_data": None,
-                "package_name": None,
-            }
-        }
-
+	"datetime": None,
+	"request-uri": None,
+	"request-type": None,  # get, post; delete
+	"parameters": {
+		"template_directory": None,
+		"nsi_name": None,
+		"nssi_name": None,
+		"nsi_directory": None,
+		"nssi_directory": None,
+		"nssi_key": None,
+		"service_name": None,
+		# related to the relations between two services
+		"nssi_name_source": None,
+		"service_name_source": None,
+		"nssi_name_target": None,
+		"service_name_target": None,
+		#
+		"machine_name": None,
+		"relation": None,
+		"service_key": None,
+		"machine_key": None,
+		"relation_key": None,
+		#
+		"es_index_page": None,
+		"es_key": None,
+		# juju
+		"juju_key_val": None,
+		# package onboarding
+		"package_onboard_data": None,
+		"package_name": None,
+	}
+}
 
 """
 @apiDefine GroupJox JOX
@@ -122,15 +121,14 @@ slices, sub-slices, services, machines, and relations
 """
 
 
-
 @app.route('/')
 def jox_homepage():
-    """
+	"""
     @apiGroup GroupJox
     @apiName GetJoxHomepage
-    
+
     @api {get}  / Homepage
-    
+
     @apiExample {curl} Example usage:
          curl -i http://127.0.0.1:5000/
 
@@ -142,120 +140,121 @@ def jox_homepage():
         http://localhost:5000/jox
         }
     """
-    logger.debug("Receive homepage request")
-    logger.info("Receive homepage request")
-    message = "Welcome to JOX! \n" \
-              "To get the list of the capabilities and jox configuration, use the following \n" \
-              "{}".format(''.join([request.url, 'jox \n']))
-    
-    return message
+	logger.debug("Receive homepage request")
+	logger.info("Receive homepage request")
+	message = "Welcome to JOX! \n" \
+	          "To get the list of the capabilities and jox configuration, use the following \n" \
+	          "{}".format(''.join([request.url, 'jox \n']))
+	
+	return message
+
 
 jox_capabilities = {
-    "jox":{
-        "/jox": "return jox configuration and the list of the capabilities",
-        "/list": {"1":"return the list of all files in formation .yaml, .yaml and .json",
-                  "2": "example: curl  http://127.0.0.1:5000/list; return the list in the default directory",
-                  "3": "example: curl  http://127.0.0.1:5000/list?url=/home/arouk/Documents/slice_template; return the list in slice_template directory",
-                },
-        "/ls":"alias to /list",
-        "/show/<string:nsi_name>":{"1":"show the content of the template nsi_name",
-                  "2": "example: curl  http://127.0.0.1:5000/show/exmple_template.yaml; show the slice template exmple_template.yaml in the default directory",
-                  "3": "example: curl  http://127.0.0.1:5000/list?url=/home/arouk/Documents/slice_template/exmple_template.yaml; show the slice template exmple_template.yaml in the given directory",
-                },
-        },
-    "slice":{
-            "/nsi/all":"GET; get the context of all deployed slices",
-            "/nsi":"GET ; alias to /nsi/all",
-            "/nsi/<string:nsi_name>":{
-                "GET":"get context of already deployed slice nsi_name",
-                "POST":"deploy/update slice nsi_name",
-                "DELET":"delete the slice nsi_name",
-            },
-    },
-    "sub-slice":{
-            "/nssi/all":{
-                "GET":"get the context of all subslices"
-            },
-            "/nssi":"alias to /nssi/all",
-            "/nssi/<string:nsi_name>":{
-                "GET":"get context of the subslices attached to the slice nsi_name",
-                "POST":"Not supported",
-                "DELET":"Not supported",
-            },
-            "/nssi/<string:nsi_name>/<string:nssi_name>":{
-                "GET":"get context of the subslice nssi_name attached to the slice nsi_name",
-                "POST":"Not supported",
-                "DELET":"Not supported",
-            },
-            "/nssi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>":{
-                "GET":"get crtain entity nssi_key of subslice nssi_name attached to the slice nsi_name",
-                "POST":"Not supported",
-                "DELET":"Not supported",
-            },
-    },
-    "elasticsearch":{
-        "/es":{
-                "GET":"get all the index-pages in elasticsearch",
-                "POST":"Not supported",
-                "DELET":"Delete all the index-pages in elasticsearch",
-            },
-        "/es/<string:es_index_page>":{
-                "GET":"get the content of the index-page es_index_page from  elasticsearch",
-                "POST":"save the content of the index-page es_index_page to elasticsearch",
-                "DELET":"Delete the index-page es_index_page from elasticsearch",
-            },
-        "/es/<string:es_index_page>/<string:es_key>":{
-                "GET":"get certain index es_key from the index-page es_index_page from elasticsearch",
-                "POST":"Not supported",
-                "DELET":"Not supported",
-            },
-    },
-    "monitoring":{
-        "slice&sub-sclice":{
-            "/monitor/nsi":
-                "get monitoring information on all the deployed slices",
-            "/monitor/nsi/<string:nsi_name>":
-                "get monitoring information on the deployed slice nsi_name",
-            "/monitor/nsi/<string:nsi_name>/<string:nssi_name>":
-                "get monitoring information on the subslice nssi_name from the deployed slice nsi_name",
-            "/monitor/nsi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>":
-                "get monitoring information on certain entity of the the subslice nssi_name from the deployed slice nsi_name",
-        },
-        "service":{
-            "/monitor/service/<string:nsi_name>":
-                "get monitoring information on all services of the slice nsi_name",
-            "/monitor/service/<string:nsi_name>/<string:nssi_name>":
-                "get monitoring information on all services of the subslice nssi_name attached to the slice nsi_name",
-            "/monitor/service/<string:nsi_name>/<string:nssi_name>/<string:service_name>":
-                "get monitoring information on the service service_name of the subslice nssi_name attached to the slice nsi_name",
-        },
-        "machine":{
-            "/monitor/machine/<string:nsi_name>":
-                    "get monitoring information on all machines of the slice nsi_name",
-            "/monitor/machine/<string:nsi_name>/<string:nssi_name>":
-                "get monitoring information on all machines of the subslice nssi_name attached to the slice nsi_name",
-            "/monitor/machine/<string:nsi_name>/<string:nssi_name>/<string:machine_name>":
-                "get monitoring information on the machine service_name of the subslice nssi_name attached to the slice nsi_name",
-        },
-        "relation":{
-            "/monitor/relation/<string:nsi_name>":
-                "get monitoring information on the relations of the slice nsi_name",
-            "/monitor/relation/<string:nsi_name>/<string:nssi_name>":
-                "get monitoring information on the relations of the subslice nssi_name attached to the slice nsi_name",
-        },
-    },
+	"jox": {
+		"/jox": "return jox configuration and the list of the capabilities",
+		"/list": {"1": "return the list of all files in formation .yaml, .yaml and .json",
+		          "2": "example: curl  http://127.0.0.1:5000/list; return the list in the default directory",
+		          "3": "example: curl  http://127.0.0.1:5000/list?url=/home/arouk/Documents/slice_template; return the list in slice_template directory",
+		          },
+		"/ls": "alias to /list",
+		"/show/<string:nsi_name>": {"1": "show the content of the template nsi_name",
+		                            "2": "example: curl  http://127.0.0.1:5000/show/exmple_template.yaml; show the slice template exmple_template.yaml in the default directory",
+		                            "3": "example: curl  http://127.0.0.1:5000/list?url=/home/arouk/Documents/slice_template/exmple_template.yaml; show the slice template exmple_template.yaml in the given directory",
+		                            },
+	},
+	"slice": {
+		"/nsi/all": "GET; get the context of all deployed slices",
+		"/nsi": "GET ; alias to /nsi/all",
+		"/nsi/<string:nsi_name>": {
+			"GET": "get context of already deployed slice nsi_name",
+			"POST": "deploy/update slice nsi_name",
+			"DELET": "delete the slice nsi_name",
+		},
+	},
+	"sub-slice": {
+		"/nssi/all": {
+			"GET": "get the context of all subslices"
+		},
+		"/nssi": "alias to /nssi/all",
+		"/nssi/<string:nsi_name>": {
+			"GET": "get context of the subslices attached to the slice nsi_name",
+			"POST": "Not supported",
+			"DELET": "Not supported",
+		},
+		"/nssi/<string:nsi_name>/<string:nssi_name>": {
+			"GET": "get context of the subslice nssi_name attached to the slice nsi_name",
+			"POST": "Not supported",
+			"DELET": "Not supported",
+		},
+		"/nssi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>": {
+			"GET": "get crtain entity nssi_key of subslice nssi_name attached to the slice nsi_name",
+			"POST": "Not supported",
+			"DELET": "Not supported",
+		},
+	},
+	"elasticsearch": {
+		"/es": {
+			"GET": "get all the index-pages in elasticsearch",
+			"POST": "Not supported",
+			"DELET": "Delete all the index-pages in elasticsearch",
+		},
+		"/es/<string:es_index_page>": {
+			"GET": "get the content of the index-page es_index_page from  elasticsearch",
+			"POST": "save the content of the index-page es_index_page to elasticsearch",
+			"DELET": "Delete the index-page es_index_page from elasticsearch",
+		},
+		"/es/<string:es_index_page>/<string:es_key>": {
+			"GET": "get certain index es_key from the index-page es_index_page from elasticsearch",
+			"POST": "Not supported",
+			"DELET": "Not supported",
+		},
+	},
+	"monitoring": {
+		"slice&sub-sclice": {
+			"/monitor/nsi":
+				"get monitoring information on all the deployed slices",
+			"/monitor/nsi/<string:nsi_name>":
+				"get monitoring information on the deployed slice nsi_name",
+			"/monitor/nsi/<string:nsi_name>/<string:nssi_name>":
+				"get monitoring information on the subslice nssi_name from the deployed slice nsi_name",
+			"/monitor/nsi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>":
+				"get monitoring information on certain entity of the the subslice nssi_name from the deployed slice nsi_name",
+		},
+		"service": {
+			"/monitor/service/<string:nsi_name>":
+				"get monitoring information on all services of the slice nsi_name",
+			"/monitor/service/<string:nsi_name>/<string:nssi_name>":
+				"get monitoring information on all services of the subslice nssi_name attached to the slice nsi_name",
+			"/monitor/service/<string:nsi_name>/<string:nssi_name>/<string:service_name>":
+				"get monitoring information on the service service_name of the subslice nssi_name attached to the slice nsi_name",
+		},
+		"machine": {
+			"/monitor/machine/<string:nsi_name>":
+				"get monitoring information on all machines of the slice nsi_name",
+			"/monitor/machine/<string:nsi_name>/<string:nssi_name>":
+				"get monitoring information on all machines of the subslice nssi_name attached to the slice nsi_name",
+			"/monitor/machine/<string:nsi_name>/<string:nssi_name>/<string:machine_name>":
+				"get monitoring information on the machine service_name of the subslice nssi_name attached to the slice nsi_name",
+		},
+		"relation": {
+			"/monitor/relation/<string:nsi_name>":
+				"get monitoring information on the relations of the slice nsi_name",
+			"/monitor/relation/<string:nsi_name>/<string:nssi_name>":
+				"get monitoring information on the relations of the subslice nssi_name attached to the slice nsi_name",
+		},
+	},
 }
 
 
 @app.route('/jox')
 def jox_config():
-    """
+	"""
     @apiGroup GroupJox
     @apiName GetJoxCapabilities
-    
+
     @apiDescription This endpoint gives you the configuration of jox, as well as the list of its capabilities
     @api {get}  /jox Configuration and capabilities
-    
+
     @apiExample {curl} Example usage:
          curl -i http://127.0.0.1:5000/jox
 
@@ -375,46 +374,47 @@ def jox_config():
             }
         }
     """
-    enquiry = standard_reqst
-    current_time = datetime.datetime.now()
-    enquiry["datetime"] = str(current_time)
-    enquiry["request-uri"] = "/jox/"
-    enquiry["request-type"] = request.method
-    enquiry = json.dumps(enquiry)
-    response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
-    data = response.decode(listOfTasks.gv.ENCODING_TYPE)
-    data = json.loads(data)
-    logger.info("enquiry: {}".format(enquiry))
-    logger.debug("enquiry: {}".format(enquiry))
-    data = data["data"]
-    status_code = 200
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["request-uri"] = "/jox/"
+	enquiry["request-type"] = request.method
+	enquiry = json.dumps(enquiry)
+	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+	data = json.loads(data)
+	logger.info("enquiry: {}".format(enquiry))
+	logger.debug("enquiry: {}".format(enquiry))
+	data = data["data"]
+	status_code = 200
+	
+	data = {
+		"jox-config": data,
+		"jox-capabilities": jox_capabilities,
+		"elapsed-time": str(datetime.datetime.now() - current_time),
+	}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
 
-    data = {
-        "jox-config": data,
-        "jox-capabilities": jox_capabilities,
-        "elapsed-time": str(datetime.datetime.now() - current_time),
-    }
-    logger.info("response: {}".format(data))
-    logger.debug("response: {}".format(data))
-    data = jsonify(data)
-    return data, status_code
 
 @app.route('/list')
 @app.route('/ls')
 @app.route('/show/<string:nsi_name>')
 def list_of_templates(nsi_name=None):
-    """
+	"""
     @apiGroup GroupJox
     @apiName GetJoxlist
-    
+
     @api {get}  /list List templates
     @apiDescription get the list of all template (in format .yaml, .yml, and .json) in default directory or given directory
-    
+
     @apiParam {path} full_path directory of the templates (Optional)
-    
+
     @apiExample {curl} First-Example-Usage:
          curl -i http://127.0.0.1:5000/list
-    
+
     @apiDescription get the list of all template in the default directory
     @apiSuccessExample First-Example-Success-Response:
         HTTP/1.0 200 OK
@@ -433,7 +433,7 @@ def list_of_templates(nsi_name=None):
     @apiDescription get the list of all template in the given directory /home/arouk/Documents/slice_templet
     @apiExample {curl} Second-Example-Usage:
          curl -i http://127.0.0.1:5000/list?url=/home/arouk/Documents
-    
+
     @apiSuccessExample Second-Example-Success-Response:
         HTTP/1.0 200 OK
         {
@@ -451,25 +451,25 @@ def list_of_templates(nsi_name=None):
           "elapsed-time": "0:00:00.003495"
         }
     """
-    
-    """
+	
+	"""
     @apiGroup GroupJox
     @apiName GetJoxLs
-    
+
     @api {get}  /ls List templates(alias)
     @apiDescription It is alias to /list
     """
-    
-    """
+	
+	"""
     @apiGroup GroupJox
     @apiName GetJoxShow
 
     @api {get}  /show/<string:nsi_name>?url=full_path Show the template
     @apiDescription Show the content of the file nsi_name, only the following formats are supported: .yaml, .yml, and .json
-    
+
     @apiParam {string} nsi_name name of the file(template)
     @apiParam {path} [full_path=None] full_path directory of the templates
-    
+
     @apiDescription example usage for to show the template in default directory
     @apiExample {curl} First-Example-Usage:
          curl -i http://127.0.0.1:5000/show/slice_template1.yaml
@@ -478,7 +478,7 @@ def list_of_templates(nsi_name=None):
         {
             //  To add example here
         }
-    
+
     @apiDescription example usage for to show the template in specified directory
     @apiExample {curl} Second-Example-Usage:
          curl -i http://127.0.0.1:5000/show/slice_template1.yaml?url=/home/arouk/Documents
@@ -496,91 +496,92 @@ def list_of_templates(nsi_name=None):
           "elapsed-time": "0:00:00.002719"
         }
     """
-    
-    enquiry = standard_reqst
-    current_time = datetime.datetime.now()
-    enquiry["datetime"] = str(current_time)
-    enquiry["parameters"]["template_directory"] = request.args.get('url')
-    enquiry["request-uri"] = str(request.url_rule)
-    enquiry["request-type"] = (request.method).lower()
-    enquiry["parameters"]["nsi_name"] = nsi_name
-    enquiry = json.dumps(enquiry)
-    logger.info("enquiry: {}".format(enquiry))
-    logger.debug("enquiry: {}".format(enquiry))
+	
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["parameters"]["template_directory"] = request.args.get('url')
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	enquiry["parameters"]["nsi_name"] = nsi_name
+	enquiry = json.dumps(enquiry)
+	logger.info("enquiry: {}".format(enquiry))
+	logger.debug("enquiry: {}".format(enquiry))
+	
+	# waiting for the response
+	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+	data = json.loads(data)
+	if data["ACK"]:
+		message = "list of templates in the directory {}".format(data["full_path"])
+	
+	else:
+		message = data["data"]
+	status_code = data["status_code"]
+	data = data["data"]
+	data = {
+		"data": data,
+		"elapsed-time": str(datetime.datetime.now() - current_time),
+	}
+	logger.info("response: {}".format(message))
+	logger.debug("response: {}".format(message))
+	data = jsonify(data)
+	return data, status_code
 
-    # waiting for the response
-    response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
-    data = response.decode(listOfTasks.gv.ENCODING_TYPE)
-    data = json.loads(data)
-    if data["ACK"]:
-        message = "list of templates in the directory {}".format(data["full_path"])
-        
-    else:
-        message = data["data"]
-    status_code = data["status_code"]
-    data = data["data"]
-    data = {
-        "data": data,
-        "elapsed-time": str(datetime.datetime.now() - current_time),
-    }
-    logger.info("response: {}".format(message))
-    logger.debug("response: {}".format(message))
-    data = jsonify(data)
-    return data, status_code
 
 @app.route('/onboard', methods=['PUT'])
 def jox_package_onboard():
-    """
+	"""
     @apiGroup GroupSlice
     @apiName GetNsiAll
 
     @api {put}  /onboard Onboarding
     @apiDescription
     """
-    enquiry = standard_reqst
-    current_time = datetime.datetime.now()
-    enquiry["datetime"] = str(current_time)
-    enquiry["request-uri"] = str(request.url_rule)
-    enquiry["request-type"] = (request.method).lower()
-    enquiry["parameters"]["template_directory"] = request.args.get('url')
-    enquiry["parameters"]["package_onboard_data"] = list(request.data)
-
-    logger.info("enquiry: {}".format(enquiry))
-    logger.debug("enquiry: {}".format(enquiry))
-    enquiry = json.dumps(enquiry)
-    # waiting for the response
-    response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
-    data = response.decode(listOfTasks.gv.ENCODING_TYPE)
-    data = json.loads(data)
-
-    status_code = data["status_code"]
-    data = data["data"]
-    data = {
-        "data": data,
-        "elapsed-time": str(datetime.datetime.now() - current_time),
-    }
-    logger.info("response: {}".format(data))
-    logger.debug("response: {}".format(data))
-    data = jsonify(data)
-    return data, status_code
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	enquiry["parameters"]["template_directory"] = request.args.get('url')
+	enquiry["parameters"]["package_onboard_data"] = list(request.data)
+	
+	logger.info("enquiry: {}".format(enquiry))
+	logger.debug("enquiry: {}".format(enquiry))
+	enquiry = json.dumps(enquiry)
+	# waiting for the response
+	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+	data = json.loads(data)
+	
+	status_code = data["status_code"]
+	data = data["data"]
+	data = {
+		"data": data,
+		"elapsed-time": str(datetime.datetime.now() - current_time),
+	}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
 
 
 @app.route('/nsi/all', methods=['GET'])
 @app.route('/nsi', methods=['GET'])
 @app.route('/nsi/<string:nsi_name>', methods=['GET', 'POST', 'DELETE'])
 def network_slice(nsi_name=None):
-    """
+	"""
     @apiGroup GroupSlice
     @apiName GetNsiAll
-    
+
     @api {get}  /nsi/all List deployed NSIs
     @apiDescription get the list of all template (in format .yaml, .yml, and .json) in default directory or given directory
-    
+
     @apiParam {path} full_path directory of the templates (Optional)
-    
+
     @apiExample {curl} First-Example-Usage:
          curl -i http://127.0.0.1:5000/list
-    
+
     @apiDescription get the list of all deployed slices
     @apiSuccessExample First-Example-Success-Response:
         HTTP/1.0 200 OK
@@ -590,42 +591,42 @@ def network_slice(nsi_name=None):
     @apiDescription get the list of all template in the given directory /home/arouk/Documents/slice_templet
     @apiExample {curl} Second-Example-Usage:
          curl -i http://127.0.0.1:5000/list?url=/home/arouk/Documents/slice_templet
-    
+
     @apiSuccessExample Second-Example-Success-Response:
         HTTP/1.0 200 OK
         {
             To add example here
         }
     """
-
-    """
+	
+	"""
     @apiGroup GroupSlice
     @apiName GetNsi
 
     @apiDescription It is alias to /nsi/all
     @api {get}  /nsi List deployed NSI(alias)
     """
-    """
+	"""
     @apiGroup GroupSlice
     @apiName PutNsi
 
     @apiDescription It allows you to deploy a slice remotely, where all the templates of nsi and nssi should be ziped in one file
     @api {put}  /nsi Deploy slice remotely
-    
-    
+
+
     @apiParam {string} zip_file full path where the zip file exists
-    
+
     @apiExample {curl} First-Example-Usage:
          curl -i -X PUT http://127.0.0.1:5000/nsi --upload-file /path/to/zip_file
-    
+
     @apiSuccessExample First-Example-Success:
         HTTP/1.0 200 OK
         {
             // To add example here
         }
     """
-
-    """
+	
+	"""
     @apiGroup GroupSlice
     @apiName GetNsiNsiName
 
@@ -641,70 +642,71 @@ def network_slice(nsi_name=None):
          curl -i -X POST http://127.0.0.1:5000/nsi/default_slice.yaml
          curl -i -X DELET http://127.0.0.1:5000/nsi/slice_name
     """
+	
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["parameters"]["template_directory"] = request.args.get('url')
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	if enquiry["request-type"] == 'post':
+		enquiry["parameters"]["package_name"] = nsi_name
+	else:
+		enquiry["parameters"]["nsi_name"] = nsi_name
+	
+	logger.info("enquiry: {}".format(enquiry))
+	logger.debug("enquiry: {}".format(enquiry))
+	enquiry = json.dumps(enquiry)
+	# waiting for the response
+	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+	data = json.loads(data)
+	
+	status_code = data["status_code"]
+	data = data["data"]
+	data = {
+		"data": data,
+		"elapsed-time": str(datetime.datetime.now() - current_time),
+	}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
 
-    enquiry = standard_reqst
-    current_time = datetime.datetime.now()
-    enquiry["datetime"] = str(current_time)
-    enquiry["parameters"]["template_directory"] = request.args.get('url')
-    enquiry["request-uri"] = str(request.url_rule)
-    enquiry["request-type"] = (request.method).lower()
-    if enquiry["request-type"] == 'post':
-        enquiry["parameters"]["package_name"] = nsi_name
-    else:
-        enquiry["parameters"]["nsi_name"] = nsi_name
-
-    logger.info("enquiry: {}".format(enquiry))
-    logger.debug("enquiry: {}".format(enquiry))
-    enquiry = json.dumps(enquiry)
-    # waiting for the response
-    response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
-    data = response.decode(listOfTasks.gv.ENCODING_TYPE)
-    data = json.loads(data)
-
-    status_code = data["status_code"]
-    data = data["data"]
-    data = {
-        "data": data,
-        "elapsed-time": str(datetime.datetime.now() - current_time),
-    }
-    logger.info("response: {}".format(data))
-    logger.debug("response: {}".format(data))
-    data = jsonify(data)
-    return data, status_code
 
 @app.route('/nssi/all')
-@app.route('/nssi')# alias to the previous one
+@app.route('/nssi')  # alias to the previous one
 @app.route('/nssi/<string:nsi_name>')
 @app.route('/nssi/<string:nsi_name>/<string:nssi_name>', methods=['GET', 'POST', 'DELETE'])
 @app.route('/nssi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>')
 def network_sub_slice(nsi_name=None, nssi_name=None, nssi_key=None):
-    """
+	"""
     @apiGroup GroupSubSlice
     @apiName GetNssiAll
-    
+
     @api {get}  /nssi/all List deployed NSSIs
     @apiDescription get the list of all deployed subslices
-    
-    
+
+
     @apiExample {curl} First-Example-Usage:
          curl -i http://127.0.0.1:5000/nssi/all
-    
+
     @apiSuccessExample First-Example-Success-Response:
         HTTP/1.0 200 OK
         {
             To add example here
         }
     """
-
-    """
+	
+	"""
     @apiGroup GroupSubSlice
     @apiName GetNssi
 
     @apiDescription It is alias to /nssi
     @api {get}  /nssi List deployed NSSIs(alias)
     """
-
-    """
+	
+	"""
     @apiGroup GroupSubSlice
     @apiName GetNssiNsiName
 
@@ -712,8 +714,8 @@ def network_sub_slice(nsi_name=None, nssi_name=None, nssi_key=None):
     @api {get}  /nssi/<string:nsi_name> Context of subslices
     @apiParam {string} nsi_name Name of slice
     """
-    
-    """
+	
+	"""
     @apiGroup GroupSubSlice
     @apiName GetNssiNsiNameNssiName
 
@@ -722,8 +724,8 @@ def network_sub_slice(nsi_name=None, nssi_name=None, nssi_key=None):
     @apiParam {string} nsi_name Name of slice
     @apiParam {string} nssi_name Name of subslice
     """
-
-    """
+	
+	"""
     @apiGroup GroupSubSlice
     @apiName GetNssiNsiNameNssiNameNssiKey
 
@@ -733,41 +735,42 @@ def network_sub_slice(nsi_name=None, nssi_name=None, nssi_key=None):
     @apiParam {string} nssi_name Name of subslice
     @apiParam {string="services","machines","relations"} nssi_key  Name of certain entity
     """
+	
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["parameters"]["template_directory"] = request.args.get('url')
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	enquiry["parameters"]["nsi_name"] = nsi_name
+	enquiry["parameters"]["nssi_name"] = nssi_name
+	enquiry["parameters"]["nssi_key"] = nssi_key
+	enquiry = json.dumps(enquiry)
+	logger.info("enquiry: {}".format(enquiry))
+	logger.debug("enquiry: {}".format(enquiry))
+	
+	# waiting for the response
+	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+	data = json.loads(data)
+	
+	status_code = data["status_code"]
+	data = data["data"]
+	data = {
+		"data": data,
+		"elapsed-time": str(datetime.datetime.now() - current_time),
+	}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
 
-    enquiry = standard_reqst
-    current_time = datetime.datetime.now()
-    enquiry["datetime"] = str(current_time)
-    enquiry["parameters"]["template_directory"] = request.args.get('url')
-    enquiry["request-uri"] = str(request.url_rule)
-    enquiry["request-type"] = (request.method).lower()
-    enquiry["parameters"]["nsi_name"] = nsi_name
-    enquiry["parameters"]["nssi_name"] = nssi_name
-    enquiry["parameters"]["nssi_key"] = nssi_key
-    enquiry = json.dumps(enquiry)
-    logger.info("enquiry: {}".format(enquiry))
-    logger.debug("enquiry: {}".format(enquiry))
-
-    # waiting for the response
-    response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
-    data = response.decode(listOfTasks.gv.ENCODING_TYPE)
-    data = json.loads(data)
-
-    status_code = data["status_code"]
-    data = data["data"]
-    data = {
-        "data": data,
-        "elapsed-time": str(datetime.datetime.now() - current_time),
-    }
-    logger.info("response: {}".format(data))
-    logger.debug("response: {}".format(data))
-    data = jsonify(data)
-    return data, status_code
 
 @app.route('/es', methods=['GET', 'DELETE'])
 @app.route('/es/<string:es_index_page>', methods=['GET', 'POST', 'DELETE'])
 @app.route('/es/<string:es_index_page>/<string:es_key>', methods=['GET', 'POST', 'DELETE'])
 def monitor_es(es_index_page=None, es_key=None):
-    """
+	"""
     @apiGroup GroupElasticsearch
     @apiName GetEs
 
@@ -785,7 +788,7 @@ def monitor_es(es_index_page=None, es_key=None):
             To add example here
         }
     """
-    """
+	"""
     @apiGroup GroupElasticsearch
     @apiName GetEsIndexPgae
 
@@ -793,7 +796,7 @@ def monitor_es(es_index_page=None, es_key=None):
     @apiDescription get/save/delete index-page from elasticsearch
 
     @apiParam {string} es_index_page name of index-page
-    
+
     @apiExample {curl} Example-Usage:
          curl -i http://127.0.0.1:5000/es/<string:es_index_page>
 
@@ -804,7 +807,7 @@ def monitor_es(es_index_page=None, es_key=None):
             To add example here
         }
     """
-    """
+	"""
     @apiGroup GroupElasticsearch
     @apiName GetEsIndexPgaeKeyVal
 
@@ -824,33 +827,33 @@ def monitor_es(es_index_page=None, es_key=None):
             To add example here
         }
     """
-    enquiry = standard_reqst
-    current_time = datetime.datetime.now()
-    enquiry["datetime"] = str(current_time)
-    enquiry["parameters"]["template_directory"] = request.args.get('url')
-    enquiry["request-uri"] = str(request.url_rule)
-    enquiry["request-type"] = (request.method).lower()
-    enquiry["parameters"]["es_index_page"] = es_index_page
-    enquiry["parameters"]["es_key"] = es_key
-
-    enquiry = json.dumps(enquiry)
-    logger.info("enquiry: {}".format(enquiry))
-    logger.debug("enquiry: {}".format(enquiry))
-    # waiting for the response
-    response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
-    data = response.decode(listOfTasks.gv.ENCODING_TYPE)
-    data = json.loads(data)
-
-    status_code = data["status_code"]
-    data = data["data"]
-    data = {
-        "data": data,
-        "elapsed-time": str(datetime.datetime.now() - current_time),
-    }
-    logger.info("response: {}".format(data))
-    logger.debug("response: {}".format(data))
-    data = jsonify(data)
-    return data, status_code
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["parameters"]["template_directory"] = request.args.get('url')
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	enquiry["parameters"]["es_index_page"] = es_index_page
+	enquiry["parameters"]["es_key"] = es_key
+	
+	enquiry = json.dumps(enquiry)
+	logger.info("enquiry: {}".format(enquiry))
+	logger.debug("enquiry: {}".format(enquiry))
+	# waiting for the response
+	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+	data = json.loads(data)
+	
+	status_code = data["status_code"]
+	data = data["data"]
+	data = {
+		"data": data,
+		"elapsed-time": str(datetime.datetime.now() - current_time),
+	}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
 
 
 """
@@ -865,7 +868,7 @@ def monitor_es(es_index_page=None, es_key=None):
 
 @apiExample {curl} Example usage:
      curl -i http://127.0.0.1:5000/monitor/nsi/nsi1/nssi1/
-     
+
 @apiSuccess {String} data The required informations.
 @apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 @apiSuccessExample Success-Response:
@@ -885,103 +888,109 @@ def monitor_es(es_index_page=None, es_key=None):
       "elapsed-time": "to add example here"
     }
 """
+
+
 @app.route('/monitor/nsi')
 @app.route('/monitor/nsi/<string:nsi_name>')
 @app.route('/monitor/nsi/<string:nsi_name>/<string:nssi_name>')
 @app.route('/monitor/nsi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>')
 def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
-    enquiry = standard_reqst
-    current_time = datetime.datetime.now()
-    enquiry["datetime"] = str(current_time)
-    enquiry["parameters"]["template_directory"] = request.args.get('url')
-    enquiry["request-uri"] = str(request.url_rule)
-    enquiry["request-type"] = (request.method).lower()
-    enquiry["parameters"]["nsi_name"] = nsi_name
-    enquiry["parameters"]["nssi_name"] = nssi_name
-    enquiry["parameters"]["nssi_key"] = nssi_key
-    enquiry = json.dumps(enquiry)
-    logger.info("enquiry: {}".format(enquiry))
-    logger.debug("enquiry: {}".format(enquiry))
-    # waiting for the response
-    response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
-    data = response.decode(listOfTasks.gv.ENCODING_TYPE)
-    data = json.loads(data)
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["parameters"]["template_directory"] = request.args.get('url')
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	enquiry["parameters"]["nsi_name"] = nsi_name
+	enquiry["parameters"]["nssi_name"] = nssi_name
+	enquiry["parameters"]["nssi_key"] = nssi_key
+	enquiry = json.dumps(enquiry)
+	logger.info("enquiry: {}".format(enquiry))
+	logger.debug("enquiry: {}".format(enquiry))
+	# waiting for the response
+	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+	data = json.loads(data)
+	
+	status_code = data["status_code"]
+	data = data["data"]
+	data = {
+		"data": data,
+		"elapsed-time": str(datetime.datetime.now() - current_time),
+	}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
 
-    status_code = data["status_code"]
-    data = data["data"]
-    data = {
-        "data": data,
-        "elapsed-time": str(datetime.datetime.now() - current_time),
-    }
-    logger.info("response: {}".format(data))
-    logger.debug("response: {}".format(data))
-    data = jsonify(data)
-    return data, status_code
-    
+
 @app.route('/monitor/service/<string:nsi_name>')
 @app.route('/monitor/service/<string:nsi_name>/<string:nssi_name>')
 @app.route('/monitor/service/<string:nsi_name>/<string:nssi_name>/<string:service_name>')
 def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key=None):
-    enquiry = standard_reqst
-    current_time = datetime.datetime.now()
-    enquiry["datetime"] = str(current_time)
-    enquiry["parameters"]["template_directory"] = request.args.get('url')
-    enquiry["request-uri"] = str(request.url_rule)
-    enquiry["request-type"] = (request.method).lower()
-    enquiry["parameters"]["nsi_name"] = nsi_name
-    enquiry["parameters"]["nssi_name"] = nssi_name
-    enquiry["parameters"]["service_name"] = service_name
-    enquiry = json.dumps(enquiry)
-    logger.info("enquiry: {}".format(enquiry))
-    logger.debug("enquiry: {}".format(enquiry))
-    # waiting for the response
-    response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
-    data = response.decode(listOfTasks.gv.ENCODING_TYPE)
-    data = json.loads(data)
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["parameters"]["template_directory"] = request.args.get('url')
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	enquiry["parameters"]["nsi_name"] = nsi_name
+	enquiry["parameters"]["nssi_name"] = nssi_name
+	enquiry["parameters"]["service_name"] = service_name
+	enquiry = json.dumps(enquiry)
+	logger.info("enquiry: {}".format(enquiry))
+	logger.debug("enquiry: {}".format(enquiry))
+	# waiting for the response
+	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+	data = json.loads(data)
+	
+	status_code = data["status_code"]
+	data = data["data"]
+	data = {
+		"data": data,
+		"elapsed-time": str(datetime.datetime.now() - current_time),
+	}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
 
-    status_code = data["status_code"]
-    data = data["data"]
-    data = {
-        "data": data,
-        "elapsed-time": str(datetime.datetime.now() - current_time),
-    }
-    logger.info("response: {}".format(data))
-    logger.debug("response: {}".format(data))
-    data = jsonify(data)
-    return data, status_code
 
 #
 @app.route('/monitor/machine/<string:nsi_name>')
 @app.route('/monitor/machine/<string:nsi_name>/<string:nssi_name>')
 @app.route('/monitor/machine/<string:nsi_name>/<string:nssi_name>/<string:machine_name>')
 def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_key=None):
-    enquiry = standard_reqst
-    current_time = datetime.datetime.now()
-    enquiry["datetime"] = str(current_time)
-    enquiry["parameters"]["template_directory"] = request.args.get('url')
-    enquiry["request-uri"] = str(request.url_rule)
-    enquiry["request-type"] = (request.method).lower()
-    enquiry["parameters"]["nsi_name"] = nsi_name
-    enquiry["parameters"]["nssi_name"] = nssi_name
-    enquiry["parameters"]["machine_name"] = machine_name
-    enquiry = json.dumps(enquiry)
-    logger.info("enquiry: {}".format(enquiry))
-    logger.debug("enquiry: {}".format(enquiry))
-    # waiting for the response
-    response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
-    data = response.decode(listOfTasks.gv.ENCODING_TYPE)
-    data = json.loads(data)
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["parameters"]["template_directory"] = request.args.get('url')
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	enquiry["parameters"]["nsi_name"] = nsi_name
+	enquiry["parameters"]["nssi_name"] = nssi_name
+	enquiry["parameters"]["machine_name"] = machine_name
+	enquiry = json.dumps(enquiry)
+	logger.info("enquiry: {}".format(enquiry))
+	logger.debug("enquiry: {}".format(enquiry))
+	# waiting for the response
+	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+	data = json.loads(data)
+	
+	status_code = data["status_code"]
+	data = data["data"]
+	data = {
+		"data": data,
+		"elapsed-time": str(datetime.datetime.now() - current_time),
+	}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
 
-    status_code = data["status_code"]
-    data = data["data"]
-    data = {
-        "data": data,
-        "elapsed-time": str(datetime.datetime.now() - current_time),
-    }
-    logger.info("response: {}".format(data))
-    logger.debug("response: {}".format(data))
-    data = jsonify(data)
-    return data, status_code
+
 # monitor_relation
 
 
@@ -991,124 +1000,126 @@ def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_ke
 #            '/<string:nssi_name_target>/<string:service_name_target>/<string:relation_key>')
 def monitor_relation(nsi_name=None, nssi_name_source=None, service_name_source=None,
                      nssi_name_target=None, service_name_target=None, relation_key=None):
-    enquiry = standard_reqst
-    current_time = datetime.datetime.now()
-    enquiry["datetime"] = str(current_time)
-    enquiry["parameters"]["template_directory"] = request.args.get('url')
-    enquiry["request-uri"] = str(request.url_rule)
-    enquiry["request-type"] = (request.method).lower()
-    enquiry["parameters"]["nsi_name"] = nsi_name
-    enquiry["parameters"]["nssi_name_source"] = nssi_name_source
-    # enquiry["parameters"]["service_name_source"] = service_name_source
-    # enquiry["parameters"]["nssi_name_target"] = nssi_name_target
-    # enquiry["parameters"]["service_name_target"] = service_name_target
-    # enquiry["parameters"]["relation_key"] = relation_key
-    enquiry = json.dumps(enquiry)
-    logger.info("enquiry: {}".format(enquiry))
-    logger.debug("enquiry: {}".format(enquiry))
-    # waiting for the response
-    response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
-    data = response.decode(listOfTasks.gv.ENCODING_TYPE)
-    data = json.loads(data)
-
-    status_code = data["status_code"]
-    data = data["data"]
-    data = {
-        "data": data,
-        "elapsed-time": str(datetime.datetime.now() - current_time),
-    }
-    logger.info("response: {}".format(data))
-    logger.debug("response: {}".format(data))
-    data = jsonify(data)
-    return data, status_code
-
-
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["parameters"]["template_directory"] = request.args.get('url')
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	enquiry["parameters"]["nsi_name"] = nsi_name
+	enquiry["parameters"]["nssi_name_source"] = nssi_name_source
+	# enquiry["parameters"]["service_name_source"] = service_name_source
+	# enquiry["parameters"]["nssi_name_target"] = nssi_name_target
+	# enquiry["parameters"]["service_name_target"] = service_name_target
+	# enquiry["parameters"]["relation_key"] = relation_key
+	enquiry = json.dumps(enquiry)
+	logger.info("enquiry: {}".format(enquiry))
+	logger.debug("enquiry: {}".format(enquiry))
+	# waiting for the response
+	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+	data = json.loads(data)
+	
+	status_code = data["status_code"]
+	data = data["data"]
+	data = {
+		"data": data,
+		"elapsed-time": str(datetime.datetime.now() - current_time),
+	}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
 
 
 @app.route('/monitor/juju')
 @app.route('/monitor/juju/<string:juju_key_val>')
 def monitor_juju(juju_key_val=None):
-    if juju_key_val is None:
-        juju_key_val = 'all'
-    enquiry = standard_reqst
-    current_time = datetime.datetime.now()
-    enquiry["datetime"] = str(current_time)
-    enquiry["parameters"]["template_directory"] = request.args.get('url')
-    enquiry["request-uri"] = str(request.url_rule)
-    enquiry["request-type"] = (request.method).lower()
-    enquiry["parameters"]["juju_key_val"] = juju_key_val
-    
-    enquiry = json.dumps(enquiry)
-    logger.info("enquiry: {}".format(enquiry))
-    logger.debug("enquiry: {}".format(enquiry))
-    # waiting for the response
-    response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
-    data = response.decode(listOfTasks.gv.ENCODING_TYPE)
-    data = json.loads(data)
+	if juju_key_val is None:
+		juju_key_val = 'all'
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["parameters"]["template_directory"] = request.args.get('url')
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	enquiry["parameters"]["juju_key_val"] = juju_key_val
+	
+	enquiry = json.dumps(enquiry)
+	logger.info("enquiry: {}".format(enquiry))
+	logger.debug("enquiry: {}".format(enquiry))
+	# waiting for the response
+	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+	data = json.loads(data)
+	
+	status_code = data["status_code"]
+	data = data["data"]
+	data = {
+		"data": data,
+		"elapsed-time": str(datetime.datetime.now() - current_time),
+	}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
 
-    status_code = data["status_code"]
-    data = data["data"]
-    data = {
-        "data": data,
-        "elapsed-time": str(datetime.datetime.now() - current_time),
-    }
-    logger.info("response: {}".format(data))
-    logger.debug("response: {}".format(data))
-    data = jsonify(data)
-    return data, status_code
 
 @app.errorhandler(Exception)
 def page_not_found(error):
-    return "!!!!"  + repr(error) + "\n"
+	return "!!!!" + repr(error) + "\n"
+
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return "page not found ".format(e), 404
+	return "page not found ".format(e), 404
+
 
 def run():
-    app.run(host=listOfTasks.gv.FLASK_SERVER_IP,
-            port=listOfTasks.gv.FLASK_SERVER_PORT,
-            debug=listOfTasks.gv.FLASK_SERVER_DEBUG)
+	app.run(host=listOfTasks.gv.FLASK_SERVER_IP,
+	        port=listOfTasks.gv.FLASK_SERVER_PORT,
+	        debug=listOfTasks.gv.FLASK_SERVER_DEBUG)
+
+
 def open_tar_gz(files, enquiry):
-    nsi_found = False
-    nssi_found = False
-    save_template_success = True
-    try:
-        with tarfile.open(mode='r', fileobj=io.BytesIO(files)) as tar:
-            for tarinfo in tar:
-                tarname = tarinfo.name
-                if str(tarname).endswith('yaml') or str(tarname).endswith('yaml'):
-                    if 'nsi' in str(tarname):
-                        nsi_found = True
+	nsi_found = False
+	nssi_found = False
+	save_template_success = True
+	try:
+		with tarfile.open(mode='r', fileobj=io.BytesIO(files)) as tar:
+			for tarinfo in tar:
+				tarname = tarinfo.name
+				if str(tarname).endswith('yaml') or str(tarname).endswith('yaml'):
+					if 'nsi' in str(tarname):
+						nsi_found = True
+						
+						nsi_name_temp = tarname.split('/')
+						file_name = nsi_name_temp[len(nsi_name_temp) - 1]
+						nsi_dir = '/'.join(nsi_name_temp[x] for x in range(len(nsi_name_temp) - 1))
+						nsi_dir = nsi_dir + '/'
+						nsi_dir = ''.join([listOfTasks.gv.STORE_DIR, nsi_dir])
+						
+						enquiry["parameters"]["nsi_name"] = file_name
+						enquiry["parameters"]["nsi_directory"] = nsi_dir
+						enquiry["request-uri"] = '/nsi/<string:nsi_name>'
+					if 'nssi' in str(tarname):
+						nssi_found = True
+						
+						nsi_name_temp = tarname.split('/')
+						file_name = nsi_name_temp[len(nsi_name_temp) - 1]
+						nssi_dir = '/'.join(nsi_name_temp[x] for x in range(len(nsi_name_temp) - 1))
+						nssi_dir = nssi_dir + '/'
+						nssi_dir = ''.join([listOfTasks.gv.STORE_DIR, nssi_dir])
+						
+						enquiry["parameters"]["nssi_directory"] = nssi_dir
+			
+			tar.extractall(listOfTasks.gv.STORE_DIR)
+		message = "The package was successfuly exctracted"
+	except Exception as ex:
+		message = "Error while opening the zip file\n {}\n".format(ex)
+	
+	return [enquiry, nsi_found, nssi_found, save_template_success, message]
 
-                        nsi_name_temp = tarname.split('/')
-                        file_name = nsi_name_temp[len(nsi_name_temp) - 1]
-                        nsi_dir = '/'.join(nsi_name_temp[x] for x in range(len(nsi_name_temp) - 1))
-                        nsi_dir = nsi_dir + '/'
-                        nsi_dir = ''.join([listOfTasks.gv.STORE_DIR, nsi_dir])
-                        
-                        enquiry["parameters"]["nsi_name"] = file_name
-                        enquiry["parameters"]["nsi_directory"] = nsi_dir
-                        enquiry["request-uri"] = '/nsi/<string:nsi_name>'
-                    if 'nssi' in str(tarname):
-                        nssi_found = True
-
-                        nsi_name_temp = tarname.split('/')
-                        file_name = nsi_name_temp[len(nsi_name_temp) - 1]
-                        nssi_dir = '/'.join(nsi_name_temp[x] for x in range(len(nsi_name_temp) - 1))
-                        nssi_dir = nssi_dir + '/'
-                        nssi_dir = ''.join([listOfTasks.gv.STORE_DIR, nssi_dir])
-                        
-                        enquiry["parameters"]["nssi_directory"] = nssi_dir
-                        
-            
-            tar.extractall(listOfTasks.gv.STORE_DIR)
-        message = "The package was successfuly exctracted"
-    except Exception as ex:
-        message = "Error while opening the zip file\n {}\n".format(ex)
-        
-
-    return [enquiry, nsi_found, nssi_found, save_template_success, message]
 
 if __name__ == '__main__':
-  run()
+	run()
