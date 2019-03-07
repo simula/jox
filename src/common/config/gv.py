@@ -81,8 +81,6 @@ HTTP_204_NO_CONTENT=None
 # Error
 HTTP_400_BAD_REQUEST=None
 HTTP_404_NOT_FOUND=None
-HTTP_420_METHOD_FAILURE=None
-HTTP_424_FAILED_DEPENDENCY=None
 
 # juju related parameters
 JUJU_MAX_RETRY_CONNECTION_MODEL_AVAILABLE=None # maximum number or retries to verify that the new created model is available

@@ -154,8 +154,12 @@ class NFVO_JOX(object):
 			self.gv.ENCODING_TYPE = self.jox_config['encoding-type']
 			
 			self.gv.STATS_TIMER = self.jox_config["stats-timer"]
-		
-		
+			
+			self.gv.HTTP_200_OK = self.jox_config["http"]["200"]["ok"]
+			self.gv.HTTP_204_NO_CONTENT = self.jox_config["http"]["200"]["no-content"]
+			self.gv.HTTP_400_BAD_REQUEST = self.jox_config["http"]["400"]["bad-request"]
+			self.gv.HTTP_404_NOT_FOUND = self.jox_config["http"]["400"]["not-found"]
+			
 		except jsonschema.ValidationError as ex:
 			self.logger.error("Error happened while validating the jox config: {}".format(ex.message))
 			self.cleanup_and_exit(str(ex))
@@ -620,7 +624,7 @@ class server_RBMQ(object):
 							response = {
 								"ACK": False,
 								"data": res,
-								"status_code": self.nfvo_jox.gv.HTTP_420_METHOD_FAILURE
+								"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 							}
 				
 				else:
@@ -628,7 +632,7 @@ class server_RBMQ(object):
 					response = {
 						"ACK": False,
 						"data": message,
-						"status_code": self.nfvo_jox.gv.HTTP_420_METHOD_FAILURE
+						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 					}
 			
 			elif request_type == "delete":
@@ -643,7 +647,7 @@ class server_RBMQ(object):
 					response = {
 						"ACK": True,
 						"data": res[1],
-						"status_code": self.nfvo_jox.gv.HTTP_420_METHOD_FAILURE
+						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 					}
 			
 			else:
@@ -669,13 +673,13 @@ class server_RBMQ(object):
 					response = {
 						"ACK": False,
 						"data": tar_file[1],
-						"status_code": self.nfvo_jox.gv.HTTP_420_METHOD_FAILURE
+						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 					}
 			else:
 				response = {
 					"ACK": False,
 					"data": onboard_files[1],
-					"status_code": self.nfvo_jox.gv.HTTP_420_METHOD_FAILURE
+					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 				}
 		elif (enquiry["request-uri"] == "/nssi/all") or (enquiry["request-uri"] == "/nssi"):
 			res = self.nfvo_jox.get_subslices_context()
@@ -766,7 +770,7 @@ class server_RBMQ(object):
 						response = {
 							"ACK": False,
 							"data": res[1],
-							"status_code": self.nfvo_jox.gv.HTTP_420_METHOD_FAILURE
+							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 						}
 				else:
 					if (es_index_page == "_all") or (es_index_page == "all") or (es_index_page == "*"):
@@ -781,7 +785,7 @@ class server_RBMQ(object):
 							response = {
 								"ACK": False,
 								"data": res[1],
-								"status_code": self.nfvo_jox.gv.HTTP_420_METHOD_FAILURE
+								"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 							}
 					else:
 						if es_key is None:
@@ -846,7 +850,7 @@ class server_RBMQ(object):
 						response = {
 							"ACK": False,
 							"data": res,
-							"status_code": self.nfvo_jox.gv.HTTP_424_FAILED_DEPENDENCY
+							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 						}
 				else:
 					res = full_path[1]
@@ -871,7 +875,7 @@ class server_RBMQ(object):
 						response = {
 							"ACK": False,
 							"data": res,
-							"status_code": self.nfvo_jox.gv.HTTP_424_FAILED_DEPENDENCY
+							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 						}
 				else:
 					res = self.nfvo_jox.jesearch.del_index_from_es(es_index_page)
@@ -887,7 +891,7 @@ class server_RBMQ(object):
 						response = {
 							"ACK": False,
 							"data": res,
-							"status_code": self.nfvo_jox.gv.HTTP_424_FAILED_DEPENDENCY
+							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 						}
 			else:
 				res = "The method {} for the request {} is not supported".format(request_type, enquiry["request-uri"])

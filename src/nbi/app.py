@@ -648,12 +648,9 @@ def jox_package_onboard():
     @api {put}  /onboard Package onboarding
     @apiDescription Through this endpoint, you can onboard the pakcage of slice(s), so that you can deploy it(them) later
 	
-	@apiDescription example usage for onboarding a package named as mosaic5g
 	@apiExample {curl} Example-Usage:
-		curl  -i http://localhost:5000/onboard upload-file mosaic5g.tar.gz
-	
-	 
-	
+		curl  -i http://localhost:5000/onboard --upload-file mosaic5g.tar.gz
+		
 	@apiSuccessExample Example-Success-Response:
 	
 	Example
@@ -702,12 +699,11 @@ def network_slice(nsi_name=None):
 	@apiDescription get the list of all deployed slices
 
 
-	@apiExample {curl} First-Example-Usage:
-	     curl -i http://localhost:5000/nsi/all
+	@apiExample {curl} Example-Usage:
+		curl -i http://localhost:5000/nsi/all
 
-	@apiDescription get the list of all deployed slices
 	@apiSuccessExample Example-Success-Response:
-	    HTTP/1.0 200 OK
+		HTTP/1.0 200 OK
 		{
 		  "data": {
 		    "mosaic5g": {
@@ -744,7 +740,7 @@ def network_slice(nsi_name=None):
 	@apiName GetNsi
 
 	
-	@api {get}  /nsi List all deployed slices (alias)
+	@api {get}  /nsi List deployed slices [alias]
 	@apiDescription It is alias to /nsi/all
 	"""
 	
@@ -752,83 +748,83 @@ def network_slice(nsi_name=None):
 	@apiGroup GroupSlice
 	@apiName GetNsiName
 
-	@api {get}  /nsi/<string:nsi_name> Get template of already deployed slice
+	@api {get}  /nsi/<string:nsi_name> Get slice template
 	@apiDescription get the context of the already deployed slice nsi_name
-	@apiParam {string} nsi_name name of the already deloyed slice
+	@apiParam {string} nsi_name name of the already deployed slice
 
-	@apiExample {curl} First-Example-Usage-POST:
-	     curl http://localhost:5000/nsi --upload-file "/home/ubuntu/jox-master/jox/src/com/slice_template/default_slice_NS.zip" -XPOST
-	@apiSuccessExample First-Example-Success-Response-POST:
-	    HTTP/1.0 200 OK
-	    {
-	     "data":"Creating/updating the slice default_slice_NSI.yaml",
-	     "elapsed-time":"0:01:40.287464"
+	@apiExample {curl} First-Example-Usage:
+	     curl http://localhost:5000/nsi/mosaic5g
+	@apiSuccessExample First-Example-Success-Response:
+	HTTP/1.0 200 OK
+	{
+	  "data": {
+	    "mosaic5g": {
+	      "inter_nssi_relation": [
+	        {
+	          "service_a": {
+	            "jcloud": "localhost",
+	            "jmodel": "default-juju-model-1",
+	            "nssi": "nssi_1",
+	            "service": "oai-hss"
+	          },
+	          "service_b": {
+	            "jcloud": "localhost",
+	            "jmodel": "default-juju-model-1",
+	            "nssi": "nssi_2",
+	            "service": "oai-mme"
+	          }
+	        }
+	      ],
+	      "slice_name": "mosaic5g",
+	      "sub_slices": [
+	        "nssi_1",
+	        "nssi_2"
+	      ]
 	    }
-
+	  },
+	  "elapsed-time": "0:00:00.005475"
+	}
 	"""
 	
 	"""
 	@apiGroup GroupSlice
 	@apiName PostNsiName
 
-	@api {post}  /nsi/<string:nsi_name> Add NSI
-	@apiDescription get the context, deployed, and delete the slice nsi_name
-	@apiParam {string} nsi_name name of the slice
+	@api {post}  /nsi/<string:package_name> Deploy slice
+	@apiDescription Deploy slice through a package already onboarded
+	@apiParam {string} package_name name of the package that is already onboarded
 
 	@apiExample {curl} Example-Usage:
-	     curl http://localhost:5000/nsi --upload-file "/home/ubuntu/jox-master/jox/src/com/slice_template/default_slice_NS.zip" -XPOST
-
+	     curl http://localhost:5000/nsi/mosaic5g -X POST
 	@apiSuccessExample Second-Example-Success-Response-GET:
 	    HTTP/1.0 200 OK
-	    {
-	       "data":{
-	              "NSI_1":{
-	                 "inter_nssi_relation":[
-	                    {
-	                       "service_a":{
-	                          "jcloud":"localhost",
-	                          "jmodel":"default-juju-model-1",
-	                          "nssi":"NSSI_1",
-	                          "service":"oai-hss"
-	                       },
-	                       "service_b":{
-	                          "jcloud":"localhost",
-	                          "jmodel":"default-juju-model-1",
-	                          "nssi":"NSSI_2",
-	                          "service":"oai-mme"
-	                       }
-	                    }
-	                 ],
-	                 "slice_name":"NSI_1",
-	                 "sub_slices":[
-	                    "NSSI_1",
-	                    "NSSI_2"
-	                 ]
-	              }
-	           },
-	        "elapsed-time":"0:00:00.003032"
-	    }
-
+	{
+	  "data": "Creating/updating the slice mosaic5g.yaml",
+	  "elapsed-time": "0:01:16.079189"
+	}
 	"""
 	"""
 	@apiGroup GroupSlice
 	@apiName DeleteNsiName
 
-	@api {delete}  /nsi/<string:nsi_name> Remove NSI
-	@apiDescription get the context, deployed, and delete the slice nsi_name
+	@api {delete}  /nsi/<string:nsi_name> Remove slice
+	@apiDescription Remove an already deployed slice
 	@apiParam {string} nsi_name name of the slice
 
 	@apiExample {curl} Example-Usage:
-	     curl -i -X DELETE http://localhost:5000/nsi/NSI_1
-	@apiSuccessExample Third-Example-Success-Response-DELETE:
+	     curl -i -X DELETE http://localhost:5000/nsi/mosaic5g
+	@apiSuccessExample Example-Success-Response:
 	    HTTP/1.0 200 OK
 	    {
-	     "data":"The slice NSI_1 successfully removed"
+	     "data":"The slice mosaic5g successfully removed"
 	     "elapsed-time":"0:00:54.056207"
 	    }
-
-
-
+    @apiErrorExample Example-Failure-Response:
+	HTTP/1.0 404 NOT FOUND
+	{
+	  "data": "The slice mosaic5g does not exists",
+	  "elapsed-time": "0:00:00.011727"
+	}
 	"""
 	enquiry = standard_reqst
 	current_time = datetime.datetime.now()
@@ -864,32 +860,146 @@ def network_slice(nsi_name=None):
 @app.route('/nssi/all')
 @app.route('/nssi')  # alias to the previous one
 @app.route('/nssi/<string:nsi_name>')
-@app.route('/nssi/<string:nsi_name>/<string:nssi_name>', methods=['GET', 'POST', 'DELETE'])
+@app.route('/nssi/<string:nsi_name>/<string:nssi_name>')
 @app.route('/nssi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>')
 def network_sub_slice(nsi_name=None, nssi_name=None, nssi_key=None):
 	"""
 	@apiGroup GroupSubSlice
 	@apiName GetNssiAll
 
-	@api {get}  /nssi/all List all deployed NSSI
+	@api {get}  /nssi/all List all subslices
 	@apiDescription get the list of all deployed subslices
 
 
 	@apiExample {curl} First-Example-Usage:
 	     curl -i http://localhost:5000/nssi/all
 
-	@apiSuccessExample First-Example-Success-Response:
-	    HTTP/1.0 200 OK
+	@apiSuccessExample Example-Success-Response:
+	HTTP/1.0 200 OK
+	{
+	  "data": [
 	    {
-	        To add example here
+	      "mosaic5g": {
+	        "nssi_1": {
+	          "machines": [
+	            {
+	              "machine_name_ro": "1:lxc",
+	              "machine_name_userdefined": "VDU_mysql",
+	              "machine_name_vnfm": "0",
+	              "vim_location": "local",
+	              "vim_type": "lxc"
+	            },
+	            {
+	              "machine_name_ro": "2:lxc",
+	              "machine_name_userdefined": "VDU_oai-hss",
+	              "machine_name_vnfm": "1",
+	              "vim_location": "local",
+	              "vim_type": "lxc"
+	            }
+	          ],
+	          "relations": [
+	            {
+	              "source": {
+	                "juju_cloud": "localhost",
+	                "juju_model": "default-juju-model-1",
+	                "service": "mysql"
+	              },
+	              "target": {
+	                "juju_cloud": "localhost",
+	                "juju_model": "default-juju-model-1",
+	                "service": "oai-hss"
+	              }
+	            }
+	          ],
+	          "services": {
+	            "mysql": {
+	              "charm": "cs:mysql-58",
+	              "jcloud": "localhost",
+	              "jmodel": "default-juju-model-1",
+	              "machine_name": "VDU_mysql",
+	              "relation": "oai-hss",
+	              "service_name": "mysql"
+	            },
+	            "oai-hss": {
+	              "charm": "cs:~navid-nikaein/xenial/oai-hss-16",
+	              "jcloud": "localhost",
+	              "jmodel": "default-juju-model-1",
+	              "machine_name": "VDU_oai-hss",
+	              "relation": "oai-spgw",
+	              "service_name": "oai-hss"
+	            }
+	          },
+	          "subslice_name": "nssi_1",
+	          "subslice_owner": "",
+	          "subslice_template_date": "",
+	          "subslice_template_version": 1.0
+	        },
+	        "nssi_2": {
+	          "machines": [
+	            {
+	              "machine_name_ro": "3:lxc",
+	              "machine_name_userdefined": "VDU_oai-mme",
+	              "machine_name_vnfm": "2",
+	              "vim_location": "local",
+	              "vim_type": "lxc"
+	            },
+	            {
+	              "machine_name_ro": "4:lxc",
+	              "machine_name_userdefined": "VDU_oai-spgw",
+	              "machine_name_vnfm": "3",
+	              "vim_location": "local",
+	              "vim_type": "lxc"
+	            }
+	          ],
+	          "relations": [
+	            {
+	              "source": {
+	                "juju_cloud": "localhost",
+	                "juju_model": "default-juju-model-1",
+	                "service": "oai-spgw"
+	              },
+	              "target": {
+	                "juju_cloud": "localhost",
+	                "juju_model": "default-juju-model-1",
+	                "service": "oai-mme"
+	              }
+	            }
+	          ],
+	          "services": {
+	            "oai-mme": {
+	              "charm": "cs:~navid-nikaein/xenial/oai-mme-18",
+	              "jcloud": "localhost",
+	              "jmodel": "default-juju-model-1",
+	              "machine_name": "VDU_oai-mme",
+	              "relation": null,
+	              "service_name": "oai-mme"
+	            },
+	            "oai-spgw": {
+	              "charm": "cs:~navid-nikaein/xenial/oai-spgw-15",
+	              "jcloud": "localhost",
+	              "jmodel": "default-juju-model-1",
+	              "machine_name": "VDU_oai-spgw",
+	              "relation": "oai-mme",
+	              "service_name": "oai-spgw"
+	            }
+	          },
+	          "subslice_name": "nssi_2",
+	          "subslice_owner": "",
+	          "subslice_template_date": "",
+	          "subslice_template_version": 1.0
+	        }
+	      }
 	    }
+	  ],
+	  "elapsed-time": "0:00:00.005259"
+	}
 	"""
 	
 	"""
 	@apiGroup GroupSubSlice
 	@apiName GetNssi
 
-	@apiDescription It is alias to /nssi
+	@apiDescription It is alias to [http://localhost:5000/nssi/all](http://localhost:5000/nssi/all)
 	@api {get}  /nssi  List all deployed NSSI [Alias]
 	"""
 	
@@ -898,7 +1008,7 @@ def network_sub_slice(nsi_name=None, nssi_name=None, nssi_key=None):
 	@apiName GetNssiNsiName
 
 	@apiDescription get the context of all the subslices attached to certain slice
-	@api {get}  /nssi/<string:nsi_name> Get context of all slices
+	@api {get}  /nssi/<string:nsi_name> Context of certain subslices
 	@apiParam {string} nsi_name Name of slice
 	"""
 	
@@ -907,9 +1017,72 @@ def network_sub_slice(nsi_name=None, nssi_name=None, nssi_key=None):
 	@apiName GetNssiNsiNameNssiName
 
 	@apiDescription get the context of certain subslice attached to specified slice
-	@api {get}  /nssi/<string:nsi_name>/<string:nssi_name> Get context of certain nssi
-	@apiParam {string} nsi_name Name of slice
-	@apiParam {string} nssi_name Name of subslice
+	@api {get}  /nssi/<string:nsi_name>/<string:nssi_name> Context of specific subslice
+	@apiParam {string} nsi_name Slice name
+	@apiParam {string} nssi_name Subslice name
+	
+	@apiExample {curl} First-Example-Usage:
+	     curl -i http://localhost:5000/nssi/mosaic5g/nssi_2
+
+	@apiSuccessExample Example-Success-Response:
+	HTTP/1.0 200 OK
+	{
+	  "data": {
+	    "machines": [
+	      {
+	        "machine_name_ro": "3:lxc",
+	        "machine_name_userdefined": "VDU_oai-mme",
+	        "machine_name_vnfm": "2",
+	        "vim_location": "local",
+	        "vim_type": "lxc"
+	      },
+	      {
+	        "machine_name_ro": "4:lxc",
+	        "machine_name_userdefined": "VDU_oai-spgw",
+	        "machine_name_vnfm": "3",
+	        "vim_location": "local",
+	        "vim_type": "lxc"
+	      }
+	    ],
+	    "relations": [
+	      {
+	        "source": {
+	          "juju_cloud": "localhost",
+	          "juju_model": "default-juju-model-1",
+	          "service": "oai-spgw"
+	        },
+	        "target": {
+	          "juju_cloud": "localhost",
+	          "juju_model": "default-juju-model-1",
+	          "service": "oai-mme"
+	        }
+	      }
+	    ],
+	    "services": {
+	      "oai-mme": {
+	        "charm": "cs:~navid-nikaein/xenial/oai-mme-18",
+	        "jcloud": "localhost",
+	        "jmodel": "default-juju-model-1",
+	        "machine_name": "VDU_oai-mme",
+	        "relation": null,
+	        "service_name": "oai-mme"
+	      },
+	      "oai-spgw": {
+	        "charm": "cs:~navid-nikaein/xenial/oai-spgw-15",
+	        "jcloud": "localhost",
+	        "jmodel": "default-juju-model-1",
+	        "machine_name": "VDU_oai-spgw",
+	        "relation": "oai-mme",
+	        "service_name": "oai-spgw"
+	      }
+	    },
+	    "subslice_name": "nssi_2",
+	    "subslice_owner": "",
+	    "subslice_template_date": "",
+	    "subslice_template_version": 1.0
+	  },
+	  "elapsed-time": "0:00:00.008035"
+	}
 	"""
 	
 	"""
@@ -917,10 +1090,46 @@ def network_sub_slice(nsi_name=None, nssi_name=None, nssi_key=None):
 	@apiName GetNssiNsiNameNssiNameNssiKey
 
 	@apiDescription get the context of certain entity fo certain subslcie attached to specified slice
-	@api {get}  /nssi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key> Get context of certain entity
+	@api {get}  /nssi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key> Context of certain entity
 	@apiParam {string} nsi_name Name of slice
 	@apiParam {string} nssi_name Name of subslice
-	@apiParam {string="subslice_services","subslice_machines","subslice_relations"} nssi_key  Name of certain entity
+	@apiParam {string="services","machines","relations"} nssi_key  Name of certain entity
+	
+	@apiExample {curl} First-Example-Usage:
+	     curl -i http://localhost:5000/nssi/mosaic5g/nssi_2/subslice_services
+	@apiSuccessExample First-Example-Failure-Response:
+	HTTP/1.0 404 NOT FOUND
+	{
+		"data": "The key subslice_services does not exist in the subslice nssi_2 attached to the slice mosaic5g",
+		"elapsed-time": "0:00:00.002774"
+	}
+	
+	@apiExample {curl} Second-Example-Usage:
+	     curl -i http://localhost:5000/nssi/mosaic5g/nssi_2/subslice_services
+	@apiSuccessExample Second-Example-Success-Response:
+	HTTP/1.0 200 OK
+	{
+	  "data": {
+	    "oai-mme": {
+	      "charm": "cs:~navid-nikaein/xenial/oai-mme-18",
+	      "jcloud": "localhost",
+	      "jmodel": "default-juju-model-1",
+	      "machine_name": "VDU_oai-mme",
+	      "relation": null,
+	      "service_name": "oai-mme"
+	    },
+	    "oai-spgw": {
+	      "charm": "cs:~navid-nikaein/xenial/oai-spgw-15",
+	      "jcloud": "localhost",
+	      "jmodel": "default-juju-model-1",
+	      "machine_name": "VDU_oai-spgw",
+	      "relation": "oai-mme",
+	      "service_name": "oai-spgw"
+	    }
+	  },
+	  "elapsed-time": "0:00:00.003153"
+	}
+	
 	"""
 	enquiry = standard_reqst
 	current_time = datetime.datetime.now()
@@ -959,42 +1168,38 @@ def monitor_es(es_index_page=None, es_key=None):
 	"""
 	@apiGroup GroupElasticsearch
 	@apiName GetEs
-	@api {get}  /es List all index-pages
-	@apiDescription get/delete the list of all index-pages in elasticsearch
+	@api {get}  /es List index-pages
+	@apiDescription Get the list of all index-pages in elasticsearch
 	@apiExample {curl} Example-Usage:
 		 curl -i http://localhost:5000/es
 
 	@apiDescription Get the list of all index-pages in elasticsearch database
-	@apiSuccessExample Example-Success-Response-GET:
-		HTTP/1.0 200 OK
-
-			{
-			   "data":
-			   [
-				".monitoring-es-6-2019.02.28",
-				"jox-config",
-				"nsi_1",
-				"nssi_1",
-				"nssi_2",
-				"slice_keys_nsi_1",
-				"slice_keys_tmp_nsi_1",
-				"slice_monitor_nssi_1",
-				"slice_monitor_nssi_2"
-				],
-			"elapsed-time": "0:00:00.021460"
-			}
+	@apiSuccessExample Example-Success-Response:
+	HTTP/1.0 200 OK
+	{
+	  "data": [
+	    "jox_config",
+	    "mosaic5g",
+	    "nssi_1",
+	    "nssi_2",
+	    "slice_keys_mosaic5g",
+	    "slice_keys_tmp_mosaic5g",
+	    "slice_monitor_nssi_1",
+	    "slice_monitor_nssi_2"
+	  ],
+	  "elapsed-time": "0:00:00.018397"
+	}
 
    """
 	"""
 	@apiGroup GroupElasticsearch
 	@apiName DeleteEs
-	@api {delete}  /es Delete all index-pages
-	@apiDescription Delete of all index-pages from elasticsearch database
+	@api {delete}  /es Delete index-pages
+	@apiDescription Delete all index-pages from elasticsearch database
 	@apiExample {curl} Example-Usage-DELETE:
 		 curl -i http://localhost:5000/es -X DELETE
-	@apiSuccessExample Example-Success-Response-DELETE:
+	@apiSuccessExample Example-Success-Response:
 		HTTP/1.0 200 OK
-
 			{
 				Example here
 			}
@@ -1003,54 +1208,134 @@ def monitor_es(es_index_page=None, es_key=None):
 	@apiGroup GroupElasticsearch
 	@apiName GetEsIndexPgae
 	@api {get}  /es/<string:es_index_page> Get index-page
-	@apiDescription Get index-page from elasticsearch
+	@apiDescription Get certain index-page from elasticsearch
 
-	@apiParam {string} es_index_page name of index-page
+	@apiParam {string} es_index_page name of the index-page
 
-	@apiExample {curl} Example-Usage-GET:
-		 curl -i http://localhost:5000/es/jox-config
+	@apiExample {curl} Example-Usage:
+		 curl -i http://localhost:5000/es/jox_config
 
-	@apiSuccessExample Example-Success-Response-GET:
-		HTTP/1.0 200 OK
-		{
-				"data": {
-					"RBMQ_SERVER_IP": "localhost",
-					"RBMQ_SERVER_PORT": 15672,
-					"RBMQ_config": {
-						"RBMQ_PASSWORD": "guest",
-						"RBMQ_QUEUE": "QueueJox",
-						"RBMQ_SERVER_IP": "localhost",
-						"RBMQ_SERVER_PORT": 1234,
-						"RBMQ_USER": "guest"
-					},
-					"_Comment": "default slice should be in yaml format",
-					"authors-list": [
-						{
-							"email": "firstname.lastname@eurecom.fr",
-							"name": "firstname lastname"
-						}
-					],
-					"clouds-list": [
-						{
-							"cloud-name": "localhost",
-							"description": "local environment accordig to ~/.juju/environments.yaml file"
-						}
-
-					}
-				},
-				"elapsed-time": "0:00:00.015391"
-			}
+	@apiSuccessExample Example-Success-Response:
+	HTTP/1.0 200 OK
+	{
+	  "data": {
+	    "authors-list": [
+	      {
+	        "email": "contact@mosaic-5g.io",
+	        "name": "Eurecom"
+	      }
+	    ],
+	    "clouds-list": [
+	      {
+	        "cloud-name": "localhost",
+	        "description": "name of you juju controller"
+	      }
+	    ],
+	    "date": "01-03-2019",
+	    "description": "Jox configuration file",
+	    "elasticsearch-config": {
+	      "elasticsearch-host": "localhost",
+	      "elasticsearch-log-level": "error",
+	      "elasticsearch-port": "9200",
+	      "elasticsearch-retry-on-conflict": 3
+	    },
+	    "encoding-type": "utf-8",
+	    "flask-config": {
+	      "flask-debug": "FALSE",
+	      "flask-port": 5000,
+	      "flask-server": "localhost"
+	    },
+	    "http": {
+	      "200": {
+	        "no-content": 204,
+	        "ok": 200
+	      },
+	      "400": {
+	        "bad-request": 400,
+	        "not-found": 404
+	      }
+	    },
+	    "jox version": 1,
+	    "juju-config": {
+	      "_Comment": "connect-model-available: define the parameters to access to a newly created model is available",
+	      "_Comment_2": "connect-model-accessible: define parameters to access to already exist juju model",
+	      "connect-model-accessible-interval": 3,
+	      "connect-model-accessible-max-retry": 50,
+	      "connect-model-available-interval": 10,
+	      "connect-model-available-max-retry": 10
+	    },
+	    "juju_version": 2.4,
+	    "log-config": {
+	      "log-file": "jox.log",
+	      "log-level": "debug",
+	      "log_colors": [
+	        {
+	          "color": "\\033[91m",
+	          "debug-level": 0,
+	          "name": "error"
+	        },
+	        {
+	          "color": "\\033[93m",
+	          "debug-level": 1,
+	          "name": "warn"
+	        },
+	        {
+	          "color": "\\033[92m",
+	          "debug-level": 2,
+	          "name": "notice"
+	        },
+	        {
+	          "color": "\\033[0m",
+	          "debug-level": 3,
+	          "name": "info"
+	        },
+	        {
+	          "color": "\\033[0m",
+	          "debug-level": 4,
+	          "name": "debug"
+	        }
+	      ]
+	    },
+	    "rabbit-mq-config": {
+	      "rabbit-mq-queue": "QueueJox",
+	      "rabbit-mq-server-ip": "localhost",
+	      "rabbit-mq-server-port": 5672
+	    },
+	    "ssh-config": {
+	      "_Comment": "ssh connection is needed when adding kvm machines",
+	      "ssh-key-directory": "/home/arouk/.ssh/",
+	      "ssh-key-name": "id_juju",
+	      "ssh-password": "linux",
+	      "ssh-user": "ubuntu"
+	    },
+	    "stats-timer": 100,
+	    "store-config": {
+	      "_Comment": "it is needed to store the onboarded packages to deploy slices later",
+	      "store-directrory": "/tmp/jox_store/"
+	    },
+	    "vim-pop": {
+	      "kvm": [
+	        "local"
+	      ],
+	      "lxc": [
+	        "local"
+	      ]
+	    }
+	  },
+	  "elapsed-time": "0:00:00.007593"
+	}
 	"""
+	
 	"""
-
 	@apiGroup GroupElasticsearch
 	@apiName DeleteEsIndexPgae
-	@api {delete}  /es/<string:es_index_page> get index-page
-	@apiExample {curl} Example-Usage-DELETE:
-		 curl -i http://localhost:5000/es/jox-config -X DELETE
-
+	
 	@api {delete}  /es/<string:es_index_page> Delete index-page
 	@apiDescription Delete index page from elasticsearch
+	
+	@apiExample {curl} Example-Usage:
+		 curl -i http://localhost:5000/es/jox-config -X DELETE
+		 
 	@apiSuccessExample Example-Success-Response-DELETE:
 		HTTP/1.0 200 OK
 
@@ -1058,36 +1343,30 @@ def monitor_es(es_index_page=None, es_key=None):
 			"data": "The index jox-config is successfully removed from elasticsearch",
 			"elapsed-time": "0:00:00.064590"
 			}
-
-
 	"""
 	"""
 	@apiGroup GroupElasticsearch
 	@apiName GetEsIndexPgaeKeyVal
 
-	@api {get}  /es/<string:es_index_page>/<string:es_key> Get a key of index-page
+	@api {get}  /es/<string:es_index_page>/<string:es_key> Get specific key of index-page
 	@apiDescription get certain key of certain index-page from elasticsearch
 
 	@apiParam {string} es_index_page name of index-page
 	@apiParam {string} es_key key to get from the indexpage es_index_page
 
 	@apiExample {curl} Example-Usage:
-		 curl -i http://localhost:5000/es/jox-config/RBMQ_config
+		 curl -i http://localhost:5000/es/jox_config/rabbit-mq-config
 
 	@apiSuccessExample Example-Success-Response:
-		HTTP/1.0 200 OK
-		{
-			{
-			"data": {
-				"RBMQ_PASSWORD": "guest",
-				"RBMQ_QUEUE": "QueueJox",
-				"RBMQ_SERVER_IP": "localhost",
-				"RBMQ_SERVER_PORT": 1234,
-				"RBMQ_USER": "guest"
-					},
-			"elapsed-time": "0:00:00.578988"
-			}
-		}
+	HTTP/1.0 200 OK
+	{
+	  "data": {
+	    "rabbit-mq-queue": "QueueJox",
+	    "rabbit-mq-server-ip": "localhost",
+	    "rabbit-mq-server-port": 5672
+	  },
+	  "elapsed-time": "0:00:00.007253"
+	}
 	"""
 	enquiry = standard_reqst
 	current_time = datetime.datetime.now()
@@ -1127,13 +1406,12 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	@apiGroup Monitoring
 	@apiName GetNsiMonitorAll
 
-	@api {get}  /monitor/nsi/<string:nsi_name> NSI all
-	@apiParam {String} nsi_name NSI name
+	@apiDescription Get monitoring information on specific slice
+	@api {get}  /monitor/nsi/<string:nsi_name> Info. on specific slice
+	@apiParam {String} nsi_name slice name
 	@apiExample {curl} Example usage:
-	    curl http://localhost:5000/monitor/nsi/oai-epc
+	    curl http://localhost:5000/monitor/nsi/mosaic5g
 
-	@apiSuccess {String} data The required informations.
-	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
 	    HTTP/1.0 200 OK
 	    {
@@ -1317,10 +1595,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	      },
 	      "elapsed-time": "0:00:00.544330"
 	    }
-
-
-	@apiError {String} data The required infromation can not be found
-	@apiError {String} elapsed-time  The elapsed time to get the required the information.
+	    
 	@apiErrorExample Error-Response:
 	    HTTP/1.0 404 Not Found
 	    {
@@ -1333,16 +1608,15 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	@apiGroup Monitoring
 	@apiName GetNssiMonitorAll
 
-	@api {get}  /monitor/nsi/<string:nsi_name>/<string:nssi_name>> NSSI all
+	@apiDescription Get monitoring information on specific subslice attached to certain slice
+	@api {get}  /monitor/nsi/<string:nsi_name>/<string:nssi_name> Info. on specific subslice
 
-	@apiParam {String} nsi_name NSI name
-	@apiParam {String} nssi_name NSSI name
+	@apiParam {String} nsi_name slice name
+	@apiParam {String} nssi_name subslice name
 
 	@apiExample {curl} Example usage:
 	      curl http://localhost:5000/monitor/nsi/oai-epc/nssi_2
 
-	@apiSuccess {String} data The required informations.
-	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
 	    HTTP/1.0 200 OK
 	    {
@@ -1440,15 +1714,12 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	      "elapsed-time": "0:00:00.005380"
 	    }
 
-
-	@apiError {String} data The required infromation can not be found
-	@apiError {String} elapsed-time  The elapsed time to get the required the information.
 	@apiErrorExample Error-Response:
-	    HTTP/1.0 404 Not Found
-	    {
-	      "data": "Ad add example herer",
-	      "elapsed-time": "to add example here"
-	    }
+	HTTP/1.0 404 Not Found
+	{
+		"data": "The subslice nssi_2 does not exist or it is not attached to the slice nssi_3",
+		"elapsed-time": "0:00:00.008988"
+	}
 	"""
 	
 	enquiry = standard_reqst

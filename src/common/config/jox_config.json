@@ -80,9 +80,7 @@
     },
     "400": {
       "bad-request":400,
-      "not-found":404,
-      "method-failure":420,
-      "failed-dependency":424
+      "not-found":404
     }
   },
 
