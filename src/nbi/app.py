@@ -91,6 +91,7 @@ before deploying and monitoring the slices. Through this APIoffered by this grou
 jox capabilities, in addition to the possibility to see the
 template slice/subslice before deploying your slice.
 """
+
 """
 @apiDefine GroupOnboarding Onboarding
 To Describe the onboarding later
@@ -772,7 +773,7 @@ def jox_package_onboard():
     @apiName PutOnboard
 
     @api {put}  /onboard package onboarding
-    @apiDescription
+    @apiDescription Description
     """
 	enquiry = standard_reqst
 	current_time = datetime.datetime.now()
