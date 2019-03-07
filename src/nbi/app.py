@@ -47,7 +47,7 @@ app = Flask(__name__)
 
 logger = logging.getLogger('jox.NBI')
 logging.basicConfig(level=logging.INFO)
-logger.info('Staring JOX main thread')
+logger.info('Starting JOX main thread')
 
 listOfTasks = tasks.listTasks()
 standard_reqst = {
@@ -135,18 +135,17 @@ def jox_homepage():
     @apiName GetJoxHomepage
 
     @api {get}  / Homepage
-	@apiDescription The hoemepage of JoX
+	@apiDescription The homepage of JoX
     
     @apiExample {curl} Example usage:
-         curl -i http://127.0.0.1:5000/
-         curl -i  [http://127.0.0.1:5000/](http://127.0.0.1:5000/)
+         curl -i http://localhost:5000/
 
     @apiSuccessExample Success-Response:
         HTTP/1.0 200 OK
         {
         Welcome to JOX!
-        To get the list of the capabilities and jox configuration, use the following
-        [http://JOX-URL:PORT/jox](http://JOX-URL:PORT/jox)
+        To get the list of the capabilities and jox configuration, use the following:
+        http://localhost:5000/jox
         }
     """
 	logger.debug("Receive homepage request")
@@ -162,13 +161,13 @@ jox_capabilities = {
 	"jox": {
 		"/jox": "return jox configuration and the list of the capabilities",
 		"/list": {"1": "return the list of all files in formation .yaml, .yaml and .json",
-		          "2": "example: curl  http://127.0.0.1:5000/list; return the list in the default directory",
-		          "3": "example: curl  http://127.0.0.1:5000/list?url=/home/arouk/Documents/slice_template; return the list in slice_template directory",
+		          "2": "example: curl  http://localhost:5000/list; return the list in the default directory",
+		          "3": "example: curl  http://localhost:5000/list?url=/home/ubunut/Documents/slice_template; return the list in slice_template directory",
 		          },
 		"/ls": "alias to /list",
 		"/show/<string:nsi_name>": {"1": "show the content of the template nsi_name",
-		                            "2": "example: curl  http://127.0.0.1:5000/show/exmple_template.yaml; show the slice template exmple_template.yaml in the default directory",
-		                            "3": "example: curl  http://127.0.0.1:5000/list?url=/home/arouk/Documents/slice_template/exmple_template.yaml; show the slice template exmple_template.yaml in the given directory",
+		                            "2": "example: curl  http://localhost:5000/show/exmple_template.yaml; show the slice template exmple_template.yaml in the default directory",
+		                            "3": "example: curl  http://localhost:5000/list?url=/home/ubunut/Documents/slice_template/exmple_template.yaml; show the slice template exmple_template.yaml in the given directory",
 		                            },
 	},
 	"slice": {
@@ -265,7 +264,7 @@ def jox_config():
     @api {get}  /jox Configuration and capabilities
 
     @apiExample {curl} Example usage:
-         curl -i http://127.0.0.1:5000/jox
+         curl -i http://localhost:5000/jox
 
     @apiSuccessExample Success-Response:
         HTTP/1.0 200 OK
@@ -366,7 +365,7 @@ def jox_config():
                 },
                 "ssh-config": {
                   "_Comment": "ssh connection is needed when adding kvm machines",
-                  "ssh-key-directory": "/home/arouk/.ssh/",
+                  "ssh-key-directory": "/home/ubunut/.ssh/",
                   "ssh-key-name": "id_juju",
                   "ssh-password": "linux",
                   "ssh-user": "ubuntu"
@@ -414,325 +413,199 @@ def jox_config():
 def list_of_templates(nsi_name=None):
 	"""
 	@apiGroup GroupJox
-	@apiName GetJoxlist
+	@apiName GetJoxlist GetJoxlistName
 
-	@api {get}  /list List of templates
-	@apiDescription Get the list of all template (in format .yaml, .yml, and .json) in default directory or given directory
-	@apiParam {path} full_path directory of the templates (Optional)
+	@api {get}  /list?url=full_path List of packages
+	@apiDescription Get the list of all packages in jox store or in a given directory
+	@apiParam {path} [full_path] Full directory of the packages
 
 	@apiExample {curl} First-Example-Usage:
-	     curl -i http://127.0.0.1:5000/list
+	     curl -i http://localhost:5000/list
 
+	@apiDescription Get the list of all packages in the default jox store
 	@apiSuccessExample First-Example-Success-Response:
-	    HTTP/1.1 200 OK
-	    {
-	        "elapsed-time": "0:00:00.006720",
-	        "list of templates in the directory None":
-	        [
-	            "default_slice_NSI.yaml",
-	            "default_slice_NSSI2_2.yaml",
-	            "default_slice_NSSI_2.yaml",
-	            "default_slice_NSSI2_1.yaml",
-	            "default_slice_NSI2.yaml",
-	            "default_slice_NSSI_1.yaml"
-	        ]
-	    }
-
-	@apiDescription Get the list of all template in the default or given directory
+	    HTTP/1.0 200 OK
+		{
+			"data": [
+				"mosaic5g"
+			],
+			"elapsed-time": "0:00:00.001849"
+		}
+	@apiDescription Get the list of all packages in a given directory
 	@apiExample {curl} Second-Example-Usage:
-	     curl -i http://127.0.0.1:5000/list?url=/home/ubuntu/jox/jox/src/com/config
+	     curl -i http://localhost:5000/list?url=/home/ubuntu/package_store/
 
 	@apiSuccessExample Second-Example-Success-Response:
-	    HTTP/1.1 200 OK
-	    {
-	        "elapsed-time": "0:00:00.005351",
-	        "list of templates in the directory None":
-	         [
-	            "jox_config.json"
-	        ]
-	    }
+	    HTTP/1.0 200 OK
+		{
+			"data": [
+				"oai-epc"
+			],
+			"elapsed-time": "0:00:00.001849"
+		}
 	"""
 	
 	"""
 	@apiGroup GroupJox
 	@apiName GetJoxLs
 
-	@api {get}  /ls List of templates  [Alias]
-	@apiDescription It is alias to /list
-	@apiParam {path} full_path directory of the templates (Optional)
-	@apiExample {curl} First-Example-Usage:
-	     curl -i http://127.0.0.1:5000/ls
-
-	@apiSuccessExample First-Example-Success-Response:
-	    HTTP/1.1 200 OK
-	    {
-	        "elapsed-time": "0:00:00.006720",
-	        "list of templates in the directory None":
-	        [
-	            "default_slice_NSI.yaml",
-	            "default_slice_NSSI2_2.yaml",
-	            "default_slice_NSSI_2.yaml",
-	            "default_slice_NSSI2_1.yaml",
-	            "default_slice_NSI2.yaml",
-	            "default_slice_NSSI_1.yaml"
-	        ]
-	    }
-
-	@apiExample {curl} Second-Example-Usage:
-	     curl -i http://127.0.0.1:5000/ls?url=/home/ubuntu/jox/jox/src/com/config
-
-	@apiSuccessExample Second-Example-Success-Response:
-	    HTTP/1.1 200 OK
-	    {
-	        "elapsed-time": "0:00:00.005351",
-	        "list of templates in the directory None":
-	         [
-	            "jox_config.json"
-	        ]
-	    }
+	@api {get}  /ls List of packages [Alias]
+	@apiDescription It is an alias to [http://localhost:5000/list](http://localhost:5000/list)
 	"""
 	
 	"""
 	@apiGroup GroupJox
 	@apiName GetJoxShow
 
-	@api {get}  /show/<string:nsi_name>?url=full_path Show the defined template
-	@apiDescription Show the content of the file nsi_name, only the following formats are supported: .yaml, .yml, and .json
+	@api {get}  /show/<string:nsi_name>?url=full_path Show template
+	@apiDescription Show the content of specific template, where only the following formats are supported: .yaml, .yml, and .json
 
 	@apiParam {string} nsi_name name of the file(template)
-	@apiParam {path} [full_path=None] full_path directory of the templates
+	@apiParam {path} full_path Full path where the templates exists
 
-	@apiDescription example usage for to show the template in default directory
-	@apiExample {curl} First-Example-Usage:
-	     curl -i http://127.0.0.1:5000/show/default_slice_NSI.yaml
-	@apiSuccessExample First-Example-Success-Response:
-	    HTTP/1.1 200 OK
+	@apiDescription example usage to show the tenmplate of one nssi
+	@apiExample {curl} Example-Usage:
+	     curl  -i http://localhost:5000/show/nssi_1.yaml?url=/tmp/jox_store/mosaic5g/nssi
+	
+	@apiSuccessExample Example-Success-Response:
+	    HTTP/1.0 200 OK
 	    {
-	      "elapsed-time": "0:00:00.029316",
-	      "list of templates in the directory None": {
-	        "description": "Template for deploying oai-epc with JoX",
-	        "imports": [
-	          "default_slice_NSSI_1",
-	          "default_slice_NSSI_2"
-	        ],
-	        "metadata": {
-	          "ID": "NSI_1",
-	          "vendor": "Eurecom",
-	          "version": 0.1
-	        },
-	        "relationships_template": {
-	          "connection_server_client": {
-	            "source": {
-	              "inputs": {
-	                "name": "eg1",
-	                "node": "oai-hss",
-	                "type": "tosca.relationships.AttachesTo"
-	              },
-	              "node": "NSS_first",
-	              "parameters": "NSSI_1"
-	            },
-	            "target": {
-	              "inputs": {
-	                "name": "ing1",
-	                "node": "oai-mme",
-	                "type": "tosca.relationships.DependsOn"
-	              },
-	              "node": "NSS_second",
-	              "parameters": "NSSI_2"
-	            },
-	            "type": "tosca.relationships.ConnectsTo"
-	          }
-	        },
-	        "topology_template": {
-	          "node_templates": {
-	            "NSS_first": {
-	              "requirements": {
-	                "egress": {
-	                  "eg1": {
-	                    "node": "oai-hss",
-	                    "relationship": {
-	                      "type": "tosca.relationships.AttachesTo"
-	                    }
-	                  }
-	                },
-	                "nssi": "NSSI_1"
-	              },
-	              "type": "tosca.nodes.JOX.NSSI"
-	            },
-	            "NSS_second": {
-	              "requirements": {
-	                "ingress": {
-	                  "ing1": {
-	                    "node": "oai-mme",
-	                    "relationship": {
-	                      "type": "tosca.relationships.DependsOn"
-	                    }
-	                  }
-	                },
-	                "nssi": "NSSI_2"
-	              },
-	              "type": "tosca.nodes.JOX.NSSI"
-	            }
-	          }
-	        },
-	        "tosca_definitions_version": "tosca_simple_yaml_1_0"
-	      }
-	    }
-
-	@apiDescription example usage for to show the template in specified directory
-	@apiExample {curl} Second-Example-Usage:
-	     curl -i http://127.0.0.1:5000/show/default_slice_NSSI_2.yaml?url=/home/ubuntu/Documents/slice_template
-	@apiSuccessExample Second-Example-Success-Response:
-	    HTTP/1.1 200 OK
-	    {
-	      "elapsed-time": "0:00:00.034370",
-	      "list of templates in the directory None": {
-	        "description": "Template for deploying oai-epc with JoX",
-	        "dsl_definitions": {
-	          "host_small": {
-	            "disk_size": 10,
-	            "mem_size": 2048,
-	            "num_cpus": 1
-	          },
-	          "host_tiny": {
-	            "disk_size": 3,
-	            "mem_size": 512,
-	            "num_cpus": 1
-	          },
-	          "os_linux_u_14_x64": {
-	            "architecture": "x86_64",
-	            "distribution": "Ubuntu",
-	            "type": "Linux",
-	            "version": 14.04
-	          },
-	          "os_linux_u_16_x64": {
-	            "architecture": "x86_64",
-	            "distribution": "Ubuntu",
-	            "type": "Linux",
-	            "version": 16.04
-	          },
-	          "os_linux_u_18_x64": {
-	            "architecture": "x86_64",
-	            "distribution": "Ubuntu",
-	            "type": "Linux",
-	            "version": 18.04
-	          }
-	        },
-	        "imports": [
-	          "default_slice_NSSI_2"
-	        ],
-	        "metadata": {
-	          "ID": "NSSI_2",
-	          "vendor": "Eurecom",
-	          "version": 0.1
-	        },
-	        "topology_template": {
-	          "node_templates": {
-	            "VDU_oai-mme": {
-	              "artifacts": {
-	                "sw_image": {
-	                  "properties": {
-	                    "supported_virtualisation_environments": {
-	                      "entry_schema": "local",
-	                      "type": "lxc"
-	                    }
-	                  },
-	                  "type": "tosca.artifacts.nfv.SwImage"
-	                }
-	              },
-	              "capabilities": {
-	                "host": {
-	                  "properties": {
-	                    "disk_size": 5,
-	                    "mem_size": 1024,
-	                    "num_cpus": 1
-	                  }
-	                },
-	                "os": {
-	                  "properties": {
-	                    "architecture": "x86_64",
-	                    "distribution": "Ubuntu",
-	                    "type": "Linux",
-	                    "version": 16.04
-	                  }
-	                }
-	              },
-	              "properties": null,
-	              "type": "tosca.nodes.nfv.VDU.Compute"
-	            },
-	            "VDU_oai-spgw": {
-	              "artifacts": {
-	                "sw_image": {
-	                  "properties": {
-	                    "supported_virtualisation_environments": {
-	                      "entry_schema": "local",
-	                      "type": "lxc"
-	                    }
-	                  },
-	                  "type": "tosca.artifacts.nfv.SwImage"
-	                }
-	              },
-	              "capabilities": {
-	                "host": {
-	                  "properties": {
-	                    "disk_size": 10,
-	                    "mem_size": 2048,
-	                    "num_cpus": 1
-	                  }
-	                },
-	                "os": {
-	                  "properties": {
-	                    "architecture": "x86_64",
-	                    "distribution": "Ubuntu",
-	                    "type": "Linux",
-	                    "version": 16.04
-	                  }
-	                }
-	              },
-	              "properties": null,
-	              "type": "tosca.nodes.nfv.VDU.Compute"
-	            },
-	            "oai-mme": {
-	              "properties": {
-	                "charm": "cs:~navid-nikaein/xenial/oai-mme-18",
-	                "endpoint": "localhost",
-	                "model": "default-juju-model-1",
-	                "vendor": "Eurecom",
-	                "version": 1
-	              },
-	              "requirements": {
-	                "req1": {
-	                  "node": "VDU_oai-mme",
-	                  "relationship": "tosca.relationships.HostedOn"
-	                }
-	              },
-	              "type": "tosca.nodes.SoftwareComponent.JOX"
-	            },
-	            "oai-spgw": {
-	              "properties": {
-	                "charm": "cs:~navid-nikaein/xenial/oai-spgw-15",
-	                "endpoint": "localhost",
-	                "model": "default-juju-model-1",
-	                "vendor": "Eurecom",
-	                "version": 1
-	              },
-	              "requirements": {
-	                "req1": {
-	                  "node": "VDU_oai-spgw",
-	                  "relationship": "tosca.relationships.HostedOn"
-	                },
-	                "req2": {
-	                  "node": "oai-mme",
-	                  "relationship": "tosca.relationships.AttachesTo"
-	                }
-	              },
-	              "type": "tosca.nodes.SoftwareComponent.JOX"
-	            }
-	          }
-	        },
-	        "tosca_definitions_version": "tosca_simple_yaml_1_0"
-	      }
-	    }
+		  "data": {
+		    "description": "template for deploying package <oai-epc> with 2 subslices (nssi_1)",
+		    "dsl_definitions": {
+		      "host_small": {
+		        "disk_size": 5,
+		        "mem_size": 1024,
+		        "num_cpus": 1
+		      },
+		      "host_tiny": {
+		        "disk_size": 5,
+		        "mem_size": 512,
+		        "num_cpus": 1
+		      },
+		      "os_linux_u_14_x64": {
+		        "architecture": "x86_64",
+		        "distribution": "Ubuntu",
+		        "type": "Linux",
+		        "version": 14.04
+		      },
+		      "os_linux_u_16_x64": {
+		        "architecture": "x86_64",
+		        "distribution": "Ubuntu",
+		        "type": "Linux",
+		        "version": 16.04
+		      },
+		      "os_linux_u_18_x64": {
+		        "architecture": "x86_64",
+		        "distribution": "Ubuntu",
+		        "type": "Linux",
+		        "version": 18.04
+		      }
+		    },
+		    "imports": [
+		      "default_slice_nssi_1"
+		    ],
+		    "metadata": {
+		      "ID": "nssi_1",
+		      "author": "Eurecom",
+		      "date": "2019-03-04",
+		      "vendor": "Eurecom",
+		      "version": 1.0
+		    },
+		    "topology_template": {
+		      "node_templates": {
+		        "VDU_mysql": {
+		          "artifacts": {
+		            "sw_image": {
+		              "properties": {
+		                "supported_virtualisation_environments": {
+		                  "entry_schema": "local",
+		                  "type": "lxc"
+		                }
+		              },
+		              "type": "tosca.artifacts.nfv.SwImage"
+		            }
+		          },
+		          "capabilities": {
+		            "host": {
+		              "properties": "small"
+		            },
+		            "os": {
+		              "properties": "ubuntu_16_64"
+		            }
+		          },
+		          "properties": null,
+		          "type": "tosca.nodes.nfv.VDU.Compute"
+		        },
+		        "VDU_oai-hss": {
+		          "artifacts": {
+		            "sw_image": {
+		              "properties": {
+		                "supported_virtualisation_environments": {
+		                  "entry_schema": "local",
+		                  "type": "lxc"
+		                }
+		              },
+		              "type": "tosca.artifacts.nfv.SwImage"
+		            }
+		          },
+		          "capabilities": {
+		            "host": {
+		              "properties": "small"
+		            },
+		            "os": {
+		              "properties": "ubuntu_16_64"
+		            }
+		          },
+		          "properties": null,
+		          "type": "tosca.nodes.nfv.VDU.Compute"
+		        },
+		        "mysql": {
+		          "properties": {
+		            "charm": "cs:mysql-58",
+		            "endpoint": "localhost",
+		            "model": "default-juju-model-1",
+		            "vendor": "Eurecom",
+		            "version": 1.0
+		          },
+		          "requirements": {
+		            "req1": {
+		              "node": "VDU_mysql",
+		              "relationship": "tosca.relationships.HostedOn"
+		            },
+		            "req2": {
+		              "node": "oai-hss",
+		              "relationship": "tosca.relationships.AttachesTo"
+		            }
+		          },
+		          "type": "tosca.nodes.SoftwareComponent.JOX"
+		        },
+		        "oai-hss": {
+		          "properties": {
+		            "charm": "cs:~navid-nikaein/xenial/oai-hss-16",
+		            "endpoint": "localhost",
+		            "model": "default-juju-model-1",
+		            "vendor": "Eurecom",
+		            "version": 1.0
+		          },
+		          "requirements": {
+		            "req1": {
+		              "node": "VDU_oai-hss",
+		              "relationship": "tosca.relationships.HostedOn"
+		            },
+		            "req2": {
+		              "node": "oai-spgw",
+		              "relationship": "tosca.relationships.AttachesTo"
+		            }
+		          },
+		          "type": "tosca.nodes.SoftwareComponent.JOX"
+		        }
+		      }
+		    },
+		    "tosca_definitions_version": "tosca_simple_yaml_1_0"
+		  },
+		  "elapsed-time": "0:00:00.025439"
+		}
 	"""
 	enquiry = standard_reqst
 	current_time = datetime.datetime.now()
@@ -772,8 +645,20 @@ def jox_package_onboard():
     @apiGroup GroupOnboarding
     @apiName PutOnboard
 
-    @api {put}  /onboard package onboarding
-    @apiDescription Description
+    @api {put}  /onboard Package onboarding
+    @apiDescription Through this endpoint, you can onboard the pakcage of slice(s), so that you can deploy it(them) later
+	
+	@apiExample {curl} Example-Usage:
+	@apiDescription example usage for onboarding a package named as mosaic5g
+	     curl  -i http://localhost:5000/onboard upload-file mosaic5g.tar.gz
+	
+	@apiSuccessExample Example-Success-Response:
+	
+	Example
+	{
+		"data": "The package was successfuly saved to the directory /tmp/jox_store/",
+		"elapsed-time": "0:00:00.011638"
+	}
     """
 	enquiry = standard_reqst
 	current_time = datetime.datetime.now()
@@ -811,78 +696,70 @@ def network_slice(nsi_name=None):
 	@apiGroup GroupSlice
 	@apiName GetNsiAll
 
-	@api {get}  /nsi/all List all deployed NSI
-	@apiDescription get the list of all template (in format .yaml, .yml, and .json) in default directory or given directory
+	@api {get}  /nsi/all List all deployed slices
+	@apiDescription get the list of all deployed slices
 
-	@apiParam {path} full_path directory of the templates (Optional)
 
 	@apiExample {curl} First-Example-Usage:
-	     curl -i http://127.0.0.1:5000/nsi/all
+	     curl -i http://localhost:5000/nsi/all
 
 	@apiDescription get the list of all deployed slices
-	@apiSuccessExample First-Example-Success-Response:
-	    HTTP/1.1 200 OK
-	    {
-	       "data":{
-	              "NSI_1":{
-	                 "inter_nssi_relation":[
-	                    {
-	                       "service_a":{
-	                          "jcloud":"localhost",
-	                          "jmodel":"default-juju-model-1",
-	                          "nssi":"NSSI_1",
-	                          "service":"oai-hss"
-	                       },
-	                       "service_b":{
-	                          "jcloud":"localhost",
-	                          "jmodel":"default-juju-model-1",
-	                          "nssi":"NSSI_2",
-	                          "service":"oai-mme"
-	                       }
-	                    }
-	                 ],
-	                 "slice_name":"NSI_1",
-	                 "sub_slices":[
-	                    "NSSI_1",
-	                    "NSSI_2"
-	                 ]
-	              }
-	           },
-	        "elapsed-time":"0:00:00.003032"
-	    }
-	@apiDescription get the list of all template in the given directory /home/arouk/Documents/slice_templet
-	@apiExample {curl} Second-Example-Usage:
-	     curl -i http://127.0.0.1:5000/list?url=/home/arouk/Documents/slice_templet
-
-	@apiSuccessExample Second-Example-Success-Response:
-	    HTTP/1.1 200 OK
-	    {
-	        To add example here
-	    }
+	@apiSuccessExample Example-Success-Response:
+	    HTTP/1.0 200 OK
+		{
+		  "data": {
+		    "mosaic5g": {
+		      "inter_nssi_relation": [
+		        {
+		          "service_a": {
+		            "jcloud": "localhost",
+		            "jmodel": "default-juju-model-1",
+		            "nssi": "nssi_1",
+		            "service": "oai-hss"
+		          },
+		          "service_b": {
+		            "jcloud": "localhost",
+		            "jmodel": "default-juju-model-1",
+		            "nssi": "nssi_2",
+		            "service": "oai-mme"
+		          }
+		        }
+		      ],
+		      "slice_name": "mosaic5g",
+		      "sub_slices": [
+		        "nssi_1",
+		        "nssi_2"
+		      ]
+		    }
+		  },
+		  "elapsed-time": "0:00:00.004858"
+		}
+	
 	"""
 	
 	"""
 	@apiGroup GroupSlice
 	@apiName GetNsi
 
+	
+	@api {get}  /nsi List all deployed slices (alias)
 	@apiDescription It is alias to /nsi/all
-	@api {get}  /nsi List all deployed NSI [Alias]
 	"""
 	
 	"""
 	@apiGroup GroupSlice
 	@apiName GetNsiName
 
-	@api {get}  /nsi/<string:nsi_name> Get NSI
-	@apiDescription get the context, deployed, and delete the slice nsi_name
-	@apiParam {string} nsi_name name of the slice
+	@api {get}  /nsi/<string:nsi_name> Get template of already deployed slice
+	@apiDescription get the context of the already deployed slice nsi_name
+	@apiParam {string} nsi_name name of the already deloyed slice
 
 	@apiExample {curl} First-Example-Usage-POST:
 	     curl http://localhost:5000/nsi --upload-file "/home/ubuntu/jox-master/jox/src/com/slice_template/default_slice_NS.zip" -XPOST
 	@apiSuccessExample First-Example-Success-Response-POST:
-	    HTTP/1.1 200 OK
+	    HTTP/1.0 200 OK
 	    {
-	     "data":"Ceating/updating the slice default_slice_NSI.yaml",
+	     "data":"Creating/updating the slice default_slice_NSI.yaml",
 	     "elapsed-time":"0:01:40.287464"
 	    }
 
@@ -900,7 +777,7 @@ def network_slice(nsi_name=None):
 	     curl http://localhost:5000/nsi --upload-file "/home/ubuntu/jox-master/jox/src/com/slice_template/default_slice_NS.zip" -XPOST
 
 	@apiSuccessExample Second-Example-Success-Response-GET:
-	    HTTP/1.1 200 OK
+	    HTTP/1.0 200 OK
 	    {
 	       "data":{
 	              "NSI_1":{
@@ -940,9 +817,9 @@ def network_slice(nsi_name=None):
 	@apiParam {string} nsi_name name of the slice
 
 	@apiExample {curl} Example-Usage:
-	     curl -i -X DELETE http://127.0.0.1:5000/nsi/NSI_1
+	     curl -i -X DELETE http://localhost:5000/nsi/NSI_1
 	@apiSuccessExample Third-Example-Success-Response-DELETE:
-	    HTTP/1.1 200 OK
+	    HTTP/1.0 200 OK
 	    {
 	     "data":"The slice NSI_1 successfully removed"
 	     "elapsed-time":"0:00:54.056207"
@@ -997,10 +874,10 @@ def network_sub_slice(nsi_name=None, nssi_name=None, nssi_key=None):
 
 
 	@apiExample {curl} First-Example-Usage:
-	     curl -i http://127.0.0.1:5000/nssi/all
+	     curl -i http://localhost:5000/nssi/all
 
 	@apiSuccessExample First-Example-Success-Response:
-	    HTTP/1.1 200 OK
+	    HTTP/1.0 200 OK
 	    {
 	        To add example here
 	    }
@@ -1083,11 +960,11 @@ def monitor_es(es_index_page=None, es_key=None):
 	@api {get}  /es List all index-pages
 	@apiDescription get/delete the list of all index-pages in elasticsearch
 	@apiExample {curl} Example-Usage:
-		 curl -i http://127.0.0.1:5000/es
+		 curl -i http://localhost:5000/es
 
 	@apiDescription Get the list of all index-pages in elasticsearch database
 	@apiSuccessExample Example-Success-Response-GET:
-		HTTP/1.1 200 OK
+		HTTP/1.0 200 OK
 
 			{
 			   "data":
@@ -1112,9 +989,9 @@ def monitor_es(es_index_page=None, es_key=None):
 	@api {delete}  /es Delete all index-pages
 	@apiDescription Delete of all index-pages from elasticsearch database
 	@apiExample {curl} Example-Usage-DELETE:
-		 curl -i http://127.0.0.1:5000/es -XDELETE
+		 curl -i http://localhost:5000/es -XDELETE
 	@apiSuccessExample Example-Success-Response-DELETE:
-		HTTP/1.1 200 OK
+		HTTP/1.0 200 OK
 
 			{
 				Example here
@@ -1129,10 +1006,10 @@ def monitor_es(es_index_page=None, es_key=None):
 	@apiParam {string} es_index_page name of index-page
 
 	@apiExample {curl} Example-Usage-GET:
-		 curl -i http://127.0.0.1:5000/es/jox-config
+		 curl -i http://localhost:5000/es/jox-config
 
 	@apiSuccessExample Example-Success-Response-GET:
-		HTTP/1.1 200 OK
+		HTTP/1.0 200 OK
 		{
 				"data": {
 					"RBMQ_SERVER_IP": "localhost",
@@ -1168,12 +1045,12 @@ def monitor_es(es_index_page=None, es_key=None):
 	@apiName DeleteEsIndexPgae
 	@api {delete}  /es/<string:es_index_page> get index-page
 	@apiExample {curl} Example-Usage-DELETE:
-		 curl -i http://127.0.0.1:5000/es/jox-config -XDELETE
+		 curl -i http://localhost:5000/es/jox-config -XDELETE
 
 	@api {delete}  /es/<string:es_index_page> Delete index-page
 	@apiDescription Delete index page from elasticsearch
 	@apiSuccessExample Example-Success-Response-DELETE:
-		HTTP/1.1 200 OK
+		HTTP/1.0 200 OK
 
 			{
 			"data": "The index jox-config is successfully removed from elasticsearch",
@@ -1193,10 +1070,10 @@ def monitor_es(es_index_page=None, es_key=None):
 	@apiParam {string} es_key key to get from the indexpage es_index_page
 
 	@apiExample {curl} Example-Usage:
-		 curl -i http://127.0.0.1:5000/es/jox-config/RBMQ_config
+		 curl -i http://localhost:5000/es/jox-config/RBMQ_config
 
 	@apiSuccessExample Example-Success-Response:
-		HTTP/1.1 200 OK
+		HTTP/1.0 200 OK
 		{
 			{
 			"data": {
@@ -1256,7 +1133,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	@apiSuccess {String} data The required informations.
 	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
-	    HTTP/1.1 200 OK
+	    HTTP/1.0 200 OK
 	    {
 	    "data": {
 	        "oai-epc": {
@@ -1443,7 +1320,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	@apiError {String} data The required infromation can not be found
 	@apiError {String} elapsed-time  The elapsed time to get the required the information.
 	@apiErrorExample Error-Response:
-	    HTTP/1.1 404 Not Found
+	    HTTP/1.0 404 Not Found
 	    {
 	      "data": "The slice oai-ran does not exists",
 	      "elapsed-time": "0:00:00.002289"
@@ -1465,7 +1342,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	@apiSuccess {String} data The required informations.
 	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
-	    HTTP/1.1 200 OK
+	    HTTP/1.0 200 OK
 	    {
 	     "data": {
 	        "oai-epc": {
@@ -1565,7 +1442,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	@apiError {String} data The required infromation can not be found
 	@apiError {String} elapsed-time  The elapsed time to get the required the information.
 	@apiErrorExample Error-Response:
-	    HTTP/1.1 404 Not Found
+	    HTTP/1.0 404 Not Found
 	    {
 	      "data": "Ad add example herer",
 	      "elapsed-time": "to add example here"
@@ -1619,7 +1496,7 @@ def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key
 	@apiSuccess {String} data The required informations.
 	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
-	    HTTP/1.1 200 OK
+	    HTTP/1.0 200 OK
 	    {
 	    "data": {
 	        "oai-epc": {
@@ -1696,7 +1573,7 @@ def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key
 	@apiError {String} data The required infromation can not be found
 	@apiError {String} elapsed-time  The elapsed time to get the required the information.
 	@apiErrorExample Error-Response:
-	    HTTP/1.1 404 Not Found
+	    HTTP/1.0 404 Not Found
 	    {
 	      "data": "Ad add example herer",
 	      "elapsed-time": "to add example here"
@@ -1718,7 +1595,7 @@ def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key
 	@apiSuccess {String} data The required informations.
 	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
-	    HTTP/1.1 200 OK
+	    HTTP/1.0 200 OK
 	    {
 	    "data": {
 	        "oai-epc": {
@@ -1763,7 +1640,7 @@ def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key
 	@apiError {String} data The required infromation can not be found
 	@apiError {String} elapsed-time  The elapsed time to get the required the information.
 	@apiErrorExample Error-Response:
-	    HTTP/1.1 404 Not Found
+	    HTTP/1.0 404 Not Found
 	    {
 	      "data": "Ad add example herer",
 	      "elapsed-time": "to add example here"
@@ -1817,7 +1694,7 @@ def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_ke
 	@apiSuccess {String} data The required informations.
 	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
-	    HTTP/1.1 200 OK
+	    HTTP/1.0 200 OK
 	    {
 	    "data": {
 	        "oai-epc": {
@@ -1893,7 +1770,7 @@ def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_ke
 	@apiError {String} data The required infromation can not be found
 	@apiError {String} elapsed-time  The elapsed time to get the required the information.
 	@apiErrorExample Error-Response:
-	    HTTP/1.1 404 Not Found
+	    HTTP/1.0 404 Not Found
 	    {
 	      "data": "Ad add example herer",
 	      "elapsed-time": "to add example here"
@@ -1915,7 +1792,7 @@ def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_ke
 	@apiSuccess {String} data The required informations.
 	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
-	    HTTP/1.1 200 OK
+	    HTTP/1.0 200 OK
 	    {
 	      "data": {
 	        "oai-epc": {
@@ -1959,7 +1836,7 @@ def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_ke
 	@apiError {String} data The required infromation can not be found
 	@apiError {String} elapsed-time  The elapsed time to get the required the information.
 	@apiErrorExample Error-Response:
-	    HTTP/1.1 404 Not Found
+	    HTTP/1.0 404 Not Found
 	    {
 	      "data": "Ad add example herer",
 	      "elapsed-time": "to add example here"
@@ -2017,7 +1894,7 @@ def monitor_relation(nsi_name=None, nssi_name_source=None, service_name_source=N
 	@apiSuccess {String} data The required informations.
 	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
-	    HTTP/1.1 200 OK
+	    HTTP/1.0 200 OK
 	    {
 	    "data": {
 	        "oai-epc": {
@@ -2082,7 +1959,7 @@ def monitor_relation(nsi_name=None, nssi_name_source=None, service_name_source=N
 	@apiError {String} data The required infromation can not be found
 	@apiError {String} elapsed-time  The elapsed time to get the required the information.
 	@apiErrorExample Error-Response:
-	    HTTP/1.1 404 Not Found
+	    HTTP/1.0 404 Not Found
 	    {
 	      "data": "Ad add example herer",
 	      "elapsed-time": "to add example here"
@@ -2104,7 +1981,7 @@ def monitor_relation(nsi_name=None, nssi_name_source=None, service_name_source=N
 	@apiSuccess {String} data The required informations.
 	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
-	    HTTP/1.1 200 OK
+	    HTTP/1.0 200 OK
 	    {
 	    "data": {
 	        "oai-epc": {
@@ -2143,7 +2020,7 @@ def monitor_relation(nsi_name=None, nssi_name_source=None, service_name_source=N
 	@apiError {String} data The required infromation can not be found
 	@apiError {String} elapsed-time  The elapsed time to get the required the information.
 	@apiErrorExample Error-Response:
-	    HTTP/1.1 404 Not Found
+	    HTTP/1.0 404 Not Found
 	    {
 	      "data": "Ad add example herer",
 	      "elapsed-time": "to add example here"
@@ -2183,7 +2060,8 @@ def monitor_relation(nsi_name=None, nssi_name_source=None, service_name_source=N
 
 @app.route('/monitor/juju')
 @app.route('/monitor/juju/<string:juju_key_val>')
-def monitor_juju(juju_key_val=None):
+@app.route('/monitor/juju/<string:juju_key_val>/<string:cloud_name>/<string:model_name>')
+def monitor_juju(juju_key_val=None, cloud_name=None, model_name=None):
 	"""
 	@apiGroup Monitoring
 	@apiName GetJujuMonitorAll
@@ -2196,7 +2074,7 @@ def monitor_juju(juju_key_val=None):
 	@apiSuccess {String} data The required informations.
 	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
-	    HTTP/1.1 200 OK
+	    HTTP/1.0 200 OK
 	    {
 	    "data": {
 	        "machines": [
@@ -2664,7 +2542,7 @@ def monitor_juju(juju_key_val=None):
 	@apiError {String} data The required infromation can not be found
 	@apiError {String} elapsed-time  The elapsed time to get the required the information.
 	@apiErrorExample Error-Response:
-	    HTTP/1.1 404 Not Found
+	    HTTP/1.0 404 Not Found
 	    {
 	      "data": "Ad add example herer",
 	      "elapsed-time": "to add example here"
@@ -2684,7 +2562,7 @@ def monitor_juju(juju_key_val=None):
 	@apiSuccess {String} data The required informations.
 	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
-	    HTTP/1.1 200 OK
+	    HTTP/1.0 200 OK
 	    {
 	      "data": {
 	        "mysql": {
@@ -2961,7 +2839,7 @@ def monitor_juju(juju_key_val=None):
 	@apiError {String} data The required infromation can not be found
 	@apiError {String} elapsed-time  The elapsed time to get the required the information.
 	@apiErrorExample Error-Response:
-	    HTTP/1.1 404 Not Found
+	    HTTP/1.0 404 Not Found
 	    {
 	      "data": "Ad add example herer",
 	      "elapsed-time": "to add example here"
@@ -2982,7 +2860,7 @@ def monitor_juju(juju_key_val=None):
 	@apiSuccess {String} data The required informations.
 	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
-	    HTTP/1.1 200 OK
+	    HTTP/1.0 200 OK
 	    {
 	    "data": {
 	        "0": {
@@ -3172,7 +3050,7 @@ def monitor_juju(juju_key_val=None):
 	@apiError {String} data The required infromation can not be found
 	@apiError {String} elapsed-time  The elapsed time to get the required the information.
 	@apiErrorExample Error-Response:
-	    HTTP/1.1 404 Not Found
+	    HTTP/1.0 404 Not Found
 	    {
 	      "data": "Ad add example herer",
 	      "elapsed-time": "to add example here"
@@ -3193,7 +3071,7 @@ def monitor_juju(juju_key_val=None):
 	@apiSuccess {String} data The required informations.
 	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
-	    HTTP/1.1 200 OK
+	    HTTP/1.0 200 OK
 	    {
 	      "data": "The relations is not supported yet",
 	      "elapsed-time": "0:00:00.705974"
@@ -3202,7 +3080,7 @@ def monitor_juju(juju_key_val=None):
 	@apiError {String} data The required infromation can not be found
 	@apiError {String} elapsed-time  The elapsed time to get the required the information.
 	@apiErrorExample Error-Response:
-	    HTTP/1.1 404 Not Found
+	    HTTP/1.0 404 Not Found
 	    {
 	      "data": "Ad add example herer",
 	      "elapsed-time": "to add example here"
@@ -3217,6 +3095,10 @@ def monitor_juju(juju_key_val=None):
 	enquiry["request-uri"] = str(request.url_rule)
 	enquiry["request-type"] = (request.method).lower()
 	enquiry["parameters"]["juju_key_val"] = juju_key_val
+	enquiry["parameters"]["cloud_name"] = cloud_name
+	enquiry["parameters"]["model_name"] = model_name
+	
+	
 	
 	enquiry = json.dumps(enquiry)
 	logger.info("enquiry: {}".format(enquiry))

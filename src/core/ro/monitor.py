@@ -222,3 +222,53 @@ async def get_juju_status(type):
         message = "The key {} is not supported. Only the following keys are supported: machines, applications, relations, all".\
             format(type)
         return [False, message]
+
+
+
+async def get_juju_status(type, cloud_name=None, model_name=None, user_name="admin"):
+    model = Model()
+    if (cloud_name is None) and (model_name is None):
+        try:
+           await model.connect_current()
+        except:
+            message = "Error while trying to connect to the current juju model"
+            logger.error(message)
+            return [False, message]
+    else:
+        try:
+            model_name = cloud_name + ":" + user_name + '/' + model_name
+            await model.connect(model_name)
+        except:
+            message = "Error while trying to connect to the current juju model"
+            logger.error(message)
+            return [False, message]
+    juju_status=(await utils.run_with_interrupt(model.get_status(), model._watch_stopping, loop=model.loop))
+    if type == 'machines':
+        return [True, juju_status.machines]
+    elif type == 'applications':
+        return [True, juju_status.applications]
+    elif type == 'relations':
+        return [True, get_all_relations(juju_status)]
+    elif type == 'all':
+        juju_status_relations =get_all_relations(juju_status)
+        full_status=({'machines':[juju_status.machines],
+                      'services':[juju_status.applications],
+                      'relations':[juju_status_relations]})
+        return [True, full_status]
+    else:
+        message = "The key {} is not supported. Only the following keys are supported: machines, applications, relations, all".\
+            format(type)
+        return [False, message]
+def get_all_relations(juju_status):
+    relations = {}
+    container = {}
+    node = 1
+    juju_status_relations = juju_status.relations
+    for item in juju_status_relations:
+        container['interface'] = item.interface
+        container['Provider:Requirer'] = item.key
+        node = ("relation-" + str(node))
+        relations.update({node: [container.copy()]})
+        node = +1
+    return relations
+    

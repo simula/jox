@@ -609,7 +609,7 @@ class server_RBMQ(object):
 					if nsi_found and nssi_found:
 						nsi_deploy = self.nfvo_jox.add_slice(nsi_name, nsi_dir, nssi_dir)
 						if nsi_deploy[0]:
-							message = "Ceating/updating the slice {}".format(nsi_name)
+							message = "Creating/updating the slice {}".format(nsi_name)
 							response = {
 								"ACK": True,
 								"data": message,
@@ -1356,7 +1356,11 @@ class server_RBMQ(object):
 				enquiry["request-uri"] == '/monitor/juju/<string:juju_key_val>'):
 			parameters = enquiry["parameters"]
 			juju_key_val = parameters["juju_key_val"]
-			data = loop.run(jmonitor_get_juju_status(juju_key_val))
+			cloud_name = parameters["cloud_name"]
+			model_name = parameters["model_name"]
+			
+			data = loop.run(jmonitor_get_juju_status(juju_key_val, cloud_name, model_name))
+			
 			if data[0]:
 				res = data[1]
 				response = {

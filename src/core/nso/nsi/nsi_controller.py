@@ -145,7 +145,7 @@ class NetworkSliceController(object):
 						pass
 				
 			self.remove_slice_object(slice_name)
-			return [True, "The slice {} successfully removed".format(slice_name)]
+			return [True, "Removing the slice {} already started in the background".format(slice_name)]
 		else:
 			return [False, slice_data[1]]
 	def remove_slice_object(self, slice_name):
