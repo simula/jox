@@ -10,6 +10,10 @@
     "GetJoxlist",
     "GetJoxLs",
     "GetJoxShow",
+
+    "GroupOnboarding",
+    "PutOnboard",
+
     "GroupSlice",
     "GetNsiAll",
     "GetNsi",

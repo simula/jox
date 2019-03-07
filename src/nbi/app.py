@@ -92,6 +92,11 @@ jox capabilities, in addition to the possibility to see the
 template slice/subslice before deploying your slice.
 """
 """
+@apiDefine GroupOnboarding Onboarding
+To Describe the onboarding later
+"""
+
+"""
 @apiDefine GroupSlice Slice
 This API endpoint holds the main functionalities for slice management,
 like add, update, and remove a slice. Additionaly, you can also see the context of the lalready deployed slices
@@ -129,9 +134,11 @@ def jox_homepage():
     @apiName GetJoxHomepage
 
     @api {get}  / Homepage
-
+	@apiDescription The hoemepage of JoX
+    
     @apiExample {curl} Example usage:
          curl -i http://127.0.0.1:5000/
+         curl -i  [http://127.0.0.1:5000/](http://127.0.0.1:5000/)
 
     @apiSuccessExample Success-Response:
         HTTP/1.0 200 OK
@@ -139,8 +146,6 @@ def jox_homepage():
         Welcome to JOX!
         To get the list of the capabilities and jox configuration, use the following
         [http://JOX-URL:PORT/jox](http://JOX-URL:PORT/jox)
-
-        @apiDescription Note: Please replace the JOX-URL with the actual ip address and with the actual port
         }
     """
 	logger.debug("Receive homepage request")
@@ -763,10 +768,10 @@ def list_of_templates(nsi_name=None):
 @app.route('/onboard', methods=['PUT'])
 def jox_package_onboard():
 	"""
-    @apiGroup GroupSlice
-    @apiName GetNsiAll
+    @apiGroup GroupOnboarding
+    @apiName PutOnboard
 
-    @api {put}  /onboard Onboarding
+    @api {put}  /onboard package onboarding
     @apiDescription
     """
 	enquiry = standard_reqst
