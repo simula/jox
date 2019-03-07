@@ -648,9 +648,11 @@ def jox_package_onboard():
     @api {put}  /onboard Package onboarding
     @apiDescription Through this endpoint, you can onboard the pakcage of slice(s), so that you can deploy it(them) later
 	
-	@apiExample {curl} Example-Usage:
 	@apiDescription example usage for onboarding a package named as mosaic5g
-	     curl  -i http://localhost:5000/onboard upload-file mosaic5g.tar.gz
+	@apiExample {curl} Example-Usage:
+		curl  -i http://localhost:5000/onboard upload-file mosaic5g.tar.gz
+	
+	 
 	
 	@apiSuccessExample Example-Success-Response:
 	
@@ -989,7 +991,7 @@ def monitor_es(es_index_page=None, es_key=None):
 	@api {delete}  /es Delete all index-pages
 	@apiDescription Delete of all index-pages from elasticsearch database
 	@apiExample {curl} Example-Usage-DELETE:
-		 curl -i http://localhost:5000/es -XDELETE
+		 curl -i http://localhost:5000/es -X DELETE
 	@apiSuccessExample Example-Success-Response-DELETE:
 		HTTP/1.0 200 OK
 
@@ -1045,7 +1047,7 @@ def monitor_es(es_index_page=None, es_key=None):
 	@apiName DeleteEsIndexPgae
 	@api {delete}  /es/<string:es_index_page> get index-page
 	@apiExample {curl} Example-Usage-DELETE:
-		 curl -i http://localhost:5000/es/jox-config -XDELETE
+		 curl -i http://localhost:5000/es/jox-config -X DELETE
 
 	@api {delete}  /es/<string:es_index_page> Delete index-page
 	@apiDescription Delete index page from elasticsearch
@@ -2062,6 +2064,9 @@ def monitor_relation(nsi_name=None, nssi_name_source=None, service_name_source=N
 @app.route('/monitor/juju/<string:juju_key_val>')
 @app.route('/monitor/juju/<string:juju_key_val>/<string:cloud_name>/<string:model_name>')
 def monitor_juju(juju_key_val=None, cloud_name=None, model_name=None):
+	
+	# cloud_name = parameters["cloud_name"]
+	# model_name = parameters["model_name"]
 	"""
 	@apiGroup Monitoring
 	@apiName GetJujuMonitorAll
