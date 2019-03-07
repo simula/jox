@@ -52,6 +52,7 @@ import asyncio
 from src.core.ro.resource_controller import ResourcesController
 import traceback
 import logging
+import argparse
 import jsonschema
 from src.core.nso.nsi import nsi_controller
 from src.core.nso.nssi import nssi_controller
@@ -1540,6 +1541,49 @@ class server_RBMQ(object):
 
 
 if __name__ == '__main__':
-	logger = logging.getLogger('proj.jox')
-	rmbq_server = server_RBMQ()
-	rmbq_server.run()
+
+        parser = argparse.ArgumentParser(description='Process commandline arguments and override configurations in jox_config.json')
+        
+        parser.add_argument('--jox-addr', metavar='[option]', action='store', type=str,
+                            required=False, default='localhost', 
+                            help='Set JoX IP address to bind to, default is loalhost')
+        
+        parser.add_argument('--jox-port', metavar='[option]', action='store', type=str,
+                            required=False, default='9997', 
+                            help='Set JoX port number: 9997 (default)')
+
+        parser.add_argument('--es-addr', metavar='[option]', action='store', type=str,
+                            required=False, default='localhost', 
+                            help='Set ElasticSearch address to bind to, default is loalhost')
+
+        parser.add_argument('--es-port', metavar='[option]', action='store', type=int,
+                            required=False, default=9200, 
+                            help='Set EasticSearch port number: default is 9200')
+        
+        parser.add_argument('--rq-addr', metavar='[option]', action='store', type=str,
+                            required=False, default='localhost', 
+                            help='Set Rabbit MQ IP address to bind to, default is loalhost')
+
+        parser.add_argument('--rq-port', metavar='[option]', action='store', type=int,
+                            required=False, default=5672, 
+                            help='Set Rabbit MQ port number: default is 5672')
+ 
+        parser.add_argument('--log',  metavar='[level]', action='store', type=str,
+                            required=False, default='info', 
+                            help='set the log level: debug, info (default), warning, error, critical')
+        parser.add_argument('--period',  metavar='[option]', action='store', type=int,
+                            required=False, default=10, 
+                            help='set JoX watch period : 1s (default)')
+        
+        parser.add_argument('--test-mode', action='store_true',
+                            required=False, default=False, 
+                            help='Run JoX is test mode')
+
+        parser.add_argument('--version', action='version', version='%(prog)s 2.0')
+        
+        args = parser.parse_args()
+        # command line args  (args.jox_addr, args.jox_port, args.es_addr, args.es_port, args.rq_addr, args.rq_port) need to be set in NFVO_JOX __init__ 
+        logger = logging.getLogger('proj.jox')
+        rmbq_server = server_RBMQ()
+        rmbq_server.run()
+        
