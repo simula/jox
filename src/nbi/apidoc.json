@@ -13,8 +13,13 @@
     "GroupSlice",
     "GetNsiAll",
     "GetNsi",
-    "PutNsi",
-    "GetNsiNsiName",
+    "GetNsi",
+    "PostNsi",
+    "GetNsiName",
+    "PostNsiName",
+    "DeleteNsiName",
+
+
     "GroupSubSlice",
     "GetNssiAll",
     "GetNssi",
@@ -23,10 +28,25 @@
     "GetNssiNsiNameNssiNameNssiKey",
     "GroupElasticsearch",
     "GetEs",
+    "DeleteEs",
     "GetEsIndexPgae",
+    "DeleteEsIndexPgae",
     "GetEsIndexPgaeKeyVal",
     "GroupMonitoring",
-    "GetNsiMonitor"
+    "GetNsiMonitorAll",
+    "GetNsiMonitorServices",
+    "GetNsiMonitorMachines",
+    "GetNsiMonitorRequirements",
+    "GetNssiMonitorAll",
+    "GetNssiMonitorServices",
+    "GetNssiMonitorMachines",
+    "GetNssiMonitorRequirements",
+    "GetJujuMonitorAll",
+    "GetJujuMonitorServices",
+    "GetJujuMonitorMachines",
+    "GetJujuMonitorRequirements"
+
+
   ],
   "template": {
   	"withCompare": true,

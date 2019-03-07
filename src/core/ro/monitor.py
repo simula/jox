@@ -33,14 +33,11 @@ __maintainer__ = 'Osama Arouk, Navid Nikaein, Kostas Kastalis, and Rohan Kharade
 __email__ = 'contact@mosaic5g.io'
 __description__ = "This responsible for managine the available resources"
 
-from src.core.ro.plugins import es
-from elasticsearch import Elasticsearch
 from elasticsearch import exceptions as els_exceptions
 import datetime
 import logging
 from juju.model import Model
 from juju import utils
-import json
 logger = logging.getLogger('jox.jmodel')
 import src.common.config.gv as gv
 
