@@ -239,7 +239,7 @@ async def get_juju_status(type, cloud_name=None, model_name=None, user_name="adm
             model_name = cloud_name + ":" + user_name + '/' + model_name
             await model.connect(model_name)
         except:
-            message = "Error while trying to connect to the current juju model"
+            message = "Error while trying to connect to the juju model {}:{}/{}".format(cloud_name, user_name, model_name)
             logger.error(message)
             return [False, message]
     juju_status=(await utils.run_with_interrupt(model.get_status(), model._watch_stopping, loop=model.loop))

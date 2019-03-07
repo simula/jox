@@ -1759,15 +1759,13 @@ def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key
 	@apiGroup Monitoring
 	@apiName GetNsiMonitorServices
 
-	@api {get}  /monitor/service/<string:nsi_name> NSI services
+	@api {get}  /monitor/service/<string:nsi_name> Info. all services in specific slice
 
-	@apiParam {String} nsi_name NSI name
+	@apiParam {String} nsi_name slice name
 
 	@apiExample {curl} Example usage:
 	     curl http://localhost:5000/monitor/service/oai-epc
 
-	@apiSuccess {String} data The required informations.
-	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
 	    HTTP/1.0 200 OK
 	    {
@@ -1842,31 +1840,26 @@ def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key
 	    "elapsed-time": "0:00:00.014984"
 	    }
 
-
-	@apiError {String} data The required infromation can not be found
-	@apiError {String} elapsed-time  The elapsed time to get the required the information.
 	@apiErrorExample Error-Response:
 	    HTTP/1.0 404 Not Found
-	    {
-	      "data": "Ad add example herer",
-	      "elapsed-time": "to add example here"
-	    }
+		{
+			"data": "The slice oai-ran does not exists",
+			"elapsed-time": "0:00:00.008638"
+		}
 	"""
 	
 	"""
 	@apiGroup Monitoring
 	@apiName GetNssiMonitorServices
 
-	@api {get}  /monitor/nsi/service/<string:nsi_name>/<string:nssi_name> NSSI services
+	@api {get}  /monitor/nsi/service/<string:nsi_name>/<string:nssi_name> Info. all services in specific subslice
 
-	@apiParam {String} nsi_name NSI name
-	@apiParam {String} nssi_name NSSI name
+	@apiParam {String} nsi_name slice name
+	@apiParam {String} nssi_name subslice name
 
 	@apiExample {curl} Example usage:
 	     curl http://localhost:5000/monitor/service/oai-epc/nssi_2
 
-	@apiSuccess {String} data The required informations.
-	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
 	    HTTP/1.0 200 OK
 	    {
@@ -1909,15 +1902,14 @@ def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key
 	      "elapsed-time": "0:00:00.006463"
 	    }
 
-
-	@apiError {String} data The required infromation can not be found
-	@apiError {String} elapsed-time  The elapsed time to get the required the information.
+	@apiExample {curl} Example usage:
+	     curl http://localhost:5000/monitor/service/oai-epc/nssi_3
 	@apiErrorExample Error-Response:
 	    HTTP/1.0 404 Not Found
-	    {
-	      "data": "Ad add example herer",
-	      "elapsed-time": "to add example here"
-	    }
+		{
+			"data": "The subslice nssi_3 attached to slice oai-epc does not exist",
+			"elapsed-time": "0:00:00.002461"
+		}
 	"""
 	enquiry = standard_reqst
 	current_time = datetime.datetime.now()
@@ -1957,15 +1949,13 @@ def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_ke
 	@apiGroup Monitoring
 	@apiName GetNsiMonitorMachines
 
-	@api {get}  /monitor/nsi/machine/<string:nsi_name> NSI machines
+	@api {get}  /monitor/machine/<string:nsi_name> Info. all machines of specific slice
 
-	@apiParam {String} nsi_name NSI name
+	@apiParam {String} nsi_name slice name
 
 	@apiExample {curl} Example usage:
 	     curl http://localhost:5000/monitor/machine/oai-epc
 
-	@apiSuccess {String} data The required informations.
-	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
 	    HTTP/1.0 200 OK
 	    {
@@ -2039,31 +2029,20 @@ def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_ke
 	      },
 	      "elapsed-time": "0:00:00.535296"
 	    }
-
-	@apiError {String} data The required infromation can not be found
-	@apiError {String} elapsed-time  The elapsed time to get the required the information.
-	@apiErrorExample Error-Response:
-	    HTTP/1.0 404 Not Found
-	    {
-	      "data": "Ad add example herer",
-	      "elapsed-time": "to add example here"
-	    }
 	"""
 	
 	"""
 	@apiGroup Monitoring
 	@apiName GetNssiMonitorMachines
 
-	# @api {get}  /monitor/nsi/machine/<string:nsi_name>/<string:nssi_name>  NSSI machines
+	@api {get}  /monitor/nsi/machine/<string:nsi_name>/<string:nssi_name>  Info. machines of specific subslice
 
-	@apiParam {String} nsi_name NSI name
-	@apiParam {String} nssi_name NSSI name
+	@apiParam {String} nsi_name slice name
+	@apiParam {String} nssi_name subslcie name
 
 	@apiExample {curl} Example usage:
 	     curl http://localhost:5000/monitor/machine/oai-epc/nssi_1
 
-	@apiSuccess {String} data The required informations.
-	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
 	    HTTP/1.0 200 OK
 	    {
@@ -2104,15 +2083,6 @@ def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_ke
 	        }
 	      },
 	      "elapsed-time": "0:00:00.005716"
-	    }
-
-	@apiError {String} data The required infromation can not be found
-	@apiError {String} elapsed-time  The elapsed time to get the required the information.
-	@apiErrorExample Error-Response:
-	    HTTP/1.0 404 Not Found
-	    {
-	      "data": "Ad add example herer",
-	      "elapsed-time": "to add example here"
 	    }
 	"""
 	enquiry = standard_reqst
@@ -2157,15 +2127,13 @@ def monitor_relation(nsi_name=None, nssi_name_source=None, service_name_source=N
 	@apiGroup Monitoring
 	@apiName GetNsiMonitorRequirements
 
-	@api {get}  /monitor/nsi/relation/<string:nsi_name> NSI requirements
+	@api {get}  /monitor/relation/<string:nsi_name> Info. relations of specific slice
 
-	@apiParam {String} nsi_name NSI name
+	@apiParam {String} nsi_name slice name
 
 	@apiExample {curl} Example usage:
 	      curl http://localhost:5000/monitor/relation/oai-epc
-
-	@apiSuccess {String} data The required informations.
-	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
+	      
 	@apiSuccessExample Success-Response:
 	    HTTP/1.0 200 OK
 	    {
@@ -2227,32 +2195,20 @@ def monitor_relation(nsi_name=None, nssi_name_source=None, service_name_source=N
 	      },
 	      "elapsed-time": "0:00:00.006634"
 	    }
-
-
-	@apiError {String} data The required infromation can not be found
-	@apiError {String} elapsed-time  The elapsed time to get the required the information.
-	@apiErrorExample Error-Response:
-	    HTTP/1.0 404 Not Found
-	    {
-	      "data": "Ad add example herer",
-	      "elapsed-time": "to add example here"
-	    }
 	"""
 	
 	"""
 	@apiGroup Monitoring
 	@apiName GetNssiMonitorRequirements
 
-	@api {get}  /monitor/nsi/relation/<string:nsi_name>/<string:nssi_name>  NSSI requirements
+	@api {get}  /monitor/nsi/relation/<string:nsi_name>/<string:nssi_name>  Info. relations of specific subslice
 
-	@apiParam {String} nsi_name NSI name
-	@apiParam {String} nssi_name NSSI name
+	@apiParam {String} nsi_name slice name
+	@apiParam {String} nssi_name subslice name
 
 	@apiExample {curl} Example usage:
 	     curl http://localhost:5000/monitor/relation/oai-epc/nssi_1
 
-	@apiSuccess {String} data The required informations.
-	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
 	    HTTP/1.0 200 OK
 	    {
@@ -2287,16 +2243,6 @@ def monitor_relation(nsi_name=None, nssi_name_source=None, service_name_source=N
 	        }
 	      },
 	      "elapsed-time": "0:00:00.018176"
-	    }
-
-
-	@apiError {String} data The required infromation can not be found
-	@apiError {String} elapsed-time  The elapsed time to get the required the information.
-	@apiErrorExample Error-Response:
-	    HTTP/1.0 404 Not Found
-	    {
-	      "data": "Ad add example herer",
-	      "elapsed-time": "to add example here"
 	    }
 	"""
 	enquiry = standard_reqst
@@ -2335,20 +2281,16 @@ def monitor_relation(nsi_name=None, nssi_name_source=None, service_name_source=N
 @app.route('/monitor/juju/<string:juju_key_val>')
 @app.route('/monitor/juju/<string:juju_key_val>/<string:cloud_name>/<string:model_name>')
 def monitor_juju(juju_key_val=None, cloud_name=None, model_name=None):
-	
-	# cloud_name = parameters["cloud_name"]
-	# model_name = parameters["model_name"]
 	"""
 	@apiGroup Monitoring
 	@apiName GetJujuMonitorAll
 
-	@api {get}  /monitor/juju Juju all
+	@apiDescription Get information on all the services, machines and relations of the curren juju model
+	@api {get}  /monitor/juju Info. juju current model
 
 	@apiExample {curl} Example usage:
 	     curl http://localhost:5000/monitor/juju
 
-	@apiSuccess {String} data The required informations.
-	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
 	    HTTP/1.0 200 OK
 	    {
@@ -2814,29 +2756,25 @@ def monitor_juju(juju_key_val=None, cloud_name=None, model_name=None):
 	      },
 	      "elapsed-time": "0:00:00.660348"
 	    }
-
-	@apiError {String} data The required infromation can not be found
-	@apiError {String} elapsed-time  The elapsed time to get the required the information.
 	@apiErrorExample Error-Response:
 	    HTTP/1.0 404 Not Found
 	    {
-	      "data": "Ad add example herer",
-	      "elapsed-time": "to add example here"
+	      "data": "Error while trying to connect to the current juju model",
+	      "elapsed-time": "0:00:00.002289"
 	    }
 	"""
 	
 	"""
 	@apiGroup Monitoring
-	@apiName GetJujuMonitorServices
+	@apiName GetJujuMonitorJujuEntityCurrentModel
 
-	@api {get}  /monitor/juju/<string:juju_entity> Juju services
-
+	@api {get}  /monitor/juju/<string:juju_entity> Specific info. of juju current model
+	
+	@apiParam {String="all", "services", "machines", "relations"} juju_entity Specify which information that you want to get from the current juju model
 
 	@apiExample {curl} Example usage:
 	        curl http://localhost:5000/monitor/juju/applications
 
-	@apiSuccess {String} data The required informations.
-	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
 	@apiSuccessExample Success-Response:
 	    HTTP/1.0 200 OK
 	    {
@@ -3111,256 +3049,47 @@ def monitor_juju(juju_key_val=None, cloud_name=None, model_name=None):
 	      },
 	      "elapsed-time": "0:00:00.147294"
 	    }
-
-	@apiError {String} data The required infromation can not be found
-	@apiError {String} elapsed-time  The elapsed time to get the required the information.
-	@apiErrorExample Error-Response:
-	    HTTP/1.0 404 Not Found
-	    {
-	      "data": "Ad add example herer",
-	      "elapsed-time": "to add example here"
-	    }
 	"""
-	
 	"""
 	@apiGroup Monitoring
-	@apiName GetJujuMonitorMachines
+	@apiName GetJujuMonitorJujuEntityCertainModel
 
-	@api {get}  /monitor/juju/<string:juju_entity> Juju machines
-
-	@apiParam {String} juju_entity machines
-
-	@apiExample {curl} Example usage:
-	     curl http://localhost:5000/monitor/juju/machines
-
-	@apiSuccess {String} data The required informations.
-	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
-	@apiSuccessExample Success-Response:
-	    HTTP/1.0 200 OK
-	    {
-	    "data": {
-	        "0": {
-	          "agent-status": {
-	            "data": {},
-	            "info": "",
-	            "kind": "",
-	            "life": "",
-	            "since": "2019-03-06T17:13:10.467955832Z",
-	            "status": "started",
-	            "version": "2.5.1"
-	          },
-	          "constraints": "mem=524288M tags=VDU_mysql",
-	          "containers": {},
-	          "dns-name": "10.70.21.123",
-	          "hardware": "arch=amd64 cores=0 mem=524288M",
-	          "has-vote": false,
-	          "id": "0",
-	          "instance-id": "juju-7a566b-0",
-	          "instance-status": {
-	            "data": {},
-	            "info": "Running",
-	            "kind": "",
-	            "life": "",
-	            "since": "2019-03-06T17:12:29.016847134Z",
-	            "status": "running",
-	            "version": ""
-	          },
-	          "ip-addresses": [
-	            "10.70.21.123"
-	          ],
-	          "jobs": [
-	            "JobHostUnits"
-	          ],
-	          "network-interfaces": {
-	            "eth0": {
-	              "gateway": "10.70.21.1",
-	              "ip-addresses": [
-	                "10.70.21.123"
-	              ],
-	              "is-up": true,
-	              "mac-address": "00:16:3e:c3:71:0c"
-	            }
-	          },
-	          "series": "xenial",
-	          "wants-vote": false
-	        },
-	        "1": {
-	          "agent-status": {
-	            "data": {},
-	            "info": "",
-	            "kind": "",
-	            "life": "",
-	            "since": "2019-03-06T17:13:30.375890236Z",
-	            "status": "started",
-	            "version": "2.5.1"
-	          },
-	          "constraints": "mem=524288M tags=VDU_oai-hss",
-	          "containers": {},
-	          "dns-name": "10.70.21.55",
-	          "hardware": "arch=amd64 cores=0 mem=524288M",
-	          "has-vote": false,
-	          "id": "1",
-	          "instance-id": "juju-7a566b-1",
-	          "instance-status": {
-	            "data": {},
-	            "info": "Running",
-	            "kind": "",
-	            "life": "",
-	            "since": "2019-03-06T17:12:34.314790591Z",
-	            "status": "running",
-	            "version": ""
-	          },
-	          "ip-addresses": [
-	            "10.70.21.55"
-	          ],
-	          "jobs": [
-	            "JobHostUnits"
-	          ],
-	          "network-interfaces": {
-	            "eth0": {
-	              "gateway": "10.70.21.1",
-	              "ip-addresses": [
-	                "10.70.21.55"
-	              ],
-	              "is-up": true,
-	              "mac-address": "00:16:3e:e0:77:7e"
-	            }
-	          },
-	          "series": "xenial",
-	          "wants-vote": false
-	        },
-	        "2": {
-	          "agent-status": {
-	            "data": {},
-	            "info": "",
-	            "kind": "",
-	            "life": "",
-	            "since": "2019-03-06T17:13:28.947200307Z",
-	            "status": "started",
-	            "version": "2.5.1"
-	          },
-	          "constraints": "mem=524288M tags=VDU_oai-mme",
-	          "containers": {},
-	          "dns-name": "10.70.21.207",
-	          "hardware": "arch=amd64 cores=0 mem=524288M",
-	          "has-vote": false,
-	          "id": "2",
-	          "instance-id": "juju-7a566b-2",
-	          "instance-status": {
-	            "data": {},
-	            "info": "Running",
-	            "kind": "",
-	            "life": "",
-	            "since": "2019-03-06T17:12:50.998958994Z",
-	            "status": "running",
-	            "version": ""
-	          },
-	          "ip-addresses": [
-	            "10.70.21.207"
-	          ],
-	          "jobs": [
-	            "JobHostUnits"
-	          ],
-	          "network-interfaces": {
-	            "eth0": {
-	              "gateway": "10.70.21.1",
-	              "ip-addresses": [
-	                "10.70.21.207"
-	              ],
-	              "is-up": true,
-	              "mac-address": "00:16:3e:a3:35:77"
-	            }
-	          },
-	          "series": "xenial",
-	          "wants-vote": false
-	        },
-	        "3": {
-	          "agent-status": {
-	            "data": {},
-	            "info": "",
-	            "kind": "",
-	            "life": "",
-	            "since": "2019-03-06T17:13:30.922084571Z",
-	            "status": "started",
-	            "version": "2.5.1"
-	          },
-	          "constraints": "mem=524288M tags=VDU_oai-spgw",
-	          "containers": {},
-	          "dns-name": "10.70.21.244",
-	          "hardware": "arch=amd64 cores=0 mem=524288M",
-	          "has-vote": false,
-	          "id": "3",
-	          "instance-id": "juju-7a566b-3",
-	          "instance-status": {
-	            "data": {},
-	            "info": "Running",
-	            "kind": "",
-	            "life": "",
-	            "since": "2019-03-06T17:13:00.176443058Z",
-	            "status": "running",
-	            "version": ""
-	          },
-	          "ip-addresses": [
-	            "10.70.21.244"
-	          ],
-	          "jobs": [
-	            "JobHostUnits"
-	          ],
-	          "network-interfaces": {
-	            "eth0": {
-	              "gateway": "10.70.21.1",
-	              "ip-addresses": [
-	                "10.70.21.244"
-	              ],
-	              "is-up": true,
-	              "mac-address": "00:16:3e:48:9f:54"
-	            }
-	          },
-	          "series": "xenial",
-	          "wants-vote": false
-	        }
-	      },
-	      "elapsed-time": "0:00:00.135307"
-	    }
-
-	@apiError {String} data The required infromation can not be found
-	@apiError {String} elapsed-time  The elapsed time to get the required the information.
-	@apiErrorExample Error-Response:
-	    HTTP/1.0 404 Not Found
-	    {
-	      "data": "Ad add example herer",
-	      "elapsed-time": "to add example here"
-	    }
-	"""
+	@api {get} /monitor/juju/<string:juju_key_val>/<string:cloud_name>/<string:model_name>
+	 Specific info. from certain juju model
 	
-	"""
-	@apiGroup Monitoring
-	@apiName GetJujuMonitorRequirements
-
-	@api {get}  /monitor/juju/<string:juju_entity> Juju machines
-
-	@apiParam {String} juju_entity machines
+	@apiParam {String="all", "services", "machines", "relations"} juju_entity Specify which information that you want to get from the current juju model
+	@apiParam {String} cloud_name juju controller name
+	@apiParam {String} model_name juju model name
+	
 
 	@apiExample {curl} Example usage:
-	     curl http://localhost:5000/monitor/juju/relations
+	        curl http://localhost:5000/monitor/localhost/Default
 
-	@apiSuccess {String} data The required informations.
-	@apiSuccess {String} elapsed-time  The elapsed time to get the required the information.
-	@apiSuccessExample Success-Response:
+	@apiErrorExample Success-Response:
+    HTTP/1.0 200 OK
+	{
+	  "data": {
+	    "machines": [
+	      {}
+	    ],
+	    "relations": [
+	      {}
+	    ],
+	    "services": [
+	      {}
+	    ]
+	  },
+	  "elapsed-time": "0:00:00.083747"
+	}
+	@apiExample {curl} Example usage:
+	        curl http://localhost:5000/monitor/localhost/model3
+
+	@apiErrorExample Error-Response:
 	    HTTP/1.0 200 OK
 	    {
-	      "data": "The relations is not supported yet",
-	      "elapsed-time": "0:00:00.705974"
-	    }
-
-	@apiError {String} data The required infromation can not be found
-	@apiError {String} elapsed-time  The elapsed time to get the required the information.
-	@apiErrorExample Error-Response:
-	    HTTP/1.0 404 Not Found
-	    {
-	      "data": "Ad add example herer",
-	      "elapsed-time": "to add example here"
-	    }
+			"data": "Error while trying to connect to the juju model localhost:admin/localhost:admin/model3",
+			"elapsed-time": "0:00:00.034122"
+		}
 	"""
 	if juju_key_val is None:
 		juju_key_val = 'all'

@@ -1357,7 +1357,8 @@ class server_RBMQ(object):
 					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 				}
 		elif (enquiry["request-uri"] == '/monitor/juju') or (
-				enquiry["request-uri"] == '/monitor/juju/<string:juju_key_val>'):
+				enquiry["request-uri"] == '/monitor/juju/<string:juju_key_val>')\
+				or(enquiry["request-uri"] == '/monitor/juju/<string:juju_key_val>/<string:cloud_name>/<string:model_name>'):
 			parameters = enquiry["parameters"]
 			juju_key_val = parameters["juju_key_val"]
 			cloud_name = parameters["cloud_name"]
