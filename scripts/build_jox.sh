@@ -54,6 +54,7 @@ install_required_packages(){
 install_uvtool_kvm(){
     $SUDO $os_pm install $option  qemu-kvm libvirt-bin virtinst bridge-utils cpu-checker || true
     $SUDO $os_pm install $option uvtool || true
+    $SUDO adduser $USER libvirtd
     # echo 'fetching cloud image kvm xenial'
     # $SUDO uvt-simplestreams-libvirt --verbose sync release=xenial arch=amd64
 }
