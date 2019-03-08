@@ -153,10 +153,10 @@ def update_index_key(jesearch, index_page, container_type, container_name, leaf_
                                 
                                 maintenance=slice_data[machines][container_name][0]['maintenance']
                                 waiting_time=slice_data[machines][container_name][0]['waiting']
-                                wait_time=(datetime.datetime.strptime(waiting_time,'%H:%M:%S.%f')-datetime.datetime.strptime("0:0:0.0",'%H:%M:%S.%f'))
-                                if maintenance == '0':
+                                if maintenance == '0' or waiting_time == '0':
                                     return
                                 else:
+                                    wait_time=(datetime.datetime.strptime(waiting_time,'%H:%M:%S.%f')-datetime.datetime.strptime("0:0:0.0",'%H:%M:%S.%f'))
                                     requirement_wait=(datetime.datetime.strptime(leaf_value,'%H:%M:%S.%f') -
                                         datetime.datetime.strptime(maintenance,'%H:%M:%S.%f')- wait_time)
                                     slice_data[machines][container_name][0][leaf_key] = str(requirement_wait)
