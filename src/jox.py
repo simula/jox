@@ -455,6 +455,13 @@ class server_RBMQ(object):
 	def on_request(self, ch, method, props, body):
 		enquiry = body.decode(self.nfvo_jox.gv.ENCODING_TYPE)
 		enquiry = json.loads(enquiry)
+		if (enquiry["request-uri"] == "/onboard"):
+			enquiry_tmp = enquiry
+			enquiry_tmp["parameters"]["package_onboard_data"] = bytes(enquiry_tmp["parameters"]["package_onboard_data"])
+			print(" [*] enquiry(%s)" % enquiry_tmp)
+		else:
+			print(" [*] enquiry(%s)" % enquiry)
+		
 		if "/jox/" in enquiry["request-uri"]:
 			jox_config = self.nfvo_jox.gv.JOX_CONFIG_KEY
 			res = self.nfvo_jox.jesearch.get_source_index(jox_config)
@@ -1387,7 +1394,7 @@ class server_RBMQ(object):
 				"data": response,
 				"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 			}
-		print(" [*] enquiry(%s)" % enquiry)
+		
 		print(colored(' [*] Waiting for messages. To exit press CTRL+C', 'green'))
 		response = json.dumps(response)
 		try:
@@ -1397,6 +1404,7 @@ class server_RBMQ(object):
 				                                                 props.correlation_id),
 			                 body=str(response))
 			ch.basic_ack(delivery_tag=method.delivery_tag)
+			response = None
 		except pika_exceptions.ConnectionClosed:
 			pass
 		except Exception as ex:

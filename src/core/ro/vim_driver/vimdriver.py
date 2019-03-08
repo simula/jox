@@ -399,7 +399,7 @@ class KvmDriver(object):
 				self.logger.debug("Trying to get KVM IP")
 				
 				cmd_wait = "uvt-kvm wait "+new_machine.mid_user_defined
-				os.system(cmd_wait)
+				os.system(cmd_wait)# more time
 				cmd_ip = "uvt-kvm ip "+new_machine.mid_user_defined
 				output = check_output(cmd_ip, shell=True)
 				machine_ip = (output.decode("utf-8")).rstrip()
@@ -413,7 +413,7 @@ class KvmDriver(object):
 				                                       )
 			else:
 				juju_machine = model.machines.get(machine_id_service)
-			new_machine.mid_vnfm = juju_machine.data["id"]  # This step taking longer time
+			new_machine.mid_vnfm = juju_machine.data["id"]
 
 			self.template_manager.update_slice_monitor_index("slice_monitor_"+subslice_name.lower(),
 			                                                 "machine_status",

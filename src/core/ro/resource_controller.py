@@ -214,8 +214,11 @@ class ResourcesController(object):
 							self.logger.info("Adding kvm machine whose id is: machine_name= {}, mid_ro = {}".format(mid_ro,
 							                                                                                        machine_config[
 								                                                                                        'machine_name']))
-							t = threading.Thread(curren_driver.add_machine(machine_config, service_name, mid_ro,
-							                          subslice_name, model_name, cloud_name))
+							t = threading.Thread(target=curren_driver.add_machine(machine_config, service_name, mid_ro,
+							                          subslice_name, model_name, cloud_name,
+							                                                      slice_name), daemon=True)
+							
+							
 							list_midRo_machineConfig[mid_ro] = machine_config
 							
 							threads.append(t)

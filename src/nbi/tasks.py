@@ -38,7 +38,7 @@ dir_parent_path = os.path.dirname(os.path.abspath(__file__ + "/.."))
 gv_file = ''.join([dir_parent_path, '/common'])
 sys.path.append(gv_file)
 from src.common.config import gv as gv
-
+from termcolor import colored
 import pika
 import logging
 import json
@@ -126,13 +126,11 @@ class listTasks(object):
 		
 		self.channel.basic_consume(self.on_response, no_ack=True,
 		                           queue=self.callback_queue)
-	
-	""" Define list of tasks that can be invoked"""
-	
+		
 	def on_response(self, ch, method, props, body):
 		if self.corr_id == props.correlation_id:
 			self.response = body
-	
+			
 	def call(self, msg):
 		messahe_not_sent = True
 		while messahe_not_sent:
@@ -152,13 +150,9 @@ class listTasks(object):
 				self.run(True)
 		while self.response is None:
 			self.connection.process_data_events()
+		
+		
 		return self.response
-	
-	def send_message(self):
-		self.channel.basic_publish(exchange='',
-		                           routing_key=self.queue_name,
-		                           body='Hello World from JOX 345678!')
-		logger.info(" [x] Sent 'Hello World!'")
-	
+
 	def exit(self):
 		self.connection.close()

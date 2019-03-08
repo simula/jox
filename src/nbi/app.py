@@ -39,7 +39,7 @@ import json
 from flask import Flask, request, jsonify
 import datetime
 import tarfile, io
-
+from termcolor import colored
 
 SLICE_TEMPLATE_DIRECTORY_DEFAULT = ''.join([dir_parent_path, '/jox_store'])
 
@@ -79,7 +79,7 @@ standard_reqst = {
 		# juju
 		"juju_key_val": None,
 		# package onboarding
-		"package_onboard_data": None,
+		"package_onboard_data": "",
 		"package_name": None,
 	}
 }
@@ -665,10 +665,13 @@ def jox_package_onboard():
 	enquiry["request-uri"] = str(request.url_rule)
 	enquiry["request-type"] = (request.method).lower()
 	enquiry["parameters"]["template_directory"] = request.args.get('url')
-	enquiry["parameters"]["package_onboard_data"] = list(request.data)
-	
+	enquiry["parameters"]["package_onboard_data"] = request.data
 	logger.info("enquiry: {}".format(enquiry))
 	logger.debug("enquiry: {}".format(enquiry))
+	
+	enquiry["parameters"]["package_onboard_data"] = list(request.data)
+	
+	
 	enquiry = json.dumps(enquiry)
 	# waiting for the response
 	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
@@ -1428,7 +1431,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	                    "down": "0",
 	                    "juju_mid": "0",
 	                    "launch_time": "0:01:45.861699",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_1",
 	                    "type": "lxc"
 	                  }
@@ -1442,7 +1445,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	                    "down": "0",
 	                    "juju_mid": "1",
 	                    "launch_time": "0:02:05.814990",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_1",
 	                    "type": "lxc"
 	                  }
@@ -1481,7 +1484,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	                    "date": "2019-03-06T18:11:24.679488",
 	                    "error": "0",
 	                    "maintenance": "0:02:48.005425",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_1",
 	                    "requirement_wait": "0",
 	                    "waiting": "0:01:50.970303"
@@ -1495,7 +1498,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	                    "date": "2019-03-06T18:11:24.679488",
 	                    "error": "0",
 	                    "maintenance": "0:02:10.633415",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_1",
 	                    "requirement_wait": "0:00:23.239041",
 	                    "waiting": "0:02:09.916849"
@@ -1515,7 +1518,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	                    "down": "0",
 	                    "juju_mid": "2",
 	                    "launch_time": "0:00:50.817423",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_2",
 	                    "type": "lxc"
 	                  }
@@ -1529,7 +1532,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	                    "down": "0",
 	                    "juju_mid": "3",
 	                    "launch_time": "0:00:52.790111",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_2",
 	                    "type": "lxc"
 	                  }
@@ -1568,7 +1571,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	                    "date": "2019-03-06T18:12:38.267184",
 	                    "error": "0",
 	                    "maintenance": "0",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_2",
 	                    "requirement_wait": "0",
 	                    "waiting": "0:00:55.036843"
@@ -1582,7 +1585,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	                    "date": "2019-03-06T18:12:38.267184",
 	                    "error": "in_error_state",
 	                    "maintenance": "0:03:38.510813",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_2",
 	                    "requirement_wait": "0",
 	                    "waiting": "0:00:56.729490"
@@ -1633,7 +1636,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	                    "down": "0",
 	                    "juju_mid": "2",
 	                    "launch_time": "0:00:50.817423",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_2",
 	                    "type": "lxc"
 	                  }
@@ -1647,7 +1650,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	                    "down": "0",
 	                    "juju_mid": "3",
 	                    "launch_time": "0:00:52.790111",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_2",
 	                    "type": "lxc"
 	                  }
@@ -1686,7 +1689,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	                    "date": "2019-03-06T18:12:38.267184",
 	                    "error": "0",
 	                    "maintenance": "0",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_2",
 	                    "requirement_wait": "0",
 	                    "waiting": "0:00:55.036843"
@@ -1700,7 +1703,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	                    "date": "2019-03-06T18:12:38.267184",
 	                    "error": "in_error_state",
 	                    "maintenance": "0:03:38.510813",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_2",
 	                    "requirement_wait": "0",
 	                    "waiting": "0:00:56.729490"
@@ -1780,7 +1783,7 @@ def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key
 	                    "date": "2019-03-06T18:11:24.679488",
 	                    "error": "0",
 	                    "maintenance": "0:02:48.005425",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_1",
 	                    "requirement_wait": "0",
 	                    "waiting": "0:01:50.970303"
@@ -1794,7 +1797,7 @@ def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key
 	                    "date": "2019-03-06T18:11:24.679488",
 	                    "error": "0",
 	                    "maintenance": "0:02:10.633415",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_1",
 	                    "requirement_wait": "0:00:23.239041",
 	                    "waiting": "0:02:09.916849"
@@ -1812,7 +1815,7 @@ def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key
 	                    "date": "2019-03-06T18:12:38.267184",
 	                    "error": "0",
 	                    "maintenance": "0",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_2",
 	                    "requirement_wait": "0",
 	                    "waiting": "0:00:55.036843"
@@ -1826,7 +1829,7 @@ def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key
 	                    "date": "2019-03-06T18:12:38.267184",
 	                    "error": "in_error_state",
 	                    "maintenance": "0:03:38.510813",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_2",
 	                    "requirement_wait": "0",
 	                    "waiting": "0:00:56.729490"
@@ -1874,7 +1877,7 @@ def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key
 	                    "date": "2019-03-06T18:12:38.267184",
 	                    "error": "0",
 	                    "maintenance": "0",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_2",
 	                    "requirement_wait": "0",
 	                    "waiting": "0:00:55.036843"
@@ -1888,7 +1891,7 @@ def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key
 	                    "date": "2019-03-06T18:12:38.267184",
 	                    "error": "in_error_state",
 	                    "maintenance": "0:03:38.510813",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_2",
 	                    "requirement_wait": "0",
 	                    "waiting": "0:00:56.729490"
@@ -1971,7 +1974,7 @@ def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_ke
 	                    "down": "0",
 	                    "juju_mid": "0",
 	                    "launch_time": "0:01:45.861699",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_1",
 	                    "type": "lxc"
 	                  }
@@ -1985,7 +1988,7 @@ def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_ke
 	                    "down": "0",
 	                    "juju_mid": "1",
 	                    "launch_time": "0:02:05.814990",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_1",
 	                    "type": "lxc"
 	                  }
@@ -2003,7 +2006,7 @@ def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_ke
 	                    "down": "0",
 	                    "juju_mid": "2",
 	                    "launch_time": "0:00:50.817423",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_2",
 	                    "type": "lxc"
 	                  }
@@ -2017,7 +2020,7 @@ def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_ke
 	                    "down": "0",
 	                    "juju_mid": "3",
 	                    "launch_time": "0:00:52.790111",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_2",
 	                    "type": "lxc"
 	                  }
@@ -2058,7 +2061,7 @@ def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_ke
 	                    "down": "0",
 	                    "juju_mid": "0",
 	                    "launch_time": "0:01:45.861699",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_1",
 	                    "type": "lxc"
 	                  }
@@ -2072,7 +2075,7 @@ def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_ke
 	                    "down": "0",
 	                    "juju_mid": "1",
 	                    "launch_time": "0:02:05.814990",
-	                    "nss_id": "oai-epc",
+	                    "nsi_id": "oai-epc",
 	                    "nssi_id": "nssi_1",
 	                    "type": "lxc"
 	                  }
@@ -3131,12 +3134,14 @@ def page_not_found(error):
 
 
 def run():
+	print(
+		colored(' [*] Waiting for request on  http://localhost:5000/ To exit press CTRL+C'.
+		        format(listOfTasks.gv.FLASK_SERVER_IP,
+		               listOfTasks.gv.FLASK_SERVER_PORT), 'green'))
+	
 	app.run(host=listOfTasks.gv.FLASK_SERVER_IP,
 	        port=listOfTasks.gv.FLASK_SERVER_PORT,
 	        debug=listOfTasks.gv.FLASK_SERVER_DEBUG)
-
-
-
-
+	
 if __name__ == '__main__':
 	run()

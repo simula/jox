@@ -330,7 +330,7 @@ class TemplateManager():
 													 "active_since": "0",
 													 "requirement_wait": "0",
 													 "error": "0",
-													 "nss_id": nsi_id,
+													 "nsi_id": nsi_id,
 													 "nssi_id": nssi_id
 													 }]}
 			services_list.append(service_name)
@@ -359,7 +359,7 @@ class TemplateManager():
 		for machine in range(len(service_list)):
 			machine_name = {service_list[machine]: [{"date":date,
 													 "juju_mid":"0",
-													 "nss_id": nsi_id,
+													 "nsi_id": nsi_id,
 													 "nssi_id": nssi_id,
 													 "type":"0",
                                                      "down":"0",
