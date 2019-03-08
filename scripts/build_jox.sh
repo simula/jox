@@ -167,6 +167,8 @@ function main() {
 	    echo "Installed juju"
 	    install_uvtool_kvm
 	    echo "Installed uvtool_kvm"
+	    echo "###### JoX built successfully !!! ######"
+
 
     fi
     if [ "$INSTALL_PKG" = "2" ] ; then
