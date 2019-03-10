@@ -56,8 +56,6 @@ class listTasks(object):
 		######## STEP 1: Load Configuration ########
 		try:
 			filename = ''.join([dir_parent_path, '/common/config/jox_config.json'])
-			print(filename)
-			print(dir_parent_path)
 			with open(filename, 'r') as f:
 				self.jox_config = json.load(f)
 				self.gv.RBMQ_SERVER_IP = self.jox_config['rabbit-mq-config']['rabbit-mq-server-ip']

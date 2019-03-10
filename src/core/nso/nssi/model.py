@@ -213,7 +213,7 @@ class JModel(JSONEncoder):
         """" Initial JService Deployment"""
         try:
             new_service = service.JService(self.gv)
-            new_service.build(service_config, service_name)
+            new_service.build(service_config, service_name, machines_config[service_config["machine_name"]])
             machine_key = allocated_machine
             new_service.to = machine_key
             

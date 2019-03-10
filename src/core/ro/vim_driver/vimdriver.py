@@ -38,6 +38,7 @@ import traceback
 import jsonpickle, json
 from subprocess import check_output
 import asyncio
+from asyncio import subprocess
 import datetime
 dir_path = os.path.dirname(os.path.abspath(__file__ + "/../../../"))
 from src.core.nso.template_manager import template_manager
@@ -370,7 +371,9 @@ class KvmDriver(object):
 			retry_connect = True
 			while number_retry <= self.max_retry and retry_connect:
 				try:
-					self.logger.debug("{} time trying to connect to juju model:{} to add lxc machine".format(number_retry, model_name))
+					self.logger.debug(
+						"{} time trying to connect to juju model:{} to add lxc machine".format(number_retry,
+						                                                                       model_name))
 					await model.connect(model_name)
 					retry_connect = False
 					self.logger.debug("Successful connection to the model {} ".format(model_name))
@@ -395,16 +398,19 @@ class KvmDriver(object):
 				          " --cpu " + str(new_machine.cpu) +
 				          " --disk " + str(new_machine.disc_size) +
 				          " --ssh-public-key-file " + ssh_key_puplic +
-                          " --password " + self.gv.SSH_PASSWORD)
+				          " --password " + self.gv.SSH_PASSWORD)
 				self.logger.debug("Trying to get KVM IP")
 				
-				cmd_wait = "uvt-kvm wait "+new_machine.mid_user_defined
-				os.system(cmd_wait)# more time
-				cmd_ip = "uvt-kvm ip "+new_machine.mid_user_defined
+				cmd_wait = "uvt-kvm wait " + new_machine.mid_user_defined
+				os.system(cmd_wait)  # more time
+				cmd_ip = "uvt-kvm ip " + new_machine.mid_user_defined
 				output = check_output(cmd_ip, shell=True)
 				machine_ip = (output.decode("utf-8")).rstrip()
-				self.logger.debug("The ip address of the machine {} is {}".format(new_machine.mid_user_defined, machine_ip))
-				self.logger.info('Adding the kvm machine {} whose ip {} to juju'.format(new_machine.mid_user_defined, machine_ip))
+				self.logger.debug(
+					"The ip address of the machine {} is {}".format(new_machine.mid_user_defined, machine_ip))
+				self.logger.info(
+					'Adding the kvm machine {} whose ip {} to juju'.format(new_machine.mid_user_defined,
+					                                                       machine_ip))
 				juju_cmd = "".join(["ssh:", self.gv.SSH_USER, "@", machine_ip, ":", ssh_key_private])
 				juju_machine = await model.add_machine(juju_cmd,
 				                                       constraints={
@@ -414,24 +420,27 @@ class KvmDriver(object):
 			else:
 				juju_machine = model.machines.get(machine_id_service)
 			new_machine.mid_vnfm = juju_machine.data["id"]
-
-			self.template_manager.update_slice_monitor_index("slice_monitor_"+subslice_name.lower(),
+			
+			self.template_manager.update_slice_monitor_index("slice_monitor_" + subslice_name.lower(),
 			                                                 "machine_status",
 			                                                 service_name,
 			                                                 "juju_mid",
 			                                                 str(new_machine.mid_vnfm),
 			                                                 nsi_id)
-			self.template_manager.update_slice_monitor_index('slice_keys_'+nsi_id.lower(), "machine_keys", service_name, "juju_mid", str(new_machine.mid_vnfm), nsi_id)
-			self.template_manager.update_slice_monitor_index("slice_monitor_"+subslice_name.lower(), "machine_status", service_name, "type","kvm", nsi_id)
-
-
-			self.logger.debug("The machine {} with juju id {} is already added to juju model".format(new_machine.mid_user_defined, juju_machine.data["id"]))
+			self.template_manager.update_slice_monitor_index('slice_keys_' + nsi_id.lower(), "machine_keys",
+			                                                 service_name, "juju_mid", str(new_machine.mid_vnfm),
+			                                                 nsi_id)
+			self.template_manager.update_slice_monitor_index("slice_monitor_" + subslice_name.lower(),
+			                                                 "machine_status", service_name, "type", "kvm", nsi_id)
+			
+			self.logger.debug(
+				"The machine {} with juju id {} is already added to juju model".format(new_machine.mid_user_defined,
+				                                                                       juju_machine.data["id"]))
 		except Exception as ex:
 			self.logger.error(traceback.format_exc())
 			raise ex
 		finally:
 			await model.disconnect()
-	
 	async def update_machine(self, machine_config):
 		for machine in self.machine_list:
 			if machine_config['machine_name'] == machine.mid_user_defined:
@@ -473,6 +482,7 @@ class KvmDriver(object):
 		
 		finally:
 			await model.disconnect()
+	
 	def delete_machine(self):
 		raise NotImplementedError()
 	def allocate_machine(self):

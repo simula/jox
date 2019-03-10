@@ -155,6 +155,11 @@ class NFVO_JOX(object):
 			
 			self.gv.STATS_TIMER = self.jox_config["stats-timer"]
 			
+			self.gv.OS_SERIES = self.jox_config["linux-os-series-config"]
+			
+			
+			
+			
 			self.gv.HTTP_200_OK = self.jox_config["http"]["200"]["ok"]
 			self.gv.HTTP_204_NO_CONTENT = self.jox_config["http"]["200"]["no-content"]
 			self.gv.HTTP_400_BAD_REQUEST = self.jox_config["http"]["400"]["bad-request"]

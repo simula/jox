@@ -159,24 +159,30 @@ def jox_homepage():
 
 jox_capabilities = {
 	"jox": {
-		"/jox": "return jox configuration and the list of the capabilities",
-		"/list": {"1": "return the list of all files in formation .yaml, .yaml and .json",
-		          "2": "example: curl  http://localhost:5000/list; return the list in the default directory",
-		          "3": "example: curl  http://localhost:5000/list?url=/home/ubunut/Documents/slice_template; return the list in slice_template directory",
+		"/": "JoX homepge",
+		"/jox": "return jox configuration and the list of nbi capabilities",
+		"/list": {"1": "return the list of onboarded packages",
+		          "2": "example: curl  http://localhost:5000/list; return the list of onboraded packages in jox store",
+		          "3": "example: curl  http://localhost:5000/list?url=/home/ubuntu/slice_package; return list of packages in given directory",
 		          },
 		"/ls": "alias to /list",
 		"/show/<string:nsi_name>": {"1": "show the content of the template nsi_name",
-		                            "2": "example: curl  http://localhost:5000/show/exmple_template.yaml; show the slice template exmple_template.yaml in the default directory",
-		                            "3": "example: curl  http://localhost:5000/list?url=/home/ubunut/Documents/slice_template/exmple_template.yaml; show the slice template exmple_template.yaml in the given directory",
+		                            "3": "example: curl  http://localhost:5000/show/nssi_1.yaml?url=/home/ubuntu/slice_package/mosaic5g/nssi; show the content of the given template in given directory",
 		                            },
 	},
+	"onboarding": {
+		"/onboard":{
+			"1":"onboard the given package to jox store",
+			"2":"example: curl  http://localhost:5000/onboard --upload-file mosaic5g.tar.gz; onboard the package mosaic5g.tar.gz to jox store",
+		},
+	},
 	"slice": {
-		"/nsi/all": "GET; get the context of all deployed slices",
-		"/nsi": "GET ; alias to /nsi/all",
+		"/nsi/all": "get the context of all deployed slices",
+		"/nsi": "alias to /nsi/all",
 		"/nsi/<string:nsi_name>": {
 			"GET": "get context of already deployed slice nsi_name",
-			"POST": "deploy/update slice nsi_name",
-			"DELET": "delete the slice nsi_name",
+			"POST": "deploy/update the slice from the package pkg_name(the name of the package in jox store)",
+			"DELETE": "delete the slice nsi_name",
 		},
 	},
 	"sub-slice": {
@@ -185,36 +191,36 @@ jox_capabilities = {
 		},
 		"/nssi": "alias to /nssi/all",
 		"/nssi/<string:nsi_name>": {
-			"GET": "get context of the subslices attached to the slice nsi_name",
+			"GET": "get context of all subslices attached to the slice nsi_name",
 			"POST": "Not supported",
-			"DELET": "Not supported",
+			"DELETE": "Not supported",
 		},
 		"/nssi/<string:nsi_name>/<string:nssi_name>": {
 			"GET": "get context of the subslice nssi_name attached to the slice nsi_name",
 			"POST": "Not supported",
-			"DELET": "Not supported",
+			"DELETE": "Not supported",
 		},
 		"/nssi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>": {
 			"GET": "get crtain entity nssi_key of subslice nssi_name attached to the slice nsi_name",
 			"POST": "Not supported",
-			"DELET": "Not supported",
+			"DELETE": "Not supported",
 		},
 	},
 	"elasticsearch": {
 		"/es": {
 			"GET": "get all the index-pages in elasticsearch",
 			"POST": "Not supported",
-			"DELET": "Delete all the index-pages in elasticsearch",
+			"DELETE": "Delete all the index-pages in elasticsearch",
 		},
 		"/es/<string:es_index_page>": {
 			"GET": "get the content of the index-page es_index_page from  elasticsearch",
 			"POST": "save the content of the index-page es_index_page to elasticsearch",
-			"DELET": "Delete the index-page es_index_page from elasticsearch",
+			"DELETE": "Delete the index-page es_index_page from elasticsearch",
 		},
 		"/es/<string:es_index_page>/<string:es_key>": {
 			"GET": "get certain index es_key from the index-page es_index_page from elasticsearch",
 			"POST": "Not supported",
-			"DELET": "Not supported",
+			"DELETE": "Not supported",
 		},
 	},
 	"monitoring": {
@@ -250,6 +256,23 @@ jox_capabilities = {
 			"/monitor/relation/<string:nsi_name>/<string:nssi_name>":
 				"get monitoring information on the relations of the subslice nssi_name attached to the slice nsi_name",
 		},
+		"juju": {
+			"/monitor/juju": "get monitoring information on the current juju model (applications,machines, and relations)",
+			"/monitor/juju/<string:juju_key_val>": {
+				"1":"get specific monitoring information juju_key_val from the current juju model",
+				"2":"The allowable values for juju_key_val are:",
+				"3":"all: get all the information (equivalent to /monitor/juju)",
+				"4":"applications: get only on the applications",
+				"5":"machines: get only on the machines",
+				"6":"relations: get only on the relations",
+			},
+			"/monitor/juju/<string:juju_key_val>/<string:cloud_name>/<string:model_name>":{
+				"1":"get monitoring information from specific juju model",
+				"2":"juju_key_val: the same allowable values fo /monitor/juju/<string:juju_key_val>",
+				"3":"cloud_name: the name of juju controller",
+				"4":"model_name: the name of juju model hosted at the juju controller cloud_name",
+			}
+		}
 	},
 }
 
@@ -365,7 +388,7 @@ def jox_config():
                 },
                 "ssh-config": {
                   "_Comment": "ssh connection is needed when adding kvm machines",
-                  "ssh-key-directory": "/home/ubunut/.ssh/",
+                  "ssh-key-directory": "/home/ubuntu/.ssh/",
                   "ssh-key-name": "id_juju",
                   "ssh-password": "linux",
                   "ssh-user": "ubuntu"
@@ -3138,7 +3161,6 @@ def run():
 		colored(' [*] Waiting for request on  http://localhost:5000/ To exit press CTRL+C'.
 		        format(listOfTasks.gv.FLASK_SERVER_IP,
 		               listOfTasks.gv.FLASK_SERVER_PORT), 'green'))
-	
 	app.run(host=listOfTasks.gv.FLASK_SERVER_IP,
 	        port=listOfTasks.gv.FLASK_SERVER_PORT,
 	        debug=listOfTasks.gv.FLASK_SERVER_DEBUG)

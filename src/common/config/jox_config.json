@@ -103,5 +103,10 @@
     "_Comment": "it is needed to store the onboarded packages to deploy slices later",
     "store-directrory": "/tmp/jox_store/"
   },
-  "encoding-type":"utf-8"
+  "encoding-type":"utf-8",
+  "linux-os-series-config": {
+	"14.04": "trusty",
+	"16.04": "xenial",
+	"18.04": "bionic"
+                         }
 }

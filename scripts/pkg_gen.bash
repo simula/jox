@@ -308,7 +308,7 @@ topology_template:
         model: default-juju-model-1, vendor: $pkg_vendor, version: $pkg_version}
       requirements:
         req1: {node: VDU_oai-hss, relationship: tosca.relationships.HostedOn}
-        req2: {node: oai-spgw, relationship: tosca.relationships.AttachesTo}
+        req2: {node: oai-mme, relationship: tosca.relationships.AttachesTo}
       type: tosca.nodes.SoftwareComponent.JOX
 tosca_definitions_version: tosca_simple_yaml_1_0
 EOF
@@ -347,13 +347,13 @@ topology_template:
         model: default-juju-model-1, vendor: $pkg_vendor, version: $pkg_version}
       requirements:
         req1: {node: VDU_oai-mme, relationship: tosca.relationships.HostedOn}
+        req2: {node: oai-spgw, relationship: tosca.relationships.AttachesTo}
       type: tosca.nodes.SoftwareComponent.JOX
     oai-spgw:
       properties: {charm: 'cs:~navid-nikaein/xenial/oai-spgw-15', endpoint: localhost,
         model: default-juju-model-1, vendor: $pkg_vendor, version: $pkg_version}
       requirements:
         req1: {node: VDU_oai-spgw, relationship: tosca.relationships.HostedOn}
-        req2: {node: oai-mme, relationship: tosca.relationships.AttachesTo}
       type: tosca.nodes.SoftwareComponent.JOX
 tosca_definitions_version: tosca_simple_yaml_1_0
 EOF

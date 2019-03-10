@@ -78,9 +78,7 @@ class JService(object):
         raise NotImplementedError()
       
       
-    def build(self,service_config, service_name):
-        #self.description=service_config["description"]
-        # self.entity_url=service_config['artifacts']['sw_image']['properties']['sw_image']
+    def build(self,service_config, service_name, machine_config):
         self.entity_url=service_config['charm']
         
         self.application_name=service_name
@@ -93,9 +91,10 @@ class JService(object):
         self.num_units=1
         self.plan=None, 
         self.resources=None
-        self.series = "xenial"
-        # if service_config["properties"]["image"] == self.gv.XENIAL:
-        #     self.series = "xenial"
+        for os_ver in self.gv.OS_SERIES:
+            if str(os_ver) in str(machine_config["os"]["version"]):
+                self.series = self.gv.OS_SERIES[os_ver]
+                break
         self.storage=None
         self.to=service_name
 

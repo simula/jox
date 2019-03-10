@@ -102,10 +102,7 @@ STORE_DIR = ""
 
 ENCODING_TYPE = "utf-8"
 
-XENIAL="xenial"
-OS_SERIES={"16.04": "xenial",
-			"18.04": "bionic",
-                         }
+OS_SERIES=""
 
 MB = 1
 GB = 1024

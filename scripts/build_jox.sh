@@ -48,7 +48,6 @@ install_required_packages(){
     $SUDO $os_pm $option install  git || true
     $SUDO $os_pm $option install  curl || true
     $SUDO $os_pm $option install  tree || true
-
 }
 
 install_uvtool_kvm(){
