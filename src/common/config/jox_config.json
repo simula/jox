@@ -94,8 +94,8 @@
   },
   "ssh-config": {
     "_Comment": "ssh connection is needed when adding kvm machines",
-    "ssh-key-directory": "/home/psoque/.ssh/",
-    "ssh-key-name": "id_rsa",
+    "ssh-key-directory": "/home/arouk/.ssh/",
+    "ssh-key-name": "id_juju",
     "ssh-user": "ubuntu",
     "ssh-password": "linux"
   },

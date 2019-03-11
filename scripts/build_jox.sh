@@ -25,7 +25,7 @@
 # brief
 # author
 
-
+# set -u
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -48,6 +48,23 @@ install_required_packages(){
     $SUDO $os_pm $option install  git || true
     $SUDO $os_pm $option install  curl || true
     $SUDO $os_pm $option install  tree || true
+
+
+    echo "Installing elasticsearch"
+    install_elasticsearch
+
+    echo "Installing rabbitMQ"
+    install_rabbitmq
+
+    echo "Installing required python packages"
+    install_python_packages
+
+    echo "Installing juju"
+    install_juju
+
+    echo "Installing uvtool_kvm"
+    install_uvtool_kvm
+
 }
 
 install_uvtool_kvm(){
@@ -157,21 +174,9 @@ function main() {
     done
 
     if [ "$INSTALL_PKG" = "1" ] ; then
-	    install_elasticsearch
-	    echo "Installed elasticsearch"
+	    echo "Installing the required packages"
 	    install_required_packages
-	    echo "Installed the required packages"
-            install_rabbitmq
-            echo "rabbitMQ"
-            install_python_packages
-            echo "installed required python packages"
-	    install_juju
-	    echo "Installed juju"
-	    install_uvtool_kvm
-	    echo "Installed uvtool_kvm"
 	    echo "###### JoX built successfully !!! ######"
-
-
     fi
     if [ "$INSTALL_PKG" = "2" ] ; then
 	    install_ubuntu_image
