@@ -431,6 +431,7 @@ class KvmDriver(object):
 					"The ip address of the machine {} is {}".format(new_machine.mid_user_defined, machine_ip))
 				self.logger.info(
 					'Adding the kvm machine {} whose ip {} to juju'.format(new_machine.mid_user_defined, machine_ip))
+				await asyncio.sleep(10)
 				juju_cmd = "".join(["ssh:", self.gv.SSH_USER, "@", machine_ip, ":", ssh_key_private])
 				juju_machine = await model.add_machine(juju_cmd,
 				                                       constraints={

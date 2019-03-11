@@ -3,7 +3,7 @@
 # mount the jox store
 DIR_JOX_STORE="/tmp/jox_store"
 sudo service rabbitmq-server start
-sudo -i service elasticsearch start
+#sudo -i service elasticsearch start
 sudo mkdir -p $DIR_JOX_STORE
 sudo mount -o size=100m -t tmpfs none $DIR_JOX_STORE
 sudo chown -R $USER /tmp/jox_store
