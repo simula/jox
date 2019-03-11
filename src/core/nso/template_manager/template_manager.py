@@ -42,40 +42,40 @@ service_keys = {}    # local key dictionary for slice component's context matchi
 machine_keys = {}
 relation_keys = {}
 
-dsl_definitions = {
-	"host":{
-			"tiny":{
-				"disk_size": 5, #GB
-				"num_cpus": 1,
-				"mem_size": 512, #MB
-			},
-			"small":{
-				"disk_size": 5, #GB
-				"num_cpus": 1,
-				"mem_size": 512, #MB
-			}
-		},
-	"os":{
-			"ubuntu_14_64":{
-				"architecture": "x86_64",
-				"type": "Linux",
-				"distribution": "Ubuntu",
-				"version": "14.04"
-			},
-			"ubuntu_16_64":{
-				"architecture": "x86_64",
-				"type": "Linux",
-				"distribution": "Ubuntu",
-				"version": "16.04"
-			},
-			"ubuntu_18_64":{
-				"architecture": "x86_64",
-				"type": "Linux",
-				"distribution": "Ubuntu",
-				"version": "18.04"
-			}
-		},
-}
+# dsl_definitions = {
+# 	"host":{
+# 			"tiny":{
+# 				"disk_size": 1, #GB
+# 				"num_cpus": 1,
+# 				"mem_size": 256, #MB
+# 			},
+# 			"small":{
+# 				"disk_size": 3, #GB
+# 				"num_cpus": 1,
+# 				"mem_size": 512, #MB
+# 			}
+# 		},
+# 	"os":{
+# 			"ubuntu_14_64":{
+# 				"architecture": "x86_64",
+# 				"type": "Linux",
+# 				"distribution": "Ubuntu",
+# 				"version": "14.04"
+# 			},
+# 			"ubuntu_16_64":{
+# 				"architecture": "x86_64",
+# 				"type": "Linux",
+# 				"distribution": "Ubuntu",
+# 				"version": "16.04"
+# 			},
+# 			"ubuntu_18_64":{
+# 				"architecture": "x86_64",
+# 				"type": "Linux",
+# 				"distribution": "Ubuntu",
+# 				"version": "18.04"
+# 			}
+# 		},
+# }
 class TemplateManager():
 
 	def __init__(self, global_variables):
@@ -253,15 +253,15 @@ class TemplateManager():
 				}
 				host = NSSI_template['topology_template']['node_templates'][item]['capabilities']['host']['properties']
 				os_sys = NSSI_template['topology_template']['node_templates'][item]['capabilities']['os']['properties']
-				for item_tmp in dsl_definitions: #
+				for item_tmp in self.gv.HOST_OS_CONFIG: #
 					if item_tmp == 'host':
-						for sub_item_tmp in dsl_definitions[item_tmp]:
+						for sub_item_tmp in self.gv.HOST_OS_CONFIG[item_tmp]:
 							if host == sub_item_tmp:
-								host = dsl_definitions[item_tmp][sub_item_tmp]
+								host = self.gv.HOST_OS_CONFIG[item_tmp][sub_item_tmp]
 					if item_tmp == 'os':
-						for sub_item_tmp in dsl_definitions[item_tmp]:
+						for sub_item_tmp in self.gv.HOST_OS_CONFIG[item_tmp]:
 							if os_sys == sub_item_tmp:
-								os_sys = dsl_definitions[item_tmp][sub_item_tmp]
+								os_sys = self.gv.HOST_OS_CONFIG[item_tmp][sub_item_tmp]
 				
 				list_machines[machine_name]['host'] = host
 				

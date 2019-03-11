@@ -144,6 +144,7 @@ class SubSlicesController(object):
 			if subslice_object is None:
 				return [False, "The subslice object of the subslice {} can not be found".format(subslice_name)]
 			else:
+				res = subslice_object.remove_jsubslice(slice_name)
 				if self.remove_subslcie_object(subslice_name):
 					return [True, "The subslice {} is successfully removed".format(subslice_name)]
 				else:

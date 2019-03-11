@@ -27,7 +27,6 @@
 """
 
 from elasticsearch import Elasticsearch
-from elasticsearch import ElasticsearchException
 import time
 import logging
 import json

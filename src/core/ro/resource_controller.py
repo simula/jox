@@ -142,7 +142,7 @@ class ResourcesController(object):
 			jcloud = service_config["jcloud"]
 			jmodel = service_config["jmodel"]
 			user = "admin"
-			loop.run(currem_vim.delete_machine(service_name, service_name,
+			loop.run(currem_vim.delete_machine(service_name,
 			                                   machine_name_vnfm, machine_id_ro, machine_name_userdefined,
 			                                   jcloud, jmodel, slice_name, subslice_name, user))
 			
@@ -151,7 +151,6 @@ class ResourcesController(object):
 			message = ''.join([message, currem_vim[1]])
 			return [False, message]
 		
-		pass
 	def add_machines(self, machines_config, services_config, subslice_name, model_name, cloud_name, slice_name):
 		threads = []
 		list_midRo_machineConfig = {}

@@ -156,6 +156,9 @@ class NFVO_JOX(object):
 			self.gv.STATS_TIMER = self.jox_config["stats-timer"]
 			
 			self.gv.OS_SERIES = self.jox_config["linux-os-series-config"]
+			self.gv.HOST_OS_CONFIG = {}
+			self.gv.HOST_OS_CONFIG["host"] = self.jox_config["host-config"]
+			self.gv.HOST_OS_CONFIG["os"] = self.jox_config["os-config"]
 			
 			
 			
@@ -334,7 +337,7 @@ class NFVO_JOX(object):
 		return nsi_deploy
 	
 	def delete_slice(self, slice_name):
-		res = self.slices_controller.remove_network_slice(slice_name, self.subslices_controller)
+		res = self.slices_controller.remove_network_slice(slice_name, self.subslices_controller, self.jesearch)
 		return res
 	
 	def add_sub_slice(self):

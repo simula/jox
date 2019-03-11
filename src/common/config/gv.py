@@ -103,6 +103,7 @@ STORE_DIR = ""
 ENCODING_TYPE = "utf-8"
 
 OS_SERIES=""
+HOST_OS_CONFIG=""
 
 MB = 1
 GB = 1024

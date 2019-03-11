@@ -275,14 +275,6 @@ class JModel(JSONEncoder):
             model = Model()
             model_name = self.cloud_name + ":" + user_name + '/' + self.model_name
             await model.connect(model_name)
-            """
-            while not service_removed:
-                try:
-                    await model.applications[service_name].destroy()
-                    await model.applications[service_name].remove()
-                except Exception as ex:
-                    service_removed = True
-            """
             try:
                 await model.applications[service_name].destroy()
                 await model.applications[service_name].remove()

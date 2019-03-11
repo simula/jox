@@ -108,5 +108,41 @@
 	"14.04": "trusty",
 	"16.04": "xenial",
 	"18.04": "bionic"
-                         }
+  },
+  "host-config": {
+    "tiny":{
+      "Comment": "disk_size is in GB unit",
+      "disk_size": 1,
+      "num_cpus": 1,
+      "Comment_2": "mem_size is in MB unit",
+      "mem_size": 256
+    },
+    "small":{
+      "Comment": "disk_size is in GB unit",
+      "disk_size": 3,
+      "num_cpus": 1,
+      "Comment_2": "mem_size is in MB unit",
+      "mem_size": 512
+    }
+  },
+  "os-config": {
+    "ubuntu_14_64":{
+      "architecture": "x86_64",
+      "type": "Linux",
+      "distribution": "Ubuntu",
+      "version": "14.04"
+    },
+    "ubuntu_16_64":{
+      "architecture": "x86_64",
+      "type": "Linux",
+      "distribution": "Ubuntu",
+      "version": "16.04"
+    },
+    "ubuntu_18_64":{
+      "architecture": "x86_64",
+      "type": "Linux",
+      "distribution": "Ubuntu",
+      "version": "18.04"
+    }
+  }
 }

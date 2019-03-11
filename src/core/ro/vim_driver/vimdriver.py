@@ -249,8 +249,7 @@ class LxcDriver(object):
 		
 		finally:
 			await model.disconnect()
-	async def delete_machine(self, new_machine,
-	                         service_name, machine_name_vnfm, machine_id_ro, machine_name_userdefined,
+	async def delete_machine(self, service_name, machine_name_vnfm, machine_id_ro, machine_name_userdefined,
 	                         jcloud, jmodel,
 	                         slice_name, subslice_name=None, user="admin"):
 		model = Model()
@@ -391,30 +390,52 @@ class KvmDriver(object):
 			if application_NotExist:
 				ssh_key_puplic = ''.join([self.gv.SSH_KEY_DIRECTORY, self.gv.SSH_KEY_NAME, '.pub'])
 				ssh_key_private = ''.join([self.gv.SSH_KEY_DIRECTORY, self.gv.SSH_KEY_NAME])
-				os.system("uvt-kvm create " +
-				          new_machine.mid_user_defined +
-				          " release=" + new_machine.os_series +
-				          " --memory " + str(new_machine.memory) +
-				          " --cpu " + str(new_machine.cpu) +
-				          " --disk " + str(new_machine.disc_size) +
-				          " --ssh-public-key-file " + ssh_key_puplic +
-				          " --password " + self.gv.SSH_PASSWORD)
-				self.logger.debug("Trying to get KVM IP")
-				
-				cmd_wait = "uvt-kvm wait " + new_machine.mid_user_defined
-				os.system(cmd_wait)  # more time
-				cmd_ip = "uvt-kvm ip " + new_machine.mid_user_defined
-				output = check_output(cmd_ip, shell=True)
-				machine_ip = (output.decode("utf-8")).rstrip()
+				################
+				cmd_list_kvm = "uvt-kvm list"
+				list_output_tmp = check_output(cmd_list_kvm, shell=True)
+				list_output_tmp = (list_output_tmp.decode("utf-8")).rstrip()
+				list_machine = list()
+				temp_item = ""
+				for item in list_output_tmp:
+					if str(item).encode() == b'\n':
+						list_machine.append(temp_item)
+						temp_item = ""
+					else:
+						temp_item = "".join([temp_item, item])
+				list_machine.append(temp_item)
+				machine_ip = ""
+				for current_machine in list_machine:
+					if new_machine.mid_user_defined == current_machine:
+						cmd_ip = "uvt-kvm ip " + new_machine.mid_user_defined
+						output = check_output(cmd_ip, shell=True)
+						machine_ip = (output.decode("utf-8")).rstrip()
+						break
+				###################
+				if machine_ip == "":
+					os.system("uvt-kvm create " +
+					          new_machine.mid_user_defined +
+					          " release=" + new_machine.os_series +
+					          " --memory " + str(new_machine.memory) +
+					          " --cpu " + str(new_machine.cpu) +
+					          " --disk " + str(new_machine.disc_size) +
+					          " --ssh-public-key-file " + ssh_key_puplic +
+					          " --password " + self.gv.SSH_PASSWORD)
+					self.logger.debug("Trying to get KVM IP")
+					
+					cmd_wait = "uvt-kvm wait " + new_machine.mid_user_defined
+					os.system(cmd_wait)  # more time
+					cmd_ip = "uvt-kvm ip " + new_machine.mid_user_defined
+					output = check_output(cmd_ip, shell=True)
+					machine_ip = (output.decode("utf-8")).rstrip()
 				self.logger.debug(
 					"The ip address of the machine {} is {}".format(new_machine.mid_user_defined, machine_ip))
 				self.logger.info(
-					'Adding the kvm machine {} whose ip {} to juju'.format(new_machine.mid_user_defined,
-					                                                       machine_ip))
+					'Adding the kvm machine {} whose ip {} to juju'.format(new_machine.mid_user_defined, machine_ip))
 				juju_cmd = "".join(["ssh:", self.gv.SSH_USER, "@", machine_ip, ":", ssh_key_private])
 				juju_machine = await model.add_machine(juju_cmd,
 				                                       constraints={
-					                                       'tags': [new_machine.mid_user_defined]
+					                                       'tags': [new_machine.mid_user_defined],
+					                                       'virt_type': 'kvm'
 				                                       }
 				                                       )
 			else:
@@ -483,8 +504,41 @@ class KvmDriver(object):
 		finally:
 			await model.disconnect()
 	
-	def delete_machine(self):
-		raise NotImplementedError()
+	async def delete_machine(self, service_name, machine_name_vnfm, machine_id_ro, machine_name_userdefined,
+	                         jcloud, jmodel,
+	                         slice_name, subslice_name=None, user="admin"):
+		model = Model()
+		try:
+			c_name = jcloud
+			m_name = jmodel
+			model_name = c_name + ":" + user + "/" + m_name
+			retry_connect = True
+			number_retry = 0
+			while number_retry <= self.max_retry and retry_connect:
+				number_retry += 1
+				try:
+					self.logger.debug(
+						"{} time trying to connect to juju model:{} to add lxc machine".format(number_retry,
+						                                                                       model_name))
+					await model.connect(model_name)
+					retry_connect = False
+					self.logger.debug("Successful connection to the model {} ".format(model_name))
+				except:
+					await model.disconnect()
+					await asyncio.sleep(self.interval_access)
+			
+			try:
+				await model.machines[str(machine_name_vnfm)].destroy(force=True)
+				cmd_destroy_kvm = ["uvt-kvm", "destroy", machine_name_userdefined]
+				output_list = await run_command(*cmd_destroy_kvm)
+			except:
+				self.logger.critical("Either the application does not exist it can not be removed")
+			self.logger.info("Remove the machine {} hosting the application {}".format(machine_name_vnfm, service_name))
+		except Exception as ex:
+			self.logger.error(traceback.format_exc())
+			raise ex
+		finally:
+			await model.disconnect()
 	def allocate_machine(self):
 		raise NotImplementedError()
 	def release_machine(self):
@@ -625,5 +679,11 @@ class _VmLxc():
 		:return:
 		"""
 		raise NotImplementedError()
-
-
+	
+async def run_command(*args):
+	process = await asyncio.create_subprocess_exec(
+		*args[1],
+		stdout=subprocess.PIPE,
+		stderr=subprocess.STDOUT)
+	stdout, stderr = await process.communicate()
+	return (stdout.decode("utf-8")).strip()

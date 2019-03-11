@@ -141,24 +141,6 @@ class JSubSlice(JSONEncoder):
                     pass
                 if current_model is not None:
                     loop.run(current_model.destroy_service(service_model.application_name))
-            ###########################
-            """
-            for service_name in self.subslice_services:
-                service_config = self.subslice_services[service_name]
-                current_model = None
-                service_model = None
-                for subslice_model in self.subslice_models:
-                    if (subslice_model.cloud_name == service_config["jcloud"]) \
-                            and (subslice_model.model_name == service_config["jmodel"]):
-                        current_model = subslice_model
-                        for item in current_model.services:
-                            if item.application_name == service_name:
-                                service_model = item
-                                break
-                if current_model is not None:
-                    loop.run(current_model.destroy_service(service_model.application_name))
-            """
-            #############################
         if len(self.subslice_machines) > 0:
             pass
             # relove relations
