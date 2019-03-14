@@ -47,8 +47,8 @@ install_required_packages(){
     $SUDO $os_pm dist-upgrade -y
     # ubunut 16 and 14
     $SUDO add-apt-repository ppa:jonathonf/python-3.6
-	$SUDO $os_pm $option update
-	$SUDO $os_pm $option install python3.6
+    $SUDO $os_pm $option update
+    $SUDO $os_pm $option install python3.6
     $SUDO $os_pm $option install python3-apt --reinstall
 
     $SUDO update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.5 1
