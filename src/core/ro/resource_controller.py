@@ -48,8 +48,9 @@ class ResourcesController(object):
 		self.jclouds = list()  # List with Juju JoxClouds
 		self.pop_lxc_list = list()
 		self.pop_kvm_list = list()
+		self.pop_phy_list = list()
 									#full name  short name
-		self.pop_type_supported = {self.gv.LXC, self.gv.KVM}
+		self.pop_type_supported = {self.gv.LXC, self.gv.KVM, self.gv.PHY}
 		self.machine_id = 0
 		self.logger = logging.getLogger('jox.RO.rsourceController')
 		self.log_config()

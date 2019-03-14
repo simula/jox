@@ -40,8 +40,20 @@ jox_store=/mnt/jox_store
 
 
 install_required_packages(){
+    export LC_ALL="en_US.UTF-8"
+    export LC_CTYPE="en_US.UTF-8"
+
     $SUDO $os_pm  update -y
-    $SUDO $os_pm $option install  python3.6 || true
+    $SUDO $os_pm dist-upgrade -y
+    # ubunut 16 and 14
+    sudo add-apt-repository ppa:jonathonf/python-3.6
+	$SUDO $os_pm $option update
+	$SUDO $os_pm $option install python3.6
+    $SUDO $os_pm $option install python3-apt --reinstall
+
+    sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.5 1
+    sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 2
+
     $SUDO $os_pm $option install  python3-pip || true
     $SUDO $os_pm $option install  docker.io || true
     $SUDO $os_pm $option install  screen || true

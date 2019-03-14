@@ -63,6 +63,7 @@ ELASTICSEARCH_RETRY_ON_CONFLICT=0
 # resources types
 KVM="kvm"
 LXC="lxc"
+PHY="phy" # physical machine
 
 
 # config param

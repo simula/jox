@@ -3158,7 +3158,7 @@ def page_not_found(error):
 
 def run():
 	print(
-		colored(' [*] Waiting for request on  http://localhost:5000/ To exit press CTRL+C'.
+		colored(' [*] Waiting for request on  http://{}:{}/ To exit press CTRL+C'.
 		        format(listOfTasks.gv.FLASK_SERVER_IP,
 		               listOfTasks.gv.FLASK_SERVER_PORT), 'green'))
 	app.run(host=listOfTasks.gv.FLASK_SERVER_IP,

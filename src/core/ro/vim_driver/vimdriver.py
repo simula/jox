@@ -680,7 +680,106 @@ class _VmLxc():
 		:return:
 		"""
 		raise NotImplementedError()
+
+
+class _PhysicalMachine():
 	
+	def __init__(self):
+		self.logger = logging.getLogger('jox.VimDriver.PhysicalMachine')
+		self.zone = None
+		self.domain = list()  # a physical machine could be connected to different domains through two interfaces
+		self.hostname = None
+		self.dns_name = None
+		# machine status
+		self.alive = False
+		self.connected = False
+		"""
+		every address will have the following characteristics
+		self.addresses[0] = {
+				"value": "ip address"
+				"type": "ipv4, ipv6"
+				"scope": "private, public, local-machine"
+				}
+		"""
+		self.addresses = list()
+		
+		""" total resources """
+		self.host_cpu_tot = 0
+		self.host_mem_tot = 0
+		self.host_disc_size_tot = 0
+		""" available resources """
+		self.host_cpu_ava = 0
+		self.host_mem_ava = 0
+		self.host_disc_size_ava= 0
+		
+		""" os characteristics """
+		self.os_arch = "" # e.g. x86_64
+		self.os_type = "" # e.g. linux
+		self.os_dist = "" # e.g. Ubuntu
+		self.os_version = "" # e.g. 16.04
+		
+		"""virtualization support"""
+		self.virt_lxd = False
+		self.virt_kvm = False
+		
+		self.list_lxd_machines = list()
+		self.list_kvm_machines = list()
+		
+		self.subslice_name = list() # list of subslice srerved by the machine
+		
+		# credential of juju
+		self.juju_cloud_name = ""
+		self.juju_model_name = ""
+		self.juju_endpoint = ""
+		self.juju_user_passwd = dict()  # list of user names and password
+		
+		self.mid_user_defined = ""
+		self.mid_vnfm = ""  # juju id of the machine in case of juju
+		self.mid_vim = ""  # value assigned by LXD hypervisor
+		self.mid_ro = ""  # name given by the resource controller
+	def build(self,
+	          subslice_name,
+	          cloud_name,
+	          model_name,
+	          mid_ro,
+	          machine_config):
+		try:
+			self.subslice_name.append(subslice_name)
+			
+			# credential of juju
+			self.juju_cloud_name = cloud_name
+			self.juju_model_name = model_name
+			self.juju_endpoint = None
+			
+			self.mid_user_defined = machine_config['machine_name']
+			self.mid_vim = ""  # value assigned by LXD hypervisor
+			self.mid_ro = mid_ro  # name given by the resource controller
+			
+			self.cpu = machine_config['host']['num_cpus']
+			self.disc_size = machine_config['host']['disk_size']
+			self.memory = machine_config['host']['mem_size']
+			if machine_config['os']['distribution'] == "Ubuntu":
+				os_version = str(machine_config['os']['version'])
+				try:
+					self.os_series = global_varialbles.OS_SERIES[os_version]
+				except:
+					message = "The os version {} for the machine {} from the subslice {} is not defined. Please define it in gv file in the variable OS_SERIES".format(
+						os_version, machine_config['machine_name'], subslice_name)
+					self.logger.critical(message)
+					self.logger.info(message)
+		except ValueError as ex:
+			raise ex
+	
+	def validate(self, cloud_name, model_name, machine_config):
+		"""
+		:param cloud_name:
+		:param model_name:
+		:param machine_config:
+		:return:
+		"""
+		raise NotImplementedError()
+
+
 async def run_command(*args):
 	process = await asyncio.create_subprocess_exec(
 		*args[1],

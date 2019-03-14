@@ -19,3 +19,9 @@ JOX is composed of the following directories:
     |-- build_jox
     |-- tools
         |-- build_helper
+        
+        
+To add:
+- virt type of physical machines
+- additional capabilities (tags)
+ juju model-config enable-os-refresh-update=false enable-os-upgrade=false
