@@ -63,6 +63,10 @@ install_required_packages(){
     $SUDO $os_pm $option install  curl || true
     $SUDO $os_pm $option install  tree || true
 
+    pip3 install --upgrade pip
+    $SUDO $option dpkg --configure -a
+    $SUDO $option pip3 install -U setuptools
+    pip3 install --upgrade pip wheel
 
     echo "Installing elasticsearch"
     install_elasticsearch
