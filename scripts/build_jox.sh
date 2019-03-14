@@ -38,11 +38,80 @@ specific_pkgs="zfsutils-linux"
 
 jox_store=/mnt/jox_store
 
+###################################
+# colorful echos
+###################################
 
-install_required_packages(){
-#    export LC_ALL="en_US.UTF-8"
-#    export LC_CTYPE="en_US.UTF-8"
+black='\E[30m'
+red='\E[31m'
+green='\E[32m'
+yellow='\E[33m'
+blue='\E[1;34m'
+magenta='\E[35m'
+cyan='\E[36m'
+white='\E[37m'
+reset_color='\E[00m'
+COLORIZE=1
 
+cecho()  {
+    # Color-echo
+    # arg1 = message
+    # arg2 = color
+    local default_msg="No Message."
+    message=${1:-$default_msg}
+    color=${2:-$green}
+    [ "$COLORIZE" = "1" ] && message="$color$message$reset_color"
+    echo -e "$message"
+    return
+}
+
+echo_error()   { cecho "$*" $red          ;}
+echo_fatal()   { cecho "$*" $red; exit -1 ;}
+echo_warning() { cecho "$*" $yellow       ;}
+echo_success() { cecho "$*" $green        ;}
+echo_info()    { cecho "$*" $blue         ;}
+
+
+
+
+
+os=$(grep "^ID=" /etc/os-release | sed "s/ID=//" | sed "s/\"//g")
+os_release=$(grep "^VERSION_ID=" /etc/os-release | sed "s/VERSION_ID=//" | sed "s/\"//g")
+os_dist=$os$os_release
+echo_info "Detected OS Dist:" $os_dist
+
+case "$os" in
+  fedora) os_base="fedora"; os_pm="dnf"; os_cmake="cmake" ;;
+  rhel)   os_base="fedora"; os_pm="yum"; os_cmake="cmake3" ;;
+  centos) os_base="fedora"; os_pm="yum"; os_cmake="cmake3" ;;
+  debian) os_base="debian"; os_pm="apt-get"; os_cmake="cmake" ;;
+  ubuntu) os_base="debian"; os_pm="apt-get"; os_cmake="cmake" ;;
+esac
+
+check_supported_os_dist() {
+    case "$os_dist" in
+        "ubuntu18.04") return 0 ;;
+        "ubuntu16.04") return 0 ;;
+    esac
+    return 1
+}
+check_ubuntu_1604() {
+    case "$os_dist" in
+        "ubuntu16.04") return 0 ;;
+    esac
+    return 1
+}
+
+if ! check_supported_os_dist; then
+    echo_error "Your distribution $os_dist is not supported by JoX R1 !"
+    exit 1
+fi
+
+
+install_required_packages_ubunut16(){
+    #    export LC_ALL="en_US.UTF-8"
+    #    export LC_CTYPE="en_US.UTF-8"
+    echo_info "Installing python3.6 for $os_dist"
     $SUDO $os_pm  update -y
     $SUDO $os_pm dist-upgrade -y
     # ubunut 16 and 14
@@ -55,7 +124,14 @@ install_required_packages(){
 
     $SUDO update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.5 1
     $SUDO update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 2
-
+}
+install_required_packages(){
+    echo_info "Installing dependencies for $os_dist"
+    if check_ubuntu_1604; then
+        install_required_packages_ubunut16
+    else
+        $SUDO $os_pm $option install python3.6
+    fi
     $SUDO $os_pm $option install  python3-pip || true
     $SUDO $os_pm $option install  docker.io || true
     $SUDO $os_pm $option install  screen || true
@@ -68,19 +144,14 @@ install_required_packages(){
     $SUDO $option pip3 install -U setuptools
     pip3 install --upgrade pip wheel
 
-    echo "Installing elasticsearch"
     install_elasticsearch
 
-    echo "Installing rabbitMQ"
     install_rabbitmq
 
-    echo "Installing required python packages"
     install_python_packages
 
-    echo "Installing juju"
     install_juju
 
-    echo "Installing uvtool_kvm"
     install_uvtool_kvm
 
 }
@@ -94,11 +165,13 @@ install_uvtool_kvm(){
 }
 
 install_ubuntu_image(){
-    echo 'fetching cloud image kvm xenial'
+    echo_info 'fetching cloud image kvm xenial'
     $SUDO uvt-simplestreams-libvirt --verbose sync release=xenial arch=amd64
+    echo_success "cloud images was successfully downloaded"
 }
 
 install_elasticsearch(){
+    echo_info "Installing elasticsearch"
     $SUDO $os_pm install  $option default-jre || true
     JAVA_HOME=/usr/lib/jvm/default-java/bin
     export JAVA_HOME 
@@ -108,16 +181,20 @@ install_elasticsearch(){
     $SUDO $os_pm install $option apt-transport-https || true
     echo "deb https://artifacts.elastic.co/packages/6.x/apt stable main" | $SUDO tee -a /etc/apt/sources.list.d/elastic-6.x.list 
     $SUDO $os_pm update $option && $SUDO $os_pm install elasticsearch || true
-    $SUDO -i service elasticsearch start 
+    $SUDO -i service elasticsearch start
+    echo_success "elasticsearch is successfully installed"
 }
 
 install_rabbitmq(){
+    echo_info "Installing rabbitMQ"
     curl http://www.rabbitmq.com/rabbitmq-signing-key-public.asc | sudo apt-key add -
     $SUDO $os_pm update
     $SUDO $os_pm install $option rabbitmq-server
+    echo_success "rabbitmq is successfully installed"
 }
 
 install_juju(){
+    echo_info "installing juju "
     $SUDO $os_pm $option install  snapd || true
     $SUDO $os_pm $option install  zfsutils-linux || true
     sudo snap install lxd || true
@@ -125,35 +202,66 @@ install_juju(){
     # newgrp lxd
     # groups
     sudo snap install juju --classic || true
+    echo_success "juju is successfully installed"
 }
 install_python_packages(){
+    echo_info "Installing python libraries"
+
+    echo_info "Installing jsonify"
     pip3 install jsonify --user
+    echo_success "jsonify is successfully installed"
+
+    echo_info "Installing flask"
     pip3 install flask --user
+    echo_success "flask is successfully installed"
+
+    echo_info "Installing juju"
     pip3 install juju --user
+    echo_success "juju is successfully installed"
+
+    echo_info "Installing termcolor"
     pip3 install termcolor --user
+    echo_success "termcolor is successfully installed"
+
+    echo_info "Installing jsonpickle"
     pip3 install jsonpickle --user
+    echo_success "jsonpickle is successfully installed"
+
+    echo_info "Installing pika"
     pip3 install pika --user
+    echo_success "pika is successfully installed"
+
+    echo_info "Installing elasticsearch"
     pip3 install elasticsearch --user
+    echo_success "elasticsearch is successfully installed"
+
+    echo_info "Installing jsonschema"
     pip3 install jsonschema --user
+    echo_success "jsonschema is successfully installed"
+
+    echo_info "Installing commentjson"
     pip3 install commentjson --user
+    echo_success "commentjson is successfully installed"
+
 }
 
 function jox_store(){
 
 if [ ! -d $jox_store ]; then
-    echo "Creating cache dir in $jox_store"
+    echo_info "Creating cache dir in $jox_store"
     sudo mkdir -p $jox_store
+    echo_success "JoX store is successfully created"
 fi
 
 if grep -qs "$jox_store" /proc/mounts; then
-    echo "JoX store is already mounted"
+    echo_info "JoX store is already mounted"
 else
-    echo "JoX store was not mounted, Mounting ..."
+    echo_info "JoX store was not mounted, Mounting ..."
     sudo mount -o size=100m -t tmpfs none "$jox_store"
     if [ $? -eq 0 ]; then
-	echo "Mount success"
+	echo_success "Mount success"
     else
-	echo "Something went wrong with the mount"
+	echo_error "Something went wrong with the mount"
     fi
 fi
 
@@ -175,30 +283,28 @@ function main() {
         case "$1" in
             -i | --install-required-pkg)
             INSTALL_PKG=1
-            echo "Installing the required packages for JoX"
+            echo_info "Installing the required packages for JoX"
             shift;;
             -h | --help | -help )
             print_help 0
             shift;;
             -x | --install-ubuntu-xenial-kvm )
             INSTALL_PKG=2
-            echo "Installing ubuntu xenial image for kvm"
+            echo_info "Installing ubuntu xenial image for kvm"
             shift;;
             *)
-            echo "Unknown option $1"
+            echo_error "Unknown option $1"
             print_help -1
             shift;;
         esac
     done
 
     if [ "$INSTALL_PKG" = "1" ] ; then
-	    echo "Installing the required packages"
 	    install_required_packages
-	    echo "###### JoX built successfully !!! ######"
+	    echo_success "###### JoX built successfully !!! ######"
     fi
     if [ "$INSTALL_PKG" = "2" ] ; then
 	    install_ubuntu_image
-	    echo "Installed ubuntu image for kvm"
     fi
 
     jox_store

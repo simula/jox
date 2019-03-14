@@ -693,6 +693,8 @@ class _PhysicalMachine():
 		# machine status
 		self.alive = False
 		self.connected = False
+		
+		self.available = True # to indicate whether the machine as a whole is reserved for certain application
 		"""
 		every address will have the following characteristics
 		self.addresses[0] = {
@@ -722,6 +724,8 @@ class _PhysicalMachine():
 		self.virt_lxd = False
 		self.virt_kvm = False
 		
+		self.tags = None
+		
 		self.list_lxd_machines = list()
 		self.list_kvm_machines = list()
 		
@@ -733,50 +737,74 @@ class _PhysicalMachine():
 		self.juju_endpoint = ""
 		self.juju_user_passwd = dict()  # list of user names and password
 		
-		self.mid_user_defined = ""
+		self.mid_user_defined = list()
 		self.mid_vnfm = ""  # juju id of the machine in case of juju
 		self.mid_vim = ""  # value assigned by LXD hypervisor
 		self.mid_ro = ""  # name given by the resource controller
 	def build(self,
-	          subslice_name,
-	          cloud_name,
-	          model_name,
-	          mid_ro,
-	          machine_config):
+	          zone,
+	          domain,
+	          hostname,
+	          dns_name,
+	          status_alive,
+	          status_connected,
+	          set_addresses,
+	          cpu_tot,
+	          mem_tot,
+	          disc_size_tot,
+	          cpu_ava,
+	          mem_ava,
+	          disc_size_ava,
+	          os_arch,
+	          os_type,
+	          os_dist,
+	          os_version,
+	          lxd_support,
+	          kvm_support,
+	          tags
+	          ):
 		try:
-			self.subslice_name.append(subslice_name)
+			self.zone = zone
+			self.domain = domain
+			self.hostname = hostname
+			self.dns_name = dns_name
+			self.dns_name = dns_name
+			self.alive = status_alive
+			self.connected = status_connected
+			self.addresses = set_addresses
 			
-			# credential of juju
-			self.juju_cloud_name = cloud_name
-			self.juju_model_name = model_name
-			self.juju_endpoint = None
+			self.host_cpu_tot = cpu_tot
+			self.host_mem_tot = mem_tot
+			self.host_disc_size_tot = disc_size_tot
 			
-			self.mid_user_defined = machine_config['machine_name']
-			self.mid_vim = ""  # value assigned by LXD hypervisor
-			self.mid_ro = mid_ro  # name given by the resource controller
+			self.host_cpu_ava = cpu_ava
+			self.host_mem_ava = mem_ava
+			self.host_disc_size_ava = disc_size_ava
 			
-			self.cpu = machine_config['host']['num_cpus']
-			self.disc_size = machine_config['host']['disk_size']
-			self.memory = machine_config['host']['mem_size']
-			if machine_config['os']['distribution'] == "Ubuntu":
-				os_version = str(machine_config['os']['version'])
-				try:
-					self.os_series = global_varialbles.OS_SERIES[os_version]
-				except:
-					message = "The os version {} for the machine {} from the subslice {} is not defined. Please define it in gv file in the variable OS_SERIES".format(
-						os_version, machine_config['machine_name'], subslice_name)
-					self.logger.critical(message)
-					self.logger.info(message)
+			self.os_arch = os_arch
+			self.os_type = os_type
+			self.os_dist = os_dist
+			self.os_version = os_version
+			
+			self.virt_lxd = lxd_support
+			self.virt_kvm = kvm_support
+			
+			# TODO to deal with tags here
+			self.tags = tags
 		except ValueError as ex:
 			raise ex
 	
+	def allocate(self, subslice, machine_user_defined_name):
+		self.available = False
+		self.subslice_name.append(subslice)
+		self.mid_user_defined.append(machine_user_defined_name)
+		
+	def release(self, subslice, machine_user_defined_name):
+		self.available = True
+		self.subslice_name.remove(subslice)
+		self.mid_user_defined.remove(machine_user_defined_name)
+		
 	def validate(self, cloud_name, model_name, machine_config):
-		"""
-		:param cloud_name:
-		:param model_name:
-		:param machine_config:
-		:return:
-		"""
 		raise NotImplementedError()
 
 

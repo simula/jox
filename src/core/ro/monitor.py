@@ -197,34 +197,6 @@ def update_index_key(jesearch, index_page, container_type, container_name, leaf_
         raise ex
 
 
-async def get_juju_status(type):
-    model = Model()
-    await model.connect_current()
-    if type == 'machines':
-        juju_status_machines=(await utils.run_with_interrupt(model.get_status(), model._watch_stopping, loop=model.loop)).machines
-        return [True, juju_status_machines]
-    elif type == 'applications':
-        juju_status_apps=(await utils.run_with_interrupt(model.get_status(), model._watch_stopping, loop=model.loop)).applications
-        return [True, juju_status_apps]
-    elif type == 'relations':
-        juju_status_relations=(await utils.run_with_interrupt(model.get_status(), model._watch_stopping, loop=model.loop)).relations
-        juju_status_relations = "The relations is not supported yet"
-        return [True, juju_status_relations]
-    elif type == 'all':
-        juju_status=(await utils.run_with_interrupt(model.get_status(), model._watch_stopping, loop=model.loop))
-        juju_status_relations = juju_status.relations
-        juju_status_relations = "The relations is not supported yet"
-        full_status=({'machines':[juju_status.machines],
-                      'services':[juju_status.applications],
-                      'relations':[juju_status_relations]})
-        return [True, full_status]
-    else:
-        message = "The key {} is not supported. Only the following keys are supported: machines, applications, relations, all".\
-            format(type)
-        return [False, message]
-
-
-
 async def get_juju_status(type, cloud_name=None, model_name=None, user_name="admin"):
     model = Model()
     if (cloud_name is None) and (model_name is None):

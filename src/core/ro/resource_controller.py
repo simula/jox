@@ -40,6 +40,7 @@ from src.core.ro import cloud
 
 from src.core.ro.vim_driver import vimdriver
 
+from src.core.ro.monitor import get_juju_status as jmonitor_get_juju_status
 
 class ResourcesController(object):
 	def __init__(self, global_variables):
@@ -128,6 +129,14 @@ class ResourcesController(object):
 			self.jesearch = jesearch
 		except Exception as ex:
 			raise ex
+	def resource_exposer(self, juju_cloud=None, juju_model=None):
+		# STEP 1: Get list of all machines added to juju controller, either the current juju model, or from specific juju model
+		
+		cloud_name = None
+		model_name = None
+		juju_key_val = "machines"
+		data = loop.run(jmonitor_get_juju_status(juju_key_val, cloud_name, model_name))
+		pass
 	def remove_machine(self, machine_config, service_config, slice_name, subslice_name):
 		vim_type = machine_config["vim_type"]
 		vim_location = machine_config["vim_location"]
