@@ -51,6 +51,7 @@ install_required_packages(){
     $SUDO $os_pm $option install python3.6
     $SUDO $os_pm $option remove --purge python3-apt
     $SUDO $os_pm $option install python3-apt
+    $SUDO $os_pm $option install python3.6-dev
 
     $SUDO update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.5 1
     $SUDO update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 2
