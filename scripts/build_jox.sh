@@ -40,8 +40,8 @@ jox_store=/mnt/jox_store
 
 
 install_required_packages(){
-    export LC_ALL="en_US.UTF-8"
-    export LC_CTYPE="en_US.UTF-8"
+#    export LC_ALL="en_US.UTF-8"
+#    export LC_CTYPE="en_US.UTF-8"
 
     $SUDO $os_pm  update -y
     $SUDO $os_pm dist-upgrade -y
