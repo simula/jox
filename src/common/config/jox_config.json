@@ -17,7 +17,7 @@
   },
 
   "flask-config":{
-    "flask-server": "172.24.10.186",
+    "flask-server": "localhost",
     "flask-port": 5000,
     "flask-debug": "FALSE"
   },
