@@ -153,7 +153,8 @@ install_required_packages(){
 
     if check_ubuntu_1604; then
         echo_info "upgrade pip3"
-        pip3 install --upgrade pip
+        $SUDO apt install add-apt-repository
+        #pip3 install --upgrade pip
         $SUDO apt install python3-pip --reinstall
 
         echo_info "dpkg --configure -a"
