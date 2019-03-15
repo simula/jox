@@ -130,20 +130,40 @@ install_required_packages(){
     if check_ubuntu_1604; then
         install_required_packages_ubunut16
     else
+        echo_info "Installing python3.6"
         $SUDO $os_pm $option install python3.6
     fi
+    echo_info "Installing python3-pip"
     $SUDO $os_pm $option install  python3-pip || true
+
+    echo_info "Installing docker.io"
     $SUDO $os_pm $option install  docker.io || true
+
+    echo_info "Installing screen"
     $SUDO $os_pm $option install  screen || true
+
+    echo_info "Installing git"
     $SUDO $os_pm $option install  git || true
+
+    echo_info "Installing curl"
     $SUDO $os_pm $option install  curl || true
+
+    echo_info "Installing tree"
     $SUDO $os_pm $option install  tree || true
 
-    pip3 install --upgrade pip
-    $SUDO $option dpkg --configure -a
-    $SUDO $option pip3 install -U setuptools
-    pip3 install --upgrade pip wheel
+    if check_ubuntu_1604; then
+        echo_info "upgrade pip3"
+        pip3 install --upgrade pip
 
+        echo_info "dpkg --configure -a"
+        $SUDO $option dpkg --configure -a
+
+        echo_info "Installing setuptools"
+        $SUDO $option pip3 install -U setuptools
+
+        echo_info "Installing tree"
+        pip3 install --upgrade pip wheel
+    fi
     install_elasticsearch
 
     install_rabbitmq
