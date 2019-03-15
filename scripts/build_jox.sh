@@ -152,8 +152,9 @@ install_required_packages(){
     $SUDO $os_pm $option install  tree || true
 
     if check_ubuntu_1604; then
-        echo_info "upgrade pip3"
-        pip3 install --upgrade pip
+#        echo_info "upgrade pip3"
+#        pip3 install --upgrade pip
+#        sudo apt install python3-pip --reinstall
 
         echo_info "dpkg --configure -a"
         $SUDO $option dpkg --configure -a
@@ -179,7 +180,7 @@ install_required_packages(){
 install_uvtool_kvm(){
     $SUDO $os_pm install $option  qemu-kvm libvirt-bin virtinst bridge-utils cpu-checker || true
     $SUDO $os_pm install $option uvtool || true
-    $SUDO adduser $USER libvirtd
+#    $SUDO adduser $USER libvirtd
     # echo 'fetching cloud image kvm xenial'
     # $SUDO uvt-simplestreams-libvirt --verbose sync release=xenial arch=amd64
 }
