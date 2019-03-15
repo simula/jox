@@ -113,7 +113,8 @@ install_required_packages_ubunut16(){
     #    export LC_CTYPE="en_US.UTF-8"
     echo_info "Installing python3.6 for $os_dist"
     $SUDO $os_pm  update -y
-    $SUDO $os_pm dist-upgrade -y
+    $SUDO apt install add-apt-repository
+    #$SUDO $os_pm dist-upgrade -y
     # ubunut 16 and 14
     $SUDO add-apt-repository ppa:jonathonf/python-3.6
     $SUDO $os_pm $option update
@@ -153,8 +154,8 @@ install_required_packages(){
 
     if check_ubuntu_1604; then
         echo_info "upgrade pip3"
-        $SUDO apt install add-apt-repository
-        #pip3 install --upgrade pip
+
+        pip3 install --upgrade pip
         $SUDO apt install python3-pip --reinstall
 
         echo_info "dpkg --configure -a"
