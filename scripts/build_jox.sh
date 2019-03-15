@@ -152,9 +152,9 @@ install_required_packages(){
     $SUDO $os_pm $option install  tree || true
 
     if check_ubuntu_1604; then
-#        echo_info "upgrade pip3"
-#        pip3 install --upgrade pip
-#        sudo apt install python3-pip --reinstall
+        echo_info "upgrade pip3"
+        pip3 install --upgrade pip
+        $SUDO apt install python3-pip --reinstall
 
         echo_info "dpkg --configure -a"
         $SUDO dpkg --configure -a
