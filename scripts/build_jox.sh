@@ -157,10 +157,10 @@ install_required_packages(){
 #        sudo apt install python3-pip --reinstall
 
         echo_info "dpkg --configure -a"
-        $SUDO $option dpkg --configure -a
+        $SUDO dpkg --configure -a
 
         echo_info "Installing setuptools"
-        $SUDO $option pip3 install -U setuptools
+        $SUDO pip3 install -U setuptools
 
         echo_info "Installing tree"
         pip3 install --upgrade pip wheel
