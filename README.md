@@ -29,3 +29,6 @@ To add:
 sudo systemctl daemon-reload
 sudo systemctl enable elasticsearch
 sudo systemctl start elasticsearch
+
+
+./build_jox.sh -i 2>&1 | tee jox_install_log.txt
