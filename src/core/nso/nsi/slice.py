@@ -88,6 +88,10 @@ class JSlice(JSONEncoder):
 		add_nssi_success = True
 		for nssi_id in self.template_manager.get_NSSIs_ID():
 			list_service_machine = self.template_manager.get_NSSI_requirements(nssi_id)
+			abort_deploy_subslice = list_service_machine[3]
+			if abort_deploy_subslice:
+				add_nssi_success = False
+				return add_nssi_success
 			subslice_config = {
 				"slice_name": self.slice_name,
 				"subslice_name": nssi_id,

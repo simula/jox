@@ -215,18 +215,27 @@ async def get_juju_status(type, cloud_name=None, model_name=None, user_name="adm
             logger.error(message)
             return [False, message]
     juju_status=(await utils.run_with_interrupt(model.get_status(), model._watch_stopping, loop=model.loop))
+    
+    model_info = dict()
+    model_info['controller_uuid'] = model.info.controller_uuid
+    model_info['model_uuid'] = model.info.uuid
+    model_info['cloud_name'] = model._connector.controller_name
+    model_info['model_name'] = model.info.name
+    model_info['default_series'] = model.info.default_series
+    model_info['provider_type'] = model.info.provider_type
+
     if type == 'machines':
-        return [True, juju_status.machines]
+        return [True, juju_status.machines, model_info]
     elif type == 'applications':
-        return [True, juju_status.applications]
+        return [True, juju_status.applications, model_info]
     elif type == 'relations':
-        return [True, get_all_relations(juju_status)]
+        return [True, get_all_relations(juju_status), model_info]
     elif type == 'all':
         juju_status_relations =get_all_relations(juju_status)
         full_status=({'machines':[juju_status.machines],
                       'services':[juju_status.applications],
                       'relations':[juju_status_relations]})
-        return [True, full_status]
+        return [True, full_status, model_info]
     else:
         message = "The key {} is not supported. Only the following keys are supported: machines, applications, relations, all".\
             format(type)

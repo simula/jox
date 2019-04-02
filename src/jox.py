@@ -66,7 +66,11 @@ import pika.exceptions as pika_exceptions
 from juju import loop
 from src.core.ro.monitor import get_juju_status as jmonitor_get_juju_status
 import tarfile, io
-
+import ipaddress
+import asyncio
+from asyncio import subprocess
+import random
+from netaddr import IPAddress, IPNetwork
 __author__ = "Eurecom"
 jox_version = '1.0'
 jox_version_date = '2019-02-01'
@@ -168,6 +172,9 @@ class NFVO_JOX(object):
 			self.gv.HTTP_400_BAD_REQUEST = self.jox_config["http"]["400"]["bad-request"]
 			self.gv.HTTP_404_NOT_FOUND = self.jox_config["http"]["400"]["not-found"]
 			
+			self.gv.ZONES = self.jox_config['zones']
+			
+			
 		except jsonschema.ValidationError as ex:
 			self.logger.error("Error happened while validating the jox config: {}".format(ex.message))
 			self.cleanup_and_exit(str(ex))
@@ -249,10 +256,11 @@ class NFVO_JOX(object):
 			self.resourceController = ResourcesController(self.gv)
 			self.resourceController.build(self.jox_config, self.jesearch)
 			for pop_type in self.jox_config['vim-pop']:
-				for pop_name in self.jox_config['vim-pop'][pop_type]:
+				for pop_config in self.jox_config['vim-pop'][pop_type]:
+					
 					self.logger.info(
-						"registering the POP {} of type {} as specified in jox_config".format(pop_name, pop_type))
-					self.register_pop(pop_name, pop_type)
+						"registering the following POP of type {} as specified in jox_config: {}".format(pop_type, pop_config))
+					self.register_pop(pop_config, pop_type)
 		except Exception as ex:
 			self.logger.error(str(ex))
 			self.logger.error(traceback.format_exc())
@@ -302,16 +310,77 @@ class NFVO_JOX(object):
 		else:
 			message = "JOX Web API loaded!"
 			self.logger.info(message)
-	
-	def register_pop(self, pop_name, pop_type):
+
+		nsi_name = "nsi-oai-4G.yaml"
+
+		available_resources = self.resource_discovery()
+		nsi_deploy = self.add_slice(nsi_name)
+	def resource_discovery(self, juju_cloud_name=None, juju_model_name=None, user="admin"):
+		"""
+		This methods discover the available resources that are already provisioned to certain juju model and register them at RO, to be later used
+		:return:
+		"""
+		machines_list = loop.run(jmonitor_get_juju_status("machines", juju_cloud_name, juju_model_name, user))
+		aplications_list = loop.run(jmonitor_get_juju_status("applications", juju_cloud_name, juju_model_name, user))
+		list_applications_machineId = dict()
+		if aplications_list[0]:
+			for appication_id in aplications_list[1]:
+
+				for unit in aplications_list[1][appication_id]['units']:
+					list_applications_machineId[unit] = aplications_list[1][appication_id]['units'][unit]['machine']
+		if machines_list[0]:
+			for machine_id in machines_list[1]:
+				from src.helpers.extract_info_juju_machine import extract_info
+				machine_config = extract_info(self.gv, machines_list[1][machine_id])
+				machine_config = machine_config.extract_info_juju_machine()
+				machine_config = machine_config[1]
+				machine_config["juju_id"] = machines_list[1][machine_id]['id']
+				
+				for ip_add in machine_config["domain"]:
+					ip = ipaddress.IPv4Address(ip_add)
+					scope = "private" if ip.is_private else "global"
+					domain = None
+					zone = None
+					
+					net_domain = machine_config["domain"][ip_add]
+					for item_zn in self.gv.ZONES:
+						for item_dmn in self.gv.ZONES[item_zn]:
+							if self.gv.ZONES[item_zn][item_dmn] == net_domain:
+								zone = item_zn
+								domain = item_dmn
+						if domain is None:
+							zone = item_zn
+							domain = "domain-{}".format(len(gv.ZONES[item_zn]))
+							self.gv.ZONES[item_zn][domain] = net_domain
+					pop_config = {
+								"pop-name": "zone-{}-{}".format(zone, domain),
+								"zone": zone,
+								"scope": scope,
+								"domain": net_domain,
+								"ssh-private-key": "",
+								"ssh-user": "",
+								"ssh-password": "",
+								"managed-by": "none"
+							}
+				machine_config['machine_available'] = \
+					False if machine_config['juju_id'] in list_applications_machineId.values() else True
+				pop_type = machine_config['virt_type']
+				pop_register_out = self.resourceController.pop_register(pop_config, pop_type)
+				juju_mode_info = machines_list[2]
+				pop_register_out = self.resourceController.register_machine(
+										machine_config, zone, net_domain,
+										juju_mode_info['cloud_name'], juju_mode_info['model_name'])
+		get_resource = self.resourceController.get_list_all_resources()
+		return get_resource
+	def register_pop(self, pop_config, pop_type):
 		try:
-			self.resourceController.pop_register(pop_name, pop_type)
+			self.resourceController.pop_register(pop_config, pop_type)
 		except Exception as ex:
 			self.logger.debug(
-				"The following error raised while registering the pop {} of type {}: \n {}".format(pop_name, pop_type,
+				"The following error raised while registering {} pop with the config {}: \n {}".format(pop_type, pop_config,
 				                                                                                   ex))
 		else:
-			self.logger.debug("The pop {} of type {} is successfully regiestered".format(pop_name, pop_type))
+			self.logger.debug("The {} pop with the following config is successfully regiestered: {}".format(pop_type, pop_config))
 	
 	def get_list_pop(self):
 		return self.resourceController.get_list_all_pop()
@@ -407,7 +476,7 @@ class NFVO_JOX(object):
 				if pop_lxc.driver_name == pop_name:
 					machine_status = pop_lxc.get_machines_status()
 					return machine_status
-		elif pop_type == self.gv.KVM:
+		elif (pop_type == self.gv.KVM) or (pop_type == self.gv.KVM_2):
 			for pop_kvm in self.resourceController.pop_kvm_list:
 				if pop_kvm.driver_name == pop_name:
 					machine_status = pop_kvm.get_machines_status()
@@ -446,7 +515,10 @@ class server_RBMQ(object):
 				self.channel.queue_declare(queue=self.queue_name)
 				
 				self.channel.basic_qos(prefetch_count=1)
+
 				self.channel.basic_consume(self.on_request, queue=self.queue_name)
+
+
 				
 				print(colored(' [*] Waiting for messages. To exit press CTRL+C', 'green'))
 				self.channel.start_consuming()
@@ -1611,4 +1683,3 @@ if __name__ == '__main__':
         logger = logging.getLogger('proj.jox')
         rmbq_server = server_RBMQ()
         rmbq_server.run()
-        

@@ -5,6 +5,13 @@ from juju import utils
 logger = logging.getLogger('jox.jmodel')
 import asyncio
 from asyncio import subprocess
+
+import ipaddress
+iface = ipaddress.ip_interface('10.99.104.1/255.255.255.0')
+
+domain = iface.exploded
+print(iface)
+
 async def get_juju_status(type, cloud_name=None, model_name=None, user_name="admin"):
 	model = Model()
 	if (cloud_name is None) and (model_name is None):
@@ -76,7 +83,7 @@ if __name__ == '__main__':
 			dns_name = machine['dns-name']
 			# status_alive = machine['dns-name']
 			# status_alive = machine['dns-name']
-			set_addresses = machine['ip-addresses']
+			
 			
 			set_interfaces = dict()
 			for interface in machine['network-interfaces']:
@@ -99,9 +106,46 @@ if __name__ == '__main__':
 			psutil.cpu_stats()
 			
 			get_mac_address = ["ip", "addr", "show", "wlp2s0"]
-			get_mem = ["ssh", "pou@{}".format(set_addresses[0]), "free", "-t", "-m"]
+			machine_name = "ubuntu"
+			set_addresses = machine['ip-addresses']
+			
+			get_cpu_info = ["ssh", "{}@{}".format(machine_name, set_addresses[0]),
+			                 "cat", "/proc/cpuinfo"]
+			get_cpu_info_out = loop.run(run_command(get_cpu_info))
+			get_cpu_info_out = get_cpu_info_out.split('\n')
+			core_id = list()
+			for item in get_cpu_info_out:
+				if "core id" in str(item):
+					item = [x for x in str(item).split(':') if x]
+					if int(item[1]) not in core_id:
+						core_id.append(int(item[1]))
+			
+			number_cpu = len(core_id)
+			
+			get_cpu_usage = ["ssh", "{}@{}".format(machine_name, set_addresses[0]),
+			                 "grep", "'cpu '",
+			                 "/proc/stat"]
+			get_cpu_usage_out = loop.run(run_command(get_cpu_usage))
+			#"|", "awk", "{usage=($2+$4)*100/($2+$4+$5)} END {print usage }"
+			get_cpu_usage_out = get_cpu_usage_out.split('\n')
+			
+			cpu_val = [x for x in str(get_cpu_usage_out[0]).split(' ') if x]
+			cpu_val.remove(cpu_val[0])
+			cpu_val = [int(x) for x in cpu_val]
+			cpu_usage =  (cpu_val[0]+cpu_val[2])*100/(cpu_val[0]+cpu_val[2]+cpu_val[3])
+			
+			get_cpu = ["ssh", "{}@{}".format(machine_name, set_addresses[0]), "lscpu"]
+			cpu_out = loop.run(run_command(get_cpu))
+			
+			get_mem = ["ssh", "{}@{}".format(machine_name, set_addresses[0]), "free", "-t", "-m"]
 			mem_out = loop.run(run_command(get_mem))
 			mem_out = mem_out.split('\n')
+			import json
+			
+			
+			
+			
+			
 			mem_tot = 0
 			mem_used = 0
 			mem_free = 0
@@ -122,13 +166,29 @@ if __name__ == '__main__':
 								counter += 1
 							else:
 								pass
+			
+			cmd_check_lxc = ["ssh", "{}@{}".format(machine_name, set_addresses[0]), "lxc", "list"]
+			cmd_check_lxc_out = loop.run(run_command(cmd_check_lxc))
+			
+			if ("error" in str(cmd_check_lxc_out)) or ("ERROR" in str(cmd_check_lxc_out)):
+				lxc_support = False
+			else:
+				lxc_support = True
+			cmd_check_kvm = ["ssh", "{}@{}".format(machine_name, set_addresses[0]), "uvt-kvm", "list"]
+			cmd_check_kvm_out = loop.run(run_command(cmd_check_kvm))
+			if ("error" in str(cmd_check_kvm_out)) or ("ERROR" in str(cmd_check_kvm_out)):
+				kvm_support = False
+			else:
+				kvm_support = True
 			import os
 			os.terminal_size
 			
 			import psutil
 			
 			# gives a single float value
-			psutil.cpu_percent()
+			number_cpus = psutil.cpu_count()
+			percentage_use = psutil.cpu_percent()
+			
 			# gives an object with many fields
 			psutil.virtual_memory()
 			# you can convert that object to a dictionary

@@ -29,14 +29,74 @@
   },
 
   "vim-pop": {
-    "lxc": ["local"],
-    "kvm": ["local"]
+    "lxc": [
+      {
+        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+        "pop-name": "default",
+        "zone": "1",
+        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+        "scope": "private",
+        "domain": "10.180.125.0/24",
+        "_Comment_3": "ssh config",
+        "ssh-private-key": "",
+        "ssh-user": "",
+        "ssh-password": "",
+        "managed-by": "lxd"
+      }
+    ],
+    "kvm": [
+      {
+        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+        "pop-name": "default",
+        "zone": "1",
+        "scope": "private",
+        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+        "domain": "192.168.122.0/24",
+        "_Comment_3": "ssh config",
+        "ssh-private-key": "",
+        "ssh-user": "",
+        "ssh-password": "",
+        "managed-by": "kvm"
+      }
+    ],
+    "phy": [
+      {
+        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+        "pop-name": "zone-1-phy",
+        "zone": "1",
+        "scope": "private",
+        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+        "domain": "192.168.1.0/24",
+        "_Comment_3": "ssh config",
+        "ssh-private-key": "",
+        "ssh-user": "",
+        "ssh-password": "",
+        "managed-by": "none"
+      }
+    ]
   },
-
+  "zones": {
+    "1": {
+      "domain-1": "192.168.1.0/24",
+      "domain-2": "1000.99.104.54/24"
+    }
+  },
   "clouds-list": [
     {
+      "description": "credentials of your juju controller",
+      "cloud-name": "psoque-home",
+      "cloud-type": "manual",
+      "cloud-endpoint": "192.168.1.100:17070",
+      "cloud-username": "admin",
+      "cloud-password": "c9db02159a4400f6756af2df370b42c5"
+    },
+    {
+      "description": "credentials of your juju controller",
       "cloud-name": "localhost",
-      "description": "name of you juju controller"
+      "cloud-type": "lxd",
+      "cloud-endpoint": "10.180.125.158:17070",
+      "cloud-username": "admin",
+      "cloud-password": "cad0dce46537672a437d0c00e764819e"
     }
   ],
 
@@ -94,8 +154,8 @@
   },
   "ssh-config": {
     "_Comment": "ssh connection is needed when adding kvm machines",
-    "ssh-key-directory": "/home/arouk/.ssh/",
-    "ssh-key-name": "id_juju",
+    "ssh-key-directory": "/home/nymphe/.ssh/",
+    "ssh-key-name": "id_rsa",
     "ssh-user": "ubuntu",
     "ssh-password": "linux"
   },

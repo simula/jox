@@ -19,7 +19,7 @@ async def add_machine():
 	await model.connect_current()
 	await asyncio.sleep(10)
 	juju_cmd = "".join(["ssh:", SSH_USER, "@", machine_ip, ":", ssh_key_private])
-	juju_machine = await model.add_machine(juju_cmd)
+	juju_machine = await model.add_machine()
 	
 	await model.disconnect()
 

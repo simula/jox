@@ -28,7 +28,7 @@
 
 import os
 import logging
-
+import copy
 logger = logging.getLogger('jox.templateManager')
 
 
@@ -42,6 +42,30 @@ service_keys = {}    # local key dictionary for slice component's context matchi
 machine_keys = {}
 relation_keys = {}
 
+
+list_tags_protocols = {
+	"usrp": ["VRT", "CHDR"],
+	"rf": []
+}
+vdu_properties = {
+	"network": None,
+	"tags": None,
+	}
+vdu_attributes = {
+	"host": None,
+	}
+vdu_policies = {
+	"region_placement": None,
+	}
+
+vdu_requirement_additional_skeleton = {
+				"properties": None,
+				"attributes": None,
+				"policies": None,
+			}
+
+
+anyval_inlist = lambda a, b: any(i in b for i in a)
 # dsl_definitions = {
 # 	"host":{
 # 			"tiny":{
@@ -165,7 +189,7 @@ class TemplateManager():
 			logger.debug(message)
 			self.jesearch.set_json_to_es(nssi_id, subslice_data_file)
 		
-		message = "the slice {} is successfully deployed".format(slice_name_yml)
+		message = "the slice {} is successfully parsed".format(slice_name_yml)
 		return [True, message]
 	def get_NSSIs_ID(self): # return the IDs of the NSSI composing the NSI
 		return self.NSSI_ID
@@ -214,6 +238,7 @@ class TemplateManager():
 		list_services = {}
 		list_machines = {}
 		slice_version = NSSI_template['metadata']['version']
+		abort_deploy_subslice = False
 		for item in NSSI_template['topology_template']['node_templates']:
 
 			if 'JOX' in NSSI_template['topology_template']['node_templates'][item]['type']:
@@ -250,6 +275,7 @@ class TemplateManager():
 					'os': None,
 					'vim_type': None,
 					'vim_location': None,
+					'additional_requirements': None
 				}
 				host = NSSI_template['topology_template']['node_templates'][item]['capabilities']['host']['properties']
 				os_sys = NSSI_template['topology_template']['node_templates'][item]['capabilities']['os']['properties']
@@ -270,9 +296,70 @@ class TemplateManager():
 				list_machines[machine_name]['vim_type'] = vim_type
 				vim_location = NSSI_template['topology_template']['node_templates'][item]['artifacts']['sw_image']['properties']['supported_virtualisation_environments']['entry_schema']
 				list_machines[machine_name]['vim_location'] = vim_location
+				""" check whether there is any properties defined """
+				vdu_requirement_additional = copy.deepcopy(vdu_requirement_additional_skeleton)
 
+				if "properties" in NSSI_template['topology_template']['node_templates'][item].keys():
+					vdu_requirement_additional["properties"] = vdu_properties
+					for property in NSSI_template['topology_template']['node_templates'][item]["properties"]:
+						if NSSI_template['topology_template']['node_templates'][item]["properties"][property]["type"] == "tosca.capabilities.Endpoint":
+							if "port_name" in NSSI_template['topology_template']['node_templates'][item]["properties"][property].keys():
+								port_name = NSSI_template['topology_template']['node_templates'][item]["properties"][property]["port_name"]
+								if port_name in NSSI_template['topology_template']['node_templates'].keys():
+									port_definition = NSSI_template['topology_template']['node_templates'][port_name]
+
+									if port_definition['type'] == 'tosca.nodes.network.Port':
+										port_requirements = port_definition['requirements']
+										if ('binding' in port_requirements.keys()) and ('link' in port_requirements.keys()):
+											req_binding = port_requirements['binding']
+											if req_binding['node'] != item:
+												abort_deploy_subslice = True
+											req_link = port_requirements['link']
+											if req_link['type'] == 'tosca.nodes.network.Network':
+												net_properties = req_link['node']['properties']
+												vdu_requirement_additional["properties"]["network"] = net_properties
+											else:
+												abort_deploy_subslice = True
+										else:
+											message = "For the port type, the binding and link should be defined. Deploying the slice will be aborted"
+											self.logger.error(message)
+											abort_deploy_subslice = True
+									else:
+										message = "The type [{}] is not recognized, and deploying the slice will be aborted".format(port_definition['type'])
+										self.logger.error(message)
+								else:
+									message = "The entity {} is not defined in node_templates. Deploying slice will be aborted".format(port_name)
+									self.logger.error(message)
+								# TODO retreive the definition of portname
+								pass
+							if "protocol" in NSSI_template['topology_template']['node_templates'][item]["properties"][property].keys():
+								# protocol defined for specific type fo communication: e.g. usrp, RF, etc
+								list_protocols = NSSI_template['topology_template']['node_templates'][item]["properties"][property]["protocol"]
+								vdu_requirement_additional["properties"]["tags"] = {
+														"usrp": False,
+														"rf": False
+														}
+								for tag_tmp in vdu_requirement_additional["properties"]["tags"]:
+									vdu_requirement_additional["properties"]["tags"][tag_tmp] = anyval_inlist(list_protocols, list_tags_protocols[tag_tmp])
+				if "attributes" in NSSI_template['topology_template']['node_templates'][item].keys():
+					vdu_requirement_additional["attributes"] = vdu_attributes
+					for attribute in NSSI_template['topology_template']['node_templates'][item]["attributes"]:
+						if ("tosca.capabilities.Endpoint" in
+								NSSI_template['topology_template']['node_templates'][item]["attributes"][attribute]["type"]):
+							vdu_requirement_additional["attributes"]['host'] = NSSI_template['topology_template']['node_templates'][item]["attributes"][attribute]["ip_address"]
+							pass
+
+				if "policies" in NSSI_template['topology_template']['node_templates'][item].keys():
+					vdu_requirement_additional["policies"] = vdu_policies
+					for policy in NSSI_template['topology_template']['node_templates'][item]["policies"]:
+						if ("tosca.policy.placement" in NSSI_template['topology_template']['node_templates'][item]["policies"][policy]["type"]) and \
+						('container_type' in NSSI_template['topology_template']['node_templates'][item]["policies"][policy].keys()) and \
+						('container_number' in NSSI_template['topology_template']['node_templates'][item]["policies"][policy].keys()):
+							vdu_requirement_additional["policies"]['region_placement'] = str(NSSI_template['topology_template']['node_templates'][item]["policies"][policy]["container_number"])
+						pass
+				list_machines[machine_name]['additional_requirements'] = copy.deepcopy(vdu_requirement_additional)
 		self.set_NSSI_monitor_index(nssi_id, self.get_NSI_ID(), list_services, list_machines) # Add monitoring template for this subslice
-		return [slice_version, list_services, list_machines]
+		return [slice_version, list_services, list_machines, abort_deploy_subslice]
 
 	def get_inter_nssi_relations(self):
 		Inter_relations = {}
