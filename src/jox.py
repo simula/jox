@@ -310,11 +310,6 @@ class NFVO_JOX(object):
 		else:
 			message = "JOX Web API loaded!"
 			self.logger.info(message)
-
-		nsi_name = "nsi-oai-4G.yaml"
-
-		available_resources = self.resource_discovery()
-		nsi_deploy = self.add_slice(nsi_name)
 	def resource_discovery(self, juju_cloud_name=None, juju_model_name=None, user="admin"):
 		"""
 		This methods discover the available resources that are already provisioned to certain juju model and register them at RO, to be later used
@@ -541,8 +536,23 @@ class server_RBMQ(object):
 			print(" [*] enquiry(%s)" % enquiry_tmp)
 		else:
 			print(" [*] enquiry(%s)" % enquiry)
-		
-		if "/jox/" in enquiry["request-uri"]:
+		if "/resource" in enquiry["request-uri"]:
+			available_resources = self.nfvo_jox.resource_discovery()
+			response = {
+				"ACK": True,
+				"data": available_resources,
+				"status_code": self.nfvo_jox.gv.HTTP_200_OK
+			}
+
+		elif "/test_deploy" in enquiry["request-uri"]:
+			nsi_name = "nsi-oai-4G.yaml"
+			nsi_deploy = self.nfvo_jox.add_slice(nsi_name)
+			response = {
+				"ACK": True,
+				"data": nsi_deploy,
+				"status_code": self.nfvo_jox.gv.HTTP_200_OK
+			}
+		elif "/jox/" in enquiry["request-uri"]:
 			jox_config = self.nfvo_jox.gv.JOX_CONFIG_KEY
 			res = self.nfvo_jox.jesearch.get_source_index(jox_config)
 			res = {

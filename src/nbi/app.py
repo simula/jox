@@ -661,7 +661,67 @@ def list_of_templates(nsi_name=None):
 	data = jsonify(data)
 	return data, status_code
 
+@app.route('/test_deploy')
+def test_deploy_slice():
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	# enquiry["parameters"]["template_directory"] = request.args.get('url')
+	# enquiry["parameters"]["package_onboard_data"] = request.data
+	logger.info("enquiry: {}".format(enquiry))
+	logger.debug("enquiry: {}".format(enquiry))
 
+	# enquiry["parameters"]["package_onboard_data"] = list(request.data)
+
+	enquiry = json.dumps(enquiry)
+	# waiting for the response
+	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+	data = json.loads(data)
+
+	status_code = data["status_code"]
+	data = data["data"]
+	data = {
+		"data": data,
+		"elapsed-time": str(datetime.datetime.now() - current_time),
+	}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
+
+@app.route('/resource')
+def resource_discovery():
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	# enquiry["parameters"]["template_directory"] = request.args.get('url')
+	# enquiry["parameters"]["package_onboard_data"] = request.data
+	logger.info("enquiry: {}".format(enquiry))
+	logger.debug("enquiry: {}".format(enquiry))
+
+	# enquiry["parameters"]["package_onboard_data"] = list(request.data)
+
+	enquiry = json.dumps(enquiry)
+	# waiting for the response
+	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+	data = json.loads(data)
+
+	status_code = data["status_code"]
+	data = data["data"]
+	data = {
+		"data": data,
+		"elapsed-time": str(datetime.datetime.now() - current_time),
+	}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
 @app.route('/onboard', methods=['PUT'])
 def jox_package_onboard():
 	"""
