@@ -38,7 +38,8 @@ class NetworkSliceController(object):
 		self.log_config()
 		
 		self.resourceController = None # pointer to resource controller
-		self.logger.info("Initial configuration of networks licec ontroller")
+		self.logger.info("Initial configuration of network slice controller")
+		self.jesearch = None
 	def log_config(self):
 		if self.gv.LOG_LEVEL == 'debug':
 			self.logger.setLevel(logging.DEBUG)
@@ -53,8 +54,9 @@ class NetworkSliceController(object):
 		else:
 			self.logger.setLevel(logging.INFO)
 	
-	def build(self, resourceController, jox_config):
+	def build(self, resourceController, jox_config, jesearch):
 		try:
+			self.jesearch = jesearch
 			self.jox_config = jox_config
 			self.resourceController = resourceController
 			self.logger.info("The resource controller is built")
@@ -124,8 +126,9 @@ class NetworkSliceController(object):
 			for current_nssi in list_subslices:
 				subslices_controller.destroy_subslice(current_nssi, slice_name)
 				index_subslcie_monitor = ''.join(['slice_monitor_', str(current_nssi).lower()])
-				jesearch.del_index_from_es(current_nssi)
-				jesearch.del_index_from_es(index_subslcie_monitor)
+				if self.gv.es_status == "Active":
+					jesearch.del_index_from_es(current_nssi)
+					jesearch.del_index_from_es(index_subslcie_monitor)
 			for relation in list_inter_nssi_relations:
 				juju_controller_a = relation['service_a']['jcloud']
 				juju_model_a = relation['service_a']['jmodel']
@@ -148,11 +151,12 @@ class NetworkSliceController(object):
 						pass
 				
 			self.remove_slice_object(slice_name)
-			slice_keys_tmp = ''.join(['slice_keys_tmp_', str(slice_name).lower()])
-			slice_keys = ''.join(['slice_keys_', str(slice_name).lower()])
-			jesearch.del_index_from_es(slice_name)
-			jesearch.del_index_from_es(slice_keys_tmp)
-			jesearch.del_index_from_es(slice_keys)
+			if self.gv.es_status == "Active":
+				slice_keys_tmp = ''.join(['slice_keys_tmp_', str(slice_name).lower()])
+				slice_keys = ''.join(['slice_keys_', str(slice_name).lower()])
+				jesearch.del_index_from_es(slice_name)
+				jesearch.del_index_from_es(slice_keys_tmp)
+				jesearch.del_index_from_es(slice_keys)
 			
 			return [True, "Removing the slice {} already started in the background".format(slice_name)]
 		else:

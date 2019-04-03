@@ -34,7 +34,7 @@ __license__ = 'Apache License, Version 2.0'
 __maintainer__ = 'Osama Arouk, Navid Nikaein, Kostas Kastalis, and Rohan Kharade'
 __email__ = 'contact@mosaic5g.io'
 __status__ = 'Development'
-__description__ = "The descripton goes here"
+__description__ = "Main program to invoke JoX"
 
 import os, sys
 
@@ -226,29 +226,33 @@ class NFVO_JOX(object):
 			if not self.jesearch.ping():
 				message = "Elasticsearch is not working while it is enabled. Either disable elasticsearch or run it"
 				self.logger.error(message)
-				self.cleanup_and_exit(str(0))
+				# self.cleanup_and_exit(str(0))
+				self.gv.es_status = "Dead"
 			else:
 				message = "elasticsearch is now running"
 				self.logger.info(message)
-		
+				self.gv.es_status = "Active"
 		######### STEP 4: Load JOX Configuration to ES ########
 		if self.gv.ELASTICSEARCH_ENABLE:
 			self.logger.info("Save JOX configuration to elasticsearch")
-			try:
-				self.logger.info("Delete the index of jox config from elasticsearch if exist")
-				self.jesearch.del_index_from_es(self.gv.JOX_CONFIG_KEY)
-				
-				self.logger.info("Sending JOX configuration file to elasticsearch")
-				set_indx_es = self.jesearch.set_json_to_es(self.gv.JOX_CONFIG_KEY, self.jox_config)
-				if set_indx_es:
-					message = "The data of the index {} is addedd to elasticsearch".format(self.gv.JOX_CONFIG_KEY)
-					self.logger.info(message)
-				else:
-					message = "The index of jox config can not be saved to elasticsearch"
-					self.logger.info(message)
-			except Exception as ex:
-				self.logger.error((str(ex)))
-				self.logger.error(traceback.format_exc())
+			if self.gv.es_status == "Active":
+				try:
+					self.logger.info("Delete the index of jox config from elasticsearch if exist")
+					self.jesearch.del_index_from_es(self.gv.JOX_CONFIG_KEY)
+
+					self.logger.info("Sending JOX configuration file to elasticsearch")
+					set_indx_es = self.jesearch.set_json_to_es(self.gv.JOX_CONFIG_KEY, self.jox_config)
+					if set_indx_es:
+						message = "The data of the index {} is addedd to elasticsearch".format(self.gv.JOX_CONFIG_KEY)
+						self.logger.info(message)
+					else:
+						message = "The index of jox config can not be saved to elasticsearch"
+						self.logger.info(message)
+				except Exception as ex:
+					self.logger.error((str(ex)))
+					self.logger.error(traceback.format_exc())
+			else:
+				pass
 		
 		######### STEP 5: Create Resource Controller ########
 		self.logger.info("Create resource Controller")
@@ -284,7 +288,7 @@ class NFVO_JOX(object):
 		try:
 			self.logger.info("Creating slice controller")
 			self.slices_controller = nsi_controller.NetworkSliceController(self.gv)
-			self.slices_controller.build(self.resourceController, self.jox_config)
+			self.slices_controller.build(self.resourceController, self.jox_config, self.jesearch)
 			
 			self.logger.info("Creating sub-slice controller")
 			self.subslices_controller = nssi_controller.SubSlicesController(self.gv)
@@ -778,6 +782,56 @@ class server_RBMQ(object):
 					"data": onboard_files[1],
 					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 				}
+
+		elif (enquiry["request-uri"] == "/log") or (enquiry["request-uri"] == "/log/<string:log_source>") or (enquiry["request-uri"] == "/log/<string:log_source>/<string:log_type>"):
+			parameters = enquiry["parameters"]
+			log_source = parameters["log_source"]
+			log_type = parameters["log_type"]
+			res=None
+			if log_source == "jox":
+				file = open("jox.log", 'r')
+				data_tmp=file.readlines()
+				data=[s.replace('\n','') for s in data_tmp]
+				if log_type == None:
+					res=data
+				elif log_type == 'all':
+					res=data
+				elif log_type== 'error' or 'debug' or 'info':
+					data_log_type=[]
+					for line in data:
+						if re.findall(log_type.upper(), line):
+							data_log_type.append(line)
+					res=data_log_type
+				else:
+					res = "This log type is not supported. Supported types all, debug, error, info, time {today, start, end}"
+				file.close()
+			if log_source == "juju":
+				file = open("juju.log", 'w')
+				cmd_log = ["juju", "debug-log", "--lines", str(10000)]
+				cmd_out = loop.run(run_command(cmd_log))
+				file.write(cmd_out)
+				file.close()
+				file = open("juju.log", 'r')
+				data_tmp=file.readlines()
+				data=[s.replace('\n','') for s in data_tmp]
+				if log_type == None:
+					res=data
+				elif log_type == 'all':
+					res=data
+				elif log_type== 'error' or 'debug' or 'info':
+					data_log_type=[]
+					for line in data:
+						if re.findall(log_type.upper(), line):
+							data_log_type.append(line)
+					res=data_log_type
+				else:
+					res = "This log type is not supported. Supported types all, debug, error, info, time {today, start, end}"
+				file.close()
+			response = {
+				"ACK": True,
+				"data": res,
+				"status_code": self.nfvo_jox.gv.HTTP_200_OK
+			}
 		elif (enquiry["request-uri"] == "/nssi/all") or (enquiry["request-uri"] == "/nssi"):
 			res = self.nfvo_jox.get_subslices_context()
 			response = {

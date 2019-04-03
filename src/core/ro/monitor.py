@@ -57,22 +57,24 @@ else:
 keys_local = {}   # locally maintaining keys for slice component's context matching
 
 def update_machine_monitor_state(jesearch, machine_id, machine_state, slice_id):
-    nssid, container_name, start_time = check_nssid_with_mid(jesearch, machine_id, 'machine_keys', slice_id)
-    if (not nssid) and (not nssid) and (not nssid):
-        pass
-    else:
-        end_time = (datetime.datetime.now()).isoformat()
-        launch_time = (datetime.datetime.strptime(end_time,'%Y-%m-%dT%H:%M:%S.%f'))-(datetime.datetime.strptime(start_time,'%Y-%m-%dT%H:%M:%S.%f'))
-        update_index_key(jesearch, 'slice_monitor_'+ nssid.lower(), "machine_status", container_name, machine_state,
-                         str(launch_time), slice_id)
+    if gv.es_status == "Active":
+        nssid, container_name, start_time = check_nssid_with_mid(jesearch, machine_id, 'machine_keys', slice_id)
+        if (not nssid) and (not nssid) and (not nssid):
+            pass
+        else:
+            end_time = (datetime.datetime.now()).isoformat()
+            launch_time = (datetime.datetime.strptime(end_time,'%Y-%m-%dT%H:%M:%S.%f'))-(datetime.datetime.strptime(start_time,'%Y-%m-%dT%H:%M:%S.%f'))
+            update_index_key(jesearch, 'slice_monitor_'+ nssid.lower(), "machine_status", container_name, machine_state,
+                             str(launch_time), slice_id)
 
 def update_service_monitor_state(jesearch , service_name, service_state, slice_id):
-    nssid, start_time = check_nssid_with_service(jesearch, service_name, slice_id)
-    end_time = (datetime.datetime.now()).isoformat()
-    
-    service_time = (datetime.datetime.strptime(end_time,'%Y-%m-%dT%H:%M:%S.%f'))-(datetime.datetime.strptime(start_time,'%Y-%m-%dT%H:%M:%S.%f'))
-    update_index_key(jesearch, 'slice_monitor_'+ nssid.lower(), "service_status", service_name, service_state,
-                        str(service_time), slice_id)
+    if gv.es_status == "Active":
+        nssid, start_time = check_nssid_with_service(jesearch, service_name, slice_id)
+        end_time = (datetime.datetime.now()).isoformat()
+
+        service_time = (datetime.datetime.strptime(end_time,'%Y-%m-%dT%H:%M:%S.%f'))-(datetime.datetime.strptime(start_time,'%Y-%m-%dT%H:%M:%S.%f'))
+        update_index_key(jesearch, 'slice_monitor_'+ nssid.lower(), "service_status", service_name, service_state,
+                            str(service_time), slice_id)
 
 def check_nssid_with_mid(jesearch, machine_id, container_type, slice_id):
     for nsi in range(len(keys_local.keys())):

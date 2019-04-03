@@ -81,6 +81,8 @@ standard_reqst = {
 		# package onboarding
 		"package_onboard_data": "",
 		"package_name": None,
+		# related to logs
+		"log": None
 	}
 }
 
@@ -3199,6 +3201,44 @@ def monitor_juju(juju_key_val=None, cloud_name=None, model_name=None):
 	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
 	data = json.loads(data)
 	
+	status_code = data["status_code"]
+	data = data["data"]
+	data = {
+		"data": data,
+		"elapsed-time": str(datetime.datetime.now() - current_time),
+	}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
+
+
+@app.route('/log')
+@app.route('/log/<string:log_source>')
+@app.route('/log/<string:log_source>/<string:log_type>')
+def logging(log_source=None, log_type=None):
+
+	if log_type is None:
+		log_type = 'all'
+	if log_source is None:
+		log_source = 'jox'
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["parameters"]["template_directory"] = request.args.get('url')
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	enquiry["parameters"]["log_type"] = log_type
+	enquiry["parameters"]["log_source"] = log_source
+
+	enquiry = json.dumps(enquiry)
+	logger.info("enquiry: {}".format(enquiry))
+	logger.debug("enquiry: {}".format(enquiry))
+	# waiting for the response
+	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+	data = json.loads(data)
+
 	status_code = data["status_code"]
 	data = data["data"]
 	data = {
