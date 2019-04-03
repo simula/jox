@@ -710,6 +710,7 @@ class KvmDriver(object):
 		finally:
 			await model.disconnect()
 		return add_new_context_machine
+
 	async def update_machine(self, machine_config):
 		for machine in self.machine_list:
 			if machine_config['machine_name'] == machine.mid_user_defined:
@@ -868,18 +869,26 @@ class PhyDriver(object):
 			self.logger.error(traceback.format_exc())
 			raise ex
 	
-	def add_machine(self, machine_config, service_name, mid_ro, subslice_name, model_name, cloud_name, nsi_id):
+	def add_machine(self, machine_config, service_name, mid_ro, subslice_name, model_name, cloud_name, nsi_id, machine_id_service=None):
 		try:
-			new_machine = _PhysicalMachine
+			new_machine = _PhysicalMachine()
 			
 			new_machine.build(subslice_name,
-			                  cloud_name,
-			                  model_name,
-			                  mid_ro,
-			                  machine_config)
-			loop.run(self.deploy_kvm(new_machine, service_name, subslice_name, nsi_id))
-			self.machine_list.append(new_machine)
+							  	cloud_name,
+								model_name,
+								mid_ro,
+								machine_config)
+
+			# cloud_name,
+			# model_name,
+			# mid_ro,
+			# machine_config
+
+			add_new_context_machine = loop.run(self.deploy_physical_machine(new_machine, service_name, subslice_name, nsi_id, "admin", machine_id_service))
+			if add_new_context_machine:
+				self.machine_list.append(new_machine)
 			self.allocate_machine(new_machine, service_name, mid_ro, machine_config['machine_name'])
+
 		except Exception as ex:
 			raise ex
 	
@@ -903,28 +912,33 @@ class PhyDriver(object):
 				return [False, message]
 		juju_status = (await utils.run_with_interrupt(model.get_status(), model._watch_stopping, loop=model.loop))
 		return [True, juju_status.machines]
-	async def deploy_kvm(self, new_machine, service_name, subslice_name, nsi_id):
+
+	async def deploy_physical_machine(self, new_machine, service_name, subslice_name, nsi_id, m_user="admin",
+						 machine_id_service=None):
 		model = Model()
+
+		add_new_context_machine = True
+		if machine_id_service is not None:
+			add_new_context_machine = False
 		try:
 			c_name = new_machine.juju_cloud_name
 			m_name = new_machine.juju_model_name
-			m_user = "admin"
 			model_name = c_name + ":" + m_user + '/' + m_name
-			
+
 			number_retry = 0
 			retry_connect = True
 			while number_retry <= self.max_retry and retry_connect:
 				try:
 					self.logger.debug(
 						"{} time trying to connect to juju model:{} to add lxc machine".format(number_retry,
-						                                                                       model_name))
+																							   model_name))
 					await model.connect(model_name)
 					retry_connect = False
 					self.logger.debug("Successful connection to the model {} ".format(model_name))
 				except:
 					await model.disconnect()
 					await asyncio.sleep(self.interval_access)
-			
+
 			app_keys = model.applications.keys()
 			application_NotExist = True
 			for app in app_keys:
@@ -932,87 +946,49 @@ class PhyDriver(object):
 					application_NotExist = False
 					app_values = model.applications.get(app)
 					machine_id_service = app_values.units[0].machine.id
-			if application_NotExist:
+					add_new_context_machine = False
+			if application_NotExist and machine_id_service is None:
 				ssh_key_puplic = ''.join([self.gv.SSH_KEY_DIRECTORY, self.gv.SSH_KEY_NAME, '.pub'])
 				ssh_key_private = ''.join([self.gv.SSH_KEY_DIRECTORY, self.gv.SSH_KEY_NAME])
-				################
-				cmd_list_kvm = "uvt-kvm list"
-				list_output_tmp = check_output(cmd_list_kvm, shell=True)
-				list_output_tmp = (list_output_tmp.decode("utf-8")).rstrip()
-				list_machine = list()
-				temp_item = ""
-				for item in list_output_tmp:
-					if str(item).encode() == b'\n':
-						list_machine.append(temp_item)
-						temp_item = ""
-					else:
-						temp_item = "".join([temp_item, item])
-				list_machine.append(temp_item)
-				machine_ip = ""
-				for current_machine in list_machine:
-					if new_machine.mid_user_defined == current_machine:
-						cmd_ip = "uvt-kvm ip " + new_machine.mid_user_defined
-						output = check_output(cmd_ip, shell=True)
-						machine_ip = (output.decode("utf-8")).rstrip()
-						break
-				###################
-				if machine_ip == "":
-					cmd_create_kvm = ["uvt-kvm", "create",
-									  new_machine.mid_user_defined,
-									  "release={}".format(new_machine.os_series),
-									  "--memory", str(new_machine.memory),
-									  "--cpu", str(new_machine.cpu),
-									  "--disk", str(new_machine.disc_size),
-									  "--ssh-public-key-file", ssh_key_puplic,
-									  "--password", self.gv.SSH_PASSWORD
-									  ]
-					cmd_create_kvm_out = loop.run(run_command(cmd_create_kvm))
 
-					cmd_wait_kvm = ["uvt-kvm", "wait", new_machine.mid_user_defined]
-					cmd_ip = ["uvt-kvm", "ip", new_machine.mid_user_defined]
-
-					cmd_wait_kvm_out = loop.run(run_command(cmd_wait_kvm))
-					cmd_ip_out = loop.run(run_command(cmd_ip))
-					machine_ip = (str(cmd_ip_out).split('\n'))[0]
-
+				machine_ip = "127.0.0.1"
+				ssh_user = "arouk"
+				cmd_kvm_ssh_vm = ["ssh", "-o", "StrictHostKeyChecking={}".format("no"), "-i", ssh_key_private,
+								  "{}@{}".format(ssh_user, machine_ip), "pwd"]
 				self.logger.debug(
 					"The ip address of the machine {} is {}".format(new_machine.mid_user_defined, machine_ip))
 				self.logger.info(
 					'Adding the kvm machine {} whose ip {} to juju'.format(new_machine.mid_user_defined, machine_ip))
 				await machine_configuration_for_jujuCharm(self.gv.SSH_USER, machine_ip, ssh_key_private, self.logger)
-				await asyncio.sleep(10)
+				await asyncio.sleep(5)
 				juju_cmd = "".join(["ssh:", self.gv.SSH_USER, "@", machine_ip, ":", ssh_key_private])
-				juju_machine = await model.add_machine(juju_cmd,
-				                                       constraints={
-					                                       'tags': [new_machine.mid_user_defined],
-					                                       'virt_type': 'kvm'
-				                                       }
-				                                       )
+				juju_machine = await model.add_machine(juju_cmd)
 			else:
 				juju_machine = model.machines.get(machine_id_service)
 			new_machine.mid_vnfm = juju_machine.data["id"]
-			
+
 			self.template_manager.update_slice_monitor_index("slice_monitor_" + subslice_name.lower(),
-			                                                 "machine_status",
-			                                                 service_name,
-			                                                 "juju_mid",
-			                                                 str(new_machine.mid_vnfm),
-			                                                 nsi_id)
+															 "machine_status",
+															 service_name,
+															 "juju_mid",
+															 str(new_machine.mid_vnfm),
+															 nsi_id)
 			self.template_manager.update_slice_monitor_index('slice_keys_' + nsi_id.lower(), "machine_keys",
-			                                                 service_name, "juju_mid", str(new_machine.mid_vnfm),
-			                                                 nsi_id)
+															 service_name, "juju_mid", str(new_machine.mid_vnfm),
+															 nsi_id)
 			self.template_manager.update_slice_monitor_index("slice_monitor_" + subslice_name.lower(),
-			                                                 "machine_status", service_name, "type", "kvm", nsi_id)
-			
+															 "machine_status", service_name, "type", "kvm", nsi_id)
+
 			self.logger.debug(
 				"The machine {} with juju id {} is already added to juju model".format(new_machine.mid_user_defined,
-				                                                                       juju_machine.data["id"]))
+																					   juju_machine.data["id"]))
 		except Exception as ex:
 			self.logger.error(traceback.format_exc())
 			raise ex
 		finally:
 			await model.disconnect()
-	
+		return add_new_context_machine
+
 	async def update_machine(self, machine_config):
 		for machine in self.machine_list:
 			if machine_config['machine_name'] == machine.mid_user_defined:
@@ -1405,58 +1381,92 @@ class _PhysicalMachine():
 		self.mid_vnfm = ""  # juju id of the machine in case of juju
 		self.mid_vim = ""  # value assigned by LXD hypervisor
 		self.mid_ro = ""  # name given by the resource controller
+
 	def build(self,
-	          zone,
-	          domain,
-	          hostname,
-	          dns_name,
-	          status_alive,
-	          status_connected,
-	          set_addresses,
-	          cpu_tot,
-	          mem_tot,
-	          disc_size_tot,
-	          cpu_ava,
-	          mem_ava,
-	          disc_size_ava,
-	          os_arch,
-	          os_type,
-	          os_dist,
-	          os_version,
-	          lxd_support,
-	          kvm_support,
-	          tags
-	          ):
+			  subslice_name,
+			  cloud_name,
+			  model_name,
+			  mid_ro,
+			  machine_config):
 		try:
-			self.zone = zone
-			self.domain = domain
-			self.hostname = hostname
-			self.dns_name = dns_name
-			self.dns_name = dns_name
-			self.alive = status_alive
-			self.connected = status_connected
-			self.addresses = set_addresses
-			
-			self.host_cpu_tot = cpu_tot
-			self.host_mem_tot = mem_tot
-			self.host_disc_size_tot = disc_size_tot
-			
-			self.host_cpu_ava_percent = cpu_ava
-			self.host_mem_ava = mem_ava
-			self.host_disc_size_ava = disc_size_ava
-			
-			self.os_arch = os_arch
-			self.os_type = os_type
-			self.os_dist = os_dist
-			self.os_version = os_version
-			
-			self.virt_lxd = lxd_support
-			self.virt_kvm = kvm_support
-			
-			# TODO to deal with tags here
-			self.tags = tags
-		except ValueError as ex:
+			self.subslice_name.append(subslice_name)
+
+			# credential of juju
+			self.juju_cloud_name = cloud_name
+			self.juju_model_name = model_name
+			self.juju_endpoint = None
+
+			self.mid_user_defined = machine_config['machine_name']
+			self.mid_vim = ""  # value assigned by LXD hypervisor
+			self.mid_ro = mid_ro  # name given by the resource controller
+
+			self.cpu = machine_config['host']['num_cpus']
+			self.disc_size = machine_config['host']['disk_size']
+			self.memory = machine_config['host']['mem_size']
+			if machine_config['os']['distribution'] == "Ubuntu":
+				os_version = str(machine_config['os']['version'])
+				try:
+					self.os_series = global_varialbles.OS_SERIES[os_version]
+				except:
+					message = "The os version {} for the machine {} from the subslice {} is not defined. Please define it in gv file in the variable OS_SERIES".format(
+						os_version, machine_config['machine_name'], subslice_name)
+					self.logger.debug(message)
+					self.logger.critical(message)
+					self.logger.info(message)
+		except Exception as ex:
 			raise ex
+	# def build_2(self,
+	#           zone,
+	#           domain,
+	#           hostname,
+	#           dns_name,
+	#           status_alive,
+	#           status_connected,
+	#           set_addresses,
+	#           cpu_tot,
+	#           mem_tot,
+	#           disc_size_tot,
+	#           cpu_ava,
+	#           mem_ava,
+	#           disc_size_ava,
+	#           os_arch,
+	#           os_type,
+	#           os_dist,
+	#           os_version,
+	#           lxd_support,
+	#           kvm_support,
+	#           tags
+	#           ):
+	# 	try:
+	# 		self.zone = zone
+	# 		self.domain = domain
+	# 		self.hostname = hostname
+	# 		self.dns_name = dns_name
+	# 		self.dns_name = dns_name
+	# 		self.alive = status_alive
+	# 		self.connected = status_connected
+	# 		self.addresses = set_addresses
+	#
+	# 		self.host_cpu_tot = cpu_tot
+	# 		self.host_mem_tot = mem_tot
+	# 		self.host_disc_size_tot = disc_size_tot
+	#
+	# 		self.host_cpu_ava_percent = cpu_ava
+	# 		self.host_mem_ava = mem_ava
+	# 		self.host_disc_size_ava = disc_size_ava
+	#
+	# 		self.os_arch = os_arch
+	# 		self.os_type = os_type
+	# 		self.os_dist = os_dist
+	# 		self.os_version = os_version
+	#
+	# 		self.virt_lxd = lxd_support
+	# 		self.virt_kvm = kvm_support
+	#
+	# 		# TODO to deal with tags here
+	# 		self.tags = tags
+	# 	except ValueError as ex:
+	# 		raise ex
 
 	def register(self,
 				 cloud_name,
@@ -1470,7 +1480,8 @@ class _PhysicalMachine():
 			self.juju_endpoint = None
 
 			self.mid_user_defined = machine_config['machine_name']
-			self.mid_vim = machine_config['juju_id']
+			self.mid_vim = ""
+			self.mid_vnfm = machine_config['juju_id']
 			self.mid_ro = mid_ro  # name given by the resource controller
 
 			self.cpu = machine_config['host']['num_cpus']
@@ -1505,11 +1516,6 @@ class _PhysicalMachine():
 		except ValueError as ex:
 			raise ex
 
-
-	def allocate(self, subslice, machine_user_defined_name):
-		self.available = False
-		self.subslice_name.append(subslice)
-		self.mid_user_defined.append(machine_user_defined_name)
 		
 	def release(self, subslice, machine_user_defined_name):
 		self.available = True

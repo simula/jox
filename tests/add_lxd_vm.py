@@ -110,7 +110,7 @@ if __name__ == '__main__':
 	""" START: KVM TEST"""
 	# """
 	time_1 = time.time()
-	mid_user_defined = "machine1"
+	mid_user_defined = "machine2"
 	cmd_list_kvm = ["uvt-kvm", "list"]
 
 	cmd_list_kvm_out = loop.run(run_command(cmd_list_kvm))
@@ -201,7 +201,7 @@ if __name__ == '__main__':
 
 
 
-	container_name = "c2"
+	container_name = "c1"
 
 	
 	cmd_list_lxc = ["lxc", "list", "--format", "json"]

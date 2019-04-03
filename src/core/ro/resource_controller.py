@@ -375,8 +375,8 @@ class ResourcesController(object):
 					if curren_driver[0]:
 						curren_driver = curren_driver[1]
 						if curren_driver.machine_exists(service_name):
-							message[machine_config["mid_model"]] = " already in LXC machines"
-							self.logger.debug(str(message))
+							message = "The service {} is already deployed on lxc machine".format(service_name)
+							self.logger.debug(message)
 						else:
 							mid_ro = self._new_machine_id(self.gv.LXC)
 							list_machines[mid_ro] = ''
@@ -393,7 +393,7 @@ class ResourcesController(object):
 									machine_id_service = machine_current.mid_vnfm
 									if (machine_current.ip == host_machine):
 										break
-							if (machine_id_service is None) and (curren_driver.managed_by == "lxd"):
+							if (machine_id_service is None) and (curren_driver.managed_by != "lxd"):
 								message = "There is no available machine to deploy on which the application {}, and JoX can not create machine in the chosen VIM. The deploying of the slice will be aborted".format(service_name)
 								self.logger.error(message)
 							self.logger.info("Adding lxc machine whose id is: machine_name= {}, mid_ro = {}".format(mid_ro, machine_config['machine_name']))
@@ -419,8 +419,8 @@ class ResourcesController(object):
 					if curren_driver[0]:
 						curren_driver = curren_driver[1]
 						if curren_driver.machine_exists(service_name):
-							message[machine_config["mid_model"]] = " already in KVM machines"
-							self.logger.debug(str(message))
+							message = "The service {} is already deployed on kvm machine".format(service_name)
+							self.logger.debug(message)
 						else:
 							mid_ro = self._new_machine_id(self.gv.KVM)
 							list_machines[mid_ro] = ''
@@ -461,6 +461,52 @@ class ResourcesController(object):
 							self.logger.debug(message)
 					else:
 						self.logger.error(curren_driver[1])
+
+				if (machine_type == self.gv.PHY) or (machine_type is None) or (machine_type == "none"):
+					curren_driver = self.get_pop_object_2(zone, domain, cidr, self.gv.PHY)
+
+					if curren_driver[0]:
+						curren_driver = curren_driver[1]
+						if curren_driver.machine_exists(service_name):
+							message = "The service {} is already deployed on physical machine".format(service_name)
+							self.logger.debug(message)
+						else:
+							mid_ro = self._new_machine_id(self.gv.PHY)
+							list_machines[mid_ro] = ''
+							list_machines_id_jmodel[service_name] = machine_name
+
+							machine_types.append(self.gv.PHY)
+
+							machine_id_service = None
+							os_series = None
+							for temp in self.gv.OS_SERIES:
+								if machine_config['os']['version'] in temp:
+									os_series = self.gv.OS_SERIES[temp]
+							for machine_current in curren_driver.machine_list:
+								if machine_current.available and (machine_current.os_series == os_series):
+									machine_id_service = machine_current.mid_vnfm
+									if (machine_current.ip == host_machine):
+										break
+
+							self.logger.info(
+								"Adding physical machine whose id is: machine_name= {}, mid_ro = {}".format(mid_ro,
+																									   machine_config[
+																										   'machine_name']))
+							t = threading.Thread(target=curren_driver.add_machine(machine_config, service_name, mid_ro,
+																				  subslice_name, model_name, cloud_name,
+																				  slice_name, machine_id_service),
+												 daemon=True)
+
+							list_midRo_machineConfig[mid_ro] = machine_config
+
+							threads.append(t)
+							t.start()
+
+							message = service_name, " kvm machine added"
+							self.logger.debug(message)
+					else:
+						self.logger.error(curren_driver[1])
+
 			for th in threads:
 				th.join()
 			self.logger.debug("Waiting for the machines to start to deploy the services")
@@ -477,6 +523,13 @@ class ResourcesController(object):
 			if [(self.gv.KVM == pop_type or self.gv.KVM_2 == pop_type) for pop_type in machine_types]:
 				for machine_id in list_machines.keys():
 					for driver in self.pop_kvm_list:
+						for mid in driver.machine_list:
+							if machine_id == mid.tmp_mid_ro:
+								list_machines[machine_id] = mid.mid_vnfm
+								list_machines_id_jmodel[mid.mid_user_defined] = mid.mid_vnfm
+			if (machine_type == self.gv.PHY) or (machine_type is None) or (machine_type == "none"):
+				for machine_id in list_machines.keys():
+					for driver in self.pop_phy_list:
 						for mid in driver.machine_list:
 							if machine_id == mid.tmp_mid_ro:
 								list_machines[machine_id] = mid.mid_vnfm

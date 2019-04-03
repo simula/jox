@@ -84,6 +84,14 @@
   "clouds-list": [
     {
       "description": "credentials of your juju controller",
+      "cloud-name": "nymphe-edu",
+      "cloud-type": "manual",
+      "cloud-endpoint": "172.24.11.27:17070",
+      "cloud-username": "admin",
+      "cloud-password": "eb7a665e4873b760827242a66e0c59b6"
+    },
+    {
+      "description": "credentials of your juju controller",
       "cloud-name": "psoque-home",
       "cloud-type": "manual",
       "cloud-endpoint": "192.168.1.100:17070",
