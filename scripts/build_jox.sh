@@ -129,21 +129,13 @@ install_required_packages(){
 
 
     install_elasticsearch
-
-    install_rabbitmq
-
-    install_python_packages
-
-    install_juju
-
-    install_uvtool_kvm
-
-    jox_store
 }
 
 install_uvtool_kvm(){
     $SUDO $os_pm $option install qemu-kvm libvirt-bin virtinst bridge-utils cpu-checker || true
     $SUDO $os_pm $option install uvtool || true
+
+    jox_store
 }
 
 install_ubuntu_image(){
@@ -155,6 +147,8 @@ install_ubuntu_image(){
 install_elasticsearch(){
     echo_info "pulling the docker image of elasticsearch"
     sudo docker pull docker.elastic.co/elasticsearch/elasticsearch:6.6.2
+
+    install_rabbitmq
 }
 
 install_rabbitmq(){
@@ -167,6 +161,9 @@ install_rabbitmq(){
     sudo systemctl start rabbitmq-server
     sudo systemctl enable rabbitmq-server
     echo_success "rabbitmq is successfully installed"
+
+
+    install_python_packages
 }
 
 install_juju(){
@@ -176,6 +173,9 @@ install_juju(){
     sudo snap install lxd || true
     sudo snap install juju --classic || true
     echo_success "juju is successfully installed"
+
+
+    install_uvtool_kvm
 }
 install_python_packages(){
     echo_info "Installing python libraries"
@@ -216,6 +216,9 @@ install_python_packages(){
     echo_info "Installing jsonschema"
     pip3 install jsonschema --user
     echo_success "jsonschema is successfully installed"
+
+
+    install_juju
 }
 
 function jox_store(){
