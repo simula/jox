@@ -65,8 +65,6 @@ watch -n 1 --color 'juju status --relations --color'
 
 - to add to build script
 * import ipaddress
-* import psutil
-* import random
 * from netaddr import IPAddress, IPNetwork
 * import copy
 * install pika==0.12.0
