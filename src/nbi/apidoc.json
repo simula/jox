@@ -11,6 +11,9 @@
     "GetJoxLs",
     "GetJoxShow",
 
+    "resource_management",
+    "get_available_resources",
+
     "GroupOnboarding",
     "PutOnboard",
 
