@@ -333,10 +333,12 @@ class ResourcesController(object):
 			else (self.gv.KVM if (machine_config['virt_type']==self.gv.KVM or machine_config['virt_type']==self.gv.KVM_2) else self.gv.PHY))
 			
 			machine_config["machine_name"] = "machine-{}".format(mid_ro)
-			pop_object.register_machine_juju(cloud_name,
-								model_name,
-								mid_ro,
-								machine_config)
+
+			if not pop_object.check_machine_exist(cloud_name, model_name, machine_config):
+				pop_object.register_machine_juju(cloud_name,
+									model_name,
+									mid_ro,
+									machine_config)
 	def add_machines(self, machines_config, services_config, subslice_name, model_name, cloud_name, slice_name):
 		threads = []
 		list_midRo_machineConfig = {}

@@ -154,8 +154,8 @@ def jox_homepage():
 	logger.info("Receive homepage request")
 	message = "Welcome to JOX! \n" \
 	          "To get the list of the capabilities and jox configuration, use the following \n" \
-	          "{}".format(''.join([request.url, 'jox \n']))
-	
+	          "{}".format(''.join([request.host_url, 'jox \n']))
+
 	return message
 
 
@@ -3253,8 +3253,15 @@ def logging(log_source=None, log_type=None):
 
 @app.errorhandler(Exception)
 def page_not_found(error):
-	return "!!!!" + repr(error) + "\n"
-
+	message = """
+	<p>The requested page does not exist and the following error was encountered:</p>
+    <p>{0}</p> 
+    <p>Please use  <a href={1}>{2}</a> to get the capabilities of JoX	</p>
+	""".format(
+		error,
+		''.join([request.host_url, 'jox']),
+		''.join([request.host_url, 'jox']))
+	return message
 
 def run():
 	print(

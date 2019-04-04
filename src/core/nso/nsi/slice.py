@@ -200,7 +200,7 @@ class JSlice(JSONEncoder):
 				jmodel = list_config_NSSI[nssi_target]['list_services'][service]['jmodel']
 				return [jcloud, jmodel]
 		return False
-	
+
 	def add_subslice(self, subslices_controller, subslice_config):
 		add_nssi = subslices_controller.add_subslice(subslice_config, self.list_all_jujuModel_attachedWatcher)
 		return add_nssi

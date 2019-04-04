@@ -68,9 +68,9 @@ from src.core.ro.monitor import get_juju_status as jmonitor_get_juju_status
 import tarfile, io
 import ipaddress
 import asyncio
-from asyncio import subprocess
-import random
-from netaddr import IPAddress, IPNetwork
+import re
+from src.core.ro.vim_driver.vimdriver import run_command
+
 __author__ = "Eurecom"
 jox_version = '1.0'
 jox_version_date = '2019-02-01'

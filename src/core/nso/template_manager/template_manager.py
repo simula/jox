@@ -125,7 +125,6 @@ class TemplateManager():
 		self.NSI_template = None
 		self.NSSI_template = list()
 		self.jesearch = es.JESearch(self.es_host, self.es_port, self.es_log_level)
-		self.gv = gv
 		if self.gv.es_status=="Dead":
 			pass
 		else:

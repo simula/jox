@@ -77,6 +77,25 @@ class LxcDriver(object):
 			self.logger.setLevel(logging.CRITICAL)
 		else:
 			self.logger.setLevel(logging.INFO)
+	def check_machine_exist(self, cloud_name, model_name, machine_config):
+		if "ip_addresses" in machine_config.keys():
+			entity = 'ip_addresses'
+		else:
+			entity = 'ip'
+		for machine in self.machine_list:
+			if type(machine.ip) is str:
+				if (machine.ip == machine_config[entity]) or (machine.ip in machine_config[entity]):
+					return True
+			else:
+				for ip_addr in machine.ip:
+					if (ip_addr == machine_config['ip_addresses']) or (ip_addr in machine_config[entity]):
+						return True
+			# if (machine.ip == machine_config['ip_addresses']):
+			# if (machine.juju_cloud_name == cloud_name) \
+			# 		and (machine.juju_model_name == model_name)\
+			# 		and (machine.ip == machine_config['ip_addresses']):
+				return True
+		return False
 	def get_machines_status(self):
 		"""
 		:return:
@@ -133,8 +152,11 @@ class LxcDriver(object):
 			add_new_context_machine = self.deploy_machine(new_machine, service_name, slice_name, nsi_id, "admin", machine_id_service)
 			# add_new_context_machine = loop.run(self.deploy_machine(new_machine, service_name, slice_name, nsi_id, "admin", machine_id_service))
 
-
-			if add_new_context_machine:
+			machine_exist = False
+			for machine in self.machine_list:
+				if machine.mid_vnfm == new_machine.mid_vnfm:
+					machine_exist = True
+			if add_new_context_machine or (not machine_exist):
 				self.machine_list.append(new_machine)
 			self.allocate_machine(new_machine, service_name, mid_ro, machine_config['machine_name'])
 
@@ -383,6 +405,17 @@ class LxcDriver(object):
 				self.logger.info("The application {} is already deployed, and thus no machine added".format(service_name))
 			new_machine.mid_vnfm = juju_machine.data["id"]  # Note here Machine ID
 
+			#############
+			cmd_machin_config = ["juju", "show-machine", new_machine.mid_vnfm, "--format", "json"]
+
+			cmd_machin_config_out = loop.run(run_command(cmd_machin_config))
+			cmd_machin_config_out = json.loads(cmd_machin_config_out)
+			new_machine.ip = cmd_machin_config_out['machines'][new_machine.mid_vnfm]['ip-addresses']
+
+
+
+
+
 			self.logger.info("The machine {} is added and its juju id is {}".format(new_machine.mid_user_defined, new_machine.mid_vnfm))
 			machine_id = new_machine.mid_vnfm
 
@@ -512,6 +545,8 @@ class LxcDriver(object):
 				machine_current.tmp_service_name = service_name
 				machine_current.tmp_mid_ro = mid_ro
 				machine_current.mid_user_defined = machine_name
+				machine_current.ip = new_machine.ip
+
 				break
 	def release_machine(self):
 		raise NotImplementedError()
@@ -548,6 +583,25 @@ class KvmDriver(object):
 		self.interval_access = self.gv.JUJU_INTERVAL_CONNECTION_MODEL_ACCESSIBLE
 		self.template_manager = template_manager.TemplateManager(global_variable)
 
+	def check_machine_exist(self, cloud_name, model_name, machine_config):
+		if "ip_addresses" in machine_config.keys():
+			entity = 'ip_addresses'
+		else:
+			entity = 'ip'
+		for machine in self.machine_list:
+			if type(machine.ip) is str:
+				if (machine.ip == machine_config[entity]) or (machine.ip in machine_config[entity]):
+					return True
+			else:
+				for ip_addr in machine.ip:
+					if (ip_addr == machine_config['ip_addresses']) or (ip_addr in machine_config[entity]):
+						return True
+			# if (machine.ip == machine_config['ip_addresses']) or (machine.ip in machine_config['ip_addresses']):
+			# if (machine.juju_cloud_name == cloud_name) \
+			# 		and (machine.juju_model_name == model_name)\
+			# 		and (machine.ip == machine_config['ip_addresses']):
+			# 	return True
+		return False
 	def get_machines_status(self):
 		data_str = jsonpickle.encode(self.machine_list)
 		data = json.loads(data_str)
@@ -590,7 +644,12 @@ class KvmDriver(object):
 			                  mid_ro,
 			                  machine_config)
 			add_new_context_machine = loop.run(self.deploy_kvm(new_machine, service_name, subslice_name, nsi_id, "admin", machine_id_service))
-			if add_new_context_machine:
+
+			machine_exist = False
+			for machine in self.machine_list:
+				if machine.mid_vnfm == new_machine.mid_vnfm:
+					machine_exist = True
+			if add_new_context_machine or (not machine_exist):
 				self.machine_list.append(new_machine)
 			self.allocate_machine(new_machine, service_name, mid_ro, machine_config['machine_name'])
 		except Exception as ex:
@@ -688,6 +747,12 @@ class KvmDriver(object):
 			else:
 				juju_machine = model.machines.get(machine_id_service)
 			new_machine.mid_vnfm = juju_machine.data["id"]
+			#############
+			cmd_machin_config = ["juju", "show-machine", new_machine.mid_vnfm, "--format", "json"]
+
+			cmd_machin_config_out = await run_command(cmd_machin_config)
+			cmd_machin_config_out = json.loads(cmd_machin_config_out)
+			new_machine.ip = cmd_machin_config_out['machines'][new_machine.mid_vnfm]['ip-addresses']
 
 			self.template_manager.update_slice_monitor_index("slice_monitor_" + subslice_name.lower(),
 															 "machine_status",
@@ -809,6 +874,7 @@ class KvmDriver(object):
 				machine_current.tmp_service_name = service_name
 				machine_current.tmp_mid_ro = mid_ro
 				machine_current.mid_user_defined = machine_name
+				machine_current.ip = new_machine.ip
 				break
 	def release_machine(self):
 		raise NotImplementedError()
@@ -835,7 +901,29 @@ class PhyDriver(object):
 		self.max_retry = self.gv.JUJU_MAX_RETRY_CONNECTION_MODEL_ACCESSIBLE
 		self.interval_access = self.gv.JUJU_INTERVAL_CONNECTION_MODEL_ACCESSIBLE
 		self.template_manager = template_manager.TemplateManager(global_variable)
-	
+
+	def check_machine_exist(self, cloud_name, model_name, machine_config):
+		if "ip_addresses" in machine_config.keys():
+			entity = 'ip_addresses'
+		else:
+			entity = 'ip'
+		for machine in self.machine_list:
+			if type(machine.ip) is str:
+				if (machine.ip == machine_config[entity]) or (machine.ip in machine_config[entity]):
+					return True
+			else:
+				for ip_addr in machine.ip:
+					if (ip_addr == machine_config['ip_addresses']) or (ip_addr in machine_config[entity]):
+						return True
+			# for ip_add in machine.addresses:
+			# 	if ip_add in machine_config['ip_addresses']:
+			# 		return True
+			# if (machine.juju_cloud_name == cloud_name) \
+			# 		and (machine.juju_model_name == model_name):
+			# 	for ip_add in machine.addresses:
+			# 		if ip_add in machine_config['ip_addresses']:
+			# 			return True
+		return False
 	def get_machines_status(self):
 		data_str = jsonpickle.encode(self.machine_list)
 		data = json.loads(data_str)
@@ -858,7 +946,7 @@ class PhyDriver(object):
 			if vm.mid_user_defined == mid_user_defined:
 				return vm.mid_vnfm
 		return -1
-	
+
 	def machine_exists(self, mid_user_defined):
 		try:
 			for vm in self.machine_list:
@@ -867,8 +955,8 @@ class PhyDriver(object):
 			return False
 		except Exception as ex:
 			self.logger.error(traceback.format_exc())
-			raise ex
-	
+			# raise ex
+			return False
 	def add_machine(self, machine_config, service_name, mid_ro, subslice_name, model_name, cloud_name, nsi_id, machine_id_service=None):
 		try:
 			new_machine = _PhysicalMachine()
@@ -885,7 +973,11 @@ class PhyDriver(object):
 			# machine_config
 
 			add_new_context_machine = loop.run(self.deploy_physical_machine(new_machine, service_name, subslice_name, nsi_id, "admin", machine_id_service))
-			if add_new_context_machine:
+			machine_exist = False
+			for machine in self.machine_list:
+				if machine.mid_vnfm == new_machine.mid_vnfm:
+					machine_exist = True
+			if add_new_context_machine or (not machine_exist):
 				self.machine_list.append(new_machine)
 			self.allocate_machine(new_machine, service_name, mid_ro, machine_config['machine_name'])
 
@@ -966,6 +1058,12 @@ class PhyDriver(object):
 			else:
 				juju_machine = model.machines.get(machine_id_service)
 			new_machine.mid_vnfm = juju_machine.data["id"]
+			#############
+			cmd_machin_config = ["juju", "show-machine", new_machine.mid_vnfm, "--format", "json"]
+
+			cmd_machin_config_out = await  run_command(cmd_machin_config)
+			cmd_machin_config_out = json.loads(cmd_machin_config_out)
+			new_machine.ip = cmd_machin_config_out['machines'][new_machine.mid_vnfm]['ip-addresses']
 
 			self.template_manager.update_slice_monitor_index("slice_monitor_" + subslice_name.lower(),
 															 "machine_status",
@@ -1089,6 +1187,7 @@ class PhyDriver(object):
 				machine_current.tmp_service_name = service_name
 				machine_current.tmp_mid_ro = mid_ro
 				machine_current.mid_user_defined = machine_name
+				machine_current.ip = new_machine.ip
 				break
 	
 	def release_machine(self):
@@ -1343,6 +1442,7 @@ class _PhysicalMachine():
 				}
 		"""
 		self.addresses = list()
+		self.ip = None
 		self.interfaces = None
 		
 		""" total resources """
@@ -1497,6 +1597,7 @@ class _PhysicalMachine():
 						os_version, machine_config['machine_name'])
 					self.logger.critical(message)
 					self.logger.info(message)
+			self.addresses = machine_config['ip_addresses']
 			self.ip = machine_config['ip_addresses']
 			self.available = machine_config['machine_available']
 			self.domain = machine_config['domain']
