@@ -715,8 +715,124 @@ def resource_discovery():
 
 	Example
 	{
-		"data": "The package was successfuly saved to the directory /tmp/jox_store/",
-		"elapsed-time": "0:00:00.011638"
+		"data": {
+			"kvm": [
+				{
+				"domain": "192.168.122.0/24",
+				"machine_list": [
+						{
+							"available": true,
+							"cpu": 1,
+							"disc_size": null,
+							"ip": "192.168.122.243",
+							"juju-id": "3",
+							"memory": 488,
+							"name": "machine-4:kvm",
+							"os_series": "xenial"
+						}
+					],
+				"pop-name": "default",
+				"scope": "private",
+				"zone": "1"
+				}
+			],
+			"lxc": [
+				{
+					"domain": "10.180.125.0/24",
+					"machine_list": [],
+					"pop-name": "default",
+					"scope": "private",
+					"zone": "1"
+				},
+				{
+					"domain": "10.199.92.0/24",
+					"machine_list": [
+							{
+								"available": true,
+								"cpu": 4,
+								"disc_size": null,
+								"ip": "10.199.92.178",
+								"juju-id": "0",
+								"memory": 7852,
+								"name": "machine-1:lxc",
+								"os_series": "xenial"
+							},
+							{
+								"available": true,
+								"cpu": 4,
+								"disc_size": null,
+								"ip": "10.199.92.77",
+								"juju-id": "1",
+								"memory": 7852,
+								"name": "machine-2:lxc",
+								"os_series": "xenial"
+							},
+							{
+								"available": true,
+								"cpu": 4,
+								"disc_size": null,
+								"ip": "10.199.92.248",
+								"juju-id": "2",
+								"memory": 7852,
+								"name": "machine-3:lxc",
+								"os_series": "xenial"
+							}
+					],
+					"pop-name": "zone-1-domain-2",
+					"scope": "private",
+					"zone": "1"
+				}
+			],
+			"phy": [
+				{
+					"domain": "192.168.1.0/24",
+					"machine_list": [],
+					"pop-name": "zone-1-phy",
+					"scope": "private",
+					"zone": "1"
+				},
+				{
+					"domain": "172.24.0.0/16",
+					"machine_list": [],
+					"pop-name": "zone-2-phy",
+					"scope": "private",
+					"zone": "1"
+				},
+				{
+					"domain": "172.24.10.0/24",
+					"machine_list": [],
+					"pop-name": "zone-3-phy",
+					"scope": "private",
+					"zone": "1"
+				},
+				{
+					"domain": "172.24.11.0/24",
+					"machine_list": [],
+					"pop-name": "zone-4-phy",
+					"scope": "private",
+					"zone": "1"
+				},
+				{
+				"domain": "192.168.12.0/24",
+				"machine_list": [
+					{
+						"available": true,
+						"cpu": 4,
+						"disc_size": null,
+						"ip": "192.168.12.220",
+						"juju-id": "4",
+						"memory": 7920,
+						"name": "machine-5:phy",
+						"os_series": "bionic"
+					}
+				],
+				"pop-name": "zone-1-domain-2",
+				"scope": "private",
+				"zone": "1"
+				}
+			]
+		},
+		"elapsed-time": "0:00:13.785535"
 	}
 	"""
 	enquiry = standard_reqst
