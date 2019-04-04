@@ -72,11 +72,11 @@ watch -n 1 --color 'juju status --relations --color'
 
 
 - accelerate deploying lxd/kvm
-ssh ubuntu@192.168.122.8 echo export LC_CTYPE=en_US.UTF-8 >> ~.bashrc
-ssh ubuntu@192.168.122.8 echo export LC_ALL=en_US.UTF-8 >> ~.bashrc
-ssh ubuntu@192.168.122.8 source .bashrc
-ssh ubuntu@192.168.122.8 sudo apt-get update -y
-ssh ubuntu@192.168.122.8 sudo apt-get upgrade -y
-ssh ubuntu@192.168.122.8 sudo apt-get install tmux curl bridge-utils cloud-image-utils cloud-utils cpu-checker distro-info genisoimage libaio1 libibverbs1 libnl-3-200 libnl-route-3-200 libnspr4 libnss3 librados2 librbd1 msr-tools qemu-block-extra qemu-utils sharutils ubuntu-fan -y
+* ssh ubuntu@192.168.122.8 echo export LC_CTYPE=en_US.UTF-8 >> ~.bashrc
+* ssh ubuntu@192.168.122.8 echo export LC_ALL=en_US.UTF-8 >> ~.bashrc
+* ssh ubuntu@192.168.122.8 source .bashrc
+* ssh ubuntu@192.168.122.8 sudo apt-get update -y
+* ssh ubuntu@192.168.122.8 sudo apt-get upgrade -y
+* ssh ubuntu@192.168.122.8 sudo apt-get install tmux curl bridge-utils cloud-image-utils cloud-utils cpu-checker distro-info genisoimage libaio1 libibverbs1 libnl-3-200 libnl-route-3-200 libnspr4 libnss3 librados2 librbd1 msr-tools qemu-block-extra qemu-utils sharutils ubuntu-fan -y
 
 
