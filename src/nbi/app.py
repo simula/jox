@@ -3253,14 +3253,13 @@ def logging(log_source=None, log_type=None):
 
 @app.errorhandler(Exception)
 def page_not_found(error):
-	message = """
-	<p>The requested page does not exist and the following error was encountered:</p>
-    <p>{0}</p> 
-    <p>Please use  <a href={1}>{2}</a> to get the capabilities of JoX	</p>
-	""".format(
-		error,
-		''.join([request.host_url, 'jox']),
-		''.join([request.host_url, 'jox']))
+	message = \
+	"""<p>The requested page does not exist and the following error was encountered:</p>
+<p>{0}</p> 
+<p>Please use  <a href={1}>{2}</a> to get the capabilities of JoX</p>
+""".format(error,
+			   ''.join([request.host_url, 'jox']),
+			   ''.join([request.host_url, 'jox']))
 	return message
 
 def run():
