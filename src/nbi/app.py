@@ -95,6 +95,11 @@ template slice/subslice before deploying your slice.
 """
 
 """
+@apiDefine resource_management Resource Management
+To Describe the resource_management later
+"""
+
+"""
 @apiDefine GroupOnboarding Onboarding
 To Describe the onboarding later
 """
@@ -694,8 +699,26 @@ def test_deploy_slice():
 	data = jsonify(data)
 	return data, status_code
 
-@app.route('/resource')
+@app.route('/resources')
 def resource_discovery():
+	"""
+	@apiGroup resource_management
+	@apiName get_available_resources
+
+	@api {get}  /resources Available Resources
+	@apiDescription Get the list of all the resources
+
+	@apiExample {curl} Example-Usage:
+		curl  -i http://localhost:5000/resources
+
+	@apiSuccessExample Example-Success-Response:
+
+	Example
+	{
+		"data": "The package was successfuly saved to the directory /tmp/jox_store/",
+		"elapsed-time": "0:00:00.011638"
+	}
+	"""
 	enquiry = standard_reqst
 	current_time = datetime.datetime.now()
 	enquiry["datetime"] = str(current_time)

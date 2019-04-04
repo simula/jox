@@ -49,7 +49,7 @@ sudo systemctl start elasticsearch
 
 ./build_jox.sh -i 2>&1 | tee jox_install_log.txt
 
-- issue: machine already provisioned:
+#### Issue: machine already provisioned:
 sudo rm -rf /etc/init/juju*
 sudo rm -rf /var/lib/juju
 sudo rm -rf /var/lib/juju
@@ -63,7 +63,7 @@ sudo rm /usr/bin/juju-run
 watch -n 1 --color 'juju status --relations --color'
 
 
-- to add to build script
+#### to add to build script
 * import ipaddress
 * from netaddr import IPAddress, IPNetwork
 * import copy
@@ -71,7 +71,7 @@ watch -n 1 --color 'juju status --relations --color'
 
 
 
-- accelerate deploying lxd/kvm
+#### accelerate deploying lxd/kvm
 * ssh ubuntu@192.168.122.8 echo export LC_CTYPE=en_US.UTF-8 >> ~.bashrc
 * ssh ubuntu@192.168.122.8 echo export LC_ALL=en_US.UTF-8 >> ~.bashrc
 * ssh ubuntu@192.168.122.8 source .bashrc
