@@ -712,8 +712,6 @@ def resource_discovery():
 		curl  -i http://localhost:5000/resources
 
 	@apiSuccessExample Example-Success-Response:
-
-	Example
 	{
 		"data": {
 			"kvm": [
@@ -3293,21 +3291,25 @@ def monitor_juju(juju_key_val=None, cloud_name=None, model_name=None):
 	        curl http://localhost:5000/monitor/localhost/Default
 
 	@apiErrorExample Success-Response:
-    HTTP/1.0 200 OK
+	HTTP/1.0 200 OK
 	{
 	  "data": {
 	    "machines": [
-	      {}
-	    ],
-	    "relations": [
-	      {}
-	    ],
-	    "services": [
-	      {}
-	    ]
-	  },
+	        {
+	        }
+        ],
+        "relations": [
+            {
+            }
+        ],
+        "services": [
+            {
+            }
+        ]
+      },
 	  "elapsed-time": "0:00:00.083747"
 	}
+	
 	@apiExample {curl} Example usage:
 	        curl http://localhost:5000/monitor/localhost/model3
 
@@ -3356,7 +3358,108 @@ def monitor_juju(juju_key_val=None, cloud_name=None, model_name=None):
 @app.route('/log/<string:log_source>')
 @app.route('/log/<string:log_source>/<string:log_type>')
 def logging(log_source=None, log_type=None):
+	"""
+	@apiGroup Monitoring
+	@apiName GetJoxlogs
 
+	@api {get}  /log/<string:log_source>/<string:log_type> Logs
+	@apiDescription Get the JoX and juju logs
+	@apiParam {String} log_source jox, juju (default is jox)
+	@apiParam {String} log_type all, error, debug, info, warning (default is all)
+
+	@apiExample {curl} First-Example-Usage:
+		     curl -i http://localhost:5000/log
+
+	@apiSuccessExample First-Example-Success-Response:
+	HTTP/1.0 200 OK
+	{
+	"data": [
+			"2019-04-04T22:53:10 INFO jox jox.py:221 Configure elastcisearch if enabled",
+			"2019-04-04T22:53:21 ERROR jox.es es.py:63 Elasticsearch: connection Failed",
+			"2019-04-04T22:53:21 DEBUG jox jox.py:396 The following cloud is successfully  added",
+			"2019-04-04T22:53:21 DEBUG jox.RO.rsourceController resource_controller.py:547 jcloud psoque-home was added to jox",
+			"2019-04-04T22:53:21 DEBUG jox jox.py:396 The following cloud is successfully  added",
+			"2019-04-04T22:53:21 DEBUG jox.RO.rsourceController resource_controller.py:547 jcloud localhost was added to jox",
+			"2019-04-04T22:53:21 DEBUG jox jox.py:396 The following cloud is successfully  added",
+			"2019-04-04T22:53:21 INFO jox jox.py:285 All clouds were successfully added!",
+			"2019-04-04T22:53:21 INFO jox jox.py:289 Creating slice controller",
+			"2019-04-04T22:53:21 INFO jox.NetworkSliceController nsi_controller.py:41 Initial configuration of network slice controller",
+			"2019-04-04T22:53:21 INFO jox.NetworkSliceController nsi_controller.py:62 The resource controller is built",
+			"2019-04-04T22:53:21 INFO jox jox.py:293 Creating sub-slice controller",
+			"2019-04-04T22:53:21 INFO jox jox.py:301 Slices Controller was successfully loaded!",
+			"2019-04-04T22:53:21 INFO jox jox.py:306 JOX loading time: 11.045218467712402 ",
+			"2019-04-04T22:53:21 INFO jox jox.py:316 JOX Web API loaded!"
+		],
+	"elapsed-time": "0:00:00.001849"
+	}
+	
+	@apiExample {curl} Second-Example-Usage:
+		     curl -i http://localhost:5000/log/jox/error
+	@apiSuccessExample Second-Example-Success-Response:
+	HTTP/1.0 200 OK
+	{
+		"data": [
+					"2019-04-04T22:53:21 ERROR jox.es es.py:63 Elasticsearch: connection Failed",
+					"2019-04-04T22:53:21 ERROR jox jox.py:228 Elasticsearch is not working while it is enabled. Either disable elasticsearch or run it"
+				],
+		"elapsed-time": "0:00:00.001849"
+	}
+	@apiExample {curl} Third-Example-Usage:
+		     curl -i http://localhost:5000/log/juju
+	@apiSuccessExample Third-Example-Success-Response:
+	HTTP/1.0 200 OK
+	{
+		"data": [
+			        "unit-mysql-8: 12:01:35 DEBUG unit.mysql/8.config-changed update-alternatives: using /etc/mysql/mysql.cnf to provide /etc/mysql/my.cnf (my.cnf) in auto mode",
+				    "unit-mysql-8: 12:01:35 DEBUG unit.mysql/8.config-changed Renaming removed key_buffer and myisam-recover options (if present)",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libhtml-tagset-perl (3.20-2) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up liburi-perl (1.71-1) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libhtml-parser-perl (3.72-1) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libcgi-pm-perl (4.26-1) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libfcgi-perl (0.77-1build1) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libcgi-fast-perl (1:2.10-1) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libencode-locale-perl (1.05-1) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libhtml-template-perl (2.95-2) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libtimedate-perl (2.3000-2) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libhttp-date-perl (6.02-1) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libio-html-perl (1.001-1) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up liblwp-mediatypes-perl (6.02-1) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libhttp-message-perl (6.11-1) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up mysql-server (5.7.25-0ubuntu0.16.04.2) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Processing triggers for libc-bin (2.23-0ubuntu11) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Processing triggers for systemd (229-4ubuntu21.17) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Processing triggers for ureadahead (0.100.0-19) ...",
+				    "unit-mysql-8: 12:01:42 INFO unit.mysql/8.juju-log dataset size in bytes: 26860322816",
+				    "unit-wordpress-8: 12:01:50 WARNING juju.worker.uniter.operation we should run a leader-deposed hook here, but we can't yet",
+				    "unit-mysql-8: 12:01:51 DEBUG unit.mysql/8.juju-log db:26: Using existing password file '/var/lib/mysql/mysql.passwd'",
+				    "unit-mysql-8: 12:01:51 DEBUG unit.mysql/8.db-relation-joined /var/lib/juju/agents/unit-mysql-8/charm/hooks/db-relation-joined:19: Warning: Using GRANT for creating new user is deprecated and will be removed in future release. Create new user with CREATE USER statement.",
+				    "unit-mysql-8: 12:01:51 DEBUG unit.mysql/8.db-relation-joined   cursor.execute(sql)",
+				    "unit-mysql-8: 12:01:51 DEBUG unit.mysql/8.db-relation-joined /var/lib/juju/agents/unit-mysql-8/charm/hooks/db-relation-joined:19: Warning: Using GRANT statement to modify existing user's properties other than privileges is deprecated and will be removed in future release. Use ALTER USER statement for this operation.",
+				    "unit-mysql-8: 12:01:51 DEBUG unit.mysql/8.db-relation-joined   cursor.execute(sql)",
+				    "unit-mysql-8: 12:01:51 DEBUG unit.mysql/8.db-relation-joined [grant replication client on *.* to `chum5ic1go5Aexe` identified by 'Aiceico0ahxaech']",
+				    "unit-mysql-8: 12:01:51 DEBUG unit.mysql/8.db-relation-joined [grant all on `wordpress`.* to `chum5ic1go5Aexe` identified by 'Aiceico0ahxaech']",
+				    "unit-mysql-8: 12:01:51 DEBUG unit.mysql/8.db-relation-joined ['relation-set', 'database=wordpress', 'user=chum5ic1go5Aexe', 'password=Aiceico0ahxaech', 'host=10.70.21.133', 'slave=False']",
+				    "unit-mysql-8: 12:01:51 DEBUG unit.mysql/8.db-relation-joined [create database `wordpress` character set utf8]",
+				    "unit-mysql-8: 12:01:54 DEBUG unit.mysql/8.juju-log db:26: Excluding /var/lib/mysql/mysql.passwd from peer migration",
+				    "unit-mysql-8: 12:01:54 DEBUG unit.mysql/8.db-relation-broken Relationship with wordpress broken.",
+				    "unit-mysql-8: 12:01:54 DEBUG unit.mysql/8.db-relation-broken revoked privileges for `chum5ic1go5Aexe` on database `wordpress`",
+				    "unit-mysql-8: 12:01:54 ERROR juju.worker.uniter resolver loop error: committing operation \"run relation-broken (26) hook\":relation \"wordpress:db mysql:db\": permission denied",
+				    "machine-21: 12:01:55 ERROR juju.worker.dependency \"unit-agent-deployer\" manifold worker returned unexpected error: permission denied",
+				    ""
+				],
+		"elapsed-time": "0:00:00.001849"
+	}
+	@apiExample {curl} Fourth-Example-Usage:
+		     curl -i http://localhost:5000/log/juju/warning
+	@apiSuccessExample Fourth-Example-Success-Response:
+	HTTP/1.0 200 OK
+	{
+		"data": [
+                    "unit-wordpress-8: 12:01:50 WARNING juju.worker.uniter.operation we should run a leader-deposed hook here, but we can't yet"
+				],
+		"elapsed-time": "0:00:00.001849"
+	}
+	"""
 	if log_type is None:
 		log_type = 'all'
 	if log_source is None:
