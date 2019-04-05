@@ -586,9 +586,6 @@ class server_RBMQ(object):
 					self.logger.debug(message)
 					list_files = list()
 					for f in os.listdir(full_path):
-						# if os.path.isfile(''.join([full_path, f])) and \
-						# 		(f.endswith('.yaml') or f.endswith('.yml') or f.endswith('.json')):
-						# 	list_files.append(f)
 						list_files.append(f)
 					res = list_files
 					response = {
@@ -1743,7 +1740,6 @@ if __name__ == '__main__':
         parser.add_argument('--version', action='version', version='%(prog)s 2.0')
         
         args = parser.parse_args()
-        # command line args  (args.jox_addr, args.jox_port, args.es_addr, args.es_port, args.rq_addr, args.rq_port) need to be set in NFVO_JOX __init__ 
         logger = logging.getLogger('proj.jox')
         rmbq_server = server_RBMQ()
         rmbq_server.run()

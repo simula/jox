@@ -134,26 +134,14 @@ class ResourcesController(object):
 			for driver in self.pop_lxc_list:
 				if (driver.zone == machine_zone) and (driver.domain == machine_domain):
 					return driver
-			
-			# return list(filter(lambda x: (x.zone == machine_zone)
-			#                              and (x.domain == machine_domain),
-			#                    self.pop_lxc_list))
 		elif (virt_type == self.gv.KVM) or (virt_type == self.gv.KVM_2):
 			for driver in self.pop_kvm_list:
 				if (driver.zone == machine_zone) and (driver.domain == machine_domain):
 					return driver
-				
-			# return list(filter(lambda x: (x.zone == machine_zone)
-			#                              and (x.domain == machine_domain),
-			#                    self.pop_kvm_list))
 		elif virt_type == self.gv.PHY:
 			for driver in self.pop_phy_list:
 				if (driver.zone == machine_zone) and (driver.domain == machine_domain):
 					return driver
-				
-			# return list(filter(lambda x: (x.zone == machine_zone)
-			#                              and (x.domain == machine_domain),
-			#                    self.pop_phy_list))
 		else:
 			return None
 		return None

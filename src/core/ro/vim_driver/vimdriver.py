@@ -36,7 +36,6 @@ from juju.model import Model
 from juju import loop, utils
 import traceback
 import jsonpickle, json
-from subprocess import check_output
 import asyncio
 from asyncio import subprocess
 import datetime
@@ -90,10 +89,6 @@ class LxcDriver(object):
 				for ip_addr in machine.ip:
 					if (ip_addr == machine_config['ip_addresses']) or (ip_addr in machine_config[entity]):
 						return True
-			# if (machine.ip == machine_config['ip_addresses']):
-			# if (machine.juju_cloud_name == cloud_name) \
-			# 		and (machine.juju_model_name == model_name)\
-			# 		and (machine.ip == machine_config['ip_addresses']):
 				return True
 		return False
 	def get_machines_status(self):
@@ -150,7 +145,6 @@ class LxcDriver(object):
 			                  mid_ro,
 			                  machine_config)
 			add_new_context_machine = self.deploy_machine(new_machine, service_name, slice_name, nsi_id, "admin", machine_id_service)
-			# add_new_context_machine = loop.run(self.deploy_machine(new_machine, service_name, slice_name, nsi_id, "admin", machine_id_service))
 
 			machine_exist = False
 			for machine in self.machine_list:
@@ -245,208 +239,151 @@ class LxcDriver(object):
 			await model.disconnect()
 		return juju_machine
 	def deploy_machine(self, new_machine, service_name, slice_name, nsi_id, user="admin", machine_id_service=None):
-		# model = Model()
-
 		app_keys = loop.run(self.get_deployed_applications(
 									machine_id_service,
 									service_name, new_machine.juju_cloud_name, new_machine.juju_model_name, user))
 		machine_id_service = app_keys[0]
 		application_NotExist = app_keys[1]
 		add_new_context_machine = app_keys[2]
-		if True:
-		# try:
-			# c_name = new_machine.juju_cloud_name
-			# m_name = new_machine.juju_model_name
-			# model_name = c_name + ":" + user + "/" + m_name
-			# retry_connect = True
-			# number_retry = 0
-			# while number_retry <= self.max_retry and retry_connect:
-			# 	number_retry += 1
-			# 	try:
-			# 		self.logger.debug("{} time trying to connect to juju model:{} to add lxc machine".format(number_retry, model_name))
-			# 		await model.connect(model_name)
-			# 		retry_connect = False
-			# 		self.logger.debug("Successful connection to the model {} ".format(model_name))
-			# 	except:
-			# 		await model.disconnect()
-			# 		await asyncio.sleep(self.interval_access)
-			#
-			# app_keys = model.applications.keys()
-			# application_NotExist = True
-			# #
-			#
-			# for app in app_keys:
-			# 	if service_name == app and len(model.applications[app].units) > 0:
-			# 		application_NotExist = False
-			# 		app_values = model.applications.get(app)
-			# 		machine_id_service = app_values.units[0].machine.id
-			# 		add_new_context_machine = True
-			if application_NotExist and machine_id_service is None:
-				cmd_list_lxc = ["lxc", "list", "--format", "json"]
+		if application_NotExist and machine_id_service is None:
+			cmd_list_lxc = ["lxc", "list", "--format", "json"]
+			cmd_list_lxc_out = loop.run(run_command(cmd_list_lxc))
+			cmd_list_lxc_out = json.loads(cmd_list_lxc_out)
+			machine_name_exist = True
+
+			tmp_counter = 0
+			machine_lxd_name = "machine-{}".format(service_name)
+			machine_lxd_name_tmp = machine_lxd_name
+			while machine_name_exist:
+				machine_name_exist_tmp = False
+				for lxc_md in cmd_list_lxc_out:
+					if lxc_md['name'] == machine_lxd_name_tmp:
+						machine_name_exist_tmp = True
+				if machine_name_exist_tmp:
+					tmp_counter += 1
+					machine_lxd_name_tmp = "{}-{}".format(machine_lxd_name, tmp_counter)
+				else:
+					machine_name_exist = False
+					machine_lxd_name = machine_lxd_name_tmp
+
+			container_name = machine_lxd_name
+			cmd_lxc_create = ["lxc", "launch", "ubuntu:{}".format(new_machine.os_version), container_name]
+			cmd_lxc_create_out = loop.run(run_command(cmd_lxc_create))
+			self.logger.info(cmd_lxc_create_out)
+			""" Get the ip addresss if the machine"""
+			machine_ip_tmp = list()
+			while len(machine_ip_tmp) == 0:
 				cmd_list_lxc_out = loop.run(run_command(cmd_list_lxc))
 				cmd_list_lxc_out = json.loads(cmd_list_lxc_out)
-				machine_name_exist = True
+				for lxc_md in cmd_list_lxc_out:
+					if lxc_md['name'] == container_name:
+						for iface in lxc_md['state']['network']:
+							for add_config in lxc_md['state']['network'][iface]['addresses']:
+								if (add_config['family'] == 'inet') and (add_config['scope'] == 'global'):
+									machine_ip_tmp.append(add_config['address'])
+									print("ip addres v4=:{}".format(add_config['family']))
+			machine_ip = list()
+			for ip_add in machine_ip_tmp:
+				packet_transmitted = 0
+				packet_received = 0
+				cmd_ping = ["ping", "-c", "3", ip_add]
+				cmd_ping_out = loop.run(run_command(cmd_ping))
+				lst = cmd_ping_out.split('\n')
+				for i in range(2, len(lst)):
+					if 'received' in str(lst[i]):
+						items = (str(lst[i])).split(',')
+						for item in items:
+							if 'received' in str(item):
+								item = [x for x in (str(item)).split(' ') if x]
+								packet_received = int(item[0])
+							if ('packets' in str(item)) and ('transmitted' in str(item)):
+								item = [x for x in (str(item)).split(' ') if x]
+								packet_transmitted = int(item[0])
+								pass
+						print(lst[i])
+				if packet_received > 0:
+					machine_ip.append(ip_add)
+			###########
+			SSH_USER_lxd = "root"
+			ssh_key_puplic = ''.join([self.gv.SSH_KEY_DIRECTORY, self.gv.SSH_KEY_NAME, '.pub'])
+			ssh_key_private = ''.join([self.gv.SSH_KEY_DIRECTORY, self.gv.SSH_KEY_NAME])
 
-				tmp_counter = 0
-				machine_lxd_name = "machine-{}".format(service_name)
-				machine_lxd_name_tmp = machine_lxd_name
-				while machine_name_exist:
-					machine_name_exist_tmp = False
-					for lxc_md in cmd_list_lxc_out:
-						if lxc_md['name'] == machine_lxd_name_tmp:
-							machine_name_exist_tmp = True
-					if machine_name_exist_tmp:
-						tmp_counter += 1
-						machine_lxd_name_tmp = "{}-{}".format(machine_lxd_name, tmp_counter)
-					else:
-						machine_name_exist = False
-						machine_lxd_name = machine_lxd_name_tmp
-
-				container_name = machine_lxd_name
-				cmd_lxc_create = ["lxc", "launch", "ubuntu:{}".format(new_machine.os_version), container_name]
-				cmd_lxc_create_out = loop.run(run_command(cmd_lxc_create))
-				self.logger.info(cmd_lxc_create_out)
-				""" Get the ip addresss if the machine"""
-				machine_ip_tmp = list()
-				while len(machine_ip_tmp) == 0:
-					cmd_list_lxc_out = loop.run(run_command(cmd_list_lxc))
-					cmd_list_lxc_out = json.loads(cmd_list_lxc_out)
-					for lxc_md in cmd_list_lxc_out:
-						if lxc_md['name'] == container_name:
-							for iface in lxc_md['state']['network']:
-								for add_config in lxc_md['state']['network'][iface]['addresses']:
-									if (add_config['family'] == 'inet') and (add_config['scope'] == 'global'):
-										machine_ip_tmp.append(add_config['address'])
-										print("ip addres v4=:{}".format(add_config['family']))
-				machine_ip = list()
-				for ip_add in machine_ip_tmp:
-					packet_transmitted = 0
-					packet_received = 0
-					cmd_ping = ["ping", "-c", "3", ip_add]
-					cmd_ping_out = loop.run(run_command(cmd_ping))
-					lst = cmd_ping_out.split('\n')
-					for i in range(2, len(lst)):
-						if 'received' in str(lst[i]):
-							items = (str(lst[i])).split(',')
-							for item in items:
-								if 'received' in str(item):
-									item = [x for x in (str(item)).split(' ') if x]
-									packet_received = int(item[0])
-								if ('packets' in str(item)) and ('transmitted' in str(item)):
-									item = [x for x in (str(item)).split(' ') if x]
-									packet_transmitted = int(item[0])
-									pass
-							print(lst[i])
-					if packet_received > 0:
-						machine_ip.append(ip_add)
-				###########
-				SSH_USER_lxd = "root"
-				ssh_key_puplic = ''.join([self.gv.SSH_KEY_DIRECTORY, self.gv.SSH_KEY_NAME, '.pub'])
-				ssh_key_private = ''.join([self.gv.SSH_KEY_DIRECTORY, self.gv.SSH_KEY_NAME])
-
-				machine_ip = machine_ip[0]
+			machine_ip = machine_ip[0]
 
 
 
-				message = "Injecting the public key in the lxd machine"
-				self.logger.info(message)
-				cmd_lxc_inject_ssh_key = ["lxc", "file", "push", ssh_key_puplic, "{}/root/.ssh/authorized_keys".format(container_name)]
-				cmd_lxc_inject_ssh_key_out = loop.run(run_command(cmd_lxc_inject_ssh_key))
+			message = "Injecting the public key in the lxd machine"
+			self.logger.info(message)
+			cmd_lxc_inject_ssh_key = ["lxc", "file", "push", ssh_key_puplic, "{}/root/.ssh/authorized_keys".format(container_name)]
+			cmd_lxc_inject_ssh_key_out = loop.run(run_command(cmd_lxc_inject_ssh_key))
 
-				message = "Injecting the public key in the lxd machine"
-				self.logger.info(message)
-				cmd_lxc_chmod = ["lxc", "exec", container_name, "--", "sh", "-c",
-							 str("chmod 600 /root/.ssh/authorized_keys && sudo chown root: /root/.ssh/authorized_keys")]
-				cmd_lxc_chmod_out = loop.run(run_command(cmd_lxc_chmod))
+			message = "Injecting the public key in the lxd machine"
+			self.logger.info(message)
+			cmd_lxc_chmod = ["lxc", "exec", container_name, "--", "sh", "-c",
+						 str("chmod 600 /root/.ssh/authorized_keys && sudo chown root: /root/.ssh/authorized_keys")]
+			cmd_lxc_chmod_out = loop.run(run_command(cmd_lxc_chmod))
 
-				message = "Ensuring ssh to the machine {}".format(machine_ip)
-				self.logger.info(message)
-				cmd_lxc_ssh_vm = ["ssh", "-o", "StrictHostKeyChecking={}".format("no"), "-i", ssh_key_private,
-								  "{}@{}".format(SSH_USER_lxd, machine_ip), "pwd"]
-				cmd_lxc_ssh_vm_out = loop.run(run_command(cmd_lxc_ssh_vm))
+			message = "Ensuring ssh to the machine {}".format(machine_ip)
+			self.logger.info(message)
+			cmd_lxc_ssh_vm = ["ssh", "-o", "StrictHostKeyChecking={}".format("no"), "-i", ssh_key_private,
+							  "{}@{}".format(SSH_USER_lxd, machine_ip), "pwd"]
+			cmd_lxc_ssh_vm_out = loop.run(run_command(cmd_lxc_ssh_vm))
 
-				loop.run(machine_configuration_for_jujuCharm(SSH_USER_lxd, machine_ip, ssh_key_private, self.logger))
+			loop.run(machine_configuration_for_jujuCharm(SSH_USER_lxd, machine_ip, ssh_key_private, self.logger))
 
-				cmd_juju_addmachine = ["juju", "add-machine", "ssh:{}@{}".format(SSH_USER_lxd, machine_ip)]
+			cmd_juju_addmachine = ["juju", "add-machine", "ssh:{}@{}".format(SSH_USER_lxd, machine_ip)]
 
-				print("add achine: {}".format(cmd_juju_addmachine))
-				cmd_lxc_ssh_vm_out = loop.run(run_command(cmd_juju_addmachine))
-				machineId = str(cmd_lxc_ssh_vm_out).split('\n')
-				for item in machineId:
-					if "created machine" in item:
-						val_id = [x for x in str(item).split(' ') if x]
-						machine_id_service = val_id[2]
+			self.logger.info("add achine: {}".format(cmd_juju_addmachine))
+			cmd_lxc_ssh_vm_out = loop.run(run_command(cmd_juju_addmachine))
+			machineId = str(cmd_lxc_ssh_vm_out).split('\n')
+			for item in machineId:
+				if "created machine" in item:
+					val_id = [x for x in str(item).split(' ') if x]
+					machine_id_service = val_id[2]
 
-				juju_machine = loop.run(
-					self.deploy_machine_2(None, None, machine_id_service, new_machine.juju_cloud_name,
-										  new_machine.juju_model_name))
+			juju_machine = loop.run(
+				self.deploy_machine_2(None, None, machine_id_service, new_machine.juju_cloud_name,
+									  new_machine.juju_model_name))
+		else:
+			juju_machine = loop.run(
+				self.deploy_machine_2(None, None, machine_id_service, new_machine.juju_cloud_name,
+									  new_machine.juju_model_name))
 
+			self.logger.info("The application {} is already deployed, and thus no machine added".format(service_name))
+		new_machine.mid_vnfm = juju_machine.data["id"]  # Note here Machine ID
 
-				# juju_cmd = "".join(["ssh:", SSH_USER_lxd, "@", machine_ip, ":", ssh_key_private])
-				# juju_machine = loop.run(self.deploy_machine_2(new_machine, juju_cmd, machine_id_service, new_machine.juju_cloud_name, new_machine.juju_model_name))
+		#############
+		cmd_machin_config = ["juju", "show-machine", new_machine.mid_vnfm, "--format", "json"]
 
-				# juju_machine = await model.add_machine(juju_cmd,
-				# 									   constraints={
-				# 										   'mem': int(new_machine.memory) * self.gv.GB,
-				# 										   'tags': [new_machine.mid_user_defined],
-				# 									   },
-				# 									   disks=[{
-				# 										   'pool': 'rootfs',
-				# 										   'size': int(new_machine.disc_size) * self.gv.GB,
-				# 										   'count': 1,
-				# 									   }],
-				# 									   )
-			else:
-				juju_machine = loop.run(
-					self.deploy_machine_2(None, None, machine_id_service, new_machine.juju_cloud_name,
-										  new_machine.juju_model_name))
+		cmd_machin_config_out = loop.run(run_command(cmd_machin_config))
+		cmd_machin_config_out = json.loads(cmd_machin_config_out)
+		new_machine.ip = cmd_machin_config_out['machines'][new_machine.mid_vnfm]['ip-addresses']
 
-				# juju_machine = model.machines.get(machine_id_service)
-				self.logger.info("The application {} is already deployed, and thus no machine added".format(service_name))
-			new_machine.mid_vnfm = juju_machine.data["id"]  # Note here Machine ID
+		self.logger.info("The machine {} is added and its juju id is {}".format(new_machine.mid_user_defined, new_machine.mid_vnfm))
+		machine_id = new_machine.mid_vnfm
 
-			#############
-			cmd_machin_config = ["juju", "show-machine", new_machine.mid_vnfm, "--format", "json"]
-
-			cmd_machin_config_out = loop.run(run_command(cmd_machin_config))
-			cmd_machin_config_out = json.loads(cmd_machin_config_out)
-			new_machine.ip = cmd_machin_config_out['machines'][new_machine.mid_vnfm]['ip-addresses']
-
-
-
-
-
-			self.logger.info("The machine {} is added and its juju id is {}".format(new_machine.mid_user_defined, new_machine.mid_vnfm))
-			machine_id = new_machine.mid_vnfm
-
-			
-			self.template_manager.update_slice_monitor_index("slice_monitor_"+slice_name.lower(),
-			                                                 "machine_status",
-			                                                 service_name,
-			                                                 "juju_mid",
-			                                                 str(machine_id),
-			                                                 nsi_id)
-			self.template_manager.update_slice_monitor_index('slice_keys_'+nsi_id.lower(),
-			                                                 "machine_keys",
-			                                                 service_name,
-			                                                 "juju_mid",
-			                                                 str(machine_id),
-			                                                 nsi_id)
-			self.template_manager.update_slice_monitor_index("slice_monitor_"+slice_name.lower(),
-			                                                 "machine_status",
-			                                                 service_name,
-			                                                 "type",
-			                                                 "lxc",
-			                                                 nsi_id)
+		
+		self.template_manager.update_slice_monitor_index("slice_monitor_"+slice_name.lower(),
+		                                                 "machine_status",
+		                                                 service_name,
+		                                                 "juju_mid",
+		                                                 str(machine_id),
+		                                                 nsi_id)
+		self.template_manager.update_slice_monitor_index('slice_keys_'+nsi_id.lower(),
+		                                                 "machine_keys",
+		                                                 service_name,
+		                                                 "juju_mid",
+		                                                 str(machine_id),
+		                                                 nsi_id)
+		self.template_manager.update_slice_monitor_index("slice_monitor_"+slice_name.lower(),
+		                                                 "machine_status",
+		                                                 service_name,
+		                                                 "type",
+		                                                 "lxc",
+		                                                 nsi_id)
 
 
-			self.logger.info("Deployed LXC Machine {} {} {}".format(new_machine.mid_vnfm, len(juju_machine.data), juju_machine.data))
-
-		# except Exception as ex:
-		# 	self.logger.error(traceback.format_exc())
-		# 	raise ex
-		# finally:
-		# 	await model.disconnect()
+		self.logger.info("Deployed LXC Machine {} {} {}".format(new_machine.mid_vnfm, len(juju_machine.data), juju_machine.data))
 		return add_new_context_machine
 	async def update_machine(self, machine_config):
 		for machine in self.machine_list:
@@ -596,11 +533,6 @@ class KvmDriver(object):
 				for ip_addr in machine.ip:
 					if (ip_addr == machine_config['ip_addresses']) or (ip_addr in machine_config[entity]):
 						return True
-			# if (machine.ip == machine_config['ip_addresses']) or (machine.ip in machine_config['ip_addresses']):
-			# if (machine.juju_cloud_name == cloud_name) \
-			# 		and (machine.juju_model_name == model_name)\
-			# 		and (machine.ip == machine_config['ip_addresses']):
-			# 	return True
 		return False
 	def get_machines_status(self):
 		data_str = jsonpickle.encode(self.machine_list)
@@ -692,24 +624,15 @@ class KvmDriver(object):
 				ssh_key_puplic = ''.join([self.gv.SSH_KEY_DIRECTORY, self.gv.SSH_KEY_NAME, '.pub'])
 				ssh_key_private = ''.join([self.gv.SSH_KEY_DIRECTORY, self.gv.SSH_KEY_NAME])
 				################
-				cmd_list_kvm = "uvt-kvm list"
-				list_output_tmp = check_output(cmd_list_kvm, shell=True)
-				list_output_tmp = (list_output_tmp.decode("utf-8")).rstrip()
-				list_machine = list()
-				temp_item = ""
-				for item in list_output_tmp:
-					if str(item).encode() == b'\n':
-						list_machine.append(temp_item)
-						temp_item = ""
-					else:
-						temp_item = "".join([temp_item, item])
-				list_machine.append(temp_item)
+				cmd_list_kvm = ["uvt-kvm", "list"]
+				cmd_list_kvm_out = await run_command(cmd_list_kvm)
+				cmd_list_kvm_out = str(cmd_list_kvm_out).split('\n')
 				machine_ip = ""
-				for current_machine in list_machine:
+				for current_machine in cmd_list_kvm_out:
 					if new_machine.mid_user_defined == current_machine:
-						cmd_ip = "uvt-kvm ip " + new_machine.mid_user_defined
-						output = check_output(cmd_ip, shell=True)
-						machine_ip = (output.decode("utf-8")).rstrip()
+						cmd_ip = ["uvt-kvm", "ip", new_machine.mid_user_defined]
+						cmd_ip_out = await run_command(cmd_ip)
+						machine_ip = (str(cmd_ip_out).split('\n'))[0]
 						break
 				###################
 				if machine_ip == "":
@@ -915,14 +838,6 @@ class PhyDriver(object):
 				for ip_addr in machine.ip:
 					if (ip_addr == machine_config['ip_addresses']) or (ip_addr in machine_config[entity]):
 						return True
-			# for ip_add in machine.addresses:
-			# 	if ip_add in machine_config['ip_addresses']:
-			# 		return True
-			# if (machine.juju_cloud_name == cloud_name) \
-			# 		and (machine.juju_model_name == model_name):
-			# 	for ip_add in machine.addresses:
-			# 		if ip_add in machine_config['ip_addresses']:
-			# 			return True
 		return False
 	def get_machines_status(self):
 		data_str = jsonpickle.encode(self.machine_list)
@@ -967,10 +882,6 @@ class PhyDriver(object):
 								mid_ro,
 								machine_config)
 
-			# cloud_name,
-			# model_name,
-			# mid_ro,
-			# machine_config
 
 			add_new_context_machine = loop.run(self.deploy_physical_machine(new_machine, service_name, subslice_name, nsi_id, "admin", machine_id_service))
 			machine_exist = False
@@ -1040,21 +951,8 @@ class PhyDriver(object):
 					machine_id_service = app_values.units[0].machine.id
 					add_new_context_machine = False
 			if application_NotExist and machine_id_service is None:
-				ssh_key_puplic = ''.join([self.gv.SSH_KEY_DIRECTORY, self.gv.SSH_KEY_NAME, '.pub'])
-				ssh_key_private = ''.join([self.gv.SSH_KEY_DIRECTORY, self.gv.SSH_KEY_NAME])
-
-				machine_ip = "127.0.0.1"
-				ssh_user = "arouk"
-				cmd_kvm_ssh_vm = ["ssh", "-o", "StrictHostKeyChecking={}".format("no"), "-i", ssh_key_private,
-								  "{}@{}".format(ssh_user, machine_ip), "pwd"]
-				self.logger.debug(
-					"The ip address of the machine {} is {}".format(new_machine.mid_user_defined, machine_ip))
-				self.logger.info(
-					'Adding the kvm machine {} whose ip {} to juju'.format(new_machine.mid_user_defined, machine_ip))
-				await machine_configuration_for_jujuCharm(self.gv.SSH_USER, machine_ip, ssh_key_private, self.logger)
-				await asyncio.sleep(5)
-				juju_cmd = "".join(["ssh:", self.gv.SSH_USER, "@", machine_ip, ":", ssh_key_private])
-				juju_machine = await model.add_machine(juju_cmd)
+				# TODO Add physical machine to juju model by providing the username, ip address, and private and public ssh_key
+				self.logger.error("Adding physical machine is not supported yet. You have to add the physical machine manually. ")
 			else:
 				juju_machine = model.machines.get(machine_id_service)
 			new_machine.mid_vnfm = juju_machine.data["id"]
@@ -1433,14 +1331,6 @@ class _PhysicalMachine():
 
 		self.tmp_service_name = None
 		self.tmp_mid_ro = None
-		"""
-		every address will have the following characteristics
-		self.addresses[0] = {
-				"value": "ip address"
-				"type": "ipv4, ipv6"
-				"scope": "private, public, local-machine"
-				}
-		"""
 		self.addresses = list()
 		self.ip = None
 		self.interfaces = None
@@ -1515,59 +1405,6 @@ class _PhysicalMachine():
 					self.logger.info(message)
 		except Exception as ex:
 			raise ex
-	# def build_2(self,
-	#           zone,
-	#           domain,
-	#           hostname,
-	#           dns_name,
-	#           status_alive,
-	#           status_connected,
-	#           set_addresses,
-	#           cpu_tot,
-	#           mem_tot,
-	#           disc_size_tot,
-	#           cpu_ava,
-	#           mem_ava,
-	#           disc_size_ava,
-	#           os_arch,
-	#           os_type,
-	#           os_dist,
-	#           os_version,
-	#           lxd_support,
-	#           kvm_support,
-	#           tags
-	#           ):
-	# 	try:
-	# 		self.zone = zone
-	# 		self.domain = domain
-	# 		self.hostname = hostname
-	# 		self.dns_name = dns_name
-	# 		self.dns_name = dns_name
-	# 		self.alive = status_alive
-	# 		self.connected = status_connected
-	# 		self.addresses = set_addresses
-	#
-	# 		self.host_cpu_tot = cpu_tot
-	# 		self.host_mem_tot = mem_tot
-	# 		self.host_disc_size_tot = disc_size_tot
-	#
-	# 		self.host_cpu_ava_percent = cpu_ava
-	# 		self.host_mem_ava = mem_ava
-	# 		self.host_disc_size_ava = disc_size_ava
-	#
-	# 		self.os_arch = os_arch
-	# 		self.os_type = os_type
-	# 		self.os_dist = os_dist
-	# 		self.os_version = os_version
-	#
-	# 		self.virt_lxd = lxd_support
-	# 		self.virt_kvm = kvm_support
-	#
-	# 		# TODO to deal with tags here
-	# 		self.tags = tags
-	# 	except ValueError as ex:
-	# 		raise ex
-
 	def register(self,
 				 cloud_name,
 				 model_name,

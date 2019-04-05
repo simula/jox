@@ -153,7 +153,7 @@ install_elasticsearch(){
 
 install_rabbitmq(){
     echo_info "Installing rabbitMQ"
-    wget -O- https://www.rabbitmq.com/rabbitmq-release-signing-key.asc | sudo apt-key add -
+    curl https://www.rabbitmq.com/rabbitmq-release-signing-key.asc | sudo apt-key add -
     $SUDO $os_pm $option install rabbitmq-server
     $SUDO service rabbitmq-server start
 

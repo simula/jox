@@ -111,11 +111,10 @@ if __name__ == '__main__':
 	# """
 	time_1 = time.time()
 	mid_user_defined = "machine2"
+	
 	cmd_list_kvm = ["uvt-kvm", "list"]
-
 	cmd_list_kvm_out = loop.run(run_command(cmd_list_kvm))
 	cmd_list_kvm_out = str(cmd_list_kvm_out).split('\n')
-
 	machine_ip = ""
 	for current_machine in cmd_list_kvm_out:
 		if mid_user_defined == current_machine:
