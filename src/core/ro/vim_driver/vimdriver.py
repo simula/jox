@@ -270,7 +270,7 @@ class LxcDriver(object):
 			cmd_lxc_create = ["lxc", "launch", "ubuntu:{}".format(new_machine.os_version), container_name]
 			cmd_lxc_create_out = loop.run(run_command(cmd_lxc_create))
 			self.logger.info(cmd_lxc_create_out)
-			""" Get the ip addresss if the machine"""
+			""" Get the ip addresss of the machine"""
 			machine_ip_tmp = list()
 			while len(machine_ip_tmp) == 0:
 				cmd_list_lxc_out = loop.run(run_command(cmd_list_lxc))
@@ -336,20 +336,79 @@ class LxcDriver(object):
 			self.logger.info("add achine: {}".format(cmd_juju_addmachine))
 			cmd_lxc_ssh_vm_out = loop.run(run_command(cmd_juju_addmachine))
 			machineId = str(cmd_lxc_ssh_vm_out).split('\n')
+			
+			cmd_to_execute = list()
+			cmd_found = False
 			for item in machineId:
 				if "created machine" in item:
 					val_id = [x for x in str(item).split(' ') if x]
 					machine_id_service = val_id[2]
-
+				##########
+				if "Add correct host key in" in str(item):
+					cmd_found = True
+				if cmd_found and ("ssh-keygen -f" in str(item)):
+					temp_val = str(item).split('-f')
+					temp_val = str(temp_val[1]).split('-R')
+					temp_val_1 = temp_val[0]
+					temp_val_2 = temp_val[1]
+					if ('\r') in temp_val_1:
+						temp_val_1 = str(temp_val_1).split('\r')
+						temp_val_1 = temp_val_1[0]
+					if ('\r') in temp_val_2:
+						temp_val_2 = str(temp_val_2).split('\r')
+						temp_val_2 = temp_val_2[0]
+					temp_val_1 = str(temp_val_1).split('"')
+					temp_val_1 = temp_val_1[1]
+					
+					temp_val_2 = str(temp_val_2).split('"')
+					temp_val_2 = temp_val_2[1]
+					
+					cmd_to_execute.append("ssh-keygen")
+					cmd_to_execute.append("-f")
+					cmd_to_execute.append(temp_val_1)
+					cmd_to_execute.append("-R")
+					cmd_to_execute.append(temp_val_2)
+			###############################################################
+			###############################################################
+			if cmd_found:
+				print("cmd_found: {}".format(cmd_to_execute))
+				cmd_found_out = loop.run(run_command(cmd_to_execute))
+				print("Try to add achine: {}".format(cmd_juju_addmachine))
+				
+				cmd_lxc_ssh_vm_out = loop.run(run_command(cmd_lxc_ssh_vm))
+				print("Try cmd_lxc_ssh_vm: {}".format(cmd_lxc_ssh_vm_out))
+				
+				#
+				cmd_fix_issues = ["sudo apt", "update", "--fix-missing"]
+				cmd_fix_issues_out = loop.run(run_command(cmd_fix_issues))
+				
+				cmd_lxc_ssh_vm_out = loop.run(run_command(cmd_juju_addmachine))
+				machineId = str(cmd_lxc_ssh_vm_out).split('\n')
+				for item in machineId:
+					if "created machine" in item:
+						val_id = [x for x in str(item).split(' ') if x]
+						machine_id_service = val_id[2]
+			###############################################################
+			###############################################################
+		# else:
+		# 	juju_machine = loop.run(
+		# 		self.deploy_machine_2(None, None, machine_id_service, new_machine.juju_cloud_name,
+		# 							  new_machine.juju_model_name))
+		
+		if machine_id_service is None:
+			self.logger.info("checking point")
+			pass
+		machine_id_found = False
+		while not machine_id_found:
 			juju_machine = loop.run(
 				self.deploy_machine_2(None, None, machine_id_service, new_machine.juju_cloud_name,
-									  new_machine.juju_model_name))
-		else:
-			juju_machine = loop.run(
-				self.deploy_machine_2(None, None, machine_id_service, new_machine.juju_cloud_name,
-									  new_machine.juju_model_name))
-
-			self.logger.info("The application {} is already deployed, and thus no machine added".format(service_name))
+				                      new_machine.juju_model_name))
+			try:
+				new_machine.mid_vnfm = juju_machine.data["id"]  # Note here Machine ID
+				machine_id_found = True
+			except:
+				pass
+		self.logger.info("The application {} is already deployed, and thus no machine added".format(service_name))
 		new_machine.mid_vnfm = juju_machine.data["id"]  # Note here Machine ID
 
 		#############
