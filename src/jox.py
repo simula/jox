@@ -906,22 +906,14 @@ class server_RBMQ(object):
 			es_index_page = parameters["es_index_page"]
 			es_key = parameters["es_key"]
 			if request_type == "get":
-				if (es_index_page is None):
-					res = self.nfvo_jox.jesearch.get_all_indices_from_es()
-					if res[0]:
-						response = {
-							"ACK": True,
-							"data": res[1],
-							"status_code": self.nfvo_jox.gv.HTTP_200_OK
-						}
-					else:
-						response = {
-							"ACK": False,
-							"data": res[1],
-							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-						}
+				if self.nfvo_jox.gv.es_status == "Dead":
+					response = {
+						"ACK": True,
+						"data": "Elasticsearch is not active",
+						"status_code": self.nfvo_jox.gv.HTTP_200_OK
+					}
 				else:
-					if (es_index_page == "_all") or (es_index_page == "all") or (es_index_page == "*"):
+					if (es_index_page is None):
 						res = self.nfvo_jox.jesearch.get_all_indices_from_es()
 						if res[0]:
 							response = {
@@ -936,47 +928,63 @@ class server_RBMQ(object):
 								"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 							}
 					else:
-						if es_key is None:
-							message = "get the index-page {} ".format(es_index_page)
-							self.logger.info(message)
-							self.logger.debug(message)
-							res = self.nfvo_jox.jesearch.get_source_index(es_index_page)
-							
+						if (es_index_page == "_all") or (es_index_page == "all") or (es_index_page == "*"):
+							res = self.nfvo_jox.jesearch.get_all_indices_from_es()
 							if res[0]:
-								res = res[1]
 								response = {
 									"ACK": True,
-									"data": res,
+									"data": res[1],
 									"status_code": self.nfvo_jox.gv.HTTP_200_OK
 								}
 							else:
-								res = res[1]
 								response = {
 									"ACK": False,
-									"data": res,
+									"data": res[1],
 									"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 								}
-						
-						
 						else:
-							message = "get the key {} from the index-page {} ".format(es_key, es_index_page)
-							self.logger.info(message)
-							self.logger.debug(message)
-							res = self.nfvo_jox.jesearch.get_json_from_es(es_index_page, es_key)
-							if res[0]:
-								res = res[1]
-								response = {
-									"ACK": True,
-									"data": res,
-									"status_code": self.nfvo_jox.gv.HTTP_200_OK
-								}
+							if es_key is None:
+								message = "get the index-page {} ".format(es_index_page)
+								self.logger.info(message)
+								self.logger.debug(message)
+								res = self.nfvo_jox.jesearch.get_source_index(es_index_page)
+								
+								if res[0]:
+									res = res[1]
+									response = {
+										"ACK": True,
+										"data": res,
+										"status_code": self.nfvo_jox.gv.HTTP_200_OK
+									}
+								else:
+									res = res[1]
+									response = {
+										"ACK": False,
+										"data": res,
+										"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+									}
+							
+							
 							else:
-								res = res[1]
-								response = {
-									"ACK": False,
-									"data": res,
-									"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-								}
+								message = "get the key {} from the index-page {} ".format(es_key, es_index_page)
+								self.logger.info(message)
+								self.logger.debug(message)
+								res = self.nfvo_jox.jesearch.get_json_from_es(es_index_page, es_key)
+								if res[0]:
+									res = res[1]
+									response = {
+										"ACK": True,
+										"data": res,
+										"status_code": self.nfvo_jox.gv.HTTP_200_OK
+									}
+								else:
+									res = res[1]
+									response = {
+										"ACK": False,
+										"data": res,
+										"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+									}
+									
 			elif request_type == "post":
 				full_path = self.check_existence_path(template_directory, es_index_page)
 				if full_path[0]:
