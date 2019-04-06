@@ -119,13 +119,16 @@ install_required_packages(){
     echo_success "Python3.6 is successfully installed"
 
     echo_info "Installing python3-pip"
-    $SUDO $os_pm $option install  python3-pip || true
+    $SUDO $os_pm $option install python3-pip || true
 
     echo_info "Installing docker.io"
-    $SUDO $os_pm $option install  docker.io || true
+    $SUDO $os_pm $option install docker.io || true
 
     echo_info "Installing curl"
-    $SUDO $os_pm $option install  curl || true
+    $SUDO $os_pm $option install curl || true
+
+    echo_info "Installing tree"
+    $SUDO $os_pm $option install tree || true
 
 
     install_elasticsearch
