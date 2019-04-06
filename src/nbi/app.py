@@ -699,17 +699,17 @@ def test_deploy_slice():
 	data = jsonify(data)
 	return data, status_code
 
-@app.route('/resources')
+@app.route('/resource-discovery')
 def resource_discovery():
 	"""
 	@apiGroup resource_management
 	@apiName get_available_resources
 
-	@api {get}  /resources Available Resources
-	@apiDescription Get the list of all the resources
+	@api {get}  /resource-discovery Discover Available Resources
+	@apiDescription Get the list of all the resources and add them to the resource controller, so that they can be used later when deploying a slice
 
 	@apiExample {curl} Example-Usage:
-		curl  -i http://localhost:5000/resources
+		curl  -i http://localhost:5000/resource-discovery
 
 	@apiSuccessExample Example-Success-Response:
 	{

@@ -200,7 +200,7 @@ class LxcDriver(object):
 			await model.disconnect()
 		return [machine_id_service, application_NotExist, add_new_context_machine]
 
-	async def deploy_machine_2(self, new_machine, juju_cmd, machine_id_service, c_name, m_name, user="admin"):
+	async def get_juju_machine(self, machine_id_service, c_name, m_name, user="admin"):
 		model = Model()
 		try:
 			model_name = c_name + ":" + user + "/" + m_name
@@ -218,20 +218,7 @@ class LxcDriver(object):
 				except:
 					await model.disconnect()
 					await asyncio.sleep(self.interval_access)
-			if machine_id_service is None:
-				juju_machine = await model.add_machine(juju_cmd,
-													   constraints={
-														   'mem': int(new_machine.memory) * self.gv.GB,
-														   'tags': [new_machine.mid_user_defined],
-													   },
-													   disks=[{
-														   'pool': 'rootfs',
-														   'size': int(new_machine.disc_size) * self.gv.GB,
-														   'count': 1,
-													   }],
-													   )
-			else:
-				juju_machine = model.machines.get(machine_id_service)
+			juju_machine = model.machines.get(machine_id_service)
 		except Exception as ex:
 			self.logger.error(traceback.format_exc())
 			raise ex
@@ -368,8 +355,6 @@ class LxcDriver(object):
 					cmd_to_execute.append(temp_val_1)
 					cmd_to_execute.append("-R")
 					cmd_to_execute.append(temp_val_2)
-			###############################################################
-			###############################################################
 			if cmd_found:
 				print("cmd_found: {}".format(cmd_to_execute))
 				cmd_found_out = loop.run(run_command(cmd_to_execute))
@@ -388,20 +373,13 @@ class LxcDriver(object):
 					if "created machine" in item:
 						val_id = [x for x in str(item).split(' ') if x]
 						machine_id_service = val_id[2]
-			###############################################################
-			###############################################################
-		# else:
-		# 	juju_machine = loop.run(
-		# 		self.deploy_machine_2(None, None, machine_id_service, new_machine.juju_cloud_name,
-		# 							  new_machine.juju_model_name))
-		
 		if machine_id_service is None:
 			self.logger.info("checking point")
 			pass
 		machine_id_found = False
 		while not machine_id_found:
 			juju_machine = loop.run(
-				self.deploy_machine_2(None, None, machine_id_service, new_machine.juju_cloud_name,
+				self.get_juju_machine(machine_id_service, new_machine.juju_cloud_name,
 				                      new_machine.juju_model_name))
 			try:
 				new_machine.mid_vnfm = juju_machine.data["id"]  # Note here Machine ID

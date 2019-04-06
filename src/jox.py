@@ -540,7 +540,7 @@ class server_RBMQ(object):
 			print(" [*] enquiry(%s)" % enquiry_tmp)
 		else:
 			print(" [*] enquiry(%s)" % enquiry)
-		if "/resources" in enquiry["request-uri"]:
+		if "/resource-discovery" in enquiry["request-uri"]:
 			available_resources = self.nfvo_jox.resource_discovery()
 			response = {
 				"ACK": True,
