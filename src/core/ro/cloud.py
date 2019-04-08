@@ -135,7 +135,8 @@ class JCloud(JSONEncoder):
         loop.run_forever()
         
     async def on_model_change(self, delta, old, new, model):
-        if gv.es_status == "Active":
+        if False:
+        # if gv.es_status == "Active":
             if delta.entity=="machine" and delta.type=="change" and delta.data['agent-status']['current']=="started":
                 monitor.update_machine_monitor_state(self.jesearch, delta.data['id'], "launch_time", self.slice_id)
     
@@ -164,4 +165,4 @@ class JCloud(JSONEncoder):
             model.add_observer(self.on_model_change)
 
         except Exception as ex:
-            print(ex)
+            self.logger.error(ex)

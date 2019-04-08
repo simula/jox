@@ -123,6 +123,14 @@
   "clouds-list": [
     {
       "description": "credentials of your juju controller",
+      "cloud-name": "psoque-edu",
+      "cloud-type": "manual",
+      "cloud-endpoint": "172.24.10.165:17070",
+      "cloud-username": "admin",
+      "cloud-password": "4fadf1387502532b4565d6226fd87835"
+    },
+    {
+      "description": "credentials of your juju controller",
       "cloud-name": "arouk-edu",
       "cloud-type": "manual",
       "cloud-endpoint": "172.24.11.27:17070",
@@ -201,8 +209,8 @@
   },
   "ssh-config": {
     "_Comment": "ssh connection is needed when adding kvm machines",
-    "ssh-key-directory": "/home/arouk/.ssh/",
-    "ssh-key-name": "id_juju2",
+    "ssh-key-directory": "/home/nymphe/.ssh/",
+    "ssh-key-name": "id_rsa",
     "ssh-user": "ubuntu",
     "ssh-password": "linux"
   },

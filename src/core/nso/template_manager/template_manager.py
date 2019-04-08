@@ -172,7 +172,6 @@ class TemplateManager():
 
 		#if self.es_status == "Active":
 		if self.gv.es_status == "Active":
-			print("here in nssi_build ",self.gv.es_status)
 			self.set_NSI_monitor_index(self.NSI_ID)
 			message = "Deleting the index {} from elasticsearch if alredy exist".format((self.NSI_ID).lower())
 			logger.info(message)

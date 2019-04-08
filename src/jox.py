@@ -805,7 +805,7 @@ class server_RBMQ(object):
 			if log_source == "juju":
 				file = open("juju.log", 'w')
 				cmd_log = ["juju", "debug-log", "--lines", str(10000)]
-				cmd_out = loop.run(run_command(cmd_log))
+				cmd_out = None #loop.run(run_command(cmd_log))
 				file.write(cmd_out)
 				file.close()
 				file = open("juju.log", 'r')

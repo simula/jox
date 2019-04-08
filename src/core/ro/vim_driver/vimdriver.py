@@ -42,6 +42,9 @@ import datetime
 dir_path = os.path.dirname(os.path.abspath(__file__ + "/../../../"))
 from src.core.nso.template_manager import template_manager
 from src.common.config import gv as global_varialbles
+
+from netaddr import IPNetwork, IPAddress
+
 #
 class LxcDriver(object):
 	def __init__(self, pop_config, global_variable):
@@ -664,17 +667,39 @@ class KvmDriver(object):
 				cmd_list_kvm = ["uvt-kvm", "list"]
 				cmd_list_kvm_out = await run_command(cmd_list_kvm)
 				cmd_list_kvm_out = str(cmd_list_kvm_out).split('\n')
+
+				####################################
+				tmp_counter = 0
+				machine_kvm_name = "machine-{}".format(service_name)
+				machine_kvm_name_tmp = machine_kvm_name
+				machine_name_exist = True
+				while machine_name_exist:
+					machine_name_exist_tmp = False
+					for kvm_md in cmd_list_kvm_out:
+						if kvm_md == machine_kvm_name_tmp:
+							machine_name_exist_tmp = True
+					if machine_name_exist_tmp:
+						tmp_counter += 1
+						machine_kvm_name_tmp = "{}-{}".format(machine_kvm_name, tmp_counter)
+					else:
+						machine_name_exist = False
+						machine_kvm_name = machine_kvm_name_tmp
+
+				new_machine.mid_vim = machine_kvm_name
+				#####################################
 				machine_ip = ""
-				for current_machine in cmd_list_kvm_out:
-					if new_machine.mid_user_defined == current_machine:
-						cmd_ip = ["uvt-kvm", "ip", new_machine.mid_user_defined]
-						cmd_ip_out = await run_command(cmd_ip)
-						machine_ip = (str(cmd_ip_out).split('\n'))[0]
-						break
+				# machine_found = False
+				# for current_machine in cmd_list_kvm_out:
+				# 	if new_machine.mid_user_defined == current_machine:
+				# 		machine_found = True
+				# 		cmd_ip = ["uvt-kvm", "ip", new_machine.mid_user_defined]
+				# 		cmd_ip_out = await run_command(cmd_ip)
+				# 		machine_ip = (str(cmd_ip_out).split('\n'))[0]
+				# 		break
 				###################
 				if machine_ip == "":
 					cmd_create_kvm = ["uvt-kvm", "create",
-									  new_machine.mid_user_defined,
+									  new_machine.mid_vim,
 									  "release={}".format(new_machine.os_series),
 									  "--memory", str(new_machine.memory),
 									  "--cpu", str(new_machine.cpu),
@@ -684,8 +709,8 @@ class KvmDriver(object):
 									  ]
 					cmd_create_kvm_out = await run_command(cmd_create_kvm)
 
-					cmd_wait_kvm = ["uvt-kvm", "wait", new_machine.mid_user_defined]
-					cmd_ip = ["uvt-kvm", "ip", new_machine.mid_user_defined]
+					cmd_wait_kvm = ["uvt-kvm", "wait", new_machine.mid_vim]
+					cmd_ip = ["uvt-kvm", "ip", new_machine.mid_vim]
 
 					cmd_wait_kvm_out = await run_command(cmd_wait_kvm)
 					cmd_ip_out = await run_command(cmd_ip)
@@ -695,40 +720,48 @@ class KvmDriver(object):
 					"The ip address of the machine {} is {}".format(new_machine.mid_user_defined, machine_ip))
 				self.logger.info(
 					'Adding the kvm machine {} whose ip {} to juju'.format(new_machine.mid_user_defined, machine_ip))
-				await machine_configuration_for_jujuCharm(self.gv.SSH_USER, machine_ip, ssh_key_private, self.logger)
-				await asyncio.sleep(10)
-				juju_cmd = "".join(["ssh:", self.gv.SSH_USER, "@", machine_ip, ":", ssh_key_private])
-				juju_machine = await model.add_machine(juju_cmd,
-													   constraints={
-														   'tags': [new_machine.mid_user_defined],
-														   'virt_type': 'kvm'
-													   }
-													   )
+				try:
+					ip = IPAddress(machine_ip) # To verify that we get the right ip address of the machine
+					await machine_configuration_for_jujuCharm(self.gv.SSH_USER, machine_ip, ssh_key_private, self.logger)
+					await asyncio.sleep(10)
+					juju_cmd = "".join(["ssh:", self.gv.SSH_USER, "@", machine_ip, ":", ssh_key_private])
+
+					juju_machine = await model.add_machine(juju_cmd)
+				except:
+					message = "There is error in the ip address of the machine, and thus the machine can not be addedd to juju model"
+					self.logger.error(message)
+
+
 			else:
 				juju_machine = model.machines.get(machine_id_service)
-			new_machine.mid_vnfm = juju_machine.data["id"]
-			#############
-			cmd_machin_config = ["juju", "show-machine", new_machine.mid_vnfm, "--format", "json"]
+			try:
+				new_machine.mid_vnfm = juju_machine.data["id"]
 
-			cmd_machin_config_out = await run_command(cmd_machin_config)
-			cmd_machin_config_out = json.loads(cmd_machin_config_out)
-			new_machine.ip = cmd_machin_config_out['machines'][new_machine.mid_vnfm]['ip-addresses']
+				#############
+				cmd_machin_config = ["juju", "show-machine", new_machine.mid_vnfm, "--format", "json"]
 
-			self.template_manager.update_slice_monitor_index("slice_monitor_" + subslice_name.lower(),
-															 "machine_status",
-															 service_name,
-															 "juju_mid",
-															 str(new_machine.mid_vnfm),
-															 nsi_id)
-			self.template_manager.update_slice_monitor_index('slice_keys_' + nsi_id.lower(), "machine_keys",
-															 service_name, "juju_mid", str(new_machine.mid_vnfm),
-															 nsi_id)
-			self.template_manager.update_slice_monitor_index("slice_monitor_" + subslice_name.lower(),
-															 "machine_status", service_name, "type", "kvm", nsi_id)
+				cmd_machin_config_out = await run_command(cmd_machin_config)
+				cmd_machin_config_out = json.loads(cmd_machin_config_out)
+				new_machine.ip = cmd_machin_config_out['machines'][new_machine.mid_vnfm]['ip-addresses']
 
-			self.logger.debug(
-				"The machine {} with juju id {} is already added to juju model".format(new_machine.mid_user_defined,
-																					   juju_machine.data["id"]))
+				self.template_manager.update_slice_monitor_index("slice_monitor_" + subslice_name.lower(),
+																 "machine_status",
+																 service_name,
+																 "juju_mid",
+																 str(new_machine.mid_vnfm),
+																 nsi_id)
+				self.template_manager.update_slice_monitor_index('slice_keys_' + nsi_id.lower(), "machine_keys",
+																 service_name, "juju_mid", str(new_machine.mid_vnfm),
+																 nsi_id)
+				self.template_manager.update_slice_monitor_index("slice_monitor_" + subslice_name.lower(),
+																 "machine_status", service_name, "type", "kvm", nsi_id)
+
+				self.logger.debug(
+					"The machine {} with juju id {} is already added to juju model".format(new_machine.mid_user_defined,
+																						   juju_machine.data["id"]))
+			except:
+				message = "Error while trying to add machine to the service {}".format(service_name)
+				self.logger.error(message)
 		except Exception as ex:
 			self.logger.error(traceback.format_exc())
 			raise ex

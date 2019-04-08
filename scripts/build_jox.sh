@@ -200,7 +200,11 @@ install_python_packages(){
     echo_success "jsonpickle is successfully installed"
 
     echo_info "Installing pika"
-    pip3 install pika==0.12.0 --user
+    pip3 install --force-reinstall pika==0.12.0 --user
+    echo_success "pika is successfully installed"
+
+    echo_info "Installing pika"
+    pip3 install --force-reinstall cryptography==2.4.2 --user
     echo_success "pika is successfully installed"
 
 
