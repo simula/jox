@@ -56,6 +56,13 @@ class ResourcesController(object):
 		self.logger = logging.getLogger('jox.RO.rsourceController')
 		self.log_config()
 		self.jesearch = None
+	def build(self, jox_config, jesearch):
+		try:
+			self.jox_config = jox_config
+			self.jesearch = jesearch
+		except Exception as ex:
+			raise ex
+
 	def log_config(self):
 		if self.gv.LOG_LEVEL == 'debug':
 			self.logger.setLevel(logging.DEBUG)
@@ -284,12 +291,7 @@ class ResourcesController(object):
 		self.machine_id = self.machine_id + 1
 		return ':'.join([str(self.machine_id), pop_type])
 	
-	def build(self, jox_config, jesearch):
-		try:
-			self.jox_config = jox_config
-			self.jesearch = jesearch
-		except Exception as ex:
-			raise ex
+
 	def remove_machine(self, machine_config, service_config, slice_name, subslice_name):
 		vim_type = machine_config["vim_type"]
 		vim_location = machine_config["vim_location"]

@@ -69,6 +69,8 @@ def update_machine_monitor_state(jesearch, machine_id, machine_state, slice_id):
 
 def update_service_monitor_state(jesearch , service_name, service_state, slice_id):
     if gv.es_status == "Active":
+        if jesearch is None:
+            print("Test")
         nssid, start_time = check_nssid_with_service(jesearch, service_name, slice_id)
         end_time = (datetime.datetime.now()).isoformat()
 
