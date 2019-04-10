@@ -57,22 +57,46 @@ else:
 keys_local = {}   # locally maintaining keys for slice component's context matching
 
 def update_machine_monitor_state(jesearch, machine_id, machine_state, slice_id):
-    nssid, container_name, start_time = check_nssid_with_mid(jesearch, machine_id, 'machine_keys', slice_id)
-    if (not nssid) and (not nssid) and (not nssid):
-        pass
-    else:
-        end_time = (datetime.datetime.now()).isoformat()
-        launch_time = (datetime.datetime.strptime(end_time,'%Y-%m-%dT%H:%M:%S.%f'))-(datetime.datetime.strptime(start_time,'%Y-%m-%dT%H:%M:%S.%f'))
-        update_index_key(jesearch, 'slice_monitor_'+ nssid.lower(), "machine_status", container_name, machine_state,
-                         str(launch_time), slice_id)
+    # if gv.es_status == "Active":
+    if True:
+        print("jesearch={}".format(jesearch))
+        print("type(jesearch)={}".format(type(jesearch)))
+
+        print("machine_id={}".format(machine_id))
+        print("type(machine_id)={}".format(type(machine_id)))
+
+        print("slice_id={}".format(slice_id))
+        print("type(slice_id)={}".format(type(slice_id)))
+
+        nssid, container_name, start_time = check_nssid_with_mid(jesearch, machine_id, 'machine_keys', slice_id)
+        print("nssid={}".format(nssid))
+        print("type(nssid)={}".format(type(nssid)))
+
+        print("container_name={}".format(container_name))
+        print("type(container_name)={}".format(type(container_name)))
+
+        print("start_time={}".format(start_time))
+        print("type(start_time)={}".format(type(start_time)))
+
+        if (not nssid) and (not nssid) and (not nssid):
+            pass
+        else:
+            end_time = (datetime.datetime.now()).isoformat()
+            launch_time = (datetime.datetime.strptime(end_time,'%Y-%m-%dT%H:%M:%S.%f'))-(datetime.datetime.strptime(start_time,'%Y-%m-%dT%H:%M:%S.%f'))
+            update_index_key(jesearch, 'slice_monitor_'+ nssid.lower(), "machine_status", container_name, machine_state,
+                             str(launch_time), slice_id)
 
 def update_service_monitor_state(jesearch , service_name, service_state, slice_id):
-    nssid, start_time = check_nssid_with_service(jesearch, service_name, slice_id)
-    end_time = (datetime.datetime.now()).isoformat()
-    
-    service_time = (datetime.datetime.strptime(end_time,'%Y-%m-%dT%H:%M:%S.%f'))-(datetime.datetime.strptime(start_time,'%Y-%m-%dT%H:%M:%S.%f'))
-    update_index_key(jesearch, 'slice_monitor_'+ nssid.lower(), "service_status", service_name, service_state,
-                        str(service_time), slice_id)
+    # if gv.es_status == "Active":
+    if True:
+        if jesearch is None:
+            print("Test")
+        nssid, start_time = check_nssid_with_service(jesearch, service_name, slice_id)
+        end_time = (datetime.datetime.now()).isoformat()
+
+        service_time = (datetime.datetime.strptime(end_time,'%Y-%m-%dT%H:%M:%S.%f'))-(datetime.datetime.strptime(start_time,'%Y-%m-%dT%H:%M:%S.%f'))
+        update_index_key(jesearch, 'slice_monitor_'+ nssid.lower(), "service_status", service_name, service_state,
+                            str(service_time), slice_id)
 
 def check_nssid_with_mid(jesearch, machine_id, container_type, slice_id):
     for nsi in range(len(keys_local.keys())):
@@ -104,6 +128,7 @@ def check_nssid_with_mid(jesearch, machine_id, container_type, slice_id):
     else:
         message = "The key {} does not exist in the page {}".format(container_type, "slice_keys_"+slice_id.lower())
         logger.error(message)
+
 
 def check_nssid_with_service(jesearch, app_name, slice_id):
     for nsi in range(len(keys_local.keys())):
@@ -215,18 +240,27 @@ async def get_juju_status(type, cloud_name=None, model_name=None, user_name="adm
             logger.error(message)
             return [False, message]
     juju_status=(await utils.run_with_interrupt(model.get_status(), model._watch_stopping, loop=model.loop))
+    
+    model_info = dict()
+    model_info['controller_uuid'] = model.info.controller_uuid
+    model_info['model_uuid'] = model.info.uuid
+    model_info['cloud_name'] = model._connector.controller_name
+    model_info['model_name'] = model.info.name
+    model_info['default_series'] = model.info.default_series
+    model_info['provider_type'] = model.info.provider_type
+
     if type == 'machines':
-        return [True, juju_status.machines]
+        return [True, juju_status.machines, model_info]
     elif type == 'applications':
-        return [True, juju_status.applications]
+        return [True, juju_status.applications, model_info]
     elif type == 'relations':
-        return [True, get_all_relations(juju_status)]
+        return [True, get_all_relations(juju_status), model_info]
     elif type == 'all':
         juju_status_relations =get_all_relations(juju_status)
         full_status=({'machines':[juju_status.machines],
                       'services':[juju_status.applications],
                       'relations':[juju_status_relations]})
-        return [True, full_status]
+        return [True, full_status, model_info]
     else:
         message = "The key {} is not supported. Only the following keys are supported: machines, applications, relations, all".\
             format(type)

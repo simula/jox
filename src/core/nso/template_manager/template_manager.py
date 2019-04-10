@@ -25,10 +25,20 @@
  * \company: Eurecom
  * \email:contact@mosaic5g.io
 """
+__author__ = 'Eurecom'
+__date__ = "11-January-2019"
+__version__ = '1.0'
+__version_date__ = "01-March-2019"
+__copyright__ = 'Copyright 2016-2019, Eurecom'
+__license__ = 'Apache License, Version 2.0'
+__maintainer__ = 'Osama Arouk, Navid Nikaein, Kostas Kastalis, and Rohan Kharade'
+__email__ = 'contact@mosaic5g.io'
+__status__ = 'Development'
+__description__ = "Class to parse TOSCA template for JoX and handle monitoring indexes related to NSIs, NSSIs etc."
 
 import os
 import logging
-
+import copy
 logger = logging.getLogger('jox.templateManager')
 
 
@@ -42,6 +52,30 @@ service_keys = {}    # local key dictionary for slice component's context matchi
 machine_keys = {}
 relation_keys = {}
 
+
+list_tags_protocols = {
+	"usrp": ["VRT", "CHDR"],
+	"rf": []
+}
+vdu_properties = {
+	"network": None,
+	"tags": None,
+	}
+vdu_attributes = {
+	"host": None,
+	}
+vdu_policies = {
+	"region_placement": None,
+	}
+
+vdu_requirement_additional_skeleton = {
+				"properties": None,
+				"attributes": None,
+				"policies": None,
+			}
+
+
+anyval_inlist = lambda a, b: any(i in b for i in a)
 # dsl_definitions = {
 # 	"host":{
 # 			"tiny":{
@@ -90,9 +124,11 @@ class TemplateManager():
 		self.map_userNssiId_NssiId = {}
 		self.NSI_template = None
 		self.NSSI_template = list()
-		self.jesearch = None
-
-		es.del_all_from_es(self.es_host, self.es_port, 'slice_keys')
+		self.jesearch = es.JESearch(self.es_host, self.es_port, self.es_log_level)
+		if self.gv.es_status=="Dead":
+			pass
+		else:
+			es.del_all_from_es(self.es_host, self.es_port, 'slice_keys')
 		
 		self.logger = logging.getLogger('jox.TemplateManager')
 		self.log_config()
@@ -110,8 +146,15 @@ class TemplateManager():
 		else:
 			self.logger.setLevel(logging.INFO)
 	def build(self, slice_name_yml, nsi_dir, nssi_dir):
-
-		self.jesearch = es.JESearch(self.es_host, self.es_port, self.es_log_level)
+		if not self.jesearch.ping():
+			message = "Elasticsearch is not working while it is enabled. Either disable elasticsearch or run it"
+			self.logger.error(message)
+			#self.es_status="Dead"
+			self.gv.es_status="Dead"
+		else:
+			# self.es_status="Active"
+			self.gv.es_status="Active"
+			self.jesearch = es.JESearch(self.es_host, self.es_port, self.es_log_level)
 		
 		slice_full_path = ''.join([nsi_dir, slice_name_yml])
 		try:
@@ -126,16 +169,18 @@ class TemplateManager():
 		
 		self.NSI_template = slice_data_file
 		self.NSI_ID = slice_data_file['metadata']['ID']
-		
-		self.set_NSI_monitor_index(self.NSI_ID)
-		message = "Deleting the index {} from elasticsearch if alredy exist".format((self.NSI_ID).lower())
-		logger.info(message)
-		logger.debug(message)
-		self.jesearch.del_index_from_es((self.NSI_ID).lower())    			# Adding slice data to elasticsearch
-		message = "Saving the index {} to elasticsearch".format((self.NSI_ID).lower())
-		logger.info(message)
-		logger.debug(message)
-		self.jesearch.set_json_to_es(self.NSI_ID, slice_data_file)
+
+		#if self.es_status == "Active":
+		if self.gv.es_status == "Active":
+			self.set_NSI_monitor_index(self.NSI_ID)
+			message = "Deleting the index {} from elasticsearch if alredy exist".format((self.NSI_ID).lower())
+			logger.info(message)
+			logger.debug(message)
+			self.jesearch.del_index_from_es((self.NSI_ID).lower())    			# Adding slice data to elasticsearch
+			message = "Saving the index {} to elasticsearch".format((self.NSI_ID).lower())
+			logger.info(message)
+			logger.debug(message)
+			self.jesearch.set_json_to_es(self.NSI_ID, slice_data_file)
 
 		for sub_slice in self.NSI_template['imports']:
 			subslice_name_yml = ''.join([nssi_dir, sub_slice, '.', 'yaml'])
@@ -158,12 +203,13 @@ class TemplateManager():
 			message = "Deleting the index {} from elasticsearch if already exist".format(nssi_id)
 			logger.info(message)
 			logger.debug(message)
-			self.jesearch.del_index_from_es(nssi_id)
-			
-			message = "Saving the index {} to elasticsearch".format(nssi_id)
-			logger.info(message)
-			logger.debug(message)
-			self.jesearch.set_json_to_es(nssi_id, subslice_data_file)
+
+			if self.gv.es_status == "Active":
+				self.jesearch.del_index_from_es(nssi_id)
+				message = "Saving the index {} to elasticsearch".format(nssi_id)
+				logger.info(message)
+				logger.debug(message)
+				self.jesearch.set_json_to_es(nssi_id, subslice_data_file)
 		
 		message = "the slice {} is successfully deployed".format(slice_name_yml)
 		return [True, message]
@@ -214,6 +260,7 @@ class TemplateManager():
 		list_services = {}
 		list_machines = {}
 		slice_version = NSSI_template['metadata']['version']
+		abort_deploy_subslice = False
 		for item in NSSI_template['topology_template']['node_templates']:
 
 			if 'JOX' in NSSI_template['topology_template']['node_templates'][item]['type']:
@@ -250,6 +297,7 @@ class TemplateManager():
 					'os': None,
 					'vim_type': None,
 					'vim_location': None,
+					'additional_requirements': None
 				}
 				host = NSSI_template['topology_template']['node_templates'][item]['capabilities']['host']['properties']
 				os_sys = NSSI_template['topology_template']['node_templates'][item]['capabilities']['os']['properties']
@@ -270,9 +318,76 @@ class TemplateManager():
 				list_machines[machine_name]['vim_type'] = vim_type
 				vim_location = NSSI_template['topology_template']['node_templates'][item]['artifacts']['sw_image']['properties']['supported_virtualisation_environments']['entry_schema']
 				list_machines[machine_name]['vim_location'] = vim_location
+				""" check whether there is any properties defined """
+				vdu_requirement_additional = copy.deepcopy(vdu_requirement_additional_skeleton)
 
-		self.set_NSSI_monitor_index(nssi_id, self.get_NSI_ID(), list_services, list_machines) # Add monitoring template for this subslice
-		return [slice_version, list_services, list_machines]
+				if "properties" in NSSI_template['topology_template']['node_templates'][item].keys():
+					vdu_requirement_additional["properties"] = vdu_properties
+					for property in NSSI_template['topology_template']['node_templates'][item]["properties"]:
+						if NSSI_template['topology_template']['node_templates'][item]["properties"][property]["type"] == "tosca.capabilities.Endpoint":
+							if "port_name" in NSSI_template['topology_template']['node_templates'][item]["properties"][property].keys():
+								port_name = NSSI_template['topology_template']['node_templates'][item]["properties"][property]["port_name"]
+								if port_name in NSSI_template['topology_template']['node_templates'].keys():
+									port_definition = NSSI_template['topology_template']['node_templates'][port_name]
+
+									if port_definition['type'] == 'tosca.nodes.network.Port':
+										port_requirements = port_definition['requirements']
+										if ('binding' in port_requirements.keys()) and ('link' in port_requirements.keys()):
+											req_binding = port_requirements['binding']
+											if req_binding['node'] != item:
+												abort_deploy_subslice = True
+											req_link = port_requirements['link']
+											if req_link['type'] == 'tosca.nodes.network.Network':
+												net_properties = req_link['node']['properties']
+												vdu_requirement_additional["properties"]["network"] = net_properties
+											else:
+												abort_deploy_subslice = True
+										else:
+											message = "For the port type, the binding and link should be defined. Deploying the slice will be aborted"
+											self.logger.error(message)
+											abort_deploy_subslice = True
+									else:
+										message = "The type [{}] is not recognized, and deploying the slice will be aborted".format(port_definition['type'])
+										self.logger.error(message)
+								else:
+									message = "The entity {} is not defined in node_templates. Deploying slice will be aborted".format(port_name)
+									self.logger.error(message)
+								# TODO retreive the definition of portname
+								pass
+							if "protocol" in NSSI_template['topology_template']['node_templates'][item]["properties"][property].keys():
+								# protocol defined for specific type fo communication: e.g. usrp, RF, etc
+								list_protocols = NSSI_template['topology_template']['node_templates'][item]["properties"][property]["protocol"]
+								vdu_requirement_additional["properties"]["tags"] = {
+														"usrp": False,
+														"rf": False
+														}
+								for tag_tmp in vdu_requirement_additional["properties"]["tags"]:
+									vdu_requirement_additional["properties"]["tags"][tag_tmp] = anyval_inlist(list_protocols, list_tags_protocols[tag_tmp])
+				if "attributes" in NSSI_template['topology_template']['node_templates'][item].keys():
+					vdu_requirement_additional["attributes"] = vdu_attributes
+					for attribute in NSSI_template['topology_template']['node_templates'][item]["attributes"]:
+						if ("tosca.capabilities.Endpoint" in
+								NSSI_template['topology_template']['node_templates'][item]["attributes"][attribute]["type"]):
+							vdu_requirement_additional["attributes"]['host'] = NSSI_template['topology_template']['node_templates'][item]["attributes"][attribute]["ip_address"]
+							pass
+
+				if "policies" in NSSI_template['topology_template']['node_templates'][item].keys():
+					vdu_requirement_additional["policies"] = vdu_policies
+					for policy in NSSI_template['topology_template']['node_templates'][item]["policies"]:
+						if ("tosca.policy.placement" in NSSI_template['topology_template']['node_templates'][item]["policies"][policy]["type"]) and \
+						('container_type' in NSSI_template['topology_template']['node_templates'][item]["policies"][policy].keys()) and \
+						('container_number' in NSSI_template['topology_template']['node_templates'][item]["policies"][policy].keys()):
+							vdu_requirement_additional["policies"]['region_placement'] = str(NSSI_template['topology_template']['node_templates'][item]["policies"][policy]["container_number"])
+						pass
+				list_machines[machine_name]['additional_requirements'] = copy.deepcopy(vdu_requirement_additional)
+
+
+
+		if not self.jesearch.ping():
+			pass
+		else:
+			self.set_NSSI_monitor_index(nssi_id, self.get_NSI_ID(), list_services, list_machines) # Add monitoring template for this subslice
+		return [slice_version, list_services, list_machines, abort_deploy_subslice]
 
 	def get_inter_nssi_relations(self):
 		Inter_relations = {}
@@ -406,24 +521,25 @@ class TemplateManager():
 
 
 	def update_slice_monitor_index(self, index_page, container_type, container_name, leaf_key, leaf_value, nsi_id):
-		slice_data = es.get_json_from_es(self.es_host, self.es_port, index_page, container_type)
-		for machines in range(len(slice_data)):  # Update the container
-			machines_list = slice_data[machines]
-			machine = list(machines_list.keys())
-			for num in range(len(machine)):
-				if machine[num] == container_name:
-					slice_data[machines][container_name][0][leaf_key] = leaf_value
-		ES = Elasticsearch([{'host': self.es_host, 'port': self.es_port, 'use_ssl': False}])
-		ES.update(index=index_page, doc_type='post', id=1,  # Push the container with updates
-				  body={'doc': {container_type: slice_data}}, retry_on_conflict=0)
+		if self.gv.es_status == "Active":
+			slice_data = es.get_json_from_es(self.es_host, self.es_port, index_page, container_type)
+			for machines in range(len(slice_data)):  # Update the container
+				machines_list = slice_data[machines]
+				machine = list(machines_list.keys())
+				for num in range(len(machine)):
+					if machine[num] == container_name:
+						slice_data[machines][container_name][0][leaf_key] = leaf_value
+			ES = Elasticsearch([{'host': self.es_host, 'port': self.es_port, 'use_ssl': False}])
+			ES.update(index=index_page, doc_type='post', id=1,  # Push the container with updates
+					  body={'doc': {container_type: slice_data}}, retry_on_conflict=0)
 
-		if container_type=="machine_keys":
-			machine_keys[nsi_id][0]['machine_keys'].clear()
-			for machine in range(len(slice_data)):
-				machine_keys[nsi_id][0]['machine_keys'].append(slice_data[machine])
-		if container_type=="service_keys":
-			service_keys[nsi_id][0]['service_keys'][0].clear()
-			for service in range(len(slice_data)):
-				service_keys[nsi_id][0]['service_keys'].append(slice_data[service])
+			if container_type=="machine_keys":
+				machine_keys[nsi_id][0]['machine_keys'].clear()
+				for machine in range(len(slice_data)):
+					machine_keys[nsi_id][0]['machine_keys'].append(slice_data[machine])
+			if container_type=="service_keys":
+				service_keys[nsi_id][0]['service_keys'][0].clear()
+				for service in range(len(slice_data)):
+					service_keys[nsi_id][0]['service_keys'].append(slice_data[service])
 
 

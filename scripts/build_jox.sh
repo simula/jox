@@ -18,14 +18,7 @@
 # -------------------------------------------------------------------------------
 #   For more information about the Mosaic5G:
 #   	contact@mosaic-5g.io
-#
-#
-################################################################################
-# file
-# brief
-# author
 
-# set -u
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -103,71 +96,49 @@ check_ubuntu_1604() {
 }
 
 if ! check_supported_os_dist; then
-    echo_error "Your distribution $os_dist is not supported by JoX R1 !"
+    echo_error "Your distribution $os_dist is not supported by JoX!"
     exit 1
 fi
 
-
-install_required_packages_ubunut16(){
-    echo_info "Installing python3.6 for $os_dist"
-    $SUDO add-apt-repository ppa:jonathonf/python-3.6  || true
-    $SUDO $os_pm $option update
-    $SUDO $os_pm $option install python3.6  || true
-    sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
-    sudo update-alternatives  --set python3 /usr/bin/python3.6
-}
 install_required_packages(){
     echo_info "Installing dependencies for $os_dist"
     if check_ubuntu_1604; then
-        install_required_packages_ubunut16
+        $SUDO $os_pm $option install python3.5  || true
     else
         echo_info "Installing python3.6"
         $SUDO $os_pm $option install python3.6  || true
     fi
-    $SUDO $os_pm $option install python-dev  || true
+
+    $SUDO $os_pm $option install \
+                        python3-setuptools \
+                        python3-dev \
+                        libpq-dev \
+                        build-essential
 
     alias python3=python3.6
     echo_success "Python3.6 is successfully installed"
 
     echo_info "Installing python3-pip"
-    $SUDO $os_pm $option install  python3-pip || true
+    $SUDO $os_pm $option install python3-pip || true
 
     echo_info "Installing docker.io"
-    $SUDO $os_pm $option install  docker.io || true
+    $SUDO $os_pm $option install docker.io || true
 
     echo_info "Installing curl"
-    $SUDO $os_pm $option install  curl || true
+    $SUDO $os_pm $option install curl || true
 
-#    if check_ubuntu_1604; then
-#        echo_info "upgrade pip3"
-#
-#        pip3 install --upgrade pip
-#        $SUDO apt install python3-pip --reinstall
-#
-#        echo_info "dpkg --configure -a"
-#        $SUDO dpkg --configure -a
-#
-#        echo_info "Installing setuptools"
-#        $SUDO pip3 install -U setuptools --user
-#
-#        echo_info "Installing tree"
-#        pip3 install --upgrade pip wheel --user
-#    fi
+    echo_info "Installing tree"
+    $SUDO $os_pm $option install tree || true
+
+
     install_elasticsearch
-
-    install_rabbitmq
-
-    install_python_packages
-
-    install_juju
-
-    install_uvtool_kvm
-
 }
 
 install_uvtool_kvm(){
-    $SUDO $os_pm install $option  qemu-kvm libvirt-bin virtinst bridge-utils cpu-checker || true
-    $SUDO $os_pm install $option uvtool || true
+    $SUDO $os_pm $option install qemu-kvm libvirt-bin virtinst bridge-utils cpu-checker || true
+    $SUDO $os_pm $option install uvtool || true
+
+    jox_store
 }
 
 install_ubuntu_image(){
@@ -177,35 +148,25 @@ install_ubuntu_image(){
 }
 
 install_elasticsearch(){
-    echo_info "Installing elasticsearch"
-    $SUDO $os_pm install  $option default-jre || true
-    JAVA_HOME=/usr/lib/jvm/default-java/bin
-    export JAVA_HOME 
-    PATH=$PATH:$JAVA_HOME 
-    export PATH 
-    curl https://artifacts.elastic.co/GPG-KEY-elasticsearch | $SUDO apt-key add -
-    $SUDO $os_pm install $option apt-transport-https || true
-    echo "deb https://artifacts.elastic.co/packages/6.x/apt stable main" | $SUDO tee -a /etc/apt/sources.list.d/elastic-6.x.list 
-    $SUDO $os_pm update $option && $SUDO $os_pm install elasticsearch || true
-    $SUDO -i service elasticsearch start
-    echo_success "elasticsearch is successfully installed"
+    echo_info "pulling the docker image of elasticsearch:6.6.2"
+    sudo docker pull docker.elastic.co/elasticsearch/elasticsearch:6.6.2
+
+    install_rabbitmq
 }
 
 install_rabbitmq(){
     echo_info "Installing rabbitMQ"
-    wget -O- https://www.rabbitmq.com/rabbitmq-release-signing-key.asc | sudo apt-key add -
-#    if check_ubuntu_1604; then
-#        wget -O- https://www.rabbitmq.com/rabbitmq-release-signing-key.asc | sudo apt-key add -
-#    else
-#        curl http://www.rabbitmq.com/rabbitmq-signing-key-public.asc | sudo apt-key add -
-#    fi
-    $SUDO $os_pm update
-    $SUDO $os_pm install $option rabbitmq-server
+    curl https://www.rabbitmq.com/rabbitmq-release-signing-key.asc | sudo apt-key add -
+    $SUDO $os_pm $option install rabbitmq-server
+    $SUDO service rabbitmq-server start
 
     echo_info "enable rabbitmq-server"
     sudo systemctl start rabbitmq-server
     sudo systemctl enable rabbitmq-server
     echo_success "rabbitmq is successfully installed"
+
+
+    install_python_packages
 }
 
 install_juju(){
@@ -215,13 +176,12 @@ install_juju(){
     sudo snap install lxd || true
     sudo snap install juju --classic || true
     echo_success "juju is successfully installed"
+
+
+    install_uvtool_kvm
 }
 install_python_packages(){
     echo_info "Installing python libraries"
-
-    echo_info "Installing jsonify"
-    pip3 install jsonify --user
-    echo_success "jsonify is successfully installed"
 
     echo_info "Installing flask"
     pip3 install flask --user
@@ -240,8 +200,21 @@ install_python_packages(){
     echo_success "jsonpickle is successfully installed"
 
     echo_info "Installing pika"
-    pip3 install pika --user
+    pip3 install --force-reinstall pika==0.12.0 --user
     echo_success "pika is successfully installed"
+
+    echo_info "Installing cryptography"
+    pip3 install --force-reinstall cryptography==2.4.2 --user
+    echo_success "cryptography is successfully installed"
+
+
+    echo_info "Installing netaddr"
+    pip3 install netaddr --user
+    echo_success "netaddr is successfully installed"
+
+    echo_info "Installing netaddr"
+    pip3 install ipaddress --user
+    echo_success "netaddr is successfully installed"
 
     echo_info "Installing elasticsearch"
     pip3 install elasticsearch --user
@@ -251,32 +224,28 @@ install_python_packages(){
     pip3 install jsonschema --user
     echo_success "jsonschema is successfully installed"
 
-    echo_info "Installing commentjson"
-    pip3 install commentjson --user
-    echo_success "commentjson is successfully installed"
 
+    install_juju
 }
 
 function jox_store(){
-
-if [ ! -d $jox_store ]; then
-    echo_info "Creating cache dir in $jox_store"
-    sudo mkdir -p $jox_store
-    echo_success "JoX store is successfully created"
-fi
-
-if grep -qs "$jox_store" /proc/mounts; then
-    echo_info "JoX store is already mounted"
-else
-    echo_info "JoX store was not mounted, Mounting ..."
-    sudo mount -o size=100m -t tmpfs none "$jox_store"
-    if [ $? -eq 0 ]; then
-	echo_success "Mount success"
-    else
-	echo_error "Something went wrong with the mount"
+    if [ ! -d $jox_store ]; then
+        echo_info "Creating cache dir in $jox_store"
+        sudo mkdir -p $jox_store
+        echo_success "JoX store is successfully created"
     fi
-fi
 
+    if grep -qs "$jox_store" /proc/mounts; then
+        echo_info "JoX store is already mounted"
+    else
+        echo_info "JoX store was not mounted, Mounting ..."
+        sudo mount -o size=100m -t tmpfs none "$jox_store"
+        if [ $? -eq 0 ]; then
+        echo_success "Mount success"
+        else
+        echo_error "Something went wrong with the mount"
+        fi
+    fi
 }
 
 function print_help() {
@@ -318,8 +287,6 @@ function main() {
     if [ "$INSTALL_PKG" = "2" ] ; then
 	    install_ubuntu_image
     fi
-
-    jox_store
 }
 
 main  "$@"
