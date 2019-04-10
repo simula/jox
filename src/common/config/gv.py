@@ -32,6 +32,8 @@ global JOX_CONFIG_KEY
 
 global KVM
 global LXC
+global PHY
+
 global LOGFILE
 global LOG_LEVEL
 global console
@@ -62,9 +64,11 @@ ELASTICSEARCH_RETRY_ON_CONFLICT=0
 
 # resources types
 KVM="kvm"
+KVM_2="qemu"
+
 LXC="lxc"
 PHY="phy" # physical machine
-
+es_status="None"
 
 # config param
 LOG_FILE=""
@@ -108,3 +112,5 @@ HOST_OS_CONFIG=""
 
 MB = 1
 GB = 1024
+
+ZONES=""

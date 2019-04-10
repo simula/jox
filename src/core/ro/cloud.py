@@ -133,26 +133,27 @@ class JCloud(JSONEncoder):
     def start_loop(self, loop):
         asyncio.set_event_loop(loop)
         loop.run_forever()
-
-
+        
     async def on_model_change(self, delta, old, new, model):
-        if delta.entity=="machine" and delta.type=="change" and delta.data['agent-status']['current']=="started":
-            monitor.update_machine_monitor_state(self.jesearch, delta.data['id'], "launch_time", self.slice_id)
-
-        if delta.entity=="unit" and delta.type=="change" and delta.data['workload-status']['current']=="error":
-            monitor.update_service_monitor_state(self.jesearch, delta.data['application'], "error", self.slice_id)
-			
-        if delta.entity=="unit" and delta.type=="change" and delta.data['workload-status']['current']=="maintenance":
-            monitor.update_service_monitor_state(self.jesearch, delta.data['application'],"waiting", self.slice_id)
-            nssid, start_time = monitor.check_nssid_with_service(self.jesearch, delta.data['application'],self.slice_id)
-            monitor.update_index_key(self.jesearch, 'slice_monitor_'+ nssid.lower(), "machine_status", delta.data['application'], "address_ipv4_public", delta.data['public-address'], self.slice_id)
-			
-        if delta.entity=="unit" and delta.type=="change" and delta.data['workload-status']['current']=="active":
-            monitor.update_service_monitor_state(self.jesearch, delta.data['application'], "maintenance", self.slice_id)
-            monitor.update_service_monitor_state(self.jesearch, delta.data['application'], "active_since", self.slice_id)
-
-        if delta.entity=="application" and delta.type=="change" and (delta.data['status']['message']=="Running" or delta.data['status']['message']=="Ready"):
-            monitor.update_service_monitor_state(self.jesearch, delta.data['name'], "requirement_wait", self.slice_id)
+        if False:
+        # if gv.es_status == "Active":
+            if delta.entity=="machine" and delta.type=="change" and delta.data['agent-status']['current']=="started":
+                monitor.update_machine_monitor_state(self.jesearch, delta.data['id'], "launch_time", self.slice_id)
+    
+            if delta.entity=="unit" and delta.type=="change" and delta.data['workload-status']['current']=="error":
+                monitor.update_service_monitor_state(self.jesearch, delta.data['application'], "error", self.slice_id)
+                
+            if delta.entity=="unit" and delta.type=="change" and delta.data['workload-status']['current']=="maintenance":
+                monitor.update_service_monitor_state(self.jesearch, delta.data['application'],"waiting", self.slice_id)
+                nssid, start_time = monitor.check_nssid_with_service(self.jesearch, delta.data['application'],self.slice_id)
+                monitor.update_index_key(self.jesearch, 'slice_monitor_'+ nssid.lower(), "machine_status", delta.data['application'], "address_ipv4_public", delta.data['public-address'], self.slice_id)
+                
+            if delta.entity=="unit" and delta.type=="change" and delta.data['workload-status']['current']=="active":
+                monitor.update_service_monitor_state(self.jesearch, delta.data['application'], "maintenance", self.slice_id)
+                monitor.update_service_monitor_state(self.jesearch, delta.data['application'], "active_since", self.slice_id)
+    
+            if delta.entity=="application" and delta.type=="change" and (delta.data['status']['message']=="Running" or delta.data['status']['message']=="Ready"):
+                monitor.update_service_monitor_state(self.jesearch, delta.data['name'], "requirement_wait", self.slice_id)
 
     async def watch_model(self, model_name):
         controller = Controller()
@@ -164,4 +165,4 @@ class JCloud(JSONEncoder):
             model.add_observer(self.on_model_change)
 
         except Exception as ex:
-            print(ex)
+            self.logger.error(ex)

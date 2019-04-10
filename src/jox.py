@@ -34,7 +34,7 @@ __license__ = 'Apache License, Version 2.0'
 __maintainer__ = 'Osama Arouk, Navid Nikaein, Kostas Kastalis, and Rohan Kharade'
 __email__ = 'contact@mosaic5g.io'
 __status__ = 'Development'
-__description__ = "The descripton goes here"
+__description__ = "Main program to invoke JoX"
 
 import os, sys
 
@@ -66,6 +66,10 @@ import pika.exceptions as pika_exceptions
 from juju import loop
 from src.core.ro.monitor import get_juju_status as jmonitor_get_juju_status
 import tarfile, io
+import ipaddress
+import asyncio
+import re
+from src.core.ro.vim_driver.vimdriver import run_command
 
 __author__ = "Eurecom"
 jox_version = '1.0'
@@ -168,6 +172,9 @@ class NFVO_JOX(object):
 			self.gv.HTTP_400_BAD_REQUEST = self.jox_config["http"]["400"]["bad-request"]
 			self.gv.HTTP_404_NOT_FOUND = self.jox_config["http"]["400"]["not-found"]
 			
+			self.gv.ZONES = self.jox_config['zones']
+			
+			
 		except jsonschema.ValidationError as ex:
 			self.logger.error("Error happened while validating the jox config: {}".format(ex.message))
 			self.cleanup_and_exit(str(ex))
@@ -219,29 +226,33 @@ class NFVO_JOX(object):
 			if not self.jesearch.ping():
 				message = "Elasticsearch is not working while it is enabled. Either disable elasticsearch or run it"
 				self.logger.error(message)
-				self.cleanup_and_exit(str(0))
+				# self.cleanup_and_exit(str(0))
+				self.gv.es_status = "Dead"
 			else:
 				message = "elasticsearch is now running"
 				self.logger.info(message)
-		
+				self.gv.es_status = "Active"
 		######### STEP 4: Load JOX Configuration to ES ########
 		if self.gv.ELASTICSEARCH_ENABLE:
 			self.logger.info("Save JOX configuration to elasticsearch")
-			try:
-				self.logger.info("Delete the index of jox config from elasticsearch if exist")
-				self.jesearch.del_index_from_es(self.gv.JOX_CONFIG_KEY)
-				
-				self.logger.info("Sending JOX configuration file to elasticsearch")
-				set_indx_es = self.jesearch.set_json_to_es(self.gv.JOX_CONFIG_KEY, self.jox_config)
-				if set_indx_es:
-					message = "The data of the index {} is addedd to elasticsearch".format(self.gv.JOX_CONFIG_KEY)
-					self.logger.info(message)
-				else:
-					message = "The index of jox config can not be saved to elasticsearch"
-					self.logger.info(message)
-			except Exception as ex:
-				self.logger.error((str(ex)))
-				self.logger.error(traceback.format_exc())
+			if self.gv.es_status == "Active":
+				try:
+					self.logger.info("Delete the index of jox config from elasticsearch if exist")
+					self.jesearch.del_index_from_es(self.gv.JOX_CONFIG_KEY)
+
+					self.logger.info("Sending JOX configuration file to elasticsearch")
+					set_indx_es = self.jesearch.set_json_to_es(self.gv.JOX_CONFIG_KEY, self.jox_config)
+					if set_indx_es:
+						message = "The data of the index {} is addedd to elasticsearch".format(self.gv.JOX_CONFIG_KEY)
+						self.logger.info(message)
+					else:
+						message = "The index of jox config can not be saved to elasticsearch"
+						self.logger.info(message)
+				except Exception as ex:
+					self.logger.error((str(ex)))
+					self.logger.error(traceback.format_exc())
+			else:
+				pass
 		
 		######### STEP 5: Create Resource Controller ########
 		self.logger.info("Create resource Controller")
@@ -249,10 +260,11 @@ class NFVO_JOX(object):
 			self.resourceController = ResourcesController(self.gv)
 			self.resourceController.build(self.jox_config, self.jesearch)
 			for pop_type in self.jox_config['vim-pop']:
-				for pop_name in self.jox_config['vim-pop'][pop_type]:
+				for pop_config in self.jox_config['vim-pop'][pop_type]:
+					
 					self.logger.info(
-						"registering the POP {} of type {} as specified in jox_config".format(pop_name, pop_type))
-					self.register_pop(pop_name, pop_type)
+						"registering the following POP of type {} as specified in jox_config: {}".format(pop_type, pop_config))
+					self.register_pop(pop_config, pop_type)
 		except Exception as ex:
 			self.logger.error(str(ex))
 			self.logger.error(traceback.format_exc())
@@ -276,7 +288,7 @@ class NFVO_JOX(object):
 		try:
 			self.logger.info("Creating slice controller")
 			self.slices_controller = nsi_controller.NetworkSliceController(self.gv)
-			self.slices_controller.build(self.resourceController, self.jox_config)
+			self.slices_controller.build(self.resourceController, self.jox_config, self.jesearch)
 			
 			self.logger.info("Creating sub-slice controller")
 			self.subslices_controller = nssi_controller.SubSlicesController(self.gv)
@@ -302,16 +314,72 @@ class NFVO_JOX(object):
 		else:
 			message = "JOX Web API loaded!"
 			self.logger.info(message)
-	
-	def register_pop(self, pop_name, pop_type):
+	def resource_discovery(self, juju_cloud_name=None, juju_model_name=None, user="admin"):
+		"""
+		This methods discover the available resources that are already provisioned to certain juju model and register them at RO, to be later used
+		:return:
+		"""
+		machines_list = loop.run(jmonitor_get_juju_status("machines", juju_cloud_name, juju_model_name, user))
+		aplications_list = loop.run(jmonitor_get_juju_status("applications", juju_cloud_name, juju_model_name, user))
+		list_applications_machineId = dict()
+		if aplications_list[0]:
+			for appication_id in aplications_list[1]:
+
+				for unit in aplications_list[1][appication_id]['units']:
+					list_applications_machineId[unit] = aplications_list[1][appication_id]['units'][unit]['machine']
+		if machines_list[0]:
+			for machine_id in machines_list[1]:
+				from src.helpers.extract_info_juju_machine import extract_info
+				machine_config = extract_info(self.gv, machines_list[1][machine_id])
+				machine_config = machine_config.extract_info_juju_machine()
+				machine_config = machine_config[1]
+				machine_config["juju_id"] = machines_list[1][machine_id]['id']
+				
+				for ip_add in machine_config["domain"]:
+					ip = ipaddress.IPv4Address(ip_add)
+					scope = "private" if ip.is_private else "global"
+					domain = None
+					zone = None
+					
+					net_domain = machine_config["domain"][ip_add]
+					for item_zn in self.gv.ZONES:
+						for item_dmn in self.gv.ZONES[item_zn]:
+							if self.gv.ZONES[item_zn][item_dmn] == net_domain:
+								zone = item_zn
+								domain = item_dmn
+						if domain is None:
+							zone = item_zn
+							domain = "domain-{}".format(len(gv.ZONES[item_zn]))
+							self.gv.ZONES[item_zn][domain] = net_domain
+					pop_config = {
+								"pop-name": "zone-{}-{}".format(zone, domain),
+								"zone": zone,
+								"scope": scope,
+								"domain": net_domain,
+								"ssh-private-key": "",
+								"ssh-user": "",
+								"ssh-password": "",
+								"managed-by": "none"
+							}
+				machine_config['machine_available'] = \
+					False if machine_config['juju_id'] in list_applications_machineId.values() else True
+				pop_type = machine_config['virt_type']
+				pop_register_out = self.resourceController.pop_register(pop_config, pop_type)
+				juju_mode_info = machines_list[2]
+				pop_register_out = self.resourceController.register_machine(
+										machine_config, zone, net_domain,
+										juju_mode_info['cloud_name'], juju_mode_info['model_name'])
+		get_resource = self.resourceController.get_list_all_resources()
+		return get_resource
+	def register_pop(self, pop_config, pop_type):
 		try:
-			self.resourceController.pop_register(pop_name, pop_type)
+			self.resourceController.pop_register(pop_config, pop_type)
 		except Exception as ex:
 			self.logger.debug(
-				"The following error raised while registering the pop {} of type {}: \n {}".format(pop_name, pop_type,
+				"The following error raised while registering {} pop with the config {}: \n {}".format(pop_type, pop_config,
 				                                                                                   ex))
 		else:
-			self.logger.debug("The pop {} of type {} is successfully regiestered".format(pop_name, pop_type))
+			self.logger.debug("The {} pop with the following config is successfully regiestered: {}".format(pop_type, pop_config))
 	
 	def get_list_pop(self):
 		return self.resourceController.get_list_all_pop()
@@ -407,7 +475,7 @@ class NFVO_JOX(object):
 				if pop_lxc.driver_name == pop_name:
 					machine_status = pop_lxc.get_machines_status()
 					return machine_status
-		elif pop_type == self.gv.KVM:
+		elif (pop_type == self.gv.KVM) or (pop_type == self.gv.KVM_2):
 			for pop_kvm in self.resourceController.pop_kvm_list:
 				if pop_kvm.driver_name == pop_name:
 					machine_status = pop_kvm.get_machines_status()
@@ -446,7 +514,10 @@ class server_RBMQ(object):
 				self.channel.queue_declare(queue=self.queue_name)
 				
 				self.channel.basic_qos(prefetch_count=1)
+
 				self.channel.basic_consume(self.on_request, queue=self.queue_name)
+
+
 				
 				print(colored(' [*] Waiting for messages. To exit press CTRL+C', 'green'))
 				self.channel.start_consuming()
@@ -469,8 +540,23 @@ class server_RBMQ(object):
 			print(" [*] enquiry(%s)" % enquiry_tmp)
 		else:
 			print(" [*] enquiry(%s)" % enquiry)
-		
-		if "/jox/" in enquiry["request-uri"]:
+		if "/resource-discovery" in enquiry["request-uri"]:
+			available_resources = self.nfvo_jox.resource_discovery()
+			response = {
+				"ACK": True,
+				"data": available_resources,
+				"status_code": self.nfvo_jox.gv.HTTP_200_OK
+			}
+
+		elif "/test_deploy" in enquiry["request-uri"]:
+			nsi_name = "nsi-oai-4G.yaml"
+			nsi_deploy = self.nfvo_jox.add_slice(nsi_name)
+			response = {
+				"ACK": True,
+				"data": nsi_deploy,
+				"status_code": self.nfvo_jox.gv.HTTP_200_OK
+			}
+		elif "/jox/" in enquiry["request-uri"]:
 			jox_config = self.nfvo_jox.gv.JOX_CONFIG_KEY
 			res = self.nfvo_jox.jesearch.get_source_index(jox_config)
 			res = {
@@ -500,9 +586,6 @@ class server_RBMQ(object):
 					self.logger.debug(message)
 					list_files = list()
 					for f in os.listdir(full_path):
-						# if os.path.isfile(''.join([full_path, f])) and \
-						# 		(f.endswith('.yaml') or f.endswith('.yml') or f.endswith('.json')):
-						# 	list_files.append(f)
 						list_files.append(f)
 					res = list_files
 					response = {
@@ -696,6 +779,56 @@ class server_RBMQ(object):
 					"data": onboard_files[1],
 					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 				}
+
+		elif (enquiry["request-uri"] == "/log") or (enquiry["request-uri"] == "/log/<string:log_source>") or (enquiry["request-uri"] == "/log/<string:log_source>/<string:log_type>"):
+			parameters = enquiry["parameters"]
+			log_source = parameters["log_source"]
+			log_type = parameters["log_type"]
+			res=None
+			if log_source == "jox":
+				file = open("jox.log", 'r')
+				data_tmp=file.readlines()
+				data=[s.replace('\n','') for s in data_tmp]
+				if log_type == None:
+					res=data
+				elif log_type == 'all':
+					res=data
+				elif log_type== 'error' or 'debug' or 'info':
+					data_log_type=[]
+					for line in data:
+						if re.findall(log_type.upper(), line):
+							data_log_type.append(line)
+					res=data_log_type
+				else:
+					res = "This log type is not supported. Supported types all, debug, error, info, time {today, start, end}"
+				file.close()
+			if log_source == "juju":
+				file = open("juju.log", 'w')
+				cmd_log = ["juju", "debug-log", "--lines", str(10000)]
+				cmd_out = None #loop.run(run_command(cmd_log))
+				file.write(cmd_out)
+				file.close()
+				file = open("juju.log", 'r')
+				data_tmp=file.readlines()
+				data=[s.replace('\n','') for s in data_tmp]
+				if log_type == None:
+					res=data
+				elif log_type == 'all':
+					res=data
+				elif log_type== 'error' or 'debug' or 'info':
+					data_log_type=[]
+					for line in data:
+						if re.findall(log_type.upper(), line):
+							data_log_type.append(line)
+					res=data_log_type
+				else:
+					res = "This log type is not supported. Supported types all, debug, error, info, time {today, start, end}"
+				file.close()
+			response = {
+				"ACK": True,
+				"data": res,
+				"status_code": self.nfvo_jox.gv.HTTP_200_OK
+			}
 		elif (enquiry["request-uri"] == "/nssi/all") or (enquiry["request-uri"] == "/nssi"):
 			res = self.nfvo_jox.get_subslices_context()
 			response = {
@@ -773,22 +906,14 @@ class server_RBMQ(object):
 			es_index_page = parameters["es_index_page"]
 			es_key = parameters["es_key"]
 			if request_type == "get":
-				if (es_index_page is None):
-					res = self.nfvo_jox.jesearch.get_all_indices_from_es()
-					if res[0]:
-						response = {
-							"ACK": True,
-							"data": res[1],
-							"status_code": self.nfvo_jox.gv.HTTP_200_OK
-						}
-					else:
-						response = {
-							"ACK": False,
-							"data": res[1],
-							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-						}
+				if self.nfvo_jox.gv.es_status == "Dead":
+					response = {
+						"ACK": True,
+						"data": "Elasticsearch is not active",
+						"status_code": self.nfvo_jox.gv.HTTP_200_OK
+					}
 				else:
-					if (es_index_page == "_all") or (es_index_page == "all") or (es_index_page == "*"):
+					if (es_index_page is None):
 						res = self.nfvo_jox.jesearch.get_all_indices_from_es()
 						if res[0]:
 							response = {
@@ -803,47 +928,63 @@ class server_RBMQ(object):
 								"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 							}
 					else:
-						if es_key is None:
-							message = "get the index-page {} ".format(es_index_page)
-							self.logger.info(message)
-							self.logger.debug(message)
-							res = self.nfvo_jox.jesearch.get_source_index(es_index_page)
-							
+						if (es_index_page == "_all") or (es_index_page == "all") or (es_index_page == "*"):
+							res = self.nfvo_jox.jesearch.get_all_indices_from_es()
 							if res[0]:
-								res = res[1]
 								response = {
 									"ACK": True,
-									"data": res,
+									"data": res[1],
 									"status_code": self.nfvo_jox.gv.HTTP_200_OK
 								}
 							else:
-								res = res[1]
 								response = {
 									"ACK": False,
-									"data": res,
+									"data": res[1],
 									"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 								}
-						
-						
 						else:
-							message = "get the key {} from the index-page {} ".format(es_key, es_index_page)
-							self.logger.info(message)
-							self.logger.debug(message)
-							res = self.nfvo_jox.jesearch.get_json_from_es(es_index_page, es_key)
-							if res[0]:
-								res = res[1]
-								response = {
-									"ACK": True,
-									"data": res,
-									"status_code": self.nfvo_jox.gv.HTTP_200_OK
-								}
+							if es_key is None:
+								message = "get the index-page {} ".format(es_index_page)
+								self.logger.info(message)
+								self.logger.debug(message)
+								res = self.nfvo_jox.jesearch.get_source_index(es_index_page)
+								
+								if res[0]:
+									res = res[1]
+									response = {
+										"ACK": True,
+										"data": res,
+										"status_code": self.nfvo_jox.gv.HTTP_200_OK
+									}
+								else:
+									res = res[1]
+									response = {
+										"ACK": False,
+										"data": res,
+										"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+									}
+							
+							
 							else:
-								res = res[1]
-								response = {
-									"ACK": False,
-									"data": res,
-									"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-								}
+								message = "get the key {} from the index-page {} ".format(es_key, es_index_page)
+								self.logger.info(message)
+								self.logger.debug(message)
+								res = self.nfvo_jox.jesearch.get_json_from_es(es_index_page, es_key)
+								if res[0]:
+									res = res[1]
+									response = {
+										"ACK": True,
+										"data": res,
+										"status_code": self.nfvo_jox.gv.HTTP_200_OK
+									}
+								else:
+									res = res[1]
+									response = {
+										"ACK": False,
+										"data": res,
+										"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+									}
+									
 			elif request_type == "post":
 				full_path = self.check_existence_path(template_directory, es_index_page)
 				if full_path[0]:
@@ -1607,8 +1748,6 @@ if __name__ == '__main__':
         parser.add_argument('--version', action='version', version='%(prog)s 2.0')
         
         args = parser.parse_args()
-        # command line args  (args.jox_addr, args.jox_port, args.es_addr, args.es_port, args.rq_addr, args.rq_port) need to be set in NFVO_JOX __init__ 
         logger = logging.getLogger('proj.jox')
         rmbq_server = server_RBMQ()
         rmbq_server.run()
-        

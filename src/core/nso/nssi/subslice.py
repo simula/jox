@@ -89,12 +89,29 @@ class JSubSlice(JSONEncoder):
             self.subslice_services = subslice_config["list_services"]
             for item in subslice_config["list_machines"]:
                 machine = subslice_config["list_machines"][item]
+                host_machine = None
+                if machine['additional_requirements']['attributes'] is not None:
+                    if 'attributes' in machine['additional_requirements'].keys():
+                        host_machine = machine['additional_requirements']['attributes']['host']
+                cidr = None
+                domain = None
+                if machine['additional_requirements']['properties'] is not None:
+                    if 'network' in machine['additional_requirements']['properties'].keys():
+                        if 'subnet' in machine['additional_requirements']['properties']['network'].keys():
+                            domain = machine['additional_requirements']['properties']['network']['subnet']
+                        if 'cidr' in machine['additional_requirements']['properties']['network'].keys():
+                            cidr = machine['additional_requirements']['properties']['network']['cidr']
+                pass
                 new_machine = {
 					'machine_name_userdefined': machine["machine_name"],
 					'machine_name_vnfm': None,
 					'machine_name_ro': None,
 					'vim_type': machine["vim_type"],
 					'vim_location': machine["vim_location"],
+                    'zone':machine['additional_requirements']['policies']['region_placement'],
+                    'domain':domain,
+                    'cidr':cidr,
+                    'host_machine':host_machine,
 				    }
                 self.subslice_machines.append(new_machine)
             # add the models on which the services of the current NSSI will be deployed

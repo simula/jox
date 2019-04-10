@@ -118,7 +118,7 @@ class listTasks(object):
 			self.connection.close()
 		self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.host_name, port=self.port))
 		self.channel = self.connection.channel()
-		
+
 		self.result = self.channel.queue_declare(exclusive=True)
 		self.callback_queue = self.result.method.queue
 		

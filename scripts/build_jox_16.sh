@@ -23,7 +23,7 @@ sudo service rabbitmq-server start
 sudo apt install snapd -y
 sudo apt install  zfsutils-linux -y
 sudo snap install lxd || true
-sudo snap install juju --classic || true
+sudo snap install jucommentjsonju --classic || true
 
 pip3 install termcolor --user
 pip3 install jsonpickle --user

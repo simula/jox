@@ -81,6 +81,8 @@ standard_reqst = {
 		# package onboarding
 		"package_onboard_data": "",
 		"package_name": None,
+		# related to logs
+		"log": None
 	}
 }
 
@@ -90,6 +92,11 @@ This API endpoint contains the main capabilities that are needed
 before deploying and monitoring the slices. Through this APIoffered by this group, you can vistualize jox configuration, and
 jox capabilities, in addition to the possibility to see the
 template slice/subslice before deploying your slice.
+"""
+
+"""
+@apiDefine resource_management Resource Management
+To Describe the resource_management later
 """
 
 """
@@ -152,8 +159,8 @@ def jox_homepage():
 	logger.info("Receive homepage request")
 	message = "Welcome to JOX! \n" \
 	          "To get the list of the capabilities and jox configuration, use the following \n" \
-	          "{}".format(''.join([request.url, 'jox \n']))
-	
+	          "{}".format(''.join([request.host_url, 'jox \n']))
+
 	return message
 
 
@@ -661,7 +668,199 @@ def list_of_templates(nsi_name=None):
 	data = jsonify(data)
 	return data, status_code
 
+@app.route('/test_deploy')
+def test_deploy_slice():
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	# enquiry["parameters"]["template_directory"] = request.args.get('url')
+	# enquiry["parameters"]["package_onboard_data"] = request.data
+	logger.info("enquiry: {}".format(enquiry))
+	logger.debug("enquiry: {}".format(enquiry))
 
+	# enquiry["parameters"]["package_onboard_data"] = list(request.data)
+
+	enquiry = json.dumps(enquiry)
+	# waiting for the response
+	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+	data = json.loads(data)
+
+	status_code = data["status_code"]
+	data = data["data"]
+	data = {
+		"data": data,
+		"elapsed-time": str(datetime.datetime.now() - current_time),
+	}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
+
+@app.route('/resource-discovery')
+def resource_discovery():
+	"""
+	@apiGroup resource_management
+	@apiName get_available_resources
+
+	@api {get}  /resource-discovery Discover Available Resources
+	@apiDescription Get the list of all the resources and add them to the resource controller, so that they can be used later when deploying a slice
+
+	@apiExample {curl} Example-Usage:
+		curl  -i http://localhost:5000/resource-discovery
+
+	@apiSuccessExample Example-Success-Response:
+	{
+		"data": {
+			"kvm": [
+				{
+				"domain": "192.168.122.0/24",
+				"machine_list": [
+						{
+							"available": true,
+							"cpu": 1,
+							"disc_size": null,
+							"ip": "192.168.122.243",
+							"juju-id": "3",
+							"memory": 488,
+							"name": "machine-4:kvm",
+							"os_series": "xenial"
+						}
+					],
+				"pop-name": "default",
+				"scope": "private",
+				"zone": "1"
+				}
+			],
+			"lxc": [
+				{
+					"domain": "10.180.125.0/24",
+					"machine_list": [],
+					"pop-name": "default",
+					"scope": "private",
+					"zone": "1"
+				},
+				{
+					"domain": "10.199.92.0/24",
+					"machine_list": [
+							{
+								"available": true,
+								"cpu": 4,
+								"disc_size": null,
+								"ip": "10.199.92.178",
+								"juju-id": "0",
+								"memory": 7852,
+								"name": "machine-1:lxc",
+								"os_series": "xenial"
+							},
+							{
+								"available": true,
+								"cpu": 4,
+								"disc_size": null,
+								"ip": "10.199.92.77",
+								"juju-id": "1",
+								"memory": 7852,
+								"name": "machine-2:lxc",
+								"os_series": "xenial"
+							},
+							{
+								"available": true,
+								"cpu": 4,
+								"disc_size": null,
+								"ip": "10.199.92.248",
+								"juju-id": "2",
+								"memory": 7852,
+								"name": "machine-3:lxc",
+								"os_series": "xenial"
+							}
+					],
+					"pop-name": "zone-1-domain-2",
+					"scope": "private",
+					"zone": "1"
+				}
+			],
+			"phy": [
+				{
+					"domain": "192.168.1.0/24",
+					"machine_list": [],
+					"pop-name": "zone-1-phy",
+					"scope": "private",
+					"zone": "1"
+				},
+				{
+					"domain": "172.24.0.0/16",
+					"machine_list": [],
+					"pop-name": "zone-2-phy",
+					"scope": "private",
+					"zone": "1"
+				},
+				{
+					"domain": "172.24.10.0/24",
+					"machine_list": [],
+					"pop-name": "zone-3-phy",
+					"scope": "private",
+					"zone": "1"
+				},
+				{
+					"domain": "172.24.11.0/24",
+					"machine_list": [],
+					"pop-name": "zone-4-phy",
+					"scope": "private",
+					"zone": "1"
+				},
+				{
+				"domain": "192.168.12.0/24",
+				"machine_list": [
+					{
+						"available": true,
+						"cpu": 4,
+						"disc_size": null,
+						"ip": "192.168.12.220",
+						"juju-id": "4",
+						"memory": 7920,
+						"name": "machine-5:phy",
+						"os_series": "bionic"
+					}
+				],
+				"pop-name": "zone-1-domain-2",
+				"scope": "private",
+				"zone": "1"
+				}
+			]
+		},
+		"elapsed-time": "0:00:13.785535"
+	}
+	"""
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	# enquiry["parameters"]["template_directory"] = request.args.get('url')
+	# enquiry["parameters"]["package_onboard_data"] = request.data
+	logger.info("enquiry: {}".format(enquiry))
+	logger.debug("enquiry: {}".format(enquiry))
+
+	# enquiry["parameters"]["package_onboard_data"] = list(request.data)
+
+	enquiry = json.dumps(enquiry)
+	# waiting for the response
+	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+	data = json.loads(data)
+
+	status_code = data["status_code"]
+	data = data["data"]
+	data = {
+		"data": data,
+		"elapsed-time": str(datetime.datetime.now() - current_time),
+	}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
 @app.route('/onboard', methods=['PUT'])
 def jox_package_onboard():
 	"""
@@ -3092,21 +3291,25 @@ def monitor_juju(juju_key_val=None, cloud_name=None, model_name=None):
 	        curl http://localhost:5000/monitor/localhost/Default
 
 	@apiErrorExample Success-Response:
-    HTTP/1.0 200 OK
+	HTTP/1.0 200 OK
 	{
 	  "data": {
 	    "machines": [
-	      {}
-	    ],
-	    "relations": [
-	      {}
-	    ],
-	    "services": [
-	      {}
-	    ]
-	  },
+	        {
+	        }
+        ],
+        "relations": [
+            {
+            }
+        ],
+        "services": [
+            {
+            }
+        ]
+      },
 	  "elapsed-time": "0:00:00.083747"
 	}
+	
 	@apiExample {curl} Example usage:
 	        curl http://localhost:5000/monitor/localhost/model3
 
@@ -3151,10 +3354,155 @@ def monitor_juju(juju_key_val=None, cloud_name=None, model_name=None):
 	return data, status_code
 
 
+@app.route('/log')
+@app.route('/log/<string:log_source>')
+@app.route('/log/<string:log_source>/<string:log_type>')
+def logging(log_source=None, log_type=None):
+	"""
+	@apiGroup Monitoring
+	@apiName GetJoxlogs
+
+	@api {get}  /log/<string:log_source>/<string:log_type> Logs
+	@apiDescription Get the JoX and juju logs
+	@apiParam {String} log_source jox, juju (default is jox)
+	@apiParam {String} log_type all, error, debug, info, warning (default is all)
+
+	@apiExample {curl} First-Example-Usage:
+		     curl -i http://localhost:5000/log
+
+	@apiSuccessExample First-Example-Success-Response:
+	HTTP/1.0 200 OK
+	{
+	"data": [
+			"2019-04-04T22:53:10 INFO jox jox.py:221 Configure elastcisearch if enabled",
+			"2019-04-04T22:53:21 ERROR jox.es es.py:63 Elasticsearch: connection Failed",
+			"2019-04-04T22:53:21 DEBUG jox jox.py:396 The following cloud is successfully  added",
+			"2019-04-04T22:53:21 DEBUG jox.RO.rsourceController resource_controller.py:547 jcloud psoque-home was added to jox",
+			"2019-04-04T22:53:21 DEBUG jox jox.py:396 The following cloud is successfully  added",
+			"2019-04-04T22:53:21 DEBUG jox.RO.rsourceController resource_controller.py:547 jcloud localhost was added to jox",
+			"2019-04-04T22:53:21 DEBUG jox jox.py:396 The following cloud is successfully  added",
+			"2019-04-04T22:53:21 INFO jox jox.py:285 All clouds were successfully added!",
+			"2019-04-04T22:53:21 INFO jox jox.py:289 Creating slice controller",
+			"2019-04-04T22:53:21 INFO jox.NetworkSliceController nsi_controller.py:41 Initial configuration of network slice controller",
+			"2019-04-04T22:53:21 INFO jox.NetworkSliceController nsi_controller.py:62 The resource controller is built",
+			"2019-04-04T22:53:21 INFO jox jox.py:293 Creating sub-slice controller",
+			"2019-04-04T22:53:21 INFO jox jox.py:301 Slices Controller was successfully loaded!",
+			"2019-04-04T22:53:21 INFO jox jox.py:306 JOX loading time: 11.045218467712402 ",
+			"2019-04-04T22:53:21 INFO jox jox.py:316 JOX Web API loaded!"
+		],
+	"elapsed-time": "0:00:00.001849"
+	}
+	
+	@apiExample {curl} Second-Example-Usage:
+		     curl -i http://localhost:5000/log/jox/error
+	@apiSuccessExample Second-Example-Success-Response:
+	HTTP/1.0 200 OK
+	{
+		"data": [
+					"2019-04-04T22:53:21 ERROR jox.es es.py:63 Elasticsearch: connection Failed",
+					"2019-04-04T22:53:21 ERROR jox jox.py:228 Elasticsearch is not working while it is enabled. Either disable elasticsearch or run it"
+				],
+		"elapsed-time": "0:00:00.001849"
+	}
+	@apiExample {curl} Third-Example-Usage:
+		     curl -i http://localhost:5000/log/juju
+	@apiSuccessExample Third-Example-Success-Response:
+	HTTP/1.0 200 OK
+	{
+		"data": [
+			        "unit-mysql-8: 12:01:35 DEBUG unit.mysql/8.config-changed update-alternatives: using /etc/mysql/mysql.cnf to provide /etc/mysql/my.cnf (my.cnf) in auto mode",
+				    "unit-mysql-8: 12:01:35 DEBUG unit.mysql/8.config-changed Renaming removed key_buffer and myisam-recover options (if present)",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libhtml-tagset-perl (3.20-2) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up liburi-perl (1.71-1) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libhtml-parser-perl (3.72-1) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libcgi-pm-perl (4.26-1) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libfcgi-perl (0.77-1build1) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libcgi-fast-perl (1:2.10-1) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libencode-locale-perl (1.05-1) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libhtml-template-perl (2.95-2) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libtimedate-perl (2.3000-2) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libhttp-date-perl (6.02-1) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libio-html-perl (1.001-1) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up liblwp-mediatypes-perl (6.02-1) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up libhttp-message-perl (6.11-1) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Setting up mysql-server (5.7.25-0ubuntu0.16.04.2) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Processing triggers for libc-bin (2.23-0ubuntu11) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Processing triggers for systemd (229-4ubuntu21.17) ...",
+				    "unit-mysql-8: 12:01:41 DEBUG unit.mysql/8.config-changed Processing triggers for ureadahead (0.100.0-19) ...",
+				    "unit-mysql-8: 12:01:42 INFO unit.mysql/8.juju-log dataset size in bytes: 26860322816",
+				    "unit-wordpress-8: 12:01:50 WARNING juju.worker.uniter.operation we should run a leader-deposed hook here, but we can't yet",
+				    "unit-mysql-8: 12:01:51 DEBUG unit.mysql/8.juju-log db:26: Using existing password file '/var/lib/mysql/mysql.passwd'",
+				    "unit-mysql-8: 12:01:51 DEBUG unit.mysql/8.db-relation-joined /var/lib/juju/agents/unit-mysql-8/charm/hooks/db-relation-joined:19: Warning: Using GRANT for creating new user is deprecated and will be removed in future release. Create new user with CREATE USER statement.",
+				    "unit-mysql-8: 12:01:51 DEBUG unit.mysql/8.db-relation-joined   cursor.execute(sql)",
+				    "unit-mysql-8: 12:01:51 DEBUG unit.mysql/8.db-relation-joined /var/lib/juju/agents/unit-mysql-8/charm/hooks/db-relation-joined:19: Warning: Using GRANT statement to modify existing user's properties other than privileges is deprecated and will be removed in future release. Use ALTER USER statement for this operation.",
+				    "unit-mysql-8: 12:01:51 DEBUG unit.mysql/8.db-relation-joined   cursor.execute(sql)",
+				    "unit-mysql-8: 12:01:51 DEBUG unit.mysql/8.db-relation-joined [grant replication client on *.* to `chum5ic1go5Aexe` identified by 'Aiceico0ahxaech']",
+				    "unit-mysql-8: 12:01:51 DEBUG unit.mysql/8.db-relation-joined [grant all on `wordpress`.* to `chum5ic1go5Aexe` identified by 'Aiceico0ahxaech']",
+				    "unit-mysql-8: 12:01:51 DEBUG unit.mysql/8.db-relation-joined ['relation-set', 'database=wordpress', 'user=chum5ic1go5Aexe', 'password=Aiceico0ahxaech', 'host=10.70.21.133', 'slave=False']",
+				    "unit-mysql-8: 12:01:51 DEBUG unit.mysql/8.db-relation-joined [create database `wordpress` character set utf8]",
+				    "unit-mysql-8: 12:01:54 DEBUG unit.mysql/8.juju-log db:26: Excluding /var/lib/mysql/mysql.passwd from peer migration",
+				    "unit-mysql-8: 12:01:54 DEBUG unit.mysql/8.db-relation-broken Relationship with wordpress broken.",
+				    "unit-mysql-8: 12:01:54 DEBUG unit.mysql/8.db-relation-broken revoked privileges for `chum5ic1go5Aexe` on database `wordpress`",
+				    "unit-mysql-8: 12:01:54 ERROR juju.worker.uniter resolver loop error: committing operation \"run relation-broken (26) hook\":relation \"wordpress:db mysql:db\": permission denied",
+				    "machine-21: 12:01:55 ERROR juju.worker.dependency \"unit-agent-deployer\" manifold worker returned unexpected error: permission denied",
+				    ""
+				],
+		"elapsed-time": "0:00:00.001849"
+	}
+	@apiExample {curl} Fourth-Example-Usage:
+		     curl -i http://localhost:5000/log/juju/warning
+	@apiSuccessExample Fourth-Example-Success-Response:
+	HTTP/1.0 200 OK
+	{
+		"data": [
+                    "unit-wordpress-8: 12:01:50 WARNING juju.worker.uniter.operation we should run a leader-deposed hook here, but we can't yet"
+				],
+		"elapsed-time": "0:00:00.001849"
+	}
+	"""
+	if log_type is None:
+		log_type = 'all'
+	if log_source is None:
+		log_source = 'jox'
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["parameters"]["template_directory"] = request.args.get('url')
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	enquiry["parameters"]["log_type"] = log_type
+	enquiry["parameters"]["log_source"] = log_source
+
+	enquiry = json.dumps(enquiry)
+	logger.info("enquiry: {}".format(enquiry))
+	logger.debug("enquiry: {}".format(enquiry))
+	# waiting for the response
+	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+	data = json.loads(data)
+
+	status_code = data["status_code"]
+	data = data["data"]
+	data = {
+		"data": data,
+		"elapsed-time": str(datetime.datetime.now() - current_time),
+	}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
+
+
 @app.errorhandler(Exception)
 def page_not_found(error):
-	return "!!!!" + repr(error) + "\n"
-
+	message = \
+	"""<p>The requested page does not exist and the following error was encountered:</p>
+<p>{0}</p> 
+<p>Please use  <a href={1}>{2}</a> to get the capabilities of JoX</p>
+""".format(error,
+			   ''.join([request.host_url, 'jox']),
+			   ''.join([request.host_url, 'jox']))
+	return message
 
 def run():
 	print(

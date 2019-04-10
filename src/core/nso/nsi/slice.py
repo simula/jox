@@ -88,6 +88,10 @@ class JSlice(JSONEncoder):
 		add_nssi_success = True
 		for nssi_id in self.template_manager.get_NSSIs_ID():
 			list_service_machine = self.template_manager.get_NSSI_requirements(nssi_id)
+			abort_deploy_subslice = list_service_machine[3]
+			if abort_deploy_subslice:
+				add_nssi_success = False
+				return add_nssi_success
 			subslice_config = {
 				"slice_name": self.slice_name,
 				"subslice_name": nssi_id,
@@ -196,7 +200,7 @@ class JSlice(JSONEncoder):
 				jmodel = list_config_NSSI[nssi_target]['list_services'][service]['jmodel']
 				return [jcloud, jmodel]
 		return False
-	
+
 	def add_subslice(self, subslices_controller, subslice_config):
 		add_nssi = subslices_controller.add_subslice(subslice_config, self.list_all_jujuModel_attachedWatcher)
 		return add_nssi
