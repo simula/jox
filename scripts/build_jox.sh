@@ -148,7 +148,7 @@ install_ubuntu_image(){
 }
 
 install_elasticsearch(){
-    echo_info "pulling the docker image of elasticsearch"
+    echo_info "pulling the docker image of elasticsearch:6.6.2"
     sudo docker pull docker.elastic.co/elasticsearch/elasticsearch:6.6.2
 
     install_rabbitmq
@@ -203,9 +203,9 @@ install_python_packages(){
     pip3 install --force-reinstall pika==0.12.0 --user
     echo_success "pika is successfully installed"
 
-    echo_info "Installing pika"
+    echo_info "Installing cryptography"
     pip3 install --force-reinstall cryptography==2.4.2 --user
-    echo_success "pika is successfully installed"
+    echo_success "cryptography is successfully installed"
 
 
     echo_info "Installing netaddr"

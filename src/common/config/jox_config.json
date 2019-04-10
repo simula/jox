@@ -36,7 +36,7 @@
         "zone": "1",
         "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
         "scope": "private",
-        "domain": "10.180.125.0/24",
+        "domain": "10.124.51.0/24",
         "_Comment_3": "ssh config",
         "ssh-private-key": "",
         "ssh-user": "",
@@ -123,11 +123,11 @@
   "clouds-list": [
     {
       "description": "credentials of your juju controller",
-      "cloud-name": "psoque-edu",
-      "cloud-type": "manual",
-      "cloud-endpoint": "172.24.10.165:17070",
+      "cloud-name": "nymphe-edu",
+      "cloud-type": "lxd",
+      "cloud-endpoint": "10.124.51.70:17070",
       "cloud-username": "admin",
-      "cloud-password": "4fadf1387502532b4565d6226fd87835"
+      "cloud-password": "3096977670271933f13ee5cafc7572ec"
     },
     {
       "description": "credentials of your juju controller",
@@ -209,7 +209,7 @@
   },
   "ssh-config": {
     "_Comment": "ssh connection is needed when adding kvm machines",
-    "ssh-key-directory": "/home/nymphe/.ssh/",
+    "ssh-key-directory": "/home/gatto/.ssh/",
     "ssh-key-name": "id_rsa",
     "ssh-user": "ubuntu",
     "ssh-password": "linux"
