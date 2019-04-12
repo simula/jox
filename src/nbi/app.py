@@ -668,8 +668,8 @@ def list_of_templates(nsi_name=None):
 	data = jsonify(data)
 	return data, status_code
 
-@app.route('/test_deploy')
-def test_deploy_slice():
+@app.route('/deploy_slice')
+def deploy_slice_slice():
 	enquiry = standard_reqst
 	current_time = datetime.datetime.now()
 	enquiry["datetime"] = str(current_time)

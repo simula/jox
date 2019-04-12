@@ -548,7 +548,7 @@ class server_RBMQ(object):
 				"status_code": self.nfvo_jox.gv.HTTP_200_OK
 			}
 
-		elif "/test_deploy" in enquiry["request-uri"]:
+		elif "/deploy_slice" in enquiry["request-uri"]:
 			nsi_name = "nsi-oai-4G.yaml"
 			nsi_deploy = self.nfvo_jox.add_slice(nsi_name)
 			response = {

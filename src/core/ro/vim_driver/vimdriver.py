@@ -317,7 +317,7 @@ class LxcDriver(object):
 									for add_config in lxc_md['state']['network'][iface]['addresses']:
 										if (add_config['family'] == 'inet') and (add_config['scope'] == 'global'):
 											machine_ip_tmp.append(add_config['address'])
-											print("ip addres v4=:{}".format(add_config['family']))
+											self.logger.info("ip addres v4=:{}".format(add_config['family']))
 					machine_ip = list()
 					for ip_add in machine_ip_tmp:
 						packet_transmitted = 0
@@ -336,7 +336,7 @@ class LxcDriver(object):
 										item = [x for x in (str(item)).split(' ') if x]
 										packet_transmitted = int(item[0])
 										pass
-								print(lst[i])
+								# print(lst[i])
 						if packet_received > 0:
 							machine_ip.append(ip_add)
 					###########
@@ -357,7 +357,7 @@ class LxcDriver(object):
 					cmd_lxc_chmod = ["lxc", "exec", container_name, "--", "sh", "-c",
 									 str(
 										 "chmod 600 /root/.ssh/authorized_keys && sudo chown root: /root/.ssh/authorized_keys")]
-					cmd_lxc_chmod_out = loop.run(run_command(cmd_lxc_chmod))
+					cmd_lxc_chmod_out = await run_command(cmd_lxc_chmod)
 
 					message = "Ensuring ssh to the machine {}".format(machine_ip)
 					self.logger.info(message)
@@ -405,12 +405,12 @@ class LxcDriver(object):
 							cmd_to_execute.append("-R")
 							cmd_to_execute.append(temp_val_2)
 					if cmd_found:
-						print("cmd_found: {}".format(cmd_to_execute))
+						self.logger.info("cmd_found: {}".format(cmd_to_execute))
 						cmd_found_out = await run_command(cmd_to_execute)
-						print("Try to add achine: {}".format(cmd_juju_addmachine))
+						self.logger.info("Try to add achine: {}".format(cmd_juju_addmachine))
 
 						cmd_lxc_ssh_vm_out = await run_command(cmd_lxc_ssh_vm)
-						print("Try cmd_lxc_ssh_vm: {}".format(cmd_lxc_ssh_vm_out))
+						self.logger.info("Try cmd_lxc_ssh_vm: {}".format(cmd_lxc_ssh_vm_out))
 
 						#
 						cmd_fix_issues = ["sudo apt", "update", "--fix-missing"]
@@ -528,7 +528,7 @@ class LxcDriver(object):
 							for add_config in lxc_md['state']['network'][iface]['addresses']:
 								if (add_config['family'] == 'inet') and (add_config['scope'] == 'global'):
 									machine_ip_tmp.append(add_config['address'])
-									print("ip addres v4=:{}".format(add_config['family']))
+									self.logger.info("ip addres v4=:{}".format(add_config['family']))
 			machine_ip = list()
 			for ip_add in machine_ip_tmp:
 				packet_transmitted = 0
@@ -547,7 +547,7 @@ class LxcDriver(object):
 								item = [x for x in (str(item)).split(' ') if x]
 								packet_transmitted = int(item[0])
 								pass
-						print(lst[i])
+						# print(lst[i])
 				if packet_received > 0:
 					machine_ip.append(ip_add)
 			###########
@@ -616,12 +616,12 @@ class LxcDriver(object):
 					cmd_to_execute.append("-R")
 					cmd_to_execute.append(temp_val_2)
 			if cmd_found:
-				print("cmd_found: {}".format(cmd_to_execute))
+				self.logger.info("cmd_found: {}".format(cmd_to_execute))
 				cmd_found_out = loop.run(run_command(cmd_to_execute))
-				print("Try to add achine: {}".format(cmd_juju_addmachine))
+				self.logger.info("Try to add achine: {}".format(cmd_juju_addmachine))
 				
 				cmd_lxc_ssh_vm_out = loop.run(run_command(cmd_lxc_ssh_vm))
-				print("Try cmd_lxc_ssh_vm: {}".format(cmd_lxc_ssh_vm_out))
+				self.logger.info("Try cmd_lxc_ssh_vm: {}".format(cmd_lxc_ssh_vm_out))
 				
 				#
 				cmd_fix_issues = ["sudo apt", "update", "--fix-missing"]
