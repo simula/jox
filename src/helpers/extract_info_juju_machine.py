@@ -16,14 +16,15 @@ class extract_info(object):
 		# ip_address = set_addresses[0]
 		for ip_addr in set_addresses:
 			test_message = "testConnection"
-			check_conn = ["ssh", "-o", "ConnectTimeout=5", "echo", test_message]
-			[check_conn.insert(3, item) for item in self.ssh_format(ip_addr)]
+			check_conn = ["ssh", "-o", "ConnectTimeout=5", "-o", "StrictHostKeyChecking=no", "echo", test_message]
+			[check_conn.insert(5, item) for item in self.ssh_format(ip_addr)]
 
 			check_conn_out = loop.run(self._run_command(check_conn))
 			check_conn_out = check_conn_out.split('\n')
-			if check_conn_out[0] == test_message:
-				ip_address = ip_addr
-				break
+			for item in check_conn_out:
+				if item == test_message:
+					ip_address = ip_addr
+					break
 
 
 		sys_info = self.get_system_info(ip_address)

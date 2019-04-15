@@ -57,8 +57,7 @@ else:
 keys_local = {}   # locally maintaining keys for slice component's context matching
 
 def update_machine_monitor_state(jesearch, machine_id, machine_state, slice_id):
-    # if gv.es_status == "Active":
-    if True:
+    if jesearch.ping():
 
         nssid, container_name, start_time = check_nssid_with_mid(jesearch, machine_id, 'machine_keys', slice_id)
 

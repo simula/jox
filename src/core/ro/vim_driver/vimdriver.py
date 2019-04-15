@@ -1674,6 +1674,7 @@ class _PhysicalMachine():
 		self.os_type = "" # e.g. linux
 		self.os_dist = "" # e.g. Ubuntu
 		self.os_version = "" # e.g. 16.04
+		self.os_series = ""
 		
 		"""virtualization support"""
 		self.virt_lxd = False
