@@ -36,7 +36,7 @@
         "zone": "1",
         "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
         "scope": "private",
-        "domain": "10.124.51.0/24",
+        "domain": "10.180.125.0/24",
         "_Comment_3": "ssh config",
         "ssh-private-key": "",
         "ssh-user": "",
@@ -66,7 +66,7 @@
         "zone": "1",
         "scope": "private",
         "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "domain": "192.168.1.0/24",
+        "domain": "192.168.12.0/24",
         "_Comment_3": "ssh config",
         "ssh-private-key": "",
         "ssh-user": "",
@@ -117,25 +117,18 @@
   "zones": {
     "1": {
       "domain-1": "192.168.1.0/24",
-      "domain-2": "1000.99.104.54/24"
+      "domain-2": "1000.99.104.54/24",
+      "domain-3": "192.168.12.0/24"
     }
   },
   "clouds-list": [
     {
       "description": "credentials of your juju controller",
       "cloud-name": "nymphe-edu",
-      "cloud-type": "lxd",
-      "cloud-endpoint": "10.124.51.70:17070",
-      "cloud-username": "admin",
-      "cloud-password": "3096977670271933f13ee5cafc7572ec"
-    },
-    {
-      "description": "credentials of your juju controller",
-      "cloud-name": "arouk-edu",
       "cloud-type": "manual",
-      "cloud-endpoint": "172.24.11.27:17070",
+      "cloud-endpoint": "192.168.12.124:17070",
       "cloud-username": "admin",
-      "cloud-password": "eb7a665e4873b760827242a66e0c59b6"
+      "cloud-password": "daa2003d5df3e4ca74e596f216d6ef58"
     },
     {
       "description": "credentials of your juju controller",
@@ -209,7 +202,7 @@
   },
   "ssh-config": {
     "_Comment": "ssh connection is needed when adding kvm machines",
-    "ssh-key-directory": "/home/gatto/.ssh/",
+    "ssh-key-directory": "/home/nymphe/.ssh/",
     "ssh-key-name": "id_rsa",
     "ssh-user": "ubuntu",
     "ssh-password": "linux"

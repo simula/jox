@@ -59,24 +59,8 @@ keys_local = {}   # locally maintaining keys for slice component's context match
 def update_machine_monitor_state(jesearch, machine_id, machine_state, slice_id):
     # if gv.es_status == "Active":
     if True:
-        print("jesearch={}".format(jesearch))
-        print("type(jesearch)={}".format(type(jesearch)))
-
-        print("machine_id={}".format(machine_id))
-        print("type(machine_id)={}".format(type(machine_id)))
-
-        print("slice_id={}".format(slice_id))
-        print("type(slice_id)={}".format(type(slice_id)))
 
         nssid, container_name, start_time = check_nssid_with_mid(jesearch, machine_id, 'machine_keys', slice_id)
-        print("nssid={}".format(nssid))
-        print("type(nssid)={}".format(type(nssid)))
-
-        print("container_name={}".format(container_name))
-        print("type(container_name)={}".format(type(container_name)))
-
-        print("start_time={}".format(start_time))
-        print("type(start_time)={}".format(type(start_time)))
 
         if (not nssid) and (not nssid) and (not nssid):
             pass
@@ -89,8 +73,8 @@ def update_machine_monitor_state(jesearch, machine_id, machine_state, slice_id):
 def update_service_monitor_state(jesearch , service_name, service_state, slice_id):
     # if gv.es_status == "Active":
     if True:
-        if jesearch is None:
-            print("Test")
+        # if jesearch is None:
+        #     print("Test")
         nssid, start_time = check_nssid_with_service(jesearch, service_name, slice_id)
         end_time = (datetime.datetime.now()).isoformat()
 
