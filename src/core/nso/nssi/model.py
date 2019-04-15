@@ -267,7 +267,7 @@ class JModel(JSONEncoder):
                 service=filter(lambda x: x.model_service_name == model_service_name,self.services)[0]
                 loop.run(self.destroy_service(model_service_name))
                 self.services.remove(service) 
-                print ("service object deleted")
+                self.logger.info ("service object deleted")
     
     async def destroy_service(self, service_name, user_name="admin"):
         service_removed = False
