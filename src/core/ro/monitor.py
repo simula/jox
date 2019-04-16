@@ -54,7 +54,7 @@ elif gv.LOG_LEVEL == 'critic':
 else:
     logger.setLevel(logging.INFO)
     
-keys_local = {}   # locally maintaining keys for slice component's context matching
+# keys_local = {}   # locally maintaining keys for slice component's context matching
 
 class Monitor(object):
     def __init__(self):
@@ -90,10 +90,10 @@ class Monitor(object):
                              str(service_time), slice_id)
 
     def check_nssid_with_mid(self, machine_id, container_type, slice_id):
-        for nsi in range(len(keys_local.keys())):
-            nsi_list = list(keys_local)
+        for nsi in range(len(self.keys_local.keys())):
+            nsi_list = list(self.keys_local)
             if nsi_list[nsi] == slice_id:
-                machine_key = keys_local[slice_id]
+                machine_key = self.keys_local[slice_id]
 
                 for data in range(len(machine_key)):
                     service_name = list((machine_key[data]).keys())[0]
@@ -108,7 +108,7 @@ class Monitor(object):
         # machine_key = es.get_json_from_es(es_host, es_port, "slice_keys_"+slice_id.lower(), container_type)
         if machine_key[0]:
             machine_key = machine_key[1]
-            keys_local.update({slice_id: machine_key})
+            self.keys_local.update({slice_id: machine_key})
             for data in range(len(machine_key)):
                 service_name = list((machine_key[data]).keys())[0]
                 if machine_key[data][service_name][0]['juju_mid'] == str(machine_id):
@@ -124,9 +124,9 @@ class Monitor(object):
 
     def check_nssid_with_service(self, app_name, slice_id):
 
-        for nsi in keys_local.keys():
-            if keys_local[nsi] == slice_id:
-                machine_key = keys_local[slice_id]
+        for nsi in self.keys_local.keys():
+            if self.keys_local[nsi] == slice_id:
+                machine_key = self.keys_local[slice_id]
 
                 for data in range(len(machine_key)):
                     service_Name = list((machine_key[data]).keys())[0]
@@ -137,13 +137,16 @@ class Monitor(object):
         service_key = self.jesearch.get_json_from_es("slice_keys_" + slice_id.lower(), 'machine_keys')
         if service_key[0]:
             service_key = service_key[1]
-            keys_local.update({slice_id: service_key})
+            self.keys_local.update({slice_id: service_key})
             for data in range(len(service_key)):
                 service_name = list((service_key[data]).keys())[0]
                 if service_name == str(app_name):
                     nssid = service_key[data][service_name][0]['nssi_id']
                     start_time = service_key[data][service_name][0]['date']
                     return nssid, start_time
+        else:
+            print("service_key[1]=[]".format(service_key[1]))
+            pass
 
     def update_index_key(self, index_page, container_type, container_name, leaf_key, leaf_value, slice_id):
         try:

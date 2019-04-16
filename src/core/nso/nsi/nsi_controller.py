@@ -100,7 +100,7 @@ class NetworkSliceController(object):
 	
 	def add_network_slice(self, slice_name_yml, subslices_controller, nsi_dir, nssi_dir):
 		self.logger.info("Adding the slice {}".format(slice_name_yml))
-		new_slice = JSlice(self.gv)
+		new_slice = JSlice(self.gv, self.jesearch)
 		build_slice = new_slice.build_jslice(slice_name_yml, nsi_dir, nssi_dir)
 		if build_slice[0]:
 			add_nsi = new_slice.add_slice(subslices_controller)

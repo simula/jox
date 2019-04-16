@@ -233,6 +233,7 @@ class JESearch(object):
                     self.logger.debug(message)
                     self.logger.critical(message)
                     return [False, message]
+
                 else:
                     message = "successfully got the key {} in the index {}".format(key, index_page)
                     self.logger.info(message)
@@ -242,60 +243,60 @@ class JESearch(object):
             self.logger.info(message)
             return [False, message]
 
-def del_all_from_es(host, port, index_page):
-    try:
-        message = "Deleting the index {} from elasticsearch".format(index_page)
-        logger.info(message)
-        logger.debug(message)
-        es = Elasticsearch([{'host': host, 'port': port, 'use_ssl': False}])
-        try:
-            message = "Elasticsearch: Connection Success"
-            logger.info(message)
-            logger.debug(message)
-        except:
-            message = "Elasticsearch: Connection Success"
-            logger.info(message)
-            logger.debug(message)
-        es.indices.delete(index=index_page, ignore=[400, 404],)
-        logger.info("es -->>   All keys in ES were flushed.")
-    except Exception as ex:
-       logger.error(ex)
+# def del_all_from_es(host, port, index_page):
+#     try:
+#         message = "Deleting the index {} from elasticsearch".format(index_page)
+#         logger.info(message)
+#         logger.debug(message)
+#         es = Elasticsearch([{'host': host, 'port': port, 'use_ssl': False}])
+#         try:
+#             message = "Elasticsearch: Connection Success"
+#             logger.info(message)
+#             logger.debug(message)
+#         except:
+#             message = "Elasticsearch: Connection Success"
+#             logger.info(message)
+#             logger.debug(message)
+#         es.indices.delete(index=index_page, ignore=[400, 404],)
+#         logger.info("es -->>   All keys in ES were flushed.")
+#     except Exception as ex:
+#        logger.error(ex)
 
-def set_json_to_es(host, port, index_page,json_object):
-    try:
-            es = Elasticsearch([{'host': host, 'port': port, 'use_ssl': False}])
-            es.indices.create(index=index_page)
-            json_data = json.dumps(json_object)
-            es.index(index=index_page, doc_type='post', id=1, body=json.loads(json_data))
-            message = "The file {} is loaded to ES".format(index_page)
-            logger.info(message)
-            logger.debug(message)
+# def set_json_to_es(host, port, index_page,json_object):
+#     try:
+#             es = Elasticsearch([{'host': host, 'port': port, 'use_ssl': False}])
+#             es.indices.create(index=index_page)
+#             json_data = json.dumps(json_object)
+#             es.index(index=index_page, doc_type='post', id=1, body=json.loads(json_data))
+#             message = "The file {} is loaded to ES".format(index_page)
+#             logger.info(message)
+#             logger.debug(message)
+#
+#             return True
+#     except Exception as ex:
+#         message = "The file {} can not be saved to elasticsearch".format(index_page)
+#         logger.info(message)
+#         logger.debug(message)
+#         raise ex
 
-            return True
-    except Exception as ex:
-        message = "The file {} can not be saved to elasticsearch".format(index_page)
-        logger.info(message)
-        logger.debug(message)
-        raise ex
 
-
-def get_json_from_es(host, port, index_page, key):
-    try:
-        es = Elasticsearch([{'host': host, 'port': port, 'use_ssl': False}])
-        time.sleep(2)
-        response = es.search(index=index_page, doc_type="post", _source_include=key)
-        for doc in response['hits']['hits']:
-            if key not in doc['_source']:
-                message = "The key {} deos not exist in the pageindex {}".format(key, index_page)
-                logger.critical(message)
-                logger.info(message)
-                logger.debug(message)
-                return None
-            else:
-                message = "The key {} is found in the pageindex {}".format(key, index_page)
-                logger.info(message)
-                logger.debug(message)
-                return doc['_source'][key]
-
-    except Exception as ex:
-        raise ex
+# def get_json_from_es(host, port, index_page, key):
+#     try:
+#         es = Elasticsearch([{'host': host, 'port': port, 'use_ssl': False}])
+#         time.sleep(2)
+#         response = es.search(index=index_page, doc_type="post", _source_include=key)
+#         for doc in response['hits']['hits']:
+#             if key not in doc['_source']:
+#                 message = "The key {} deos not exist in the pageindex {}".format(key, index_page)
+#                 logger.critical(message)
+#                 logger.info(message)
+#                 logger.debug(message)
+#                 return None
+#             else:
+#                 message = "The key {} is found in the pageindex {}".format(key, index_page)
+#                 logger.info(message)
+#                 logger.debug(message)
+#                 return doc['_source'][key]
+#
+#     except Exception as ex:
+#         raise ex

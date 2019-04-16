@@ -47,7 +47,7 @@ from netaddr import IPNetwork, IPAddress
 
 #
 class LxcDriver(object):
-	def __init__(self, pop_config, global_variable):
+	def __init__(self, pop_config, global_variable, jesearch):
 		self.driver_name = pop_config["pop-name"]
 		self.zone = pop_config["zone"]
 		self.domain = pop_config["domain"]
@@ -57,6 +57,7 @@ class LxcDriver(object):
 		self.driver_ssh_password = pop_config["ssh-password"]
 		self.managed_by = pop_config["managed-by"]
 		self.gv = global_variable
+		self.jesearch = jesearch
 		
 		self.machine_list = list()
 		
@@ -64,7 +65,7 @@ class LxcDriver(object):
 		self.interval_access = self.gv.JUJU_INTERVAL_CONNECTION_MODEL_ACCESSIBLE
 		self.logger = logging.getLogger('jox.LxcDriver.{}'.format(self.driver_name))
 		self.log_config()
-		self.template_manager = template_manager.TemplateManager(global_variable)
+		self.template_manager = template_manager.TemplateManager(global_variable, jesearch)
 		
 	def log_config(self):
 		if self.gv.LOG_LEVEL == 'debug':
@@ -798,7 +799,7 @@ class LxcDriver(object):
 
 
 class KvmDriver(object):
-	def __init__(self, pop_config, global_variable):
+	def __init__(self, pop_config, global_variable, jesearch):
 		self.driver_name = pop_config["pop-name"]
 		self.zone = pop_config["zone"]
 		self.domain = pop_config["domain"]
@@ -807,13 +808,14 @@ class KvmDriver(object):
 		self.driver_ssh_username = pop_config["ssh-user"]
 		self.driver_ssh_password = pop_config["ssh-password"]
 		self.managed_by = pop_config["managed-by"]
+		self.jesearch = jesearch
 
 		self.gv = global_variable
 		self.machine_list = list()
 		self.logger = logging.getLogger('jox.KvmDriver.{}'.format(self.driver_name))
 		self.max_retry = self.gv.JUJU_MAX_RETRY_CONNECTION_MODEL_ACCESSIBLE
 		self.interval_access = self.gv.JUJU_INTERVAL_CONNECTION_MODEL_ACCESSIBLE
-		self.template_manager = template_manager.TemplateManager(global_variable)
+		self.template_manager = template_manager.TemplateManager(global_variable, jesearch)
 
 	def check_machine_exist(self, cloud_name, model_name, machine_config):
 		if "ip_addresses" in machine_config.keys():
@@ -1133,7 +1135,7 @@ class KvmDriver(object):
 
 
 class PhyDriver(object):
-	def __init__(self, pop_config, global_variable):
+	def __init__(self, pop_config, global_variable, jesearch):
 		self.driver_name = pop_config["pop-name"]
 		self.zone = pop_config["zone"]
 		self.domain = pop_config["domain"]
@@ -1142,13 +1144,14 @@ class PhyDriver(object):
 		self.driver_ssh_username = pop_config["ssh-user"]
 		self.driver_ssh_password = pop_config["ssh-password"]
 		self.managed_by = pop_config["managed-by"]
+		self.jesearch = jesearch
 		
 		self.gv = global_variable
 		self.machine_list = list()
 		self.logger = logging.getLogger('jox.PhyDriver.{}'.format(self.driver_name))
 		self.max_retry = self.gv.JUJU_MAX_RETRY_CONNECTION_MODEL_ACCESSIBLE
 		self.interval_access = self.gv.JUJU_INTERVAL_CONNECTION_MODEL_ACCESSIBLE
-		self.template_manager = template_manager.TemplateManager(global_variable)
+		self.template_manager = template_manager.TemplateManager(global_variable, jesearch)
 
 	def check_machine_exist(self, cloud_name, model_name, machine_config):
 		if "ip_addresses" in machine_config.keys():

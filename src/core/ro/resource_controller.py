@@ -88,7 +88,7 @@ class ResourcesController(object):
 				          "following supported VIMs: {1}".format(pop_config, self.pop_type_supported))
 				return False
 			else:
-				new_driver = vimdriver.LxcDriver(pop_config, self.gv)
+				new_driver = vimdriver.LxcDriver(pop_config, self.gv, self.jesearch)
 				
 				self.pop_lxc_list.append(new_driver)
 				return True
@@ -103,7 +103,7 @@ class ResourcesController(object):
 				                  "following supported VIMs: {1}".format(pop_config, self.pop_type_supported))
 				return False
 			else:
-				new_driver = vimdriver.KvmDriver(pop_config, self.gv)
+				new_driver = vimdriver.KvmDriver(pop_config, self.gv, self.jesearch)
 				self.pop_kvm_list.append(new_driver)
 				return True
 		elif pop_type == self.gv.PHY:
@@ -117,7 +117,7 @@ class ResourcesController(object):
 				                  "following supported VIMs: {1}".format(pop_config, self.pop_type_supported))
 				return False
 			else:
-				new_driver = vimdriver.PhyDriver(pop_config, self.gv)
+				new_driver = vimdriver.PhyDriver(pop_config, self.gv, self.jesearch)
 				self.pop_phy_list.append(new_driver)
 				return True
 		else:

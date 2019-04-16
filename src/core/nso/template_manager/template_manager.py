@@ -112,7 +112,7 @@ anyval_inlist = lambda a, b: any(i in b for i in a)
 # }
 class TemplateManager():
 
-	def __init__(self, global_variables):
+	def __init__(self, global_variables, jesearch):
 		self.gv = global_variables
 		self.es_host = self.gv.ELASTICSEARCH_HOSt
 		self.es_port = self.gv.ELASTICSEARCH_PORT
@@ -124,11 +124,7 @@ class TemplateManager():
 		self.map_userNssiId_NssiId = {}
 		self.NSI_template = None
 		self.NSSI_template = list()
-		self.jesearch = es.JESearch(self.es_host, self.es_port, self.es_log_level)
-		if self.gv.es_status=="Dead":
-			pass
-		else:
-			es.del_all_from_es(self.es_host, self.es_port, 'slice_keys')
+		self.jesearch = jesearch
 		
 		self.logger = logging.getLogger('jox.TemplateManager')
 		self.log_config()
@@ -146,15 +142,6 @@ class TemplateManager():
 		else:
 			self.logger.setLevel(logging.INFO)
 	def build(self, slice_name_yml, nsi_dir, nssi_dir):
-		if not self.jesearch.ping():
-			message = "Elasticsearch is not working while it is enabled. Either disable elasticsearch or run it"
-			self.logger.error(message)
-			#self.es_status="Dead"
-			self.gv.es_status="Dead"
-		else:
-			# self.es_status="Active"
-			self.gv.es_status="Active"
-			self.jesearch = es.JESearch(self.es_host, self.es_port, self.es_log_level)
 		
 		slice_full_path = ''.join([nsi_dir, slice_name_yml])
 		try:
@@ -170,8 +157,7 @@ class TemplateManager():
 		self.NSI_template = slice_data_file
 		self.NSI_ID = slice_data_file['metadata']['ID']
 
-		#if self.es_status == "Active":
-		if self.gv.es_status == "Active":
+		if self.jesearch.ping():
 			self.set_NSI_monitor_index(self.NSI_ID)
 			message = "Deleting the index {} from elasticsearch if alredy exist".format((self.NSI_ID).lower())
 			logger.info(message)
@@ -204,7 +190,7 @@ class TemplateManager():
 			logger.info(message)
 			logger.debug(message)
 
-			if self.gv.es_status == "Active":
+			if self.jesearch.ping():
 				self.jesearch.del_index_from_es(nssi_id)
 				message = "Saving the index {} to elasticsearch".format(nssi_id)
 				logger.info(message)
@@ -417,15 +403,15 @@ class TemplateManager():
 							"machine_keys": [],
 							"service_keys": [],
 							"relation_keys": []} # Relation key not required for now
-		es.del_all_from_es(self.es_host, self.es_port, 'slice_keys_' + nsi_id.lower()) # this is per  slice index (runtime updates)
-		es.set_json_to_es(self.es_host, self.es_port, 'slice_keys_' + nsi_id.lower(), slice_skeleton)
+		self.jesearch.del_index_from_es('slice_keys_' + nsi_id.lower())
+		self.jesearch.set_json_to_es('slice_keys_' + nsi_id.lower(), slice_skeleton)
 
-		es.del_all_from_es(self.es_host, self.es_port, 'slice_keys_tmp_' + nsi_id.lower()) # this is per  slice index (runtime updates)
-		es.set_json_to_es(self.es_host, self.es_port, 'slice_keys_tmp_' + nsi_id.lower(), slice_skeleton)
-
+		# es.del_all_from_es(self.es_host, self.es_port, 'slice_keys_' + nsi_id.lower()) # this is per  slice index (runtime updates)
+		# es.set_json_to_es(self.es_host, self.es_port, 'slice_keys_' + nsi_id.lower(), slice_skeleton)
 
 	def set_NSSI_monitor_index(self, nssi_id, nsi_id, list_services, list_machines):
-		es.del_all_from_es(self.es_host, self.es_port, 'slice_monitor_' + nssi_id.lower()) # this is per sub slice index (runtime updates)
+		self.jesearch.del_index_from_es('slice_monitor_' + nssi_id.lower())
+		# es.del_all_from_es(self.es_host, self.es_port, 'slice_monitor_' + nssi_id.lower()) # this is per sub slice index (runtime updates)
 		services_list = []
 		machines_list = []
 		relations_list = []
@@ -435,7 +421,9 @@ class TemplateManager():
 							"machine_status": [],
 							"service_status": [],
 							"relation_status": []}  # Create Empty container
-		es.set_json_to_es(self.es_host, self.es_port, 'slice_monitor_' + nssi_id.lower(), slice_skeleton)
+		self.jesearch.set_json_to_es('slice_monitor_' + nssi_id.lower(), slice_skeleton)
+
+		# es.set_json_to_es(self.es_host, self.es_port, 'slice_monitor_' + nssi_id.lower(), slice_skeleton)
 		service_list = list(list_services.keys())  # List of applications
 		ES = Elasticsearch([{'host': self.es_host, 'port': self.es_port, 'use_ssl': False}])
 		for service in range(len(service_list)):
@@ -521,8 +509,9 @@ class TemplateManager():
 
 
 	def update_slice_monitor_index(self, index_page, container_type, container_name, leaf_key, leaf_value, nsi_id):
-		if self.gv.es_status == "Active":
-			slice_data = es.get_json_from_es(self.es_host, self.es_port, index_page, container_type)
+		if self.jesearch.ping():
+			slice_data = self.jesearch.get_json_from_es(index_page, container_type)
+			# slice_data = es.get_json_from_es(self.es_host, self.es_port, index_page, container_type)
 			for machines in range(len(slice_data)):  # Update the container
 				machines_list = slice_data[machines]
 				machine = list(machines_list.keys())

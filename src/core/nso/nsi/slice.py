@@ -35,7 +35,7 @@ import traceback
 
 class JSlice(JSONEncoder):
 	
-	def __init__(self, global_variables):
+	def __init__(self, global_variables, jesearch):
 		self.gv = global_variables
 		self.logger = logging.getLogger('jox.jslice')
 		self.log_config()
@@ -43,8 +43,9 @@ class JSlice(JSONEncoder):
 		self.slice_template_date = ""
 		self.slice_name = ""
 		self.slice_owner = ""
+		self.jesearch = jesearch
 		
-		self.template_manager = template_manager.TemplateManager(self.gv) # to analyse the template
+		self.template_manager = template_manager.TemplateManager(self.gv, self.jesearch) # to analyse the template
 		self.list_NSSI = None # liste of the sub-slices composing the current slice
 		self.list_inter_nssi_relations = list()
 		self.list_all_jujuModel_attachedWatcher = list()

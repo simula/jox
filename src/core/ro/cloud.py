@@ -155,9 +155,9 @@ class JCloud(JSONEncoder):
                 # monitor.update_service_monitor_state(self.jesearch, delta.data['application'],"waiting", self.slice_id)
 
 
-                nssid, start_time = self.monitor.check_nssid_with_service(self.jesearch, delta.data['application'],self.slice_id)
+                nssid, start_time = self.monitor.check_nssid_with_service(delta.data['application'],self.slice_id)
                 # nssid, start_time = monitor.check_nssid_with_service(self.jesearch, delta.data['application'],self.slice_id)
-                self.monitor.update_index_key(self.jesearch, 'slice_monitor_'+ nssid.lower(), "machine_status", delta.data['application'], "address_ipv4_public", delta.data['public-address'], self.slice_id)
+                self.monitor.update_index_key('slice_monitor_'+ nssid.lower(), "machine_status", delta.data['application'], "address_ipv4_public", delta.data['public-address'], self.slice_id)
                 # monitor.update_index_key(self.jesearch, 'slice_monitor_'+ nssid.lower(), "machine_status", delta.data['application'], "address_ipv4_public", delta.data['public-address'], self.slice_id)
 
             if delta.entity=="unit" and delta.type=="change" and delta.data['workload-status']['current']=="active":
