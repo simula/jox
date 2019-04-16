@@ -72,9 +72,7 @@ def update_machine_monitor_state(jesearch, machine_id, machine_state, slice_id):
 
 def update_service_monitor_state(jesearch , service_name, service_state, slice_id):
     # if gv.es_status == "Active":
-    if True:
-        # if jesearch is None:
-        #     print("Test")
+    if jesearch.ping():
         nssid, start_time = check_nssid_with_service(jesearch, service_name, slice_id)
         end_time = (datetime.datetime.now()).isoformat()
 
@@ -98,7 +96,6 @@ def check_nssid_with_mid(jesearch, machine_id, container_type, slice_id):
         else :
             return [False, False, False]
     machine_key = jesearch.get_json_from_es("slice_keys_"+slice_id.lower(), container_type)
-    # machine_key = es.get_json_from_es(es_host, es_port, "slice_keys_"+slice_id.lower(), container_type)
     if machine_key[0]:
         machine_key = machine_key[1]
         keys_local.update({slice_id: machine_key})
@@ -108,11 +105,12 @@ def check_nssid_with_mid(jesearch, machine_id, container_type, slice_id):
                 nssid = machine_key[data][service_name][0]['nssi_id']
                 container_name = service_name
                 start_time = machine_key[data][service_name][0]['date']
-                return nssid, container_name, start_time
+                return [nssid, container_name, start_time]
     else:
         message = "The key {} does not exist in the page {}".format(container_type, "slice_keys_"+slice_id.lower())
         logger.error(message)
-
+        logger.critical(message)
+        return [False, False, False]
 
 def check_nssid_with_service(jesearch, app_name, slice_id):
     for nsi in range(len(keys_local.keys())):
@@ -126,8 +124,6 @@ def check_nssid_with_service(jesearch, app_name, slice_id):
                     nssid = machine_key[data][service_Name][0]['nssi_id']
                     start_time = machine_key[data][service_Name][0]['date']
                     return nssid, start_time
-            else:
-                pass
     service_key = jesearch.get_json_from_es("slice_keys_"+slice_id.lower(), 'machine_keys')
     if service_key[0]:
         service_key = service_key[1]
@@ -246,8 +242,7 @@ async def get_juju_status(type, cloud_name=None, model_name=None, user_name="adm
                       'relations':[juju_status_relations]})
         return [True, full_status, model_info]
     else:
-        message = "The key {} is not supported. Only the following keys are supported: machines, applications, relations, all".\
-            format(type)
+        message = "The key {} is not supported. Only the following keys are supported: machines, applications, relations, all".format(type)
         return [False, message]
 def get_all_relations(juju_status):
     relations = {}

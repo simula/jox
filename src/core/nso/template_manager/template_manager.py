@@ -420,8 +420,6 @@ class TemplateManager():
 		es.del_all_from_es(self.es_host, self.es_port, 'slice_keys_' + nsi_id.lower()) # this is per  slice index (runtime updates)
 		es.set_json_to_es(self.es_host, self.es_port, 'slice_keys_' + nsi_id.lower(), slice_skeleton)
 
-		es.del_all_from_es(self.es_host, self.es_port, 'slice_keys_tmp_' + nsi_id.lower()) # this is per  slice index (runtime updates)
-		es.set_json_to_es(self.es_host, self.es_port, 'slice_keys_tmp_' + nsi_id.lower(), slice_skeleton)
 
 
 	def set_NSSI_monitor_index(self, nssi_id, nsi_id, list_services, list_machines):

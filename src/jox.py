@@ -84,7 +84,6 @@ class NFVO_JOX(object):
 		
 		self.dir_slice = dir_path + '/common/template_slice/'  # directory where the slice template should exist
 		self.dir_subslice = dir_path + '/common/template_slice/'
-		
 		self.dir_config = dir_path + '/common/config/'  # directory for the configurations needed by different modules
 		self.dir_home = expanduser("~")
 		
@@ -805,7 +804,7 @@ class server_RBMQ(object):
 			if log_source == "juju":
 				file = open("juju.log", 'w')
 				cmd_log = ["juju", "debug-log", "--lines", str(10000)]
-				cmd_out = None #loop.run(run_command(cmd_log))
+				cmd_out = loop.run(run_command(cmd_log))
 				file.write(cmd_out)
 				file.close()
 				file = open("juju.log", 'r')
