@@ -142,7 +142,7 @@ class JESearch(object):
             self.logger.error(message)
             self.logger.debug(message)
         try:
-            slice_data = self.get_json_from_es(self.host, self.port, index_page, container_type)
+            slice_data = self.get_json_from_es(index_page, container_type)
             if slice_data[0]:
                 slice_data = slice_data[1]
                 for machines in range(len(slice_data)):  # Update the container
