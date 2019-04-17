@@ -38,21 +38,10 @@ import datetime
 import logging
 from juju.model import Model
 from juju import utils
-logger = logging.getLogger('jox.jmodel')
 import src.common.config.gv as gv
 
-if gv.LOG_LEVEL == 'debug':
-    logger.setLevel(logging.DEBUG)
-elif gv.LOG_LEVEL == 'info':
-    logger.setLevel(logging.INFO)
-elif gv.LOG_LEVEL == 'warn':
-    logger.setLevel(logging.WARNING)
-elif gv.LOG_LEVEL == 'error':
-    logger.setLevel(logging.ERROR)
-elif gv.LOG_LEVEL == 'critic':
-    logger.setLevel(logging.CRITICAL)
-else:
-    logger.setLevel(logging.INFO)
+
+
     
 # keys_local = {}   # locally maintaining keys for slice component's context matching
 
@@ -61,18 +50,80 @@ class Monitor(object):
         self.jesearch = None
         self.keys_local = {}
 
+        self.logger = logging.getLogger('jox.monitor')
+        if gv.LOG_LEVEL == 'debug':
+            self.logger.setLevel(logging.DEBUG)
+        elif gv.LOG_LEVEL == 'info':
+            self.logger.setLevel(logging.INFO)
+        elif gv.LOG_LEVEL == 'warn':
+            self.logger.setLevel(logging.WARNING)
+        elif gv.LOG_LEVEL == 'error':
+            self.logger.setLevel(logging.ERROR)
+        elif gv.LOG_LEVEL == 'critic':
+            self.logger.setLevel(logging.CRITICAL)
+        else:
+            self.logger.setLevel(logging.INFO)
+
     def buil(self, jesearch):
         self.jesearch = jesearch
 
-    def update_machine_monitor_state(self, machine_id, machine_state, slice_id):
+    def update_machine_monitor_state(self, machine_id, machine_state, current_state_machine, slice_id): # machine_state=add, change
         if self.jesearch.ping():
-
-            nssid, container_name, start_time = self.check_nssid_with_mid(machine_id, 'machine_keys', slice_id)
-
-            if (not nssid) and (not container_name) and (not start_time):
+            if machine_state == "add":
+                pass
+            elif machine_state == "change":
                 pass
             else:
-                end_time = (datetime.datetime.now()).isoformat()
+                # TODO support monitoring information when removing machine
+                message  = "The current state of the machine ({}) is not holde yet by JoX"
+                self.logger.critical(message)
+                self.logger.debug(message)
+
+            end_time = (datetime.datetime.now()).isoformat()
+            check_val = self.check_nssid_with_mid(machine_id, 'machine_keys', current_state_machine, slice_id)
+            if check_val[0] is not None:
+                nssid = check_val[0]
+                container_name = check_val[1]
+                start_time = check_val[2]
+                state_old = check_val[3]
+                state_new = check_val[4]
+                prepending_time = check_val[5]
+                total_time = (datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%f')) \
+                             - (datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f'))
+
+                update_key = "current_state"
+                update_value = state_new
+                self.update_index_key('slice_monitor_' + nssid.lower(), "machine_status", container_name,
+                                      update_key,
+                                      str(update_value), slice_id)
+
+                update_key = "{}_{}".format(state_old, 'since')
+                update_value = 0
+                self.update_index_key('slice_monitor_' + nssid.lower(), "machine_status", container_name,
+                                      update_key,
+                                      str(update_value), slice_id)
+                update_key = "{}_{}".format(state_old, 'time')
+                update_value = total_time
+                self.update_index_key('slice_monitor_' + nssid.lower(), "machine_status", container_name,
+                                      update_key,
+                                      str(update_value), slice_id)
+
+                update_key = "{}_{}".format(state_new, 'since')
+                update_value = end_time
+                self.update_index_key('slice_monitor_' + nssid.lower(), "machine_status", container_name,
+                                      update_key,
+                                      str(update_value), slice_id)
+                if prepending_time is not None:
+                    update_key = "{}_{}".format('launch', 'time')
+                    update_value = (datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%f')) \
+                             - (datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f'))
+                    self.update_index_key('slice_monitor_' + nssid.lower(), "machine_status", container_name,
+                                          update_key,
+                                          str(update_value), slice_id)
+
+
+
+
                 launch_time = (datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%f')) - (
                     datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f'))
                 self.update_index_key('slice_monitor_' + nssid.lower(), "machine_status", container_name,
@@ -89,21 +140,21 @@ class Monitor(object):
             self.update_index_key('slice_monitor_' + nssid.lower(), "service_status", service_name, service_state,
                              str(service_time), slice_id)
 
-    def check_nssid_with_mid(self, machine_id, container_type, slice_id):
-        for nsi in range(len(self.keys_local.keys())):
-            nsi_list = list(self.keys_local)
-            if nsi_list[nsi] == slice_id:
-                machine_key = self.keys_local[slice_id]
-
-                for data in range(len(machine_key)):
-                    service_name = list((machine_key[data]).keys())[0]
-                    if machine_key[data][service_name][0]['juju_mid'] == str(machine_id):
-                        nssid = machine_key[data][service_name][0]['nssi_id']
-                        container_name = service_name
-                        start_time = machine_key[data][service_name][0]['date']
-                        return [nssid, container_name, start_time]
-            else:
-                return [False, False, False]
+    def check_nssid_with_mid(self, machine_id, container_type, current_state_machine, slice_id):
+        # for nsi in range(len(self.keys_local.keys())):
+        #     nsi_list = list(self.keys_local)
+        #     if nsi_list[nsi] == slice_id:
+        #         machine_key = self.keys_local[slice_id]
+        #
+        #         for data in range(len(machine_key)):
+        #             service_name = list((machine_key[data]).keys())[0]
+        #             if machine_key[data][service_name][0]['juju_mid'] == str(machine_id):
+        #                 nssid = machine_key[data][service_name][0]['nssi_id']
+        #                 container_name = service_name
+        #                 start_time = machine_key[data][service_name][0]['date']
+        #                 return [nssid, container_name, start_time]
+        #     else:
+        #         return [False, False, False]
         machine_key = self.jesearch.get_json_from_es("slice_keys_" + slice_id.lower(), container_type)
         # machine_key = es.get_json_from_es(es_host, es_port, "slice_keys_"+slice_id.lower(), container_type)
         if machine_key[0]:
@@ -114,18 +165,34 @@ class Monitor(object):
                 if machine_key[data][service_name][0]['juju_mid'] == str(machine_id):
                     nssid = machine_key[data][service_name][0]['nssi_id']
                     container_name = service_name
-                    start_time = machine_key[data][service_name][0]['date']
-                    return [nssid, container_name, start_time]
+                    if current_state_machine == machine_key[data][service_name][0]['current_state']:
+                        # there is not change in the state of the machine
+                        return [None, None, None, None, None]
+                    else:
+                        state_old = machine_key[data][service_name][0]['current_state']
+                        state_new = current_state_machine
+
+                        if (state_new == 'started') and (state_old == 'pending'):
+                            val = "{}_{}".format('prepending', 'time')
+                            prepending_time = machine_key[data][service_name][0][val]
+                        else:
+                            prepending_time = None
+
+                        val = "{}_{}".format(state_old, 'since')
+                        start_time = machine_key[data][service_name][0][val]
+                        return [nssid, container_name, start_time, state_old, state_new, prepending_time]
+            return [None, None, None, None, None,None]
         else:
             message = "The key {} does not exist in the page {}".format(container_type,
                                                                         "slice_keys_" + slice_id.lower())
-            logger.error(message)
-            return [False, False, False]
+            self.logger.error(message)
+            return [None, None, None, None, None, None]
 
     def check_nssid_with_service(self, app_name, slice_id):
-
+        if app_name == 'oai-ran':
+            pass
         for nsi in self.keys_local.keys():
-            if self.keys_local[nsi] == slice_id:
+            if nsi == slice_id:
                 machine_key = self.keys_local[slice_id]
 
                 for data in range(len(machine_key)):
@@ -163,7 +230,13 @@ class Monitor(object):
                         if machine[num] == container_name:
                             if slice_data[machines][container_name][0][leaf_key] == "0" and leaf_key:
                                 if leaf_key == 'maintenance':
+
                                     waiting_time = slice_data[machines][container_name][0]['waiting']
+                                    print("machines={}".format(machines))
+                                    print("container_name={}".format(container_name))
+                                    print("slice_data={}".format(slice_data))
+                                    print("waiting_time={}".format(waiting_time))
+                                    print("leaf_value={}".format(leaf_value))
                                     maintenance = (datetime.datetime.strptime(leaf_value, '%H:%M:%S.%f') -
                                                    datetime.datetime.strptime(waiting_time, '%H:%M:%S.%f'))
                                     slice_data[machines][container_name][0][leaf_key] = str(maintenance)
@@ -188,7 +261,7 @@ class Monitor(object):
 
                                 else:
                                     slice_data[machines][container_name][0][leaf_key] = leaf_value
-                                logger.info("Updating {} => {} state {} with value {} ".format(slice_id, container_name,
+                                self.logger.info("Updating {} => {} state {} with value {} ".format(slice_id, container_name,
                                                                                                leaf_key,
                                                                                                slice_data[machines][
                                                                                                    container_name][0][
@@ -209,7 +282,7 @@ class Monitor(object):
             else:
                 pass
         except els_exceptions.ConflictError:
-            logger.critical("Other request is already modified updated the index")
+            self.logger.critical("Other request is already modified updated the index")
         except Exception as ex:
             raise ex
 
@@ -362,7 +435,19 @@ class Monitor(object):
 #     except Exception as ex:
 #         raise ex
 
-
+logger = logging.getLogger('jox.jujuStatus')
+if gv.LOG_LEVEL == 'debug':
+    logger.setLevel(logging.DEBUG)
+elif gv.LOG_LEVEL == 'info':
+    logger.setLevel(logging.INFO)
+elif gv.LOG_LEVEL == 'warn':
+    logger.setLevel(logging.WARNING)
+elif gv.LOG_LEVEL == 'error':
+    logger.setLevel(logging.ERROR)
+elif gv.LOG_LEVEL == 'critic':
+    logger.setLevel(logging.CRITICAL)
+else:
+    logger.setLevel(logging.INFO)
 async def get_juju_status(type, cloud_name=None, model_name=None, user_name="admin"):
     model = Model()
     if (cloud_name is None) and (model_name is None):

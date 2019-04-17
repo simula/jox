@@ -238,7 +238,14 @@ class JESearch(object):
                     message = "successfully got the key {} in the index {}".format(key, index_page)
                     self.logger.info(message)
                     return [True, doc['_source'][key]]
+            message = "Could not find the key {} in {}".format(key, index_page)
+            self.logger.info(message)
+            return [False, message]
         except Exception as ex:
+            message = "Could not find the key {} in {}".format(key, index_page)
+            self.logger.info(message)
+            return [False, message]
+        except:
             message = "Could not find the key {} in {}".format(key, index_page)
             self.logger.info(message)
             return [False, message]

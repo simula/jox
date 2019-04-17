@@ -142,9 +142,17 @@ class JCloud(JSONEncoder):
         
     async def on_model_change(self, delta, old, new, model):
         if self.jesearch.ping():
-            if delta.entity=="machine" and delta.type=="change" and delta.data['agent-status']['current']=="started":
-                self.monitor.update_machine_monitor_state(delta.data['id'], "launch_time", self.slice_id)
-                # monitor.update_machine_monitor_state(self.jesearch, delta.data['id'], "launch_time", self.slice_id)
+            print("delta.entity={}".format(delta.entity))
+            print("delta.type={}".format(delta.type))
+            print("delta.data={}".format(delta.data))
+
+            if delta.entity=="machine" and (delta.type=="add" or delta.type=="change"):
+                current_state_machine = delta.data['agent-status']['current']
+                self.monitor.update_machine_monitor_state(delta.data['id'], delta.type, current_state_machine, self.slice_id)
+
+
+            # if delta.entity=="machine" and delta.type=="change" and delta.data['agent-status']['current']=="started":
+            #     self.monitor.update_machine_monitor_state(delta.data['id'], "launch_time", self.slice_id)
 
             if delta.entity=="unit" and delta.type=="change" and delta.data['workload-status']['current']=="error":
                 self.monitor.update_service_monitor_state(delta.data['application'], "error", self.slice_id)
@@ -167,7 +175,10 @@ class JCloud(JSONEncoder):
             if delta.entity=="application" and delta.type=="change" and (delta.data['status']['message']=="Running" or delta.data['status']['message']=="Ready"):
                 self.monitor.update_service_monitor_state(delta.data['name'], "requirement_wait", self.slice_id)
                 # monitor.update_service_monitor_state(self.jesearch, delta.data['name'], "requirement_wait", self.slice_id)
-
+        else:
+            message = "Elasticsearch is not working, and thus no update for monitoring information"
+            self.logger.debug(message)
+            self.logger.debug(message)
     async def watch_model(self, model_name):
         controller = Controller()
         self.logger.info("Connecting to controller")
