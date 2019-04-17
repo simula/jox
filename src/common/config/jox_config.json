@@ -68,6 +68,19 @@
         "ssh-user": "",
         "ssh-password": "",
         "managed-by": "lxd"
+      },
+      {
+        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+        "pop-name": "default-4",
+        "zone": "1",
+        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+        "scope": "private",
+        "domain": "10.124.51.0/24",
+        "_Comment_3": "ssh config",
+        "ssh-private-key": "",
+        "ssh-user": "",
+        "ssh-password": "",
+        "managed-by": "lxd"
       }
     ],
     "kvm": [

@@ -120,15 +120,11 @@ class Monitor(object):
                     self.update_index_key('slice_monitor_' + nssid.lower(), "machine_status", container_name,
                                           update_key,
                                           str(update_value), slice_id)
-
-
-
-
-                launch_time = (datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%f')) - (
-                    datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f'))
-                self.update_index_key('slice_monitor_' + nssid.lower(), "machine_status", container_name,
-                                 machine_state,
-                                 str(launch_time), slice_id)
+                # launch_time = (datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%f')) - (
+                #     datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f'))
+                # self.update_index_key('slice_monitor_' + nssid.lower(), "machine_status", container_name,
+                #                  machine_state,
+                #                  str(launch_time), slice_id)
 
     def update_service_monitor_state(self, service_name, service_state, slice_id):
         if self.jesearch.ping():
