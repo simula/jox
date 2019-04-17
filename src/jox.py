@@ -227,15 +227,13 @@ class NFVO_JOX(object):
 				message = "Elasticsearch is not working while it is enabled. Either disable elasticsearch or run it"
 				self.logger.error(message)
 				# self.cleanup_and_exit(str(0))
-				self.gv.es_status = "Dead"
 			else:
 				message = "elasticsearch is now running"
 				self.logger.info(message)
-				self.gv.es_status = "Active"
 		######### STEP 4: Load JOX Configuration to ES ########
 		if self.gv.ELASTICSEARCH_ENABLE:
 			self.logger.info("Save JOX configuration to elasticsearch")
-			if self.gv.es_status == "Active":
+			if self.jesearch.ping():
 				try:
 					self.logger.info("Delete the index of jox config from elasticsearch if exist")
 					self.jesearch.del_index_from_es(self.gv.JOX_CONFIG_KEY)
@@ -251,8 +249,6 @@ class NFVO_JOX(object):
 				except Exception as ex:
 					self.logger.error((str(ex)))
 					self.logger.error(traceback.format_exc())
-			else:
-				pass
 		
 		######### STEP 5: Create Resource Controller ########
 		self.logger.info("Create resource Controller")
@@ -906,7 +902,7 @@ class server_RBMQ(object):
 			es_index_page = parameters["es_index_page"]
 			es_key = parameters["es_key"]
 			if request_type == "get":
-				if self.nfvo_jox.gv.es_status == "Dead":
+				if not self.nfvo_jox.jesearch.ping():
 					response = {
 						"ACK": True,
 						"data": "Elasticsearch is not active",

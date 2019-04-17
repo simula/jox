@@ -43,12 +43,10 @@ logger = logging.getLogger('jox.templateManager')
 
 
 dir_path = os.path.dirname(os.path.abspath(__file__ + "/../../../"))
-import json, yaml
-from src.core.ro.plugins import es
-from elasticsearch import Elasticsearch
-import datetime, time
+import yaml
+import datetime
 
-service_keys = {}    # local key dictionary for slice component's context matching
+service_keys = {} # local key dictionary for slice component's context matching
 machine_keys = {}
 relation_keys = {}
 
@@ -369,9 +367,7 @@ class TemplateManager():
 
 
 
-		if not self.jesearch.ping():
-			pass
-		else:
+		if self.jesearch.ping():
 			self.set_NSSI_monitor_index(nssi_id, self.get_NSI_ID(), list_services, list_machines) # Add monitoring template for this subslice
 		return [slice_version, list_services, list_machines, abort_deploy_subslice]
 
@@ -425,7 +421,7 @@ class TemplateManager():
 
 		# es.set_json_to_es(self.es_host, self.es_port, 'slice_monitor_' + nssi_id.lower(), slice_skeleton)
 		service_list = list(list_services.keys())  # List of applications
-		ES = Elasticsearch([{'host': self.es_host, 'port': self.es_port, 'use_ssl': False}])
+		# ES = Elasticsearch([{'host': self.es_host, 'port': self.es_port, 'use_ssl': False}])
 		for service in range(len(service_list)):
 			service_name = {service_list[service]: [{"date": date,
 													 "waiting": "0",
@@ -437,8 +433,13 @@ class TemplateManager():
 													 "nssi_id": nssi_id
 													 }]}
 			services_list.append(service_name)
-		ES.update(index='slice_monitor_'+nssi_id.lower(), doc_type='post', id=1,
-				  body={'doc': {'service_status': services_list}}, retry_on_conflict=0)
+
+		self.jesearch.update_index_with_content('slice_monitor_'+nssi_id.lower(),
+												'service_status',
+												services_list)
+
+		# ES.update(index='slice_monitor_'+nssi_id.lower(), doc_type='post', id=1,
+		# 		  body={'doc': {'service_status': services_list}}, retry_on_conflict=0)
 		for service in range(len(service_list)):
 			service_name = {service_list[service]: [{"date": date,
 													 "nssi_id": nssi_id
@@ -456,8 +457,13 @@ class TemplateManager():
 							data.append(key_list[num])
 				data.append(service_name)
 				service_keys.update({nsi_id: [{'service_keys': data}]})  # Update local list
-		ES.update(index='slice_keys_'+(self.get_NSI_ID()).lower(), doc_type='post', id=1,
-				  body={'doc': {'service_keys': service_keys[nsi_id][0]['service_keys']}}, retry_on_conflict=0)
+
+		self.jesearch.update_index_with_content('slice_keys_'+(self.get_NSI_ID()).lower(),
+												'service_keys', service_keys[nsi_id][0]['service_keys'])
+
+
+		# ES.update(index='slice_keys_'+(self.get_NSI_ID()).lower(), doc_type='post', id=1,
+		# 		  body={'doc': {'service_keys': service_keys[nsi_id][0]['service_keys']}}, retry_on_conflict=0)
 
 		for machine in range(len(service_list)):
 			machine_name = {service_list[machine]: [{"date":date,
@@ -470,8 +476,12 @@ class TemplateManager():
                                                      "launch_time":"0"
                                                      }]}
 			machines_list.append(machine_name)
-		ES.update(index='slice_monitor_'+nssi_id.lower(), doc_type='post', id=1,   # Putting in subslice index
-				  body={'doc': {'machine_status': machines_list	}}, retry_on_conflict=0)
+		self.jesearch.update_index_with_content('slice_monitor_'+nssi_id.lower(),
+												'machine_status',
+												machines_list)
+
+		# ES.update(index='slice_monitor_'+nssi_id.lower(), doc_type='post', id=1,   # Putting in subslice index
+		# 		  body={'doc': {'machine_status': machines_list	}}, retry_on_conflict=0)
 
 		for machine in range(len(service_list)):
 			machine_name = {service_list[machine]: [{"date": date,
@@ -491,8 +501,13 @@ class TemplateManager():
 							data.append(key_list[num])
 				data.append(machine_name)
 				machine_keys.update({nsi_id:[{'machine_keys':data}]})  # Update local list
-		ES.update(index='slice_keys_' + (self.get_NSI_ID()).lower(), doc_type='post', id=1,
-				  body={'doc': {'machine_keys': machine_keys[nsi_id][0]['machine_keys']}}, retry_on_conflict=0)
+
+		self.jesearch.update_index_with_content(index='slice_keys_' + (self.get_NSI_ID()).lower(),
+												container_type='machine_keys',
+												data=machine_keys[nsi_id][0]['machine_keys'])
+
+		# ES.update(index='slice_keys_' + (self.get_NSI_ID()).lower(), doc_type='post', id=1,
+		# 		  body={'doc': {'machine_keys': machine_keys[nsi_id][0]['machine_keys']}}, retry_on_conflict=0)
 
 
 		for machine in range(len(service_list)):
@@ -503,8 +518,12 @@ class TemplateManager():
 													 "requirement": list_services[service_list[machine]]['relation']
 													 }]}
 			relations_list.append(machine_name)
-		ES.update(index='slice_monitor_'+ nssi_id.lower(), doc_type='post', id=1,  # Putting in subslice index
-				  body={'doc': {'relation_status': relations_list}}, retry_on_conflict=0)
+		self.jesearch.update_index_with_content('slice_monitor_'+ nssi_id.lower(),
+												'relation_status',
+												relations_list)
+
+		# ES.update(index='slice_monitor_'+ nssi_id.lower(), doc_type='post', id=1,  # Putting in subslice index
+		# 		  body={'doc': {'relation_status': relations_list}}, retry_on_conflict=0)
 
 
 
@@ -518,9 +537,13 @@ class TemplateManager():
 				for num in range(len(machine)):
 					if machine[num] == container_name:
 						slice_data[machines][container_name][0][leaf_key] = leaf_value
-			ES = Elasticsearch([{'host': self.es_host, 'port': self.es_port, 'use_ssl': False}])
-			ES.update(index=index_page, doc_type='post', id=1,  # Push the container with updates
-					  body={'doc': {container_type: slice_data}}, retry_on_conflict=0)
+			self.jesearch.update_index_with_content(index_page,
+													container_type,
+													slice_data)
+
+			# ES = Elasticsearch([{'host': self.es_host, 'port': self.es_port, 'use_ssl': False}])
+			# ES.update(index=index_page, doc_type='post', id=1,  # Push the container with updates
+			# 		  body={'doc': {container_type: slice_data}}, retry_on_conflict=0)
 
 			if container_type=="machine_keys":
 				machine_keys[nsi_id][0]['machine_keys'].clear()
