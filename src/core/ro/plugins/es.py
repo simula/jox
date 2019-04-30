@@ -226,7 +226,8 @@ class JESearch(object):
             self.logger.debug(message)
             return [False, message]
         try:
-            response = self.es.search(index=index_page, doc_type="post", _source_include=key)
+            # response = self.es.search(index=index_page, doc_type="post", _source_include=key)
+            response = self.es.search(index=index_page, _source_include=key)
             for doc in response['hits']['hits']:
                 if key not in doc['_source']:
                     message = "The key {} does not exist in the index {}".format(key, index_page)
