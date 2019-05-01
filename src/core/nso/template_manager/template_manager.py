@@ -45,6 +45,7 @@ logger = logging.getLogger('jox.templateManager')
 dir_path = os.path.dirname(os.path.abspath(__file__ + "/../../../"))
 import yaml
 import datetime
+import time
 
 service_keys = {} # local key dictionary for slice component's context matching
 machine_keys = {}
@@ -499,7 +500,7 @@ class TemplateManager():
 
 		for machine in range(len(service_list)):
 			machine_name = {service_list[machine]: [{"date": date,
-													 "juju_mid":"0",
+													 "juju_mid":"",
 													 "nsi_id": nsi_id,
 													 "nssi_id": nssi_id
 													 }]}
@@ -541,23 +542,27 @@ class TemplateManager():
 
 
 
-	def update_slice_monitor_index(self, index_page, container_type, container_name, leaf_key, leaf_value, nsi_id):
+	def update_slice_monitor_index(self, index_page, container_type, container_name, container_data, nsi_id):
 		if self.jesearch.ping():
 			slice_data = self.jesearch.get_json_from_es(index_page, container_type)
+			container_data.items()
+			leaf_keys = list(container_data.keys())
+			leaf_values = list(container_data.values())
 			if slice_data[0]:
 				slice_data = slice_data[1]
-
 				# slice_data = es.get_json_from_es(self.es_host, self.es_port, index_page, container_type)
 				for machines in range(len(slice_data)):  # Update the container
 					machines_list = slice_data[machines]
 					machine = list(machines_list.keys())
 					for num in range(len(machine)):
 						if machine[num] == container_name:
-							slice_data[machines][container_name][0][leaf_key] = leaf_value
+							for number in range(len(container_data)):
+								leaf_key = leaf_keys[number - 1]
+								leaf_value = leaf_values[number - 1]
+								slice_data[machines][container_name][0][leaf_key] = leaf_value
 				self.jesearch.update_index_with_content(index_page,
 														container_type,
 														slice_data)
-
 				# ES = Elasticsearch([{'host': self.es_host, 'port': self.es_port, 'use_ssl': False}])
 				# ES.update(index=index_page, doc_type='post', id=1,  # Push the container with updates
 				# 		  body={'doc': {container_type: slice_data}}, retry_on_conflict=0)
@@ -570,5 +575,6 @@ class TemplateManager():
 					service_keys[nsi_id][0]['service_keys'][0].clear()
 					for service in range(len(slice_data)):
 						service_keys[nsi_id][0]['service_keys'].append(slice_data[service])
+
 
 

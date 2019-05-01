@@ -25,5 +25,5 @@ sudo mkdir -p $DIR_JOX_STORE
 sudo mount -o size=100m -t tmpfs none $DIR_JOX_STORE
 sudo chown -R $USER /tmp/jox_store
 sudo chown -R 777 /tmp/jox_store
-print test
+
 python3 src/jox.py "$@"

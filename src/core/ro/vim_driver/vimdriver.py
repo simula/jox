@@ -456,23 +456,18 @@ class LxcDriver(object):
 																					new_machine.mid_vnfm))
 			machine_id = new_machine.mid_vnfm
 
+			container_data = {"juju_mid": str(machine_id), "type": "lxc"}
 			self.template_manager.update_slice_monitor_index("slice_monitor_" + slice_name.lower(),
 															 "machine_status",
 															 service_name,
-															 "juju_mid",
-															 str(machine_id),
+															 container_data,
 															 nsi_id)
+
+			container_data = {"juju_mid": str(machine_id)}
 			self.template_manager.update_slice_monitor_index('slice_keys_' + nsi_id.lower(),
 															 "machine_keys",
 															 service_name,
-															 "juju_mid",
-															 str(machine_id),
-															 nsi_id)
-			self.template_manager.update_slice_monitor_index("slice_monitor_" + slice_name.lower(),
-															 "machine_status",
-															 service_name,
-															 "type",
-															 "lxc",
+															 container_data,
 															 nsi_id)
 
 			self.logger.info(
