@@ -489,6 +489,7 @@ class TemplateManager():
                                                      "down_time":"0",
                                                      "launch_time":"0", # it it the time taken to become the machine in started state
 													 "current_state": "prepending", # prepending, pending, started, down, error
+													 "stopped_since":"0"
                                                      }]}
 			machines_list.append(machine_name)
 		self.jesearch.update_index_with_content('slice_monitor_'+nssi_id.lower(),
@@ -550,7 +551,6 @@ class TemplateManager():
 			leaf_values = list(container_data.values())
 			if slice_data[0]:
 				slice_data = slice_data[1]
-				# slice_data = es.get_json_from_es(self.es_host, self.es_port, index_page, container_type)
 				for machines in range(len(slice_data)):  # Update the container
 					machines_list = slice_data[machines]
 					machine = list(machines_list.keys())
@@ -560,13 +560,8 @@ class TemplateManager():
 								leaf_key = leaf_keys[number - 1]
 								leaf_value = leaf_values[number - 1]
 								slice_data[machines][container_name][0][leaf_key] = leaf_value
-				self.jesearch.update_index_with_content(index_page,
-														container_type,
-														slice_data)
-				# ES = Elasticsearch([{'host': self.es_host, 'port': self.es_port, 'use_ssl': False}])
-				# ES.update(index=index_page, doc_type='post', id=1,  # Push the container with updates
-				# 		  body={'doc': {container_type: slice_data}}, retry_on_conflict=0)
-
+				self.jesearch.update_index_with_content(index_page, container_type, slice_data)
+				
 				if container_type=="machine_keys":
 					machine_keys[nsi_id][0]['machine_keys'].clear()
 					for machine in range(len(slice_data)):
