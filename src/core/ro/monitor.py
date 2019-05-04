@@ -81,6 +81,7 @@ class Monitor(object):
 
             end_time = (datetime.datetime.now()).isoformat()
             check_val = self.check_nssid_with_mid(machine_id, 'machine_keys', current_state_machine, slice_id)
+            print(check_val)
             if check_val[0] is not None:
                 nssid = check_val[0]
                 container_name = check_val[1]
@@ -120,11 +121,6 @@ class Monitor(object):
                     self.update_index_key('slice_monitor_' + nssid.lower(), "machine_status", container_name,
                                           update_key,
                                           str(update_value), slice_id)
-                # launch_time = (datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%f')) - (
-                #     datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f'))
-                # self.update_index_key('slice_monitor_' + nssid.lower(), "machine_status", container_name,
-                #                  machine_state,
-                #                  str(launch_time), slice_id)
 
     def update_service_monitor_state(self, service_name, service_state, slice_id):
         if self.jesearch.ping():
@@ -137,22 +133,7 @@ class Monitor(object):
                              str(service_time), slice_id)
 
     def check_nssid_with_mid(self, machine_id, container_type, current_state_machine, slice_id):
-        # for nsi in range(len(self.keys_local.keys())):
-        #     nsi_list = list(self.keys_local)
-        #     if nsi_list[nsi] == slice_id:
-        #         machine_key = self.keys_local[slice_id]
-        #
-        #         for data in range(len(machine_key)):
-        #             service_name = list((machine_key[data]).keys())[0]
-        #             if machine_key[data][service_name][0]['juju_mid'] == str(machine_id):
-        #                 nssid = machine_key[data][service_name][0]['nssi_id']
-        #                 container_name = service_name
-        #                 start_time = machine_key[data][service_name][0]['date']
-        #                 return [nssid, container_name, start_time]
-        #     else:
-        #         return [False, False, False]
         machine_key = self.jesearch.get_json_from_es("slice_keys_" + slice_id.lower(), container_type)
-        # machine_key = es.get_json_from_es(es_host, es_port, "slice_keys_"+slice_id.lower(), container_type)
         if machine_key[0]:
             machine_key = machine_key[1]
             self.keys_local.update({slice_id: machine_key})
@@ -161,21 +142,25 @@ class Monitor(object):
                 if machine_key[data][service_name][0]['juju_mid'] == str(machine_id):
                     nssid = machine_key[data][service_name][0]['nssi_id']
                     container_name = service_name
-                    if current_state_machine == machine_key[data][service_name][0]['current_state']:
+                    slice_mon_data= self.jesearch.get_json_from_es("slice_monitor_" + nssid.lower(), "machine_status")
+                    if slice_mon_data[0]:
+                        slice_mon_data=slice_mon_data[1]
+                    print(slice_mon_data)
+                    if current_state_machine == slice_mon_data[0][service_name][0]['current_state']:
                         # there is not change in the state of the machine
                         return [None, None, None, None, None]
                     else:
-                        state_old = machine_key[data][service_name][0]['current_state']
+                        state_old = slice_mon_data[data][service_name][0]['current_state']
                         state_new = current_state_machine
 
                         if (state_new == 'started') and (state_old == 'pending'):
                             val = "{}_{}".format('prepending', 'time')
-                            prepending_time = machine_key[data][service_name][0][val]
+                            prepending_time = slice_mon_data[data][service_name][0][val]
                         else:
                             prepending_time = None
 
                         val = "{}_{}".format(state_old, 'since')
-                        start_time = machine_key[data][service_name][0][val]
+                        start_time = slice_mon_data[data][service_name][0][val]
                         return [nssid, container_name, start_time, state_old, state_new, prepending_time]
             return [None, None, None, None, None,None]
         else:
@@ -185,8 +170,9 @@ class Monitor(object):
             return [None, None, None, None, None, None]
 
     def check_nssid_with_service(self, app_name, slice_id):
-        if app_name == 'oai-ran':
-            pass
+        print("Here check namec ", app_name, slice_id )
+        #if app_name == 'oai-ran':
+        #    pass
         for nsi in self.keys_local.keys():
             if nsi == slice_id:
                 machine_key = self.keys_local[slice_id]
