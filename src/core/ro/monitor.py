@@ -150,7 +150,7 @@ class Monitor(object):
                         # there is not change in the state of the machine
                         return [None, None, None, None, None]
                     else:
-                        state_old = slice_mon_data[data][service_name][0]['current_state']
+                        state_old = slice_mon_data[0][service_name][0]['current_state']
                         state_new = current_state_machine
 
                         if (state_new == 'started') and (state_old == 'pending'):
@@ -160,7 +160,7 @@ class Monitor(object):
                             prepending_time = None
 
                         val = "{}_{}".format(state_old, 'since')
-                        start_time = slice_mon_data[data][service_name][0][val]
+                        start_time = slice_mon_data[0][service_name][0][val]
                         return [nssid, container_name, start_time, state_old, state_new, prepending_time]
             return [None, None, None, None, None,None]
         else:
