@@ -425,19 +425,22 @@ class TemplateManager():
 		# ES = Elasticsearch([{'host': self.es_host, 'port': self.es_port, 'use_ssl': False}])
 		for service in range(len(service_list)):
 			service_name = {service_list[service]: [{"date": date,
-													 "waiting": "0",
-													 "maintenance": "0",
+													 "maintenance_time": "0",
+													 "maintenance_since": "0",
 													 "active_since": "0",
+													 "active_time": "0",
 													 "requirement_wait": "0",
-													 "error": "0",
+													 "error_time": "0",
+													 "error_since": "0",
 													 "blocked": "0",
-													 "current_status": "",
-													 "current_status_since": "",
+													 "blocked_since": "0",
+													 "waiting_since": date,
+													 "waiting_time": "0",
+													 "current_state": "waiting",
 													 "nsi_id": nsi_id,
 													 "nssi_id": nssi_id
 													 }]}
 			services_list.append(service_name)
-
 		self.jesearch.update_index_with_content('slice_monitor_'+nssi_id.lower(),
 												'service_status',
 												services_list)
@@ -561,7 +564,7 @@ class TemplateManager():
 								leaf_value = leaf_values[number - 1]
 								slice_data[machines][container_name][0][leaf_key] = leaf_value
 				self.jesearch.update_index_with_content(index_page, container_type, slice_data)
-				
+
 				if container_type=="machine_keys":
 					machine_keys[nsi_id][0]['machine_keys'].clear()
 					for machine in range(len(slice_data)):
@@ -570,6 +573,5 @@ class TemplateManager():
 					service_keys[nsi_id][0]['service_keys'][0].clear()
 					for service in range(len(slice_data)):
 						service_keys[nsi_id][0]['service_keys'].append(slice_data[service])
-
 
 

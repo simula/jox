@@ -122,7 +122,6 @@ class Monitor(object):
                                       "{}_{}".format(state_new, 'since'):str(end_time),
                                       "{}_{}".format('launch', 'time'): str(update_value),
                                       "address_ipv4_public": machine_data['addresses'][0]['value']}
-
                 else:
                     container_data = {"current_state": str(state_new),
                                       "{}_{}".format(state_old, 'since'): str(0),
@@ -144,6 +143,7 @@ class Monitor(object):
                                           str(update_value), slice_id)
                 """
 
+    """
     def update_service_monitor_state(self, service_name, service_state, slice_id):
         if self.jesearch.ping():
             nssid, start_time = self.check_nssid_with_service(service_name, slice_id)
@@ -153,6 +153,40 @@ class Monitor(object):
                 datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f'))
             self.update_index_key('slice_monitor_' + nssid.lower(), "service_status", service_name, service_state,
                              str(service_time), slice_id)
+    """
+    def update_service_monitor_state(self, service_data, service_state, current_state_service, slice_id): # machine_state=add, change
+        if self.jesearch.ping():
+            if service_state == "unit":
+                pass
+            elif service_state == "change":
+                pass
+            else:
+                # TODO support monitoring information when removing service
+                message  = "The current state of the service ({}) is not hold yet by JoX"
+                self.logger.critical(message)
+                self.logger.debug(message)
+
+            end_time = (datetime.datetime.now()).isoformat()
+            check_val = self.check_nssid_with_service(service_data['application'], 'service_keys', current_state_service, slice_id)
+            if check_val[0] is not None:
+                nssid = check_val[0]
+                container_name = check_val[1]
+                start_time = check_val[2]
+                state_old = check_val[3]
+                state_new = check_val[4]
+                prepending_time = check_val[5]
+                total_time = (datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%f')) \
+                             - (datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f'))
+
+                container_data = {"current_state": str(state_new),
+                                  "{}_{}".format(state_old, 'since'): str(0),
+                                  "{}_{}".format(state_old, 'time'): str(total_time),
+                                  "{}_{}".format(state_new, 'since'): str(end_time)}
+
+                self.update_slice_monitor_index('slice_monitor_' + nssid.lower(),
+                                                "service_status",
+                                                container_name,
+                                                container_data)
 
     def check_nssid_with_mid(self, machine_id, container_type, current_state_machine, slice_id):
         machine_key = self.jesearch.get_json_from_es("slice_keys_" + slice_id.lower(), container_type)
@@ -190,6 +224,7 @@ class Monitor(object):
             self.logger.error(message)
             return [None, None, None, None, None, None]
 
+    """
     def check_nssid_with_service(self, app_name, slice_id):
         print("Here check namec ", app_name, slice_id )
         #if app_name == 'oai-ran':
@@ -217,6 +252,42 @@ class Monitor(object):
         else:
             print("service_key[1]=[]".format(service_key[1]))
             pass
+    """
+    def check_nssid_with_service(self, app_name, container_type, current_state_machine, slice_id):
+        service_key = self.jesearch.get_json_from_es("slice_keys_" + slice_id.lower(), container_type)
+        if service_key[0]:
+            service_key = service_key[1]
+            self.keys_local.update({slice_id: service_key})
+            for data in range(len(service_key)):
+                service_name = list((service_key[data]).keys())[0]
+                if service_name == str(app_name):
+                    nssid = service_key[data][service_name][0]['nssi_id']
+                    container_name = service_name
+                    slice_mon_data= self.jesearch.get_json_from_es("slice_monitor_" + nssid.lower(), "service_status")
+                    if slice_mon_data[0]:
+                        slice_mon_data=slice_mon_data[1]
+                    if current_state_machine == slice_mon_data[0][service_name][0]['current_state']:
+                        # there is not change in the state of the machine
+                        return [None, None, None, None, None]
+                    else:
+                        state_old = slice_mon_data[0][service_name][0]['current_state']
+                        state_new = current_state_machine
+
+                        if (state_new == 'active') and (state_old == 'maintenance'):
+                            val = "{}_{}".format('waiting', 'time')
+                            waiting_time = slice_mon_data[0][service_name][0][val]
+                        else:
+                            waiting_time = None
+
+                        val = "{}_{}".format(state_old, 'since')
+                        start_time = slice_mon_data[0][service_name][0][val]
+                        return [nssid, container_name, start_time, state_old, state_new, waiting_time]
+            return [None, None, None, None, None,None]
+        else:
+            message = "The key {} does not exist in the page {}".format(container_type,
+                                                                        "slice_keys_" + slice_id.lower())
+            self.logger.error(message)
+            return [None, None, None, None, None, None]
 
     def update_slice_monitor_index(self, index_page, container_type, container_name, container_data):
         if self.jesearch.ping():
@@ -236,74 +307,6 @@ class Monitor(object):
                                 leaf_value = leaf_values[number - 1]
                                 slice_data[machines][container_name][0][leaf_key] = leaf_value
                 self.jesearch.update_index_with_content(index_page, container_type, slice_data)
-
-    def update_index_key(self, index_page, container_type, container_name, leaf_key, leaf_value, slice_id):
-        try:
-            slice_data = self.jesearch.get_json_from_es(index_page, container_type)
-            if slice_data[0]:
-                slice_data = slice_data[1]
-                for machines in range(len(slice_data)):
-                    machines_list = slice_data[machines]
-                    machine = list(machines_list.keys())
-                    for num in range(len(machine)):
-                        if machine[num] == container_name:
-                            if slice_data[machines][container_name][0][leaf_key] == "0" and leaf_key:
-                                if leaf_key == 'maintenance':
-
-                                    waiting_time = slice_data[machines][container_name][0]['waiting']
-                                    print("machines={}".format(machines))
-                                    print("container_name={}".format(container_name))
-                                    print("slice_data={}".format(slice_data))
-                                    print("waiting_time={}".format(waiting_time))
-                                    print("leaf_value={}".format(leaf_value))
-                                    maintenance = (datetime.datetime.strptime(leaf_value, '%H:%M:%S.%f') -
-                                                   datetime.datetime.strptime(waiting_time, '%H:%M:%S.%f'))
-                                    slice_data[machines][container_name][0][leaf_key] = str(maintenance)
-                                elif leaf_key == 'requirement_wait':
-
-                                    maintenance = slice_data[machines][container_name][0]['maintenance']
-                                    waiting_time = slice_data[machines][container_name][0]['waiting']
-                                    if maintenance == '0' or waiting_time == '0':
-                                        return
-                                    else:
-                                        wait_time = (datetime.datetime.strptime(waiting_time, '%H:%M:%S.%f')
-                                                     - datetime.datetime.strptime("0:0:0.0", '%H:%M:%S.%f'))
-                                        requirement_wait = (datetime.datetime.strptime(leaf_value, '%H:%M:%S.%f') -
-                                                            datetime.datetime.strptime(maintenance, '%H:%M:%S.%f') - wait_time)
-                                        slice_data[machines][container_name][0][leaf_key] = str(requirement_wait)
-                                elif leaf_key == 'error':
-                                    slice_data[machines][container_name][0][leaf_key] = "in_error_state"
-                                elif leaf_key == 'active_since':
-                                    slice_data[machines][container_name][0]['error'] = '0'
-                                    slice_data[machines][container_name][0][leaf_key] = str(
-                                        (datetime.datetime.now()).isoformat())
-
-                                else:
-                                    slice_data[machines][container_name][0][leaf_key] = leaf_value
-                                self.logger.info("Updating {} => {} state {} with value {} ".format(slice_id, container_name,
-                                                                                               leaf_key,
-                                                                                               slice_data[machines][
-                                                                                                   container_name][0][
-                                                                                                   leaf_key]))
-
-                                self.jesearch.update_index_with_content(index_page, container_type, slice_data)
-
-                                if leaf_key == 'requirement_wait':
-
-                                    slice_data = self.jesearch.get_json_from_es(index_page, "relation_status")
-                                    if slice_data[0]:
-                                        slice_data = slice_data[1]
-                                        slice_data[machines][container_name][0][leaf_key] = str(requirement_wait)
-
-                                        self.jesearch.update_index_with_content(index_page, "relation_status", slice_data)
-                                    else:
-                                        pass
-            else:
-                pass
-        except els_exceptions.ConflictError:
-            self.logger.critical("Other request is already modified updated the index")
-        except Exception as ex:
-            raise ex
 
 logger = logging.getLogger('jox.jujuStatus')
 if gv.LOG_LEVEL == 'debug':
