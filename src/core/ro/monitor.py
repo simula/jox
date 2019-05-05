@@ -110,8 +110,7 @@ class Monitor(object):
                                       update_key,
                                       str(update_value), slice_id)
                 """
-
-                # Just update all above values in one go, just one es transaction
+                # Just update all above values in one go, one es transaction
                 if state_new == "started": # then update launch time and ipv4 address too
                     update_value = (datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%f')) \
                                    - (datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f')) \
@@ -174,7 +173,7 @@ class Monitor(object):
                 start_time = check_val[2]
                 state_old = check_val[3]
                 state_new = check_val[4]
-                prepending_time = check_val[5]
+                waiting_time = check_val[5]
                 total_time = (datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%f')) \
                              - (datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f'))
 
@@ -253,7 +252,7 @@ class Monitor(object):
             print("service_key[1]=[]".format(service_key[1]))
             pass
     """
-    def check_nssid_with_service(self, app_name, container_type, current_state_machine, slice_id):
+    def check_nssid_with_service(self, app_name, container_type, current_state_machine, slice_id): # service_state=unit, change
         service_key = self.jesearch.get_json_from_es("slice_keys_" + slice_id.lower(), container_type)
         if service_key[0]:
             service_key = service_key[1]
