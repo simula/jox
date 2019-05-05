@@ -77,7 +77,6 @@ class Monitor(object):
 
             end_time = (datetime.datetime.now()).isoformat()
             check_val = self.check_nssid_with_mid(machine_data['id'], 'machine_keys', current_state_machine, slice_id)
-            print(check_val)
             if check_val[0] is not None:
                 nssid = check_val[0]
                 container_name = check_val[1]
@@ -115,20 +114,27 @@ class Monitor(object):
                 # Just update all above values in one go, just one es transaction
                 if state_new == "started": # then update launch time and ipv4 address too
                     update_value = (datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%f')) \
-                                   - (datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f'))
+                                   - (datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f')) \
+                                   + (datetime.datetime.strptime(prepending_time ,'%H:%M:%S.%f'))
+
                     container_data = {"current_state": str(state_new), ("{}_{}".format(state_old, 'since')): str(0),
-                                      "{}_{}".format(state_old, 'time'): str(total_time),"{}_{}".format(state_new, 'since'):str(end_time),
-                                      "{}_{}".format('launch', 'time'): str(update_value)}
+                                      "{}_{}".format(state_old, 'time'): str(total_time),
+                                      "{}_{}".format(state_new, 'since'):str(end_time),
+                                      "{}_{}".format('launch', 'time'): str(update_value),
+                                      "address_ipv4_public": machine_data['addresses'][0]['value']}
+
                 else:
-                    container_data = {"current_state": str(state_new), "{}_{}".format(state_old, 'since'): str(0),
-                                      "{}_{}".format(state_old, 'time'): str(total_time),"{}_{}".format(state_new, 'since'):str(end_time)}
-                print(container_data)
+                    container_data = {"current_state": str(state_new),
+                                      "{}_{}".format(state_old, 'since'): str(0),
+                                      "{}_{}".format(state_old, 'time'): str(total_time),
+                                      "{}_{}".format(state_new, 'since'):str(end_time)}
+
                 self.update_slice_monitor_index('slice_monitor_' + nssid.lower(),
                                                                  "machine_status",
                                                                  container_name,
-                                                                 container_data,
-                                                                 )
-                """ # this creating problem
+                                                                 container_data)
+
+                """ # this is creating problem,  we have to avoid two consecutive es transaction with same container
                 if prepending_time is not None:
                     update_key = "{}_{}".format('launch', 'time')
                     update_value = (datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%f')) \
@@ -137,8 +143,6 @@ class Monitor(object):
                                           update_key,
                                           str(update_value), slice_id)
                 """
-
-
 
     def update_service_monitor_state(self, service_name, service_state, slice_id):
         if self.jesearch.ping():
@@ -151,7 +155,6 @@ class Monitor(object):
                              str(service_time), slice_id)
 
     def check_nssid_with_mid(self, machine_id, container_type, current_state_machine, slice_id):
-        print(current_state_machine)
         machine_key = self.jesearch.get_json_from_es("slice_keys_" + slice_id.lower(), container_type)
         if machine_key[0]:
             machine_key = machine_key[1]
@@ -164,7 +167,6 @@ class Monitor(object):
                     slice_mon_data= self.jesearch.get_json_from_es("slice_monitor_" + nssid.lower(), "machine_status")
                     if slice_mon_data[0]:
                         slice_mon_data=slice_mon_data[1]
-                    # print(slice_mon_data)
                     if current_state_machine == slice_mon_data[0][service_name][0]['current_state']:
                         # there is not change in the state of the machine
                         return [None, None, None, None, None]
