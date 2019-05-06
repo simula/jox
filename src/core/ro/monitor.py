@@ -228,7 +228,7 @@ class Monitor(object):
 
     """
     def check_nssid_with_service(self, app_name, slice_id):
-        print("Here check namec ", app_name, slice_id )
+
         #if app_name == 'oai-ran':
         #    pass
         for nsi in self.keys_local.keys():
