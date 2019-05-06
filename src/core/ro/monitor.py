@@ -114,7 +114,7 @@ class Monitor(object):
                 if state_new == "started": # then update launch time and ipv4 address too
                     update_value = (datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%f')) \
                                    - (datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f')) \
-                                   + (datetime.datetime.strptime(prepending_time ,'%H:%M:%S.%f'))
+                                   # + (datetime.datetime.strptime(prepending_time ,'%H:%M:%S.%f'))
 
                     container_data = {"current_state": str(state_new), ("{}_{}".format(state_old, 'since')): str(0),
                                       "{}_{}".format(state_old, 'time'): str(total_time),
@@ -200,22 +200,25 @@ class Monitor(object):
                     slice_mon_data= self.jesearch.get_json_from_es("slice_monitor_" + nssid.lower(), "machine_status")
                     if slice_mon_data[0]:
                         slice_mon_data=slice_mon_data[1]
-                    if current_state_machine == slice_mon_data[0][service_name][0]['current_state']:
-                        # there is not change in the state of the machine
-                        return [None, None, None, None, None]
-                    else:
-                        state_old = slice_mon_data[0][service_name][0]['current_state']
-                        state_new = current_state_machine
+                    for num in range(len(slice_mon_data)):
+                        application_name = list((slice_mon_data[num]).keys())[0]
+                        if application_name == service_name:
+                            if current_state_machine == slice_mon_data[num][service_name][0]['current_state']:
+                                # there is not change in the state of the machine
+                                return [None, None, None, None, None]
+                            else:
+                                state_old = slice_mon_data[num][service_name][0]['current_state']
+                                state_new = current_state_machine
 
-                        if (state_new == 'started') and (state_old == 'pending'):
-                            val = "{}_{}".format('prepending', 'time')
-                            prepending_time = slice_mon_data[0][service_name][0][val]
-                        else:
-                            prepending_time = None
+                                if (state_new == 'started') and (state_old == 'pending'):
+                                    val = "{}_{}".format('prepending', 'time')
+                                    prepending_time = slice_mon_data[num][service_name][0][val]
+                                else:
+                                    prepending_time = None
 
-                        val = "{}_{}".format(state_old, 'since')
-                        start_time = slice_mon_data[0][service_name][0][val]
-                        return [nssid, container_name, start_time, state_old, state_new, prepending_time]
+                                val = "{}_{}".format(state_old, 'since')
+                                start_time = slice_mon_data[num][service_name][0][val]
+                                return [nssid, container_name, start_time, state_old, state_new, prepending_time]
             return [None, None, None, None, None,None]
         else:
             message = "The key {} does not exist in the page {}".format(container_type,
@@ -265,22 +268,25 @@ class Monitor(object):
                     slice_mon_data= self.jesearch.get_json_from_es("slice_monitor_" + nssid.lower(), "service_status")
                     if slice_mon_data[0]:
                         slice_mon_data=slice_mon_data[1]
-                    if current_state_machine == slice_mon_data[0][service_name][0]['current_state']:
-                        # there is not change in the state of the machine
-                        return [None, None, None, None, None]
-                    else:
-                        state_old = slice_mon_data[0][service_name][0]['current_state']
-                        state_new = current_state_machine
+                    for num in range(len(slice_mon_data)):
+                        application_name = list((slice_mon_data[num]).keys())[0]
+                        if application_name == service_name:
+                            if current_state_machine == slice_mon_data[num][service_name][0]['current_state']:
+                                # there is not change in the state of the machine
+                                return [None, None, None, None, None]
+                            else:
+                                state_old = slice_mon_data[num][service_name][0]['current_state']
+                                state_new = current_state_machine
 
-                        if (state_new == 'active') and (state_old == 'maintenance'):
-                            val = "{}_{}".format('waiting', 'time')
-                            waiting_time = slice_mon_data[0][service_name][0][val]
-                        else:
-                            waiting_time = None
+                                if (state_new == 'active') and (state_old == 'maintenance'):
+                                    val = "{}_{}".format('waiting', 'time')
+                                    waiting_time = slice_mon_data[num][service_name][0][val]
+                                else:
+                                    waiting_time = None
 
-                        val = "{}_{}".format(state_old, 'since')
-                        start_time = slice_mon_data[0][service_name][0][val]
-                        return [nssid, container_name, start_time, state_old, state_new, waiting_time]
+                                val = "{}_{}".format(state_old, 'since')
+                                start_time = slice_mon_data[num][service_name][0][val]
+                                return [nssid, container_name, start_time, state_old, state_new, waiting_time]
             return [None, None, None, None, None,None]
         else:
             message = "The key {} does not exist in the page {}".format(container_type,
