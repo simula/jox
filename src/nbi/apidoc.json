@@ -47,15 +47,9 @@
     "GetNssiMonitorServices",
     "GetNssiMonitorMachines",
     "GetNssiMonitorRequirements",
-    "GetJujuMonitorAll",
-    "GetJujuMonitorServices",
-    "GetJujuMonitorMachines",
-    "GetJujuMonitorRequirements",
-    "GetJoxlogs",
-    "GetJujulogs"
-
-
-
+    "GetJujuMonitorJujuEntityCurrentModel",
+    "GetJujuMonitorJujuEntityCertainModel",
+    "GetJoxlogs"
   ],
   "template": {
   	"withCompare": true,
