@@ -39,7 +39,7 @@ import logging
 from juju.model import Model
 from juju import utils
 import src.common.config.gv as gv
-
+import time
 # keys_local = {}   # locally maintaining keys for slice component's context matching
 
 class Monitor(object):
@@ -144,18 +144,24 @@ class Monitor(object):
                                                 container_name,
                                                 container_data)
                 # if service is in active state then it might wait for juju relation if dependent service is not ready
-                #
+                # hence put timestamp as joining since as this time
                 if state_new == "active":
-                    container_data = {"current_state": "joining",
-                                      "joining_since": end_time}
-
-                    self.update_slice_monitor_index('slice_monitor_' + nssid.lower(),
-                                                "relation_status",
-                                                container_name,
-                                                container_data)
+                    slice_mon_data= self.jesearch.get_json_from_es("slice_monitor_" + nssid.lower(), "relation_status")
+                    if slice_mon_data[0]:
+                        slice_mon_data=slice_mon_data[1]
+                    for num in range(len(slice_mon_data)):
+                        application_name = list((slice_mon_data[num]).keys())[0]
+                        # just update for first time
+                        if application_name == service_data['application'] and slice_mon_data[num][application_name][0]['current_state'] == 'waiting_to_join':
+                            container_data = {"current_state": "joining",
+                                              "joining_since": end_time}
+                            self.update_slice_monitor_index('slice_monitor_' + nssid.lower(),
+                                                        "relation_status",
+                                                        container_name,
+                                                        container_data)
 
     # update relation statistics
-    def update_relation_monitor_state(self, relation_data, service_state, current_state_service, slice_id): # machine_state=add, change
+    def update_relation_monitor_state(self, relation_data, service_state, current_state_relation, slice_id): # machine_state=add, change
         if self.jesearch.ping():
             if service_state == "application":
                 pass
@@ -169,12 +175,14 @@ class Monitor(object):
 
             end_time = (datetime.datetime.now()).isoformat()
             check_val = self.check_nssid_info_with_relation(relation_data['name'], 'service_keys', slice_id)
+            # print(relation_data['name'],current_state_relation,  check_val)
             if check_val[0] is not None:
                 nssid = check_val[0]
                 container_name = check_val[1]
                 state_new = check_val[2]
                 state_old= check_val[3]
                 state_old_since = check_val[4]
+
                 if state_old_since == '0': # it means service just became active
                     total_time='0'
                 else:
@@ -185,13 +193,12 @@ class Monitor(object):
                                   "{}_{}".format(state_new, 'since'): str(end_time),
                                   "{}_{}".format('relation_wait', 'time'): str(total_time),
                                   "{}_{}".format(state_old, 'since'): str(0)}
-
+                # print('\n', container_name, container_data)
                 self.update_slice_monitor_index('slice_monitor_' + nssid.lower(),
                                                 "relation_status",
                                                 container_name,
                                                 container_data)
-
-
+                
     # get nssi context from juju mid
     def check_nssid_info_with_mid(self, machine_id, container_type, current_state_machine, slice_id):
         machine_key = self.jesearch.get_json_from_es("slice_keys_" + slice_id.lower(), container_type)
@@ -324,6 +331,7 @@ class Monitor(object):
                                 leaf_key = leaf_keys[number - 1]
                                 leaf_value = leaf_values[number - 1]
                                 slice_data[machines][container_name][0][leaf_key] = leaf_value
+                # print("Here",container_type, slice_data, '\n')
                 self.jesearch.update_index_with_content(index_page, container_type, slice_data)
 
 logger = logging.getLogger('jox.jujuStatus')
