@@ -92,8 +92,8 @@ class Monitor(object):
                 if state_new == "started": # then update launch time and ipv4 address too
                     launch_time = (datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%f')) \
                                    - (datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f')) \
-                                   # + (datetime.datetime.strptime(prepending_time ,'%H:%M:%S.%f'))
-                    # launch_time = '{}:{}:{}.{}'.format(launch_time.hour, launch_time.minute, launch_time.second, launch_time.microsecond)
+                                   + (datetime.datetime.strptime(prepending_time ,'%H:%M:%S.%f'))
+                    launch_time = '{}:{}:{}.{}'.format(launch_time.hour, launch_time.minute, launch_time.second, launch_time.microsecond)
                     container_data = {"current_state": str(state_new), ("{}_{}".format(state_old, 'since')): str(0),
                                       "{}_{}".format(state_old, 'time'): str(total_time),
                                       "{}_{}".format(state_new, 'since'):str(end_time),
@@ -198,7 +198,7 @@ class Monitor(object):
                                                 "relation_status",
                                                 container_name,
                                                 container_data)
-                
+
     # get nssi context from juju mid
     def check_nssid_info_with_mid(self, machine_id, container_type, current_state_machine, slice_id):
         machine_key = self.jesearch.get_json_from_es("slice_keys_" + slice_id.lower(), container_type)
