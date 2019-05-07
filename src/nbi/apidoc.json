@@ -1,7 +1,7 @@
 {
-  "name": "JOX",
-  "description": "JOX northbound API documentation\n",
-  "title": "JOX NBI",
+  "name": "JoX",
+  "description": "JoX northbound API documentation\n",
+  "title": "JoX NBI",
   "url" : "http://JOX-URL:PORT",
   "order": [
     "GroupJox",
