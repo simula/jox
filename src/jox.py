@@ -801,12 +801,12 @@ class server_RBMQ(object):
 			if log_source == "juju":
 				file = open("juju.log", 'w')
 				cmd_log = ["juju", "debug-log", "--lines", str(10000)]
-				cmd_out = None #loop.run(run_command(cmd_log))
+				cmd_out = loop.run(run_command(cmd_log))
 				file.write(cmd_out)
 				file.close()
 				file = open("juju.log", 'r')
-				data_tmp=file.readlines()
-				data=[s.replace('\n','') for s in data_tmp]
+				data_tmp = file.readlines()
+				data = [s.replace('\n', '') for s in data_tmp]
 				if log_type == None:
 					res=data
 				elif log_type == 'all':
