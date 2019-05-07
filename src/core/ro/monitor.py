@@ -88,8 +88,8 @@ class Monitor(object):
                 total_time = (datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%f')) \
                              - (datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f'))
 
-                # Just update all above values in one go, one es transaction
-                if state_new == "started": # then update launch time and ipv4 address too
+                # Just update all above values in one es transaction
+                if state_new == "started": # if started then update launch time and ipv4 address too
                     launch_time = (datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%f')) \
                                    - (datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f')) \
                                    + (datetime.datetime.strptime(prepending_time ,'%H:%M:%S.%f'))
@@ -183,7 +183,9 @@ class Monitor(object):
                 state_old= check_val[3]
                 state_old_since = check_val[4]
 
-                if state_old_since == '0': # it means service just became active
+                # it means service just became active and joining_since is not updated, 
+                # this happens due to lack of concurrency using es python api
+                if state_old_since == '0': 
                     total_time='0'
                 else:
                     total_time = (datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%f')) \
