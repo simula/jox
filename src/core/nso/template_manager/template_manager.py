@@ -429,7 +429,6 @@ class TemplateManager():
 													 "maintenance_since": "0",
 													 "active_since": "0",
 													 "active_time": "0",
-													 "requirement_wait": "0",
 													 "error_time": "0",
 													 "error_since": "0",
 													 "blocked": "0",
@@ -528,12 +527,14 @@ class TemplateManager():
 		# ES.update(index='slice_keys_' + (self.get_NSI_ID()).lower(), doc_type='post', id=1,
 		# 		  body={'doc': {'machine_keys': machine_keys[nsi_id][0]['machine_keys']}}, retry_on_conflict=0)
 
-
 		for machine in range(len(service_list)):
 			machine_name = {service_list[machine]: [{"date": date,
 													 "nsi_id": nsi_id,
 													 "nssi_id": nssi_id,
-													 "requirement_wait": "0",
+													 "relation_wait_time": "0",
+													 "joining_since": "0",
+													 "joined_since": "0",
+													 "current_state": "waiting_to_join",
 													 "requirement": list_services[service_list[machine]]['relation']
 													 }]}
 			relations_list.append(machine_name)
