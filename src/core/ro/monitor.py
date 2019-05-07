@@ -89,7 +89,7 @@ class Monitor(object):
                              - (datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f'))
 
                 # Just update all above values in one es transaction
-                if state_new == "started": # if started then update launch time and ipv4 address too
+                if state_new == "started"and prepending_time is not None: # if started then update launch time and ipv4 address too
                     launch_time = (datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%f')) \
                                    - (datetime.datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f')) \
                                    + (datetime.datetime.strptime(prepending_time ,'%H:%M:%S.%f'))
