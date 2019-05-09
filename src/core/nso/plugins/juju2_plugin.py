@@ -106,8 +106,8 @@ class JujuController(object):
             "enable-os-upgrade": False,
         }
         await self.controller.connect(self.controller_name)
-        model=await self.controller.add_model(model_name, cloud_name, credential_name, owner, config, region)
-        
+        model=await self.controller.add_model(model_name, credential_name=credential_name, owner=owner, config=config, region=region)
+
         await self.controller.disconnect()
         """
         """
