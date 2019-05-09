@@ -158,11 +158,14 @@ class JCloud(JSONEncoder):
             if delta.entity=="unit" and (delta.type=="change"):
                 current_state_service = delta.data['workload-status']['current']
                 self.monitor.update_service_monitor_state(delta.data, delta.type, current_state_service, self.slice_id)
+                # print('service',delta.entity, delta.type, delta.data)
 
             # call to update relation statistics
-            if delta.entity=="application" and (delta.type=="change") and (delta.data['status']['message']=="Running" or delta.data['status']['message']=="Ready"):
+            if delta.entity=="application" and (delta.type=="change") and (delta.data['status']['current']=="active" ) and (delta.data['status']['message']=="Running"
+                                                                           or delta.data['status']['message']=="Ready" or delta.data['status']['message']==""):
                 current_state_relation = delta.data['status']['message']
                 self.monitor.update_relation_monitor_state(delta.data, delta.type, current_state_relation, self.slice_id)
+                # print('relation',delta.entity, delta.type, delta.data)
 
 
    #     else:
