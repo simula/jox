@@ -362,7 +362,6 @@ class ResourcesController(object):
 							cidr = machines_config[machine_name]['additional_requirements']['properties']['network']['cidr']
 				if machine_type == self.gv.LXC:
 					curren_driver = self.get_pop_object_2(zone, domain, cidr, self.gv.LXC)
-
 					# curren_driver = self.get_pop_object(pop_name, self.gv.LXC)''
 					if curren_driver[0]:
 						curren_driver = curren_driver[1]

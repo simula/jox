@@ -1409,8 +1409,8 @@ def monitor_es(es_index_page=None, es_key=None):
 	    "nssi_2",
 	    "slice_keys_mosaic5g",
 	    "slice_keys_tmp_mosaic5g",
-	    "slice_monitor_nssi_1",
-	    "slice_monitor_nssi_2"
+	    "_slice_monitor_nssi_1",
+	    "_slice_monitor_nssi_2"
 	  ],
 	  "elapsed-time": "0:00:00.018397"
 	}
@@ -1642,7 +1642,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	    {
 	    "data": {
 	        "oai-epc": {
-	          "slice_monitor_nssi_1": {
+	          "_slice_monitor_nssi_1": {
 	            "date": "2019-03-06T18:11:24.679488",
 	            "machine_status": [
 	              {
@@ -1729,7 +1729,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	              }
 	            ]
 	          },
-	          "slice_monitor_nssi_2": {
+	          "_slice_monitor_nssi_2": {
 	            "date": "2019-03-06T18:12:38.267184",
 	            "machine_status": [
 	              {
@@ -1847,7 +1847,7 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	    {
 	     "data": {
 	        "oai-epc": {
-	          "slice_monitor_nssi_2": {
+	          "_slice_monitor_nssi_2": {
 	            "date": "2019-03-06T18:12:38.267184",
 	            "machine_status": [
 	              {
@@ -1996,7 +1996,7 @@ def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key
 	    {
 	    "data": {
 	        "oai-epc": {
-	          "slice_monitor_nssi_1": {
+	          "_slice_monitor_nssi_1": {
 	            "service_status": [
 	              {
 	                "mysql": [
@@ -2028,7 +2028,7 @@ def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key
 	              }
 	            ]
 	          },
-	          "slice_monitor_nssi_2": {
+	          "_slice_monitor_nssi_2": {
 	            "service_status": [
 	              {
 	                "oai-mme": [
@@ -2090,7 +2090,7 @@ def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key
 	    {
 	    "data": {
 	        "oai-epc": {
-	          "slice_monitor_nssi_2": {
+	          "_slice_monitor_nssi_2": {
 	            "service_status": [
 	              {
 	                "oai-mme": [
@@ -2186,7 +2186,7 @@ def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_ke
 	    {
 	    "data": {
 	        "oai-epc": {
-	          "slice_monitor_nssi_1": {
+	          "_slice_monitor_nssi_1": {
 	            "machine_status": [
 	              {
 	                "mysql": [
@@ -2218,7 +2218,7 @@ def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_ke
 	              }
 	            ]
 	          },
-	          "slice_monitor_nssi_2": {
+	          "_slice_monitor_nssi_2": {
 	            "machine_status": [
 	              {
 	                "oai-mme": [
@@ -2273,7 +2273,7 @@ def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_ke
 	    {
 	      "data": {
 	        "oai-epc": {
-	          "slice_monitor_nssi_1": {
+	          "_slice_monitor_nssi_1": {
 	            "machine_status": [
 	              {
 	                "mysql": [
@@ -2364,7 +2364,7 @@ def monitor_relation(nsi_name=None, nssi_name_source=None, service_name_source=N
 	    {
 	    "data": {
 	        "oai-epc": {
-	          "slice_monitor_nssi_1": {
+	          "_slice_monitor_nssi_1": {
 	            "relation_status": [
 	              {
 	                "mysql": [
@@ -2390,7 +2390,7 @@ def monitor_relation(nsi_name=None, nssi_name_source=None, service_name_source=N
 	              }
 	            ]
 	          },
-	          "slice_monitor_nssi_2": {
+	          "_slice_monitor_nssi_2": {
 	            "relation_status": [
 	              {
 	                "oai-mme": [
@@ -2439,7 +2439,7 @@ def monitor_relation(nsi_name=None, nssi_name_source=None, service_name_source=N
 	    {
 	    "data": {
 	        "oai-epc": {
-	          "slice_monitor_nssi_1": {
+	          "_slice_monitor_nssi_1": {
 	            "relation_status": [
 	              {
 	                "mysql": [

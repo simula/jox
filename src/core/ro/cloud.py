@@ -167,7 +167,6 @@ class JCloud(JSONEncoder):
                 self.monitor.update_relation_monitor_state(delta.data, delta.type, current_state_relation, self.slice_id)
                 # print('relation',delta.entity, delta.type, delta.data)
 
-
    #     else:
     #        message = "Elasticsearch is not working, and thus no update for monitoring information"
      #       self.logger.debug(message)

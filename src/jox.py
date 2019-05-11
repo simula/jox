@@ -296,7 +296,7 @@ class NFVO_JOX(object):
 		else:
 			self.logger.info("Slices Controller was successfully loaded!")
 		
-		########## STEP 9: Start WebAPI (Flask)##########
+		########## STEP 8: Start WebAPI (Flask)##########
 		try:
 			self.end_time = time.time()
 			self.logger.info("JOX loading time: %s ", self.end_time - self.start_time)
@@ -1063,7 +1063,7 @@ class server_RBMQ(object):
 					
 					set_subslices = slcies_context[slice_data]["sub_slices"]
 					for subslcie_name in set_subslices:
-						data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
+						data_subslcie_monitor = ''.join([slice_name,'_slice_monitor_', str(subslcie_name).lower()])
 						data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
 						res[slice_name][data_subslcie_monitor] = data[1]
 				response = {
@@ -1089,7 +1089,7 @@ class server_RBMQ(object):
 				res = {}
 				res[nsi_name] = {}
 				for subslcie_name in set_subslices:
-					data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
+					data_subslcie_monitor = ''.join([nsi_name,'_slice_monitor_', str(subslcie_name).lower()])
 					data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
 					res[nsi_name][data_subslcie_monitor] = data[1]
 				response = {
@@ -1118,7 +1118,7 @@ class server_RBMQ(object):
 				subslice_exist = False
 				for subslcie_name in set_subslices:
 					if nssi_name == subslcie_name:
-						data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
+						data_subslcie_monitor = ''.join([nsi_name,'_slice_monitor_', str(subslcie_name).lower()])
 						data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
 						res[nsi_name][data_subslcie_monitor] = data[1]
 						subslice_exist = True
@@ -1160,7 +1160,7 @@ class server_RBMQ(object):
 				for subslcie_name in set_subslices:
 					if nssi_name == subslcie_name:
 						subslice_exist = True
-						data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
+						data_subslcie_monitor = ''.join([nsi_name,'_slice_monitor_', str(subslcie_name).lower()])
 						res[nsi_name][data_subslcie_monitor] = {}
 						data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
 						for subslice_key in data[1]:
@@ -1207,7 +1207,7 @@ class server_RBMQ(object):
 				res = {}
 				res[nsi_name] = {}
 				for subslcie_name in set_subslices:
-					data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
+					data_subslcie_monitor = ''.join([nsi_name,'_slice_monitor_', str(subslcie_name).lower()])
 					data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
 					
 					res[nsi_name][data_subslcie_monitor] = {}
@@ -1240,7 +1240,7 @@ class server_RBMQ(object):
 				for subslcie_name in set_subslices:
 					if nssi_name == subslcie_name:
 						subslice_exist = True
-						data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
+						data_subslcie_monitor = ''.join([nsi_name,'_slice_monitor_', str(subslcie_name).lower()])
 						data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
 						res[nsi_name][data_subslcie_monitor] = {}
 						res[nsi_name][data_subslcie_monitor]["service_status"] = data[1]["service_status"]
@@ -1281,7 +1281,7 @@ class server_RBMQ(object):
 				for subslcie_name in set_subslices:
 					if nssi_name == subslcie_name:
 						subslice_exist = True
-						data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
+						data_subslcie_monitor = ''.join([nsi_name,'_slice_monitor_', str(subslcie_name).lower()])
 						data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
 						res[nsi_name][data_subslcie_monitor] = {}
 						list_services = data[1]["service_status"]
@@ -1329,7 +1329,7 @@ class server_RBMQ(object):
 				res = {}
 				res[nsi_name] = {}
 				for subslcie_name in set_subslices:
-					data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
+					data_subslcie_monitor = ''.join([nsi_name,'_slice_monitor_', str(subslcie_name).lower()])
 					data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
 					
 					res[nsi_name][data_subslcie_monitor] = {}
@@ -1361,7 +1361,7 @@ class server_RBMQ(object):
 				for subslcie_name in set_subslices:
 					if nssi_name == subslcie_name:
 						subslice_exist = True
-						data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
+						data_subslcie_monitor = ''.join([nsi_name,'_slice_monitor_', str(subslcie_name).lower()])
 						data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
 						res[nsi_name][data_subslcie_monitor] = {}
 						res[nsi_name][data_subslcie_monitor]["machine_status"] = data[1]["machine_status"]
@@ -1402,7 +1402,7 @@ class server_RBMQ(object):
 				for subslcie_name in set_subslices:
 					if nssi_name == subslcie_name:
 						subslice_exist = True
-						data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
+						data_subslcie_monitor = ''.join([nsi_name,'_slice_monitor_', str(subslcie_name).lower()])
 						data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
 						res[nsi_name][data_subslcie_monitor] = {}
 						list_machines = data[1]["machine_status"]
@@ -1451,7 +1451,7 @@ class server_RBMQ(object):
 				res = {}
 				res[nsi_name] = {}
 				for subslcie_name in set_subslices:
-					data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
+					data_subslcie_monitor = ''.join([nsi_name,'_slice_monitor_', str(subslcie_name).lower()])
 					data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
 					
 					res[nsi_name][data_subslcie_monitor] = {}
@@ -1484,7 +1484,7 @@ class server_RBMQ(object):
 				for subslcie_name in set_subslices:
 					if nssi_name_source == subslcie_name:
 						subslice_exist = True
-						data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
+						data_subslcie_monitor = ''.join([nsi_name,'_slice_monitor_', str(subslcie_name).lower()])
 						data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
 						res[nsi_name][data_subslcie_monitor] = {}
 						res[nsi_name][data_subslcie_monitor]["relation_status"] = data[1]["relation_status"]

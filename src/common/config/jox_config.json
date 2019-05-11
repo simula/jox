@@ -36,46 +36,7 @@
         "zone": "1",
         "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
         "scope": "private",
-        "domain": "10.39.202.0/24",
-        "_Comment_3": "ssh config",
-        "ssh-private-key": "",
-        "ssh-user": "",
-        "ssh-password": "",
-        "managed-by": "lxd"
-      },
-      {
-        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "default-2",
-        "zone": "1",
-        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "scope": "private",
-        "domain": "10.180.125.0/24",
-        "_Comment_3": "ssh config",
-        "ssh-private-key": "",
-        "ssh-user": "",
-        "ssh-password": "",
-        "managed-by": "lxd"
-      },
-      {
-        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "default-3",
-        "zone": "1",
-        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "scope": "private",
-        "domain": "10.39.202.0/24",
-        "_Comment_3": "ssh config",
-        "ssh-private-key": "",
-        "ssh-user": "",
-        "ssh-password": "",
-        "managed-by": "lxd"
-      },
-      {
-        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "default-4",
-        "zone": "1",
-        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "scope": "private",
-        "domain": "10.124.51.0/24",
+        "domain": "10.70.21.0/24",
         "_Comment_3": "ssh config",
         "ssh-private-key": "",
         "ssh-user": "",
@@ -156,42 +117,17 @@
   "zones": {
     "1": {
       "domain-1": "192.168.1.0/24",
-      "domain-2": "1000.99.104.54/24",
-      "domain-3": "192.168.12.0/24"
+      "domain-2": "1000.99.104.54/24"
     }
   },
   "clouds-list": [
     {
       "description": "credentials of your juju controller",
-      "cloud-name": "localhost-borer",
-      "cloud-type": "lxd",
-      "cloud-endpoint": "10.39.202.248:17070",
-      "cloud-username": "lxd",
-      "cloud-password": "6be4435470df33ef5d477b2625680ba7"
-    },
-    {
-      "description": "credentials of your juju controller",
-      "cloud-name": "sakura-home",
-      "cloud-type": "manual",
-      "cloud-endpoint": "10.124.51.249:17070",
-      "cloud-username": "lxd",
-      "cloud-password": "0ff27627bdb42216ec2c0c6296d832c9"
-    },
-    {
-      "description": "credentials of your juju controller",
-      "cloud-name": "psoque-home",
-      "cloud-type": "manual",
-      "cloud-endpoint": "192.168.1.100:17070",
-      "cloud-username": "admin",
-      "cloud-password": "c9db02159a4400f6756af2df370b42c5"
-    },
-    {
-      "description": "credentials of your juju controller",
       "cloud-name": "localhost",
       "cloud-type": "lxd",
-      "cloud-endpoint": "10.180.125.158:17070",
+      "cloud-endpoint": "10.92.207.71:17070",
       "cloud-username": "admin",
-      "cloud-password": "cad0dce46537672a437d0c00e764819e"
+      "cloud-password": "f36d66fce35e0cf155d7508b9982d20b"
     }
   ],
 
@@ -249,8 +185,8 @@
   },
   "ssh-config": {
     "_Comment": "ssh connection is needed when adding kvm machines",
-    "ssh-key-directory": "/home/borer/.ssh/",
-    "ssh-key-name": "id_juju2",
+    "ssh-key-directory": "/home/rohan/.ssh/",
+    "ssh-key-name": "id_rsa",
     "ssh-user": "ubuntu",
     "ssh-password": "linux"
   },

@@ -130,7 +130,7 @@ class JESearch(object):
             message = "Error while trying to connect to Elasticsearch"
             self.logger.error(message)
             self.logger.debug(message)
-        
+        # print(index_page,   container_type, "slice data -->", data, "\n")
         self.es.update(index=index_page, doc_type='post', id=1,  # Push the container with updates
                   body={'doc': {container_type: data}}, retry_on_conflict=0)
         
@@ -226,7 +226,6 @@ class JESearch(object):
             self.logger.debug(message)
             return [False, message]
         try:
-            # response = self.es.search(index=index_page, doc_type="post", _source_include=key)
             response = self.es.search(index=index_page, _source_include=key)
             for doc in response['hits']['hits']:
                 if key not in doc['_source']:
