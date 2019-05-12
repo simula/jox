@@ -463,7 +463,7 @@ class LxcDriver(object):
 															 nsi_id)
 
 			container_data = {"juju_mid": str(machine_id)}
-			self.template_manager.update__slice_monitor_index('slice_keys_' + nsi_id.lower(),
+			self.template_manager.update__slice_monitor_index(nsi_id.lower()+'_slice_keys',
 															 "machine_keys",
 															 service_name,
 															 container_data,
@@ -659,7 +659,7 @@ class LxcDriver(object):
 		                                                 "juju_mid",
 		                                                 str(machine_id),
 		                                                 nsi_id)
-		self.template_manager.update__slice_monitor_index('slice_keys_'+nsi_id.lower(),
+		self.template_manager.update__slice_monitor_index(nsi_id.lower()+'_slice_keys',
 		                                                 "machine_keys",
 		                                                 service_name,
 		                                                 "juju_mid",
@@ -1001,7 +1001,7 @@ class KvmDriver(object):
 																 "juju_mid",
 																 str(new_machine.mid_vnfm),
 																 nsi_id)
-				self.template_manager.update__slice_monitor_index('slice_keys_' + nsi_id.lower(), "machine_keys",
+				self.template_manager.update__slice_monitor_index(nsi_id.lower()+'_slice_keys', "machine_keys",
 																 service_name, "juju_mid", str(new_machine.mid_vnfm),
 																 nsi_id)
 				self.template_manager.update__slice_monitor_index(nsi_id,"_slice_monitor_" + subslice_name.lower(),
@@ -1291,7 +1291,7 @@ class PhyDriver(object):
 															 "juju_mid",
 															 str(new_machine.mid_vnfm),
 															 nsi_id)
-			self.template_manager.update__slice_monitor_index('slice_keys_' + nsi_id.lower(), "machine_keys",
+			self.template_manager.update__slice_monitor_index(nsi_id.lower()+'_slice_keys', "machine_keys",
 															 service_name, "juju_mid", str(new_machine.mid_vnfm),
 															 nsi_id)
 			self.template_manager.update__slice_monitor_index("_slice_monitor_" + subslice_name.lower(),

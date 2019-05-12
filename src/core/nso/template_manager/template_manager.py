@@ -403,8 +403,8 @@ class TemplateManager():
 							"machine_keys": [],
 							"service_keys": [],
 							"relation_keys": []} # Relation key not required for now
-		self.jesearch.del_index_from_es('slice_keys_' + nsi_id.lower())
-		self.jesearch.set_json_to_es('slice_keys_' + nsi_id.lower(), slice_skeleton)
+		self.jesearch.del_index_from_es(nsi_id.lower()+'_slice_keys')
+		self.jesearch.set_json_to_es(nsi_id.lower()+'_slice_keys', slice_skeleton)
 
 	def set_NSSI_monitor_index(self, nssi_id, nsi_id, list_services, list_machines):
 		self.jesearch.del_index_from_es(nsi_id.lower()+'_slice_monitor_' + nssi_id.lower())
@@ -459,7 +459,7 @@ class TemplateManager():
 				data.append(service_name)
 				self.service_keys.update({nsi_id: [{'service_keys': data}]})  # Update local list
 
-		self.jesearch.update_index_with_content('slice_keys_'+(self.get_NSI_ID()).lower(),
+		self.jesearch.update_index_with_content((self.get_NSI_ID()).lower()+'_slice_keys',
 												'service_keys', self.service_keys[nsi_id][0]['service_keys'])
 
 
@@ -510,7 +510,7 @@ class TemplateManager():
 				data.append(machine_name)
 				machine_keys.update({nsi_id:[{'machine_keys':data}]})  # Update local list
 
-		self.jesearch.update_index_with_content('slice_keys_' + (self.get_NSI_ID()).lower(),
+		self.jesearch.update_index_with_content((self.get_NSI_ID()).lower()+'_slice_keys',
 												'machine_keys',
 												machine_keys[nsi_id][0]['machine_keys'])
 

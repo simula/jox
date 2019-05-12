@@ -203,7 +203,7 @@ class Monitor(object):
 
     # get nssi context from juju mid
     def check_nssid_info_with_mid(self, machine_id, container_type, current_state_machine, slice_id):
-        machine_key = self.jesearch.get_json_from_es("slice_keys_" + slice_id.lower(), container_type)
+        machine_key = self.jesearch.get_json_from_es(slice_id.lower()+'_slice_keys', container_type)
         if machine_key[0]:
             machine_key = machine_key[1]
             self.keys_local.update({slice_id: machine_key})
@@ -237,14 +237,14 @@ class Monitor(object):
             return [None, None, None, None, None,None]
         else:
             message = "The key {} does not exist in the page {}".format(container_type,
-                                                                        "slice_keys_" + slice_id.lower())
+                                                                        slice_id.lower()+'_slice_keys')
             self.logger.error(message)
             return [None, None, None, None, None, None]
 
 
     # get nssi context from juju mid
     def check_nssid_info_with_service(self, app_name, container_type, current_state_machine, slice_id): # service_state=unit, change
-        service_key = self.jesearch.get_json_from_es("slice_keys_" + slice_id.lower(), container_type)
+        service_key = self.jesearch.get_json_from_es(slice_id.lower()+'_slice_keys', container_type)
         if service_key[0]:
             service_key = service_key[1]
             self.keys_local.update({slice_id: service_key})
@@ -278,13 +278,13 @@ class Monitor(object):
             return [None, None, None, None, None,None]
         else:
             message = "The key {} does not exist in the page {}".format(container_type,
-                                                                        "slice_keys_" + slice_id.lower())
+                                                                        slice_id.lower()+'_slice_keys')
             self.logger.error(message)
             return [None, None, None, None, None, None]
 
     # get nssi context from juju relation endpoint
     def check_nssid_info_with_relation(self, relation_id, container_type, slice_id):
-        service_key = self.jesearch.get_json_from_es("slice_keys_" + slice_id.lower(), container_type)
+        service_key = self.jesearch.get_json_from_es(slice_id.lower()+'_slice_keys', container_type)
         if service_key[0]:
             service_key = service_key[1]
             self.keys_local.update({slice_id: service_key})
@@ -311,7 +311,7 @@ class Monitor(object):
             return [None, None, None, None, None,None]
         else:
             message = "The key {} does not exist in the page {}".format(container_type,
-                                                                        "slice_keys_" + slice_id.lower())
+                                                                        slice_id.lower()+'_slice_keys')
             self.logger.error(message)
             return [None, None, None, None, None, None]
 

@@ -155,7 +155,7 @@ class NetworkSliceController(object):
 			self.remove_slice_object(slice_name)
 			if self.jesearch.ping():
 				slice_keys_tmp = ''.join(['slice_keys_tmp_', str(slice_name).lower()])
-				slice_keys = ''.join(['slice_keys_', str(slice_name).lower()])
+				slice_keys = ''.join([str(slice_name).lower(),'_slice_keys'])
 				self.jesearch.del_index_from_es(slice_name)
 				self.jesearch.del_index_from_es(slice_keys_tmp)
 				self.jesearch.del_index_from_es(slice_keys)
