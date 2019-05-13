@@ -173,6 +173,8 @@ class NFVO_JOX(object):
 			self.gv.HTTP_404_NOT_FOUND = self.jox_config["http"]["400"]["not-found"]
 			
 			self.gv.ZONES = self.jox_config['zones']
+
+			self.gv.JOX_TIMEOUT_REQUEST = self.jox_config['jox-timeout-request']
 			
 			
 		except jsonschema.ValidationError as ex:
@@ -528,13 +530,12 @@ class server_RBMQ(object):
 				exit()
 	
 	def on_request(self, ch, method, props, body):
-		enquiry = body.decode(self.nfvo_jox.gv.ENCODING_TYPE)
+		enquiry = body.decode(self.nfvo_jox.gv.ENCODING_TYPE)qq
 		enquiry = json.loads(enquiry)
 
 		elapsed_time_on_request = datetime.datetime.now() - datetime.datetime.strptime(enquiry["datetime"], '%Y-%m-%d %H:%M:%S.%f')
 
-
-		if elapsed_time_on_request.total_seconds() < 5*60:
+		if elapsed_time_on_request.total_seconds() < self.nfvo_jox.gv.JOX_TIMEOUT_REQUEST:
 			send_reply = True
 			if (enquiry["request-uri"] == "/onboard"):
 				enquiry_tmp = enquiry

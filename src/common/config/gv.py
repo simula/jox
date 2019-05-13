@@ -54,6 +54,9 @@ FLASK_SERVER_IP=""
 FLASK_SERVER_PORT=""
 FLASK_SERVER_DEBUG=""
 
+### JoX
+# JOX_TIMEOUT_REQUEST is the timeout for a request received by jox server to be served. After this time, the request will be ignored
+JOX_TIMEOUT_REQUEST=0 #(seconds)
 
 # Elasticsearch param
 ELASTICSEARCH_ENABLE=True

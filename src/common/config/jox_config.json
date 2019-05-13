@@ -9,7 +9,10 @@
       "email": "contact@mosaic-5g.io"
     }
   ],
-
+  "jox-config": {
+    "_Comment": "JOX_TIMEOUT_REQUEST is in seconds unit",
+    "jox-timeout-request": 300
+  },
   "rabbit-mq-config":{
     "rabbit-mq-server-ip":"localhost",
     "rabbit-mq-server-port":5672,
