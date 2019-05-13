@@ -456,14 +456,14 @@ class LxcDriver(object):
 																					new_machine.mid_vnfm))
 			machine_id = new_machine.mid_vnfm
 			container_data = {"juju_mid": str(machine_id), "type": "lxc"}
-			self.template_manager.update__slice_monitor_index("_slice_monitor_" + slice_name.lower(),
+			self.template_manager.update_subslice_monitor_index("_subslice_monitor_" + slice_name.lower(),
 															 "machine_status",
 															 service_name,
 															 container_data,
 															 nsi_id)
 
 			container_data = {"juju_mid": str(machine_id)}
-			self.template_manager.update__slice_monitor_index(nsi_id.lower()+'_slice_keys',
+			self.template_manager.update_subslice_monitor_index(nsi_id.lower()+'_slice_keys',
 															 "machine_keys",
 															 service_name,
 															 container_data,
@@ -653,19 +653,19 @@ class LxcDriver(object):
 		machine_id = new_machine.mid_vnfm
 
 		
-		self.template_manager.update__slice_monitor_index(nsi_id+"_slice_monitor_"+slice_name.lower(),
+		self.template_manager.update_subslice_monitor_index(nsi_id+"_subslice_monitor_"+slice_name.lower(),
 		                                                 "machine_status",
 		                                                 service_name,
 		                                                 "juju_mid",
 		                                                 str(machine_id),
 		                                                 nsi_id)
-		self.template_manager.update__slice_monitor_index(nsi_id.lower()+'_slice_keys',
+		self.template_manager.update_subslice_monitor_index(nsi_id.lower()+'_slice_keys',
 		                                                 "machine_keys",
 		                                                 service_name,
 		                                                 "juju_mid",
 		                                                 str(machine_id),
 		                                                 nsi_id)
-		self.template_manager.update__slice_monitor_index(nsi_id+"_slice_monitor_"+slice_name.lower(),
+		self.template_manager.update_subslice_monitor_index(nsi_id+"_subslice_monitor_"+slice_name.lower(),
 		                                                 "machine_status",
 		                                                 service_name,
 		                                                 "type",
@@ -995,16 +995,16 @@ class KvmDriver(object):
 				cmd_machin_config_out = json.loads(cmd_machin_config_out)
 				new_machine.ip = cmd_machin_config_out['machines'][new_machine.mid_vnfm]['ip-addresses']
 
-				self.template_manager.update__slice_monitor_index(nsi_id,"_slice_monitor_" + subslice_name.lower(),
+				self.template_manager.update_subslice_monitor_index(nsi_id,"_subslice_monitor_" + subslice_name.lower(),
 																 "machine_status",
 																 service_name,
 																 "juju_mid",
 																 str(new_machine.mid_vnfm),
 																 nsi_id)
-				self.template_manager.update__slice_monitor_index(nsi_id.lower()+'_slice_keys', "machine_keys",
+				self.template_manager.update_subslice_monitor_index(nsi_id.lower()+'_slice_keys', "machine_keys",
 																 service_name, "juju_mid", str(new_machine.mid_vnfm),
 																 nsi_id)
-				self.template_manager.update__slice_monitor_index(nsi_id,"_slice_monitor_" + subslice_name.lower(),
+				self.template_manager.update_subslice_monitor_index(nsi_id,"_subslice_monitor_" + subslice_name.lower(),
 																 "machine_status", service_name, "type", "kvm", nsi_id)
 
 				self.logger.debug(
@@ -1285,16 +1285,16 @@ class PhyDriver(object):
 			cmd_machin_config_out = json.loads(cmd_machin_config_out)
 			new_machine.ip = cmd_machin_config_out['machines'][new_machine.mid_vnfm]['ip-addresses']
 
-			self.template_manager.update__slice_monitor_index("_slice_monitor_" + subslice_name.lower(),
+			self.template_manager.update_subslice_monitor_index("_subslice_monitor_" + subslice_name.lower(),
 															 "machine_status",
 															 service_name,
 															 "juju_mid",
 															 str(new_machine.mid_vnfm),
 															 nsi_id)
-			self.template_manager.update__slice_monitor_index(nsi_id.lower()+'_slice_keys', "machine_keys",
+			self.template_manager.update_subslice_monitor_index(nsi_id.lower()+'_slice_keys', "machine_keys",
 															 service_name, "juju_mid", str(new_machine.mid_vnfm),
 															 nsi_id)
-			self.template_manager.update__slice_monitor_index("_slice_monitor_" + subslice_name.lower(),
+			self.template_manager.update_subslice_monitor_index("_subslice_monitor_" + subslice_name.lower(),
 															 "machine_status", service_name, "type", "kvm", nsi_id)
 
 			self.logger.debug(

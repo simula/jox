@@ -115,7 +115,7 @@ class JModel(JSONEncoder):
                 self.machines_config = model_config["list_machines"]
                 self.services_config = model_config["list_services"]
                 
-                # jtemplate.create__slice_monitor_template(self.services_config)
+                # jtemplate.create__subslice_monitor_template(self.services_config)
             
                 _list = list(filter(lambda x: x.controller_name == self.cloud_name, jclouds))
                 self.jcloud = _list[0]  # find correct cloud object
