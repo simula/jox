@@ -130,9 +130,11 @@ class JESearch(object):
             message = "Error while trying to connect to Elasticsearch"
             self.logger.error(message)
             self.logger.debug(message)
-        
+
         self.es.update(index=index_page, doc_type='post', id=1,  # Push the container with updates
-                  body={'doc': {container_type: data}}, retry_on_conflict=0)
+                       body={'doc': {container_type: data}}, retry_on_conflict=3)
+
+
         
     def update_index_key(self, index_page, container_type, container_name, leaf_key, leaf_value):
         try:

@@ -165,16 +165,16 @@
       "description": "credentials of your juju controller",
       "cloud-name": "localhost-borer",
       "cloud-type": "lxd",
-      "cloud-endpoint": "10.39.202.248:17070",
-      "cloud-username": "lxd",
-      "cloud-password": "6be4435470df33ef5d477b2625680ba7"
+      "cloud-endpoint": "10.39.202.144:17070",
+      "cloud-username": "admin",
+      "cloud-password": "3dbdaa9798613ea747fe9096a95c140b"
     },
     {
       "description": "credentials of your juju controller",
       "cloud-name": "sakura-home",
       "cloud-type": "manual",
       "cloud-endpoint": "10.124.51.249:17070",
-      "cloud-username": "lxd",
+      "cloud-username": "admin",
       "cloud-password": "0ff27627bdb42216ec2c0c6296d832c9"
     },
     {

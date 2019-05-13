@@ -125,7 +125,7 @@ class NetworkSliceController(object):
 			list_inter_nssi_relations = slice_data['inter_nssi_relation']
 			for current_nssi in list_subslices:
 				subslices_controller.destroy_subslice(current_nssi, slice_name)
-				index_subslcie_monitor = ''.join(['slice_monitor_', str(current_nssi).lower()])
+				index_subslcie_monitor = ''.join(['subslice_monitor_', str(current_nssi).lower()])
 
 
 				if self.jesearch.ping():
@@ -154,10 +154,10 @@ class NetworkSliceController(object):
 				
 			self.remove_slice_object(slice_name)
 			if self.jesearch.ping():
-				slice_keys_tmp = ''.join(['slice_keys_tmp_', str(slice_name).lower()])
+				slice_monitor = ''.join(['slice_monitor_', str(slice_name).lower()])
 				slice_keys = ''.join(['slice_keys_', str(slice_name).lower()])
 				self.jesearch.del_index_from_es(slice_name)
-				self.jesearch.del_index_from_es(slice_keys_tmp)
+				self.jesearch.del_index_from_es(slice_monitor)
 				self.jesearch.del_index_from_es(slice_keys)
 			
 			return [True, "Removing the slice {} already started in the background".format(slice_name)]
