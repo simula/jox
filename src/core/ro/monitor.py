@@ -459,8 +459,7 @@ async def get_juju_status(type, cloud_name=None, model_name=None, user_name="adm
                       'relations':[juju_status_relations]})
         return [True, full_status, model_info]
     else:
-        message = "The key {} is not supported. Only the following keys are supported: machines, applications, relations, all".\
-            format(type)
+        message = "The key {} is not supported. Only the following keys are supported: machines, applications, relations, all".format(type)
         return [False, message]
 def get_all_relations(juju_status):
     relations = {}

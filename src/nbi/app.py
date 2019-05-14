@@ -89,49 +89,50 @@ standard_reqst = {
 """
 @apiDefine GroupJox JOX
 This API endpoint contains the main capabilities that are needed
-before deploying and monitoring the slices. Through this APIoffered by this group, you can vistualize jox configuration, and
-jox capabilities, in addition to the possibility to see the
+before deploying and monitoring the slices. Through the set of APIs offered in this section, you can vistualize jox configuration, and
+jox capabilities, in addition to the possibility to visualize the
 template slice/subslice before deploying your slice.
 """
 
 """
 @apiDefine resource_management Resource Management
-To Describe the resource_management later
+In this section, we introduce a set of endpoints for managing the resources
 """
 
 """
 @apiDefine GroupOnboarding Onboarding
-To Describe the onboarding later
+This section presents the endpoints related to package onboarding.
 """
 
 """
 @apiDefine GroupSlice Slice
-This API endpoint holds the main functionalities for slice management,
-like add, update, and remove a slice. Additionaly, you can also see the context of the lalready deployed slices
-
-like get the context of deployed slices, add, and remove slices
+This section holds the main functionalities for slice management, like add, update, and remove a slice. Additionaly, 
+This section presents endpoints to  get the context of already deployed slices
 """
+
 """
 @apiDefine GroupSubSlice Sub-slice
-This API endpoint is dedictaed for subslcies. for the current version of JOX, you can only get the
+This API endpoint is dedictaed for subslcies. for the current version of JoX, you can only get the
 context of the subslices, without any possibility to add/update/remove subslice.
 """
+
 """
 @apiDefine GroupElasticsearch Elasticsearch
 This API endpoint is a wrapper of elasticsearch (ES), where the main functionality that are supported in the current
-version of JOX, are:
+version of JoX, are:
 
 - get list of all index-pages that are saved to ES
 - delete all the index-pages
 
 
-this section contains the main functionalities to interact with elasticsearch,
+This section contains the main functionalities to interact with elasticsearch,
 like get the page-indexes in elasticsearch, save and delete page-indexe to(from) elasticsearch
 """
+
 """
 @apiDefine GroupMonitoring Monitoring
-this section contains the main functionalities for monitoring
-slices, sub-slices, services, machines, and relations
+This section contains the main functionalities for monitoring
+slices, sub-slices, services, machines, and relations. Further, this monitoring information can be obtained either from JoX (more specifically from elasticsearch where the monitoring information is saved automatically) or from juju. Another endpoint to get the log from JoX/juju with different log levels is also introduced here.
 """
 
 
@@ -708,7 +709,7 @@ def resource_discovery():
 	@apiName get_available_resources
 
 	@api {get}  /resource-discovery Discover Available Resources
-	@apiDescription Get the list of all the resources and add them to the resource controller, so that they can be used later when deploying a slice
+	@apiDescription Get the list of all the resources and add them to the resource controller, so that the free resources can be used later when deploying a slice
 
 	@apiExample {curl} Example-Usage:
 		curl  -i http://localhost:5000/resource-discovery
@@ -870,7 +871,7 @@ def jox_package_onboard():
     @apiName PutOnboard
 
     @api {put}  /onboard Package onboarding
-    @apiDescription Through this endpoint, you can onboard the pakcage of slice(s), so that you can deploy it(them) later
+    @apiDescription Through this endpoint, you can onboard a slice's pakcage, so that you can deploy it later. In order to generate your packages containing the slice and subslices and then package it, you can use the package generater (a tool provided with JoX) that is located in *scripts* in JoX directory.
 	
 	@apiExample {curl} Example-Usage:
 		curl  -i http://localhost:5000/onboard --upload-file mosaic5g.tar.gz
@@ -1234,16 +1235,16 @@ def network_sub_slice(nsi_name=None, nssi_name=None, nssi_key=None):
 	@apiGroup GroupSubSlice
 	@apiName GetNssiNsiName
 
-	@apiDescription get the context of all the subslices attached to certain slice
-	@api {get}  /nssi/<string:nsi_name> Context of certain subslices
-	@apiParam {string} nsi_name Name of slice
+	@apiDescription Get the context of all the subslices attached to certain slice
+	@api {get}  /nssi/<string:nsi_name> Context of subslices
+	@apiParam {string} nsi_name name of slice
 	"""
 	
 	"""
 	@apiGroup GroupSubSlice
 	@apiName GetNssiNsiNameNssiName
 
-	@apiDescription get the context of certain subslice attached to specified slice
+	@apiDescription Get the context of certain subslice attached to specified slice
 	@api {get}  /nssi/<string:nsi_name>/<string:nssi_name> Context of specific subslice
 	@apiParam {string} nsi_name Slice name
 	@apiParam {string} nssi_name Subslice name
@@ -1317,10 +1318,10 @@ def network_sub_slice(nsi_name=None, nssi_name=None, nssi_key=None):
 	@apiName GetNssiNsiNameNssiNameNssiKey
 
 	@apiDescription get the context of certain entity fo certain subslcie attached to specified slice
-	@api {get}  /nssi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key> Context of certain entity
-	@apiParam {string} nsi_name Name of slice
-	@apiParam {string} nssi_name Name of subslice
-	@apiParam {string="services","machines","relations"} nssi_key  Name of certain entity
+	@api {get}  /nssi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key> Context of specific entity
+	@apiParam {string} nsi_name name of slice
+	@apiParam {string} nssi_name name of subslice
+	@apiParam {string="services","machines","relations"} nssi_key  name of certain entity
 	
 	@apiExample {curl} First-Example-Usage:
 	     curl -i http://localhost:5000/nssi/mosaic5g/nssi_2/subslice_services
@@ -1396,7 +1397,7 @@ def monitor_es(es_index_page=None, es_key=None):
 	@apiGroup GroupElasticsearch
 	@apiName GetEs
 	@api {get}  /es List index-pages
-	@apiDescription Get the list of all index-pages in elasticsearch
+	@apiDescription Get the list of all index-pages from elasticsearch
 	@apiExample {curl} Example-Usage:
 		 curl -i http://localhost:5000/es
 
@@ -1630,11 +1631,11 @@ def monitor_es(es_index_page=None, es_key=None):
 @app.route('/monitor/nsi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>')
 def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	"""
-	@apiGroup Monitoring
+	@apiGroup GroupMonitoring
 	@apiName GetNsiMonitorAll
 
 	@apiDescription Get monitoring information on specific slice
-	@api {get}  /monitor/nsi/<string:nsi_name> Info. on specific slice
+	@api {get}  /monitor/nsi/<string:nsi_name> Information on specific slice
 	@apiParam {String} nsi_name slice name
 	@apiExample {curl} Example usage:
 	    curl http://localhost:5000/monitor/nsi/mosaic5g
@@ -1832,11 +1833,11 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 	"""
 	
 	"""
-	@apiGroup Monitoring
+	@apiGroup GroupMonitoring
 	@apiName GetNssiMonitorAll
 
 	@apiDescription Get monitoring information on specific subslice attached to certain slice
-	@api {get}  /monitor/nsi/<string:nsi_name>/<string:nssi_name> Info. on specific subslice
+	@api {get}  /monitor/nsi/<string:nsi_name>/<string:nssi_name> Information on specific subslice
 
 	@apiParam {String} nsi_name slice name
 	@apiParam {String} nssi_name subslice name
@@ -1983,10 +1984,10 @@ def monitor_nssi(nsi_name=None, nssi_name=None, nssi_key=None):
 @app.route('/monitor/service/<string:nsi_name>/<string:nssi_name>/<string:service_name>')
 def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key=None):
 	"""
-	@apiGroup Monitoring
+	@apiGroup GroupMonitoring
 	@apiName GetNsiMonitorServices
 
-	@api {get}  /monitor/service/<string:nsi_name> Info. all services in specific slice
+	@api {get}  /monitor/service/<string:nsi_name> Information all services in specific slice
 
 	@apiParam {String} nsi_name slice name
 
@@ -2076,10 +2077,10 @@ def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key
 	"""
 	
 	"""
-	@apiGroup Monitoring
+	@apiGroup GroupMonitoring
 	@apiName GetNssiMonitorServices
 
-	@api {get}  /monitor/nsi/service/<string:nsi_name>/<string:nssi_name> Info. all services in specific subslice
+	@api {get}  /monitor/nsi/service/<string:nsi_name>/<string:nssi_name> Information all services in specific subslice
 
 	@apiParam {String} nsi_name slice name
 	@apiParam {String} nssi_name subslice name
@@ -2173,10 +2174,10 @@ def monitor_srvice(nsi_name=None, nssi_name=None, service_name=None, service_key
 @app.route('/monitor/machine/<string:nsi_name>/<string:nssi_name>/<string:machine_name>')
 def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_key=None):
 	"""
-	@apiGroup Monitoring
+	@apiGroup GroupMonitoring
 	@apiName GetNsiMonitorMachines
 
-	@api {get}  /monitor/machine/<string:nsi_name> Info. all machines of specific slice
+	@api {get}  /monitor/machine/<string:nsi_name> Information all machines of specific slice
 
 	@apiParam {String} nsi_name slice name
 
@@ -2259,10 +2260,10 @@ def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_ke
 	"""
 	
 	"""
-	@apiGroup Monitoring
+	@apiGroup GroupMonitoring
 	@apiName GetNssiMonitorMachines
 
-	@api {get}  /monitor/nsi/machine/<string:nsi_name>/<string:nssi_name>  Info. machines of specific subslice
+	@api {get}  /monitor/nsi/machine/<string:nsi_name>/<string:nssi_name>  Information machines of specific subslice
 
 	@apiParam {String} nsi_name slice name
 	@apiParam {String} nssi_name subslcie name
@@ -2351,10 +2352,10 @@ def monitor_machine(nsi_name=None, nssi_name=None, machine_name=None, machine_ke
 def monitor_relation(nsi_name=None, nssi_name_source=None, service_name_source=None,
                      nssi_name_target=None, service_name_target=None, relation_key=None):
 	"""
-	@apiGroup Monitoring
+	@apiGroup GroupMonitoring
 	@apiName GetNsiMonitorRequirements
 
-	@api {get}  /monitor/relation/<string:nsi_name> Info. relations of specific slice
+	@api {get}  /monitor/relation/<string:nsi_name> Information relations of specific slice
 
 	@apiParam {String} nsi_name slice name
 
@@ -2425,10 +2426,10 @@ def monitor_relation(nsi_name=None, nssi_name_source=None, service_name_source=N
 	"""
 	
 	"""
-	@apiGroup Monitoring
+	@apiGroup GroupMonitoring
 	@apiName GetNssiMonitorRequirements
 
-	@api {get}  /monitor/nsi/relation/<string:nsi_name>/<string:nssi_name>  Info. relations of specific subslice
+	@api {get}  /monitor/nsi/relation/<string:nsi_name>/<string:nssi_name>  Information relations of specific subslice
 
 	@apiParam {String} nsi_name slice name
 	@apiParam {String} nssi_name subslice name
@@ -2509,493 +2510,11 @@ def monitor_relation(nsi_name=None, nssi_name_source=None, service_name_source=N
 @app.route('/monitor/juju/<string:juju_key_val>/<string:cloud_name>/<string:model_name>')
 def monitor_juju(juju_key_val=None, cloud_name=None, model_name=None):
 	"""
-	@apiGroup Monitoring
-	@apiName GetJujuMonitorAll
-
-	@apiDescription Get information on all the services, machines and relations of the curren juju model
-	@api {get}  /monitor/juju Info. juju current model
-
-	@apiExample {curl} Example usage:
-	     curl http://localhost:5000/monitor/juju
-
-	@apiSuccessExample Success-Response:
-	    HTTP/1.0 200 OK
-	    {
-	    "data": {
-	        "machines": [
-	          {
-	            "0": {
-	              "agent-status": {
-	                "data": {},
-	                "info": "",
-	                "kind": "",
-	                "life": "",
-	                "since": "2019-03-06T17:13:10.467955832Z",
-	                "status": "started",
-	                "version": "2.5.1"
-	              },
-	              "constraints": "mem=524288M tags=VDU_mysql",
-	              "containers": {},
-	              "dns-name": "10.70.21.123",
-	              "hardware": "arch=amd64 cores=0 mem=524288M",
-	              "has-vote": false,
-	              "id": "0",
-	              "instance-id": "juju-7a566b-0",
-	              "instance-status": {
-	                "data": {},
-	                "info": "Running",
-	                "kind": "",
-	                "life": "",
-	                "since": "2019-03-06T17:12:29.016847134Z",
-	                "status": "running",
-	                "version": ""
-	              },
-	              "ip-addresses": [
-	                "10.70.21.123"
-	              ],
-	              "jobs": [
-	                "JobHostUnits"
-	              ],
-	              "network-interfaces": {
-	                "eth0": {
-	                  "gateway": "10.70.21.1",
-	                  "ip-addresses": [
-	                    "10.70.21.123"
-	                  ],
-	                  "is-up": true,
-	                  "mac-address": "00:16:3e:c3:71:0c"
-	                }
-	              },
-	              "series": "xenial",
-	              "wants-vote": false
-	            },
-	            "1": {
-	              "agent-status": {
-	                "data": {},
-	                "info": "",
-	                "kind": "",
-	                "life": "",
-	                "since": "2019-03-06T17:13:30.375890236Z",
-	                "status": "started",
-	                "version": "2.5.1"
-	              },
-	              "constraints": "mem=524288M tags=VDU_oai-hss",
-	              "containers": {},
-	              "dns-name": "10.70.21.55",
-	              "hardware": "arch=amd64 cores=0 mem=524288M",
-	              "has-vote": false,
-	              "id": "1",
-	              "instance-id": "juju-7a566b-1",
-	              "instance-status": {
-	                "data": {},
-	                "info": "Running",
-	                "kind": "",
-	                "life": "",
-	                "since": "2019-03-06T17:12:34.314790591Z",
-	                "status": "running",
-	                "version": ""
-	              },
-	              "ip-addresses": [
-	                "10.70.21.55"
-	              ],
-	              "jobs": [
-	                "JobHostUnits"
-	              ],
-	              "network-interfaces": {
-	                "eth0": {
-	                  "gateway": "10.70.21.1",
-	                  "ip-addresses": [
-	                    "10.70.21.55"
-	                  ],
-	                  "is-up": true,
-	                  "mac-address": "00:16:3e:e0:77:7e"
-	                }
-	              },
-	              "series": "xenial",
-	              "wants-vote": false
-	            },
-	            "2": {
-	              "agent-status": {
-	                "data": {},
-	                "info": "",
-	                "kind": "",
-	                "life": "",
-	                "since": "2019-03-06T17:13:28.947200307Z",
-	                "status": "started",
-	                "version": "2.5.1"
-	              },
-	              "constraints": "mem=524288M tags=VDU_oai-mme",
-	              "containers": {},
-	              "dns-name": "10.70.21.207",
-	              "hardware": "arch=amd64 cores=0 mem=524288M",
-	              "has-vote": false,
-	              "id": "2",
-	              "instance-id": "juju-7a566b-2",
-	              "instance-status": {
-	                "data": {},
-	                "info": "Running",
-	                "kind": "",
-	                "life": "",
-	                "since": "2019-03-06T17:12:50.998958994Z",
-	                "status": "running",
-	                "version": ""
-	              },
-	              "ip-addresses": [
-	                "10.70.21.207"
-	              ],
-	              "jobs": [
-	                "JobHostUnits"
-	              ],
-	              "network-interfaces": {
-	                "eth0": {
-	                  "gateway": "10.70.21.1",
-	                  "ip-addresses": [
-	                    "10.70.21.207"
-	                  ],
-	                  "is-up": true,
-	                  "mac-address": "00:16:3e:a3:35:77"
-	                }
-	              },
-	              "series": "xenial",
-	              "wants-vote": false
-	            },
-	            "3": {
-	              "agent-status": {
-	                "data": {},
-	                "info": "",
-	                "kind": "",
-	                "life": "",
-	                "since": "2019-03-06T17:13:30.922084571Z",
-	                "status": "started",
-	                "version": "2.5.1"
-	              },
-	              "constraints": "mem=524288M tags=VDU_oai-spgw",
-	              "containers": {},
-	              "dns-name": "10.70.21.244",
-	              "hardware": "arch=amd64 cores=0 mem=524288M",
-	              "has-vote": false,
-	              "id": "3",
-	              "instance-id": "juju-7a566b-3",
-	              "instance-status": {
-	                "data": {},
-	                "info": "Running",
-	                "kind": "",
-	                "life": "",
-	                "since": "2019-03-06T17:13:00.176443058Z",
-	                "status": "running",
-	                "version": ""
-	              },
-	              "ip-addresses": [
-	                "10.70.21.244"
-	              ],
-	              "jobs": [
-	                "JobHostUnits"
-	              ],
-	              "network-interfaces": {
-	                "eth0": {
-	                  "gateway": "10.70.21.1",
-	                  "ip-addresses": [
-	                    "10.70.21.244"
-	                  ],
-	                  "is-up": true,
-	                  "mac-address": "00:16:3e:48:9f:54"
-	                }
-	              },
-	              "series": "xenial",
-	              "wants-vote": false
-	            }
-	          }
-	        ],
-	        "relations": [
-	          "The relations is not supported yet"
-	        ],
-	        "services": [
-	          {
-	            "mysql": {
-	              "can-upgrade-to": "",
-	              "charm": "cs:mysql-58",
-	              "charm-verion": "",
-	              "endpoint-bindings": {
-	                "ceph": "",
-	                "cluster": "",
-	                "data": "",
-	                "db": "",
-	                "db-admin": "",
-	                "ha": "",
-	                "local-monitors": "",
-	                "master": "",
-	                "monitors": "",
-	                "munin": "",
-	                "nrpe-external-master": "",
-	                "shared-db": "",
-	                "slave": ""
-	              },
-	              "exposed": false,
-	              "life": "",
-	              "meter-statuses": null,
-	              "public-address": "",
-	              "relations": {
-	                "cluster": [
-	                  "mysql"
-	                ],
-	                "db": [
-	                  "oai-hss"
-	                ]
-	              },
-	              "series": "xenial",
-	              "status": {
-	                "data": {},
-	                "info": "Ready",
-	                "kind": "",
-	                "life": "",
-	                "since": "2019-03-06T17:15:57.932331667Z",
-	                "status": "active",
-	                "version": ""
-	              },
-	              "subordinate-to": [],
-	              "units": {
-	                "mysql/0": {
-	                  "agent-status": {
-	                    "data": {},
-	                    "info": "",
-	                    "kind": "",
-	                    "life": "",
-	                    "since": "2019-03-06T17:16:04.503916259Z",
-	                    "status": "idle",
-	                    "version": "2.5.1"
-	                  },
-	                  "charm": "",
-	                  "leader": true,
-	                  "machine": "0",
-	                  "opened-ports": [
-	                    "3306/tcp"
-	                  ],
-	                  "public-address": "10.70.21.123",
-	                  "subordinates": null,
-	                  "workload-status": {
-	                    "data": {},
-	                    "info": "Ready",
-	                    "kind": "",
-	                    "life": "",
-	                    "since": "2019-03-06T17:15:57.932331667Z",
-	                    "status": "active",
-	                    "version": ""
-	                  },
-	                  "workload-version": "5.7.25"
-	                }
-	              },
-	              "workload-version": "5.7.25"
-	            },
-	            "oai-hss": {
-	              "can-upgrade-to": "",
-	              "charm": "cs:~navid-nikaein/xenial/oai-hss-16",
-	              "charm-verion": "",
-	              "endpoint-bindings": {
-	                "db": "",
-	                "hss": ""
-	              },
-	              "exposed": false,
-	              "life": "",
-	              "meter-statuses": null,
-	              "public-address": "",
-	              "relations": {
-	                "db": [
-	                  "mysql"
-	                ],
-	                "hss": [
-	                  "oai-mme"
-	                ]
-	              },
-	              "series": "xenial",
-	              "status": {
-	                "data": {},
-	                "info": "Running",
-	                "kind": "",
-	                "life": "",
-	                "since": "2019-03-06T17:16:07.582399661Z",
-	                "status": "active",
-	                "version": ""
-	              },
-	              "subordinate-to": [],
-	              "units": {
-	                "oai-hss/0": {
-	                  "agent-status": {
-	                    "data": {},
-	                    "info": "",
-	                    "kind": "",
-	                    "life": "",
-	                    "since": "2019-03-06T17:16:08.18189912Z",
-	                    "status": "idle",
-	                    "version": "2.5.1"
-	                  },
-	                  "charm": "",
-	                  "leader": true,
-	                  "machine": "1",
-	                  "opened-ports": null,
-	                  "public-address": "10.70.21.55",
-	                  "subordinates": null,
-	                  "workload-status": {
-	                    "data": {},
-	                    "info": "Running",
-	                    "kind": "",
-	                    "life": "",
-	                    "since": "2019-03-06T17:16:07.582399661Z",
-	                    "status": "active",
-	                    "version": ""
-	                  },
-	                  "workload-version": ""
-	                }
-	              },
-	              "workload-version": ""
-	            },
-	            "oai-mme": {
-	              "can-upgrade-to": "",
-	              "charm": "cs:~navid-nikaein/xenial/oai-mme-18",
-	              "charm-verion": "",
-	              "endpoint-bindings": {
-	                "hss": "",
-	                "mme": "",
-	                "spgw": ""
-	              },
-	              "exposed": false,
-	              "life": "",
-	              "meter-statuses": null,
-	              "public-address": "",
-	              "relations": {
-	                "hss": [
-	                  "oai-hss"
-	                ],
-	                "spgw": [
-	                  "oai-spgw"
-	                ]
-	              },
-	              "series": "xenial",
-	              "status": {
-	                "data": {},
-	                "info": "Running",
-	                "kind": "",
-	                "life": "",
-	                "since": "2019-03-06T17:16:11.120606764Z",
-	                "status": "active",
-	                "version": ""
-	              },
-	              "subordinate-to": [],
-	              "units": {
-	                "oai-mme/0": {
-	                  "agent-status": {
-	                    "data": {},
-	                    "info": "",
-	                    "kind": "",
-	                    "life": "",
-	                    "since": "2019-03-06T17:16:11.24301358Z",
-	                    "status": "idle",
-	                    "version": "2.5.1"
-	                  },
-	                  "charm": "",
-	                  "leader": true,
-	                  "machine": "2",
-	                  "opened-ports": [
-	                    "36412/tcp",
-	                    "2123/udp",
-	                    "2152/udp"
-	                  ],
-	                  "public-address": "10.70.21.207",
-	                  "subordinates": null,
-	                  "workload-status": {
-	                    "data": {},
-	                    "info": "Running",
-	                    "kind": "",
-	                    "life": "",
-	                    "since": "2019-03-06T17:16:11.120606764Z",
-	                    "status": "active",
-	                    "version": ""
-	                  },
-	                  "workload-version": ""
-	                }
-	              },
-	              "workload-version": ""
-	            },
-	            "oai-spgw": {
-	              "can-upgrade-to": "",
-	              "charm": "cs:~navid-nikaein/xenial/oai-spgw-15",
-	              "charm-verion": "",
-	              "endpoint-bindings": {
-	                "spgw": ""
-	              },
-	              "exposed": false,
-	              "life": "",
-	              "meter-statuses": null,
-	              "public-address": "",
-	              "relations": {
-	                "spgw": [
-	                  "oai-mme"
-	                ]
-	              },
-	              "series": "xenial",
-	              "status": {
-	                "data": {
-	                  "hook": "update-status"
-	                },
-	                "info": "hook failed: \"update-status\"",
-	                "kind": "",
-	                "life": "",
-	                "since": "2019-03-06T17:19:19.208573253Z",
-	                "status": "error",
-	                "version": ""
-	              },
-	              "subordinate-to": [],
-	              "units": {
-	                "oai-spgw/0": {
-	                  "agent-status": {
-	                    "data": {},
-	                    "info": "",
-	                    "kind": "",
-	                    "life": "",
-	                    "since": "2019-03-06T17:19:19.208573253Z",
-	                    "status": "idle",
-	                    "version": "2.5.1"
-	                  },
-	                  "charm": "",
-	                  "leader": true,
-	                  "machine": "3",
-	                  "opened-ports": [
-	                    "2123/udp",
-	                    "2152/udp"
-	                  ],
-	                  "public-address": "10.70.21.244",
-	                  "subordinates": null,
-	                  "workload-status": {
-	                    "data": {},
-	                    "info": "hook failed: \"update-status\"",
-	                    "kind": "",
-	                    "life": "",
-	                    "since": "2019-03-06T17:19:19.208573253Z",
-	                    "status": "error",
-	                    "version": ""
-	                  },
-	                  "workload-version": ""
-	                }
-	              },
-	              "workload-version": ""
-	            }
-	          }
-	        ]
-	      },
-	      "elapsed-time": "0:00:00.660348"
-	    }
-	@apiErrorExample Error-Response:
-	    HTTP/1.0 404 Not Found
-	    {
-	      "data": "Error while trying to connect to the current juju model",
-	      "elapsed-time": "0:00:00.002289"
-	    }
-	"""
-	
-	"""
-	@apiGroup Monitoring
+	@apiGroup GroupMonitoring
 	@apiName GetJujuMonitorJujuEntityCurrentModel
+	@apiDescription Get monitoring information directly from the current juju model for specific entity
 
-	@api {get}  /monitor/juju/<string:juju_entity> Specific info. of juju current model
+	@api {get}  /monitor/juju/<string:juju_entity> Specific information of juju current model
 	
 	@apiParam {String="all", "services", "machines", "relations"} juju_entity Specify which information that you want to get from the current juju model
 
@@ -3278,11 +2797,13 @@ def monitor_juju(juju_key_val=None, cloud_name=None, model_name=None):
 	    }
 	"""
 	"""
-	@apiGroup Monitoring
+	@apiGroup GroupMonitoring
 	@apiName GetJujuMonitorJujuEntityCertainModel
-
+	@apiDescription Get monitoring information directly from certain juju model and for specific entity
+	
+	
 	@api {get} /monitor/juju/<string:juju_key_val>/<string:cloud_name>/<string:model_name>
-	 Specific info. from certain juju model
+	 Specific information from certain juju model
 	
 	@apiParam {String="all", "services", "machines", "relations"} juju_entity Specify which information that you want to get from the current juju model
 	@apiParam {String} cloud_name juju controller name
@@ -3361,14 +2882,13 @@ def monitor_juju(juju_key_val=None, cloud_name=None, model_name=None):
 @app.route('/log/<string:log_source>/<string:log_type>')
 def logging(log_source=None, log_type=None):
 	"""
-	@apiGroup Monitoring
+	@apiGroup GroupMonitoring
 	@apiName GetJoxlogs
 
 	@api {get}  /log/<string:log_source>/<string:log_type> Logs
-	@apiDescription Get the JoX and juju logs
-	@apiParam {String} log_source jox, juju (default is jox)
-	@apiParam {String} log_type all, error, debug, info, warning (default is all)
-
+	@apiDescription Get the log from JoX or juju with specific log level
+	@apiParam {String="jox", "juju"}  log_source=jox The source from which the log will be returned
+	@apiParam {String="all", "error", "debug", "info", "warning"} log_type=all the required log level from the target source.
 	@apiExample {curl} First-Example-Usage:
 		     curl -i http://localhost:5000/log
 

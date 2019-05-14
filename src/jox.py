@@ -84,7 +84,6 @@ class NFVO_JOX(object):
 		
 		self.dir_slice = dir_path + '/common/template_slice/'  # directory where the slice template should exist
 		self.dir_subslice = dir_path + '/common/template_slice/'
-		
 		self.dir_config = dir_path + '/common/config/'  # directory for the configurations needed by different modules
 		self.dir_home = expanduser("~")
 		
