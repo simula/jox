@@ -49,30 +49,32 @@ RBMQ_SERVER_PORT=""
 RBMQ_QUEUE=""
 
 
-# FLASK param
+""" FLASK param """
 FLASK_SERVER_IP=""
 FLASK_SERVER_PORT=""
 FLASK_SERVER_DEBUG=""
 
-### JoX
-# JOX_TIMEOUT_REQUEST is the timeout for a request received by jox server to be served. After this time, the request will be ignored
+"""  JoX """
+"""
+JOX_TIMEOUT_REQUEST is the timeout for a request received by jox server to be served. After this time, the request will be ignored
+"""
 JOX_TIMEOUT_REQUEST=0 #(seconds)
 
-# Elasticsearch param
+"""  Elasticsearch param """
 ELASTICSEARCH_ENABLE=True
 ELASTICSEARCH_HOSt=""
 ELASTICSEARCH_PORT=""
 ELASTICSEARCH_LOG_LEVEL=""
 ELASTICSEARCH_RETRY_ON_CONFLICT=0
 
-# resources types
+""" resources types """
 KVM="kvm"
 KVM_2="qemu"
 
 LXC="lxc"
 PHY="phy" # physical machine
 
-# config param
+"""  config param """
 LOG_FILE=""
 LOG_LEVEL=""
 
@@ -81,7 +83,7 @@ LOG_LEVEL=""
 STATS_TIMER=""
 
 
-# HTTP_status code
+"""  HTTP_status code """
 # Success
 HTTP_200_OK=None
 HTTP_204_NO_CONTENT=None
@@ -89,21 +91,21 @@ HTTP_204_NO_CONTENT=None
 HTTP_400_BAD_REQUEST=None
 HTTP_404_NOT_FOUND=None
 
-# juju related parameters
+"""  juju related parameters """
 JUJU_MAX_RETRY_CONNECTION_MODEL_AVAILABLE=None # maximum number or retries to verify that the new created model is available
 JUJU_INTERVAL_CONNECTION_MODEL_AVAILABLE=None  # in seconds
 
 JUJU_MAX_RETRY_CONNECTION_MODEL_ACCESSIBLE=None # maximum number or retries to connect to already exist juju model
 JUJU_INTERVAL_CONNECTION_MODEL_ACCESSIBLE=None  # in seconds
 
-# ssh key
+"""  ssh key """
 SSH_KEY_DIRECTORY = ""
 SSH_KEY_NAME = ""
 SSH_USER=""
 SSH_PASSWORD=""
 
 
-# cach param
+"""  cache param """
 STORE_DIR = ""
 
 

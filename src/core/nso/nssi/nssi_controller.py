@@ -113,7 +113,8 @@ class SubSlicesController(object):
 				return [False, message]
 	
 	def add_subslice(self, subslice_config, list_all_jujuModel_attachedWatcher):
-		"""
+		##
+		""" The structure of subslice_config is as follows
 		subslice_config = {
 			"subslice_name": nssi_id,
 			"slice_version": list_service_machine[2],

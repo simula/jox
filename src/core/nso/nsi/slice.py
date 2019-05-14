@@ -32,6 +32,7 @@ from json import JSONEncoder
 from juju import loop
 from src.core.nso.template_manager import template_manager
 import traceback
+import time
 
 class JSlice(JSONEncoder):
 	
@@ -153,6 +154,7 @@ class JSlice(JSONEncoder):
 				if source_jcloud == target_jcloud and source_jmodel == target_jmodel:
 					message = "adding relation between {} from the nssi {} and {} from the nssi {}".format(nssi_node_source, nssi_source, nssi_node_target, nssi_target)
 					self.logger.debug(message)
+					time.sleep(10)
 					loop.run(self.add_relation_interNssi_IntraModel(nssi_source, source_jcloud, source_jmodel, nssi_node_source,
 																nssi_target, target_jcloud, target_jmodel, nssi_node_target))
 				else:

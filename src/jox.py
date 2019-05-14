@@ -174,7 +174,7 @@ class NFVO_JOX(object):
 			
 			self.gv.ZONES = self.jox_config['zones']
 
-			self.gv.JOX_TIMEOUT_REQUEST = self.jox_config['jox-timeout-request']
+			self.gv.JOX_TIMEOUT_REQUEST = self.jox_config["jox-config"]['jox-timeout-request']
 			
 			
 		except jsonschema.ValidationError as ex:
@@ -530,7 +530,7 @@ class server_RBMQ(object):
 				exit()
 	
 	def on_request(self, ch, method, props, body):
-		enquiry = body.decode(self.nfvo_jox.gv.ENCODING_TYPE)qq
+		enquiry = body.decode(self.nfvo_jox.gv.ENCODING_TYPE)
 		enquiry = json.loads(enquiry)
 
 		elapsed_time_on_request = datetime.datetime.now() - datetime.datetime.strptime(enquiry["datetime"], '%Y-%m-%d %H:%M:%S.%f')
@@ -1074,6 +1074,11 @@ class server_RBMQ(object):
 					for slice_data in slcies_context:
 						slice_name = slcies_context[slice_data]['slice_name']
 						res[slice_name] = {}
+
+						data_slcie_monitor = ''.join(['slice_monitor_', str(slice_name).lower()])
+						data = self.nfvo_jox.jesearch.get_source_index(data_slcie_monitor)
+						res[slice_name][data_slcie_monitor] = data[1]
+
 						#
 						set_subslices = slcies_context[slice_data]["sub_slices"]
 						for subslcie_name in set_subslices:
@@ -1103,6 +1108,12 @@ class server_RBMQ(object):
 					set_subslices = slice_data["sub_slices"]
 					res = {}
 					res[nsi_name] = {}
+
+					data_slcie_monitor = ''.join(['slice_monitor_', str(nsi_name).lower()])
+					data = self.nfvo_jox.jesearch.get_source_index(data_slcie_monitor)
+					res[nsi_name][data_slcie_monitor] = data[1]
+
+
 					for subslcie_name in set_subslices:
 						data_subslcie_monitor = ''.join(['subslice_monitor_', str(subslcie_name).lower()])
 						data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
@@ -1473,6 +1484,13 @@ class server_RBMQ(object):
 					set_subslices = slice_data["sub_slices"]
 					res = {}
 					res[nsi_name] = {}
+
+					data_slcie_monitor = ''.join(['slice_monitor_', str(nsi_name).lower()])
+					data = self.nfvo_jox.jesearch.get_source_index(data_slcie_monitor)
+
+					res[nsi_name][data_slcie_monitor] = {}
+					res[nsi_name][data_slcie_monitor]["relation_status"] = data[1]["relation_status"]
+
 					for subslcie_name in set_subslices:
 						data_subslcie_monitor = ''.join(['subslice_monitor_', str(subslcie_name).lower()])
 						data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
@@ -1573,21 +1591,6 @@ class server_RBMQ(object):
 			}
 			send_reply = True
 			self.send_ack(ch, method, props, response, send_reply)
-		# print(colored(' [*] Waiting for messages. To exit press CTRL+C', 'green'))
-		# if send_reply:
-		# 	response = json.dumps(response)
-		# 	try:
-		# 		ch.basic_publish(exchange='',
-		# 						 routing_key=props.reply_to,
-		# 						 properties=pika.BasicProperties(correlation_id= \
-		# 															 props.correlation_id),
-		# 						 body=str(response))
-		# 		ch.basic_ack(delivery_tag=method.delivery_tag)
-		# 		response = None
-		# 	except pika_exceptions.ConnectionClosed:
-		# 		pass
-		# 	except Exception as ex:
-		# 		logger.critical("Error while sending response: {}".format(ex))
 	def send_ack(self, ch, method, props, response, send_reply):
 
 		if send_reply:
