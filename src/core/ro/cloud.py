@@ -39,6 +39,9 @@ from juju import loop
 from threading import Thread
 import src.common.config.gv as gv
 from src.core.ro import monitor
+from src.core.ro.monitor import Monitor
+
+
 
 class JCloud(JSONEncoder):
     def __init__(self, global_variables):
@@ -50,7 +53,7 @@ class JCloud(JSONEncoder):
         self.jesearch = None
         self.logger = logging.getLogger('jox.JCloud')
         self.log_config()
-        # self.vim_controller=None
+        self.monitor = None
 
     def log_config(self):
         if self.gv.LOG_LEVEL == 'debug':
@@ -71,6 +74,9 @@ class JCloud(JSONEncoder):
     def build_and_deploy(self,cloud_config, jesearch):
         try:
             self.jesearch = jesearch
+            self.monitor = Monitor()
+            self.monitor.buil(self.jesearch)
+
             self.controller_name=cloud_config["cloud-name"]
             self.juju_controller= juju2_plugin.JujuController(self.gv)
             loop.run(self.juju_controller.build(self.controller_name))
@@ -109,11 +115,13 @@ class JCloud(JSONEncoder):
         
     def attach_watcher(self,model_name, slice_name):
         self.slice_id = slice_name
-        new_loop = asyncio.new_event_loop()
-        new_loop.create_task(self.watch_model(model_name))
-        t = Thread(target=self.start_loop, args=(new_loop,))
-        t.daemon = True
-        t.start()
+        entity_type = ['machine', 'application', 'unit', 'relation']
+        for entity in entity_type:
+            new_loop = asyncio.new_event_loop()
+            new_loop.create_task(self.watch_model(model_name, entity))
+            t = Thread(target=self.start_loop, args=(new_loop,))
+            t.daemon = True
+            t.start()
     def get_user(self,user_name): 
         try:
             data=loop.run(self.juju_controller.get_user(user_name))
@@ -133,36 +141,33 @@ class JCloud(JSONEncoder):
     def start_loop(self, loop):
         asyncio.set_event_loop(loop)
         loop.run_forever()
-        
-    async def on_model_change(self, delta, old, new, model):
-        if False:
-        # if gv.es_status == "Active":
-            if delta.entity=="machine" and delta.type=="change" and delta.data['agent-status']['current']=="started":
-                monitor.update_machine_monitor_state(self.jesearch, delta.data['id'], "launch_time", self.slice_id)
-    
-            if delta.entity=="unit" and delta.type=="change" and delta.data['workload-status']['current']=="error":
-                monitor.update_service_monitor_state(self.jesearch, delta.data['application'], "error", self.slice_id)
-                
-            if delta.entity=="unit" and delta.type=="change" and delta.data['workload-status']['current']=="maintenance":
-                monitor.update_service_monitor_state(self.jesearch, delta.data['application'],"waiting", self.slice_id)
-                nssid, start_time = monitor.check_nssid_with_service(self.jesearch, delta.data['application'],self.slice_id)
-                monitor.update_index_key(self.jesearch, 'slice_monitor_'+ nssid.lower(), "machine_status", delta.data['application'], "address_ipv4_public", delta.data['public-address'], self.slice_id)
-                
-            if delta.entity=="unit" and delta.type=="change" and delta.data['workload-status']['current']=="active":
-                monitor.update_service_monitor_state(self.jesearch, delta.data['application'], "maintenance", self.slice_id)
-                monitor.update_service_monitor_state(self.jesearch, delta.data['application'], "active_since", self.slice_id)
-    
-            if delta.entity=="application" and delta.type=="change" and (delta.data['status']['message']=="Running" or delta.data['status']['message']=="Ready"):
-                monitor.update_service_monitor_state(self.jesearch, delta.data['name'], "requirement_wait", self.slice_id)
 
-    async def watch_model(self, model_name):
+    async def on_model_change(self, delta, old, new, model):
+        if self.jesearch.ping():
+            if delta.entity=="machine" and (delta.type=="add" or delta.type=="change"):
+                current_state_machine = delta.data['agent-status']['current']
+                self.monitor.update_machine_monitor_state(delta.data, delta.type, current_state_machine, self.slice_id)
+
+            # call to update service statistics
+            if delta.entity=="unit" and (delta.type=="change"):
+                current_state_service = delta.data['workload-status']['current']
+                self.monitor.update_service_monitor_state(delta.data, current_state_service, delta.entity, delta.type, self.slice_id)
+
+            if delta.entity == "relation" and (delta.type == "add"):
+                if len(delta.data['endpoints']) == 2:
+                    self.monitor.update_relation_monitor_state(delta.data, delta.entity, delta.type, self.slice_id)
+
+            # call to update relation statistics
+            if delta.entity=="application" and (delta.type=="change") and (delta.data['status']['message']=="Running" or delta.data['status']['message']=="Ready"):
+                self.monitor.update_relation_monitor_state(delta.data, delta.entity, delta.type, self.slice_id)
+    async def watch_model(self, model_name, entity):
         controller = Controller()
         self.logger.info("Connecting to controller")
         await controller.connect()
 
         try:
             model = await controller.get_model(model_name)
-            model.add_observer(self.on_model_change)
+            model.add_observer(self.on_model_change, entity_type=entity)
 
         except Exception as ex:
             self.logger.error(ex)

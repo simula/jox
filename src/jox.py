@@ -57,7 +57,7 @@ import jsonschema
 from src.core.nso.nsi import nsi_controller
 from src.core.nso.nssi import nssi_controller
 from src.core.ro.plugins import es
-
+import datetime
 from src.common.config import gv
 import time
 import yaml, json
@@ -172,6 +172,8 @@ class NFVO_JOX(object):
 			self.gv.HTTP_404_NOT_FOUND = self.jox_config["http"]["400"]["not-found"]
 			
 			self.gv.ZONES = self.jox_config['zones']
+
+			self.gv.JOX_TIMEOUT_REQUEST = self.jox_config["jox-config"]['jox-timeout-request']
 			
 			
 		except jsonschema.ValidationError as ex:
@@ -226,15 +228,13 @@ class NFVO_JOX(object):
 				message = "Elasticsearch is not working while it is enabled. Either disable elasticsearch or run it"
 				self.logger.error(message)
 				# self.cleanup_and_exit(str(0))
-				self.gv.es_status = "Dead"
 			else:
 				message = "elasticsearch is now running"
 				self.logger.info(message)
-				self.gv.es_status = "Active"
 		######### STEP 4: Load JOX Configuration to ES ########
 		if self.gv.ELASTICSEARCH_ENABLE:
 			self.logger.info("Save JOX configuration to elasticsearch")
-			if self.gv.es_status == "Active":
+			if self.jesearch.ping():
 				try:
 					self.logger.info("Delete the index of jox config from elasticsearch if exist")
 					self.jesearch.del_index_from_es(self.gv.JOX_CONFIG_KEY)
@@ -250,8 +250,6 @@ class NFVO_JOX(object):
 				except Exception as ex:
 					self.logger.error((str(ex)))
 					self.logger.error(traceback.format_exc())
-			else:
-				pass
 		
 		######### STEP 5: Create Resource Controller ########
 		self.logger.info("Create resource Controller")
@@ -533,334 +531,324 @@ class server_RBMQ(object):
 	def on_request(self, ch, method, props, body):
 		enquiry = body.decode(self.nfvo_jox.gv.ENCODING_TYPE)
 		enquiry = json.loads(enquiry)
-		if (enquiry["request-uri"] == "/onboard"):
-			enquiry_tmp = enquiry
-			enquiry_tmp["parameters"]["package_onboard_data"] = bytes(enquiry_tmp["parameters"]["package_onboard_data"])
-			print(" [*] enquiry(%s)" % enquiry_tmp)
-		else:
-			print(" [*] enquiry(%s)" % enquiry)
-		if "/resource-discovery" in enquiry["request-uri"]:
-			available_resources = self.nfvo_jox.resource_discovery()
-			response = {
-				"ACK": True,
-				"data": available_resources,
-				"status_code": self.nfvo_jox.gv.HTTP_200_OK
-			}
 
-		elif "/deploy_slice" in enquiry["request-uri"]:
-			nsi_name = "nsi-oai-4G.yaml"
-			nsi_deploy = self.nfvo_jox.add_slice(nsi_name)
-			response = {
-				"ACK": True,
-				"data": nsi_deploy,
-				"status_code": self.nfvo_jox.gv.HTTP_200_OK
-			}
-		elif "/jox/" in enquiry["request-uri"]:
-			jox_config = self.nfvo_jox.gv.JOX_CONFIG_KEY
-			res = self.nfvo_jox.jesearch.get_source_index(jox_config)
-			res = {
-				"ACK": True,
-				"data": res[1],
-				"status_code": self.nfvo_jox.gv.HTTP_200_OK
-			}
-			response = res
-		elif (enquiry["request-uri"] == '/list') \
-				or (enquiry["request-uri"] == '/ls') \
-				or (enquiry["request-uri"] == '/show/<string:nsi_name>'):
-			# request_type = enquiry["request-type"]
-			parameters = enquiry["parameters"]
-			nsi_name = parameters["nsi_name"]
-			template_directory = parameters["template_directory"]
-			full_path = self.check_existence_path(template_directory, nsi_name)
-			
-			if full_path[0]:
-				full_path = full_path[1]
-				if os.path.isdir(full_path):
-					if not full_path.startswith('/'):
-						full_path = ''.join(['/', full_path])
-					if not full_path.endswith('/'):
-						full_path = ''.join([full_path, '/'])
-					message = "get list of all the nsi in the directory {}".format(full_path)
-					self.logger.info(message)
-					self.logger.debug(message)
-					list_files = list()
-					for f in os.listdir(full_path):
-						list_files.append(f)
-					res = list_files
-					response = {
-						"ACK": True,
-						"data": res,
-						"status_code": self.nfvo_jox.gv.HTTP_200_OK,
-						"full_path": full_path
-					}
-				elif os.path.isfile(full_path):
-					message = "Getting template of the nsi {}".format(full_path)
-					self.logger.info(message)
-					self.logger.debug(message)
-					
-					data_nsi = self.read_yaml_json(full_path)
-					if data_nsi[0]:
-						res = data_nsi[1]
+		elapsed_time_on_request = datetime.datetime.now() - datetime.datetime.strptime(enquiry["datetime"], '%Y-%m-%d %H:%M:%S.%f')
+
+		if elapsed_time_on_request.total_seconds() < self.nfvo_jox.gv.JOX_TIMEOUT_REQUEST:
+			send_reply = True
+			if (enquiry["request-uri"] == "/onboard"):
+				enquiry_tmp = enquiry
+				enquiry_tmp["parameters"]["package_onboard_data"] = bytes(enquiry_tmp["parameters"]["package_onboard_data"])
+				print(" [*] enquiry(%s)" % enquiry_tmp)
+			else:
+				print(" [*] enquiry(%s)" % enquiry)
+			if "/resource-discovery" in enquiry["request-uri"]:
+				available_resources = self.nfvo_jox.resource_discovery()
+				response = {
+					"ACK": True,
+					"data": available_resources,
+					"status_code": self.nfvo_jox.gv.HTTP_200_OK
+				}
+				self.send_ack(ch, method, props, response, send_reply)
+
+			elif "/deploy_slice" in enquiry["request-uri"]:
+				nsi_name = "nsi-oai-4G.yaml"
+				nsi_deploy = self.nfvo_jox.add_slice(nsi_name)
+				response = {
+					"ACK": True,
+					"data": nsi_deploy,
+					"status_code": self.nfvo_jox.gv.HTTP_200_OK
+				}
+				send_reply = False
+				self.send_ack(ch, method, props, response, send_reply)
+			elif "/jox/" in enquiry["request-uri"]:
+				jox_config = self.nfvo_jox.gv.JOX_CONFIG_KEY
+				res = self.nfvo_jox.jesearch.get_source_index(jox_config)
+				res = {
+					"ACK": True,
+					"data": res[1],
+					"status_code": self.nfvo_jox.gv.HTTP_200_OK
+				}
+				response = res
+				self.send_ack(ch, method, props, response, send_reply)
+			elif (enquiry["request-uri"] == '/list') \
+					or (enquiry["request-uri"] == '/ls') \
+					or (enquiry["request-uri"] == '/show/<string:nsi_name>'):
+				# request_type = enquiry["request-type"]
+				parameters = enquiry["parameters"]
+				nsi_name = parameters["nsi_name"]
+				template_directory = parameters["template_directory"]
+				full_path = self.check_existence_path(template_directory, nsi_name)
+
+				if full_path[0]:
+					full_path = full_path[1]
+					if os.path.isdir(full_path):
+						if not full_path.startswith('/'):
+							full_path = ''.join(['/', full_path])
+						if not full_path.endswith('/'):
+							full_path = ''.join([full_path, '/'])
+						message = "get list of all the nsi in the directory {}".format(full_path)
+						self.logger.info(message)
+						self.logger.debug(message)
+						list_files = list()
+						for f in os.listdir(full_path):
+							list_files.append(f)
+						res = list_files
 						response = {
 							"ACK": True,
 							"data": res,
 							"status_code": self.nfvo_jox.gv.HTTP_200_OK,
 							"full_path": full_path
 						}
+					elif os.path.isfile(full_path):
+						message = "Getting template of the nsi {}".format(full_path)
+						self.logger.info(message)
+						self.logger.debug(message)
+
+						data_nsi = self.read_yaml_json(full_path)
+						if data_nsi[0]:
+							res = data_nsi[1]
+							response = {
+								"ACK": True,
+								"data": res,
+								"status_code": self.nfvo_jox.gv.HTTP_200_OK,
+								"full_path": full_path
+							}
+						else:
+							res = data_nsi[1]
+							response = {
+								"ACK": False,
+								"data": res,
+								"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+							}
 					else:
-						res = data_nsi[1]
+						res = "The following path is not valid or the file does not exist: {}".format(full_path[1])
 						response = {
 							"ACK": False,
 							"data": res,
 							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 						}
 				else:
-					res = "The following path is not valid or the file does not exist: {}".format(full_path[1])
+					message = full_path[1]
+					response = {
+						"ACK": False,
+						"data": message,
+						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+					}
+				self.send_ack(ch, method, props, response, send_reply)
+			elif (enquiry["request-uri"] == "/nsi/all") or (enquiry["request-uri"] == "/nsi"):
+				request_type = enquiry["request-type"]
+				if request_type == "get":
+					res = self.nfvo_jox.get_slice_context()
+					if res[0]:
+						status_code = self.nfvo_jox.gv.HTTP_200_OK
+					else:
+						status_code = self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+					response = {
+						"ACK": res[0],
+						"data": res[1],
+						"status_code": status_code
+					}
+				elif request_type == "delete":
+					res = "The method {} for the request {} is not supported".format(request_type, enquiry["request-uri"])
 					response = {
 						"ACK": False,
 						"data": res,
-						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+						"status_code": self.nfvo_jox.gv.HTTP_200_OK
 					}
-			else:
-				message = full_path[1]
-				response = {
-					"ACK": False,
-					"data": message,
-					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-				}
-		elif (enquiry["request-uri"] == "/nsi/all") or (enquiry["request-uri"] == "/nsi"):
-			request_type = enquiry["request-type"]
-			if request_type == "get":
-				res = self.nfvo_jox.get_slice_context()
-				if res[0]:
-					status_code = self.nfvo_jox.gv.HTTP_200_OK
 				else:
-					status_code = self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-				response = {
-					"ACK": res[0],
-					"data": res[1],
-					"status_code": status_code
-				}
-			elif request_type == "delete":
-				res = "The method {} for the request {} is not supported".format(request_type, enquiry["request-uri"])
-				response = {
-					"ACK": False,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_200_OK
-				}
-			else:
-				res = "The method {} for the request {} is not supported".format(request_type, enquiry["request-uri"])
-				response = {
-					"ACK": False,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_400_BAD_REQUEST
-				}
-		elif enquiry["request-uri"] == "/nsi/<string:nsi_name>":
-			parameters = enquiry["parameters"]
-			
-			package_name = parameters["package_name"]
-			nsi_name = parameters["nsi_name"]
-			template_directory = parameters["template_directory"]
-			nsi_directory_temp = parameters["nsi_directory"]
-			nssi_directory_temp = parameters["nssi_directory"]
-			request_type = enquiry["request-type"]
-			if request_type == "get":
-				if nsi_name is None:
-					res = "Please specify the name of the slice"
+					res = "The method {} for the request {} is not supported".format(request_type, enquiry["request-uri"])
 					response = {
 						"ACK": False,
 						"data": res,
 						"status_code": self.nfvo_jox.gv.HTTP_400_BAD_REQUEST
 					}
-				else:
-					res = self.nfvo_jox.get_slice_context(nsi_name)
-					
-					if res[0]:
-						res = res[1]
-						response = {
-							"ACK": True,
-							"data": res,
-							"status_code": self.nfvo_jox.gv.HTTP_200_OK
-						}
-					else:
-						res = res[1]
+				self.send_ack(ch, method, props, response, send_reply)
+			elif enquiry["request-uri"] == "/nsi/<string:nsi_name>":
+				parameters = enquiry["parameters"]
+
+				package_name = parameters["package_name"]
+				nsi_name = parameters["nsi_name"]
+				template_directory = parameters["template_directory"]
+				nsi_directory_temp = parameters["nsi_directory"]
+				nssi_directory_temp = parameters["nssi_directory"]
+				request_type = enquiry["request-type"]
+				if request_type == "get":
+					if nsi_name is None:
+						res = "Please specify the name of the slice"
 						response = {
 							"ACK": False,
 							"data": res,
-							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+							"status_code": self.nfvo_jox.gv.HTTP_400_BAD_REQUEST
 						}
-			elif (request_type == "post"):
-				package_path = ''.join([self.nfvo_jox.gv.STORE_DIR, package_name, '/'])
-				nsi_found = False
-				nssi_found = False
-				if os.path.exists(package_path):
-					nsi_dir = ''.join([package_path, 'nsi', '/'])
-					if os.path.exists(nsi_dir):
-						for f in os.listdir(nsi_dir):
-							if os.path.isfile(''.join([nsi_dir, f])) and \
-									(f.endswith('.yaml') or f.endswith('.yml')):
-								nsi_found = True
-								nsi_name = f
-					nssi_dir = ''.join([package_path, 'nssi', '/'])
-					if os.path.exists(nssi_dir):
-						for f in os.listdir(nssi_dir):
-							if os.path.isfile(''.join([nssi_dir, f])) and \
-									(f.endswith('.yaml') or f.endswith('.yml')):
-								nssi_found = True
-					if nsi_found and nssi_found:
-						nsi_deploy = self.nfvo_jox.add_slice(nsi_name, nsi_dir, nssi_dir)
-						if nsi_deploy[0]:
+					else:
+						res = self.nfvo_jox.get_slice_context(nsi_name)
+
+						if res[0]:
+							res = res[1]
+							response = {
+								"ACK": True,
+								"data": res,
+								"status_code": self.nfvo_jox.gv.HTTP_200_OK
+							}
+						else:
+							res = res[1]
+							response = {
+								"ACK": False,
+								"data": res,
+								"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+							}
+					self.send_ack(ch, method, props, response, send_reply)
+				elif (request_type == "post"):
+					package_path = ''.join([self.nfvo_jox.gv.STORE_DIR, package_name, '/'])
+					nsi_found = False
+					nssi_found = False
+					if os.path.exists(package_path):
+						nsi_dir = ''.join([package_path, 'nsi', '/'])
+						if os.path.exists(nsi_dir):
+							for f in os.listdir(nsi_dir):
+								if os.path.isfile(''.join([nsi_dir, f])) and \
+										(f.endswith('.yaml') or f.endswith('.yml')):
+									nsi_found = True
+									nsi_name = f
+						nssi_dir = ''.join([package_path, 'nssi', '/'])
+						if os.path.exists(nssi_dir):
+							for f in os.listdir(nssi_dir):
+								if os.path.isfile(''.join([nssi_dir, f])) and \
+										(f.endswith('.yaml') or f.endswith('.yml')):
+									nssi_found = True
+						if nsi_found and nssi_found:
 							message = "Creating/updating the slice {}".format(nsi_name)
 							response = {
 								"ACK": True,
 								"data": message,
 								"status_code": self.nfvo_jox.gv.HTTP_200_OK
 							}
-						else:
-							res = nsi_deploy[1]
-							response = {
-								"ACK": False,
-								"data": res,
-								"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-							}
-				
-				else:
-					message = "package {} does not exists in {}".format(package_name, self.nfvo_jox.gv.STORE_DIR)
-					response = {
-						"ACK": False,
-						"data": message,
-						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-					}
-			
-			elif request_type == "delete":
-				res = self.nfvo_jox.delete_slice(nsi_name)
-				if res[0]:
-					response = {
-						"ACK": True,
-						"data": res[1],
-						"status_code": self.nfvo_jox.gv.HTTP_200_OK
-					}
-				else:
-					response = {
-						"ACK": True,
-						"data": res[1],
-						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-					}
-			
-			else:
-				res = "The method {} for the request is not supported".format(request_type.upper(),
-				                                                              enquiry["request-uri"])
-				response = {
-					"ACK": False,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_400_BAD_REQUEST
-				}
-		elif (enquiry["request-uri"] == "/onboard"):
-			files = bytes(enquiry["parameters"]["package_onboard_data"])
-			onboard_files = self.onboard_jox_package(files)
-			if onboard_files[0]:
-				tar_file = self.open_save_tar_gz(files)
-				if tar_file[0]:
-					response = {
-						"ACK": True,
-						"data": tar_file[1],
-						"status_code": self.nfvo_jox.gv.HTTP_200_OK
-					}
-				else:
-					response = {
-						"ACK": False,
-						"data": tar_file[1],
-						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-					}
-			else:
-				response = {
-					"ACK": False,
-					"data": onboard_files[1],
-					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-				}
+							self.send_ack(ch, method, props, response, send_reply)
+							nsi_deploy = self.nfvo_jox.add_slice(nsi_name, nsi_dir, nssi_dir)
 
-		elif (enquiry["request-uri"] == "/log") or (enquiry["request-uri"] == "/log/<string:log_source>") or (enquiry["request-uri"] == "/log/<string:log_source>/<string:log_type>"):
-			parameters = enquiry["parameters"]
-			log_source = parameters["log_source"]
-			log_type = parameters["log_type"]
-			res=None
-			if log_source == "jox":
-				file = open("jox.log", 'r')
-				data_tmp=file.readlines()
-				data=[s.replace('\n','') for s in data_tmp]
-				if log_type == None:
-					res=data
-				elif log_type == 'all':
-					res=data
-				elif log_type== 'error' or 'debug' or 'info':
-					data_log_type=[]
-					for line in data:
-						if re.findall(log_type.upper(), line):
-							data_log_type.append(line)
-					res=data_log_type
+					else:
+						message = "package {} does not exists in {}".format(package_name, self.nfvo_jox.gv.STORE_DIR)
+						response = {
+							"ACK": False,
+							"data": message,
+							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+						}
+						self.send_ack(ch, method, props, response, send_reply)
+
+				elif request_type == "delete":
+					res = self.nfvo_jox.delete_slice(nsi_name)
+					if res[0]:
+						response = {
+							"ACK": True,
+							"data": res[1],
+							"status_code": self.nfvo_jox.gv.HTTP_200_OK
+						}
+					else:
+						response = {
+							"ACK": True,
+							"data": res[1],
+							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+						}
+					self.send_ack(ch, method, props, response, send_reply)
 				else:
-					res = "This log type is not supported. Supported types all, debug, error, info, time {today, start, end}"
-				file.close()
-			if log_source == "juju":
-				file = open("juju.log", 'w')
-				cmd_log = ["juju", "debug-log", "--lines", str(10000)]
-				cmd_out = loop.run(run_command(cmd_log))
-				file.write(cmd_out)
-				file.close()
-				file = open("juju.log", 'r')
-				data_tmp=file.readlines()
-				data=[s.replace('\n','') for s in data_tmp]
-				if log_type == None:
-					res=data
-				elif log_type == 'all':
-					res=data
-				elif log_type== 'error' or 'debug' or 'info':
-					data_log_type=[]
-					for line in data:
-						if re.findall(log_type.upper(), line):
-							data_log_type.append(line)
-					res=data_log_type
+					res = "The method {} for the request is not supported".format(request_type.upper(),
+																				  enquiry["request-uri"])
+					response = {
+						"ACK": False,
+						"data": res,
+						"status_code": self.nfvo_jox.gv.HTTP_400_BAD_REQUEST
+					}
+					self.send_ack(ch, method, props, response, send_reply)
+			elif (enquiry["request-uri"] == "/onboard"):
+				files = bytes(enquiry["parameters"]["package_onboard_data"])
+				onboard_files = self.onboard_jox_package(files)
+				if onboard_files[0]:
+					tar_file = self.open_save_tar_gz(files)
+					if tar_file[0]:
+						response = {
+							"ACK": True,
+							"data": tar_file[1],
+							"status_code": self.nfvo_jox.gv.HTTP_200_OK
+						}
+					else:
+						response = {
+							"ACK": False,
+							"data": tar_file[1],
+							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+						}
 				else:
-					res = "This log type is not supported. Supported types all, debug, error, info, time {today, start, end}"
-				file.close()
-			response = {
-				"ACK": True,
-				"data": res,
-				"status_code": self.nfvo_jox.gv.HTTP_200_OK
-			}
-		elif (enquiry["request-uri"] == "/nssi/all") or (enquiry["request-uri"] == "/nssi"):
-			res = self.nfvo_jox.get_subslices_context()
-			response = {
-				"ACK": True,
-				"data": res,
-				"status_code": self.nfvo_jox.gv.HTTP_200_OK
-			}
-		elif (enquiry["request-uri"] == "/nssi/<string:nsi_name>") or \
-				(enquiry["request-uri"] == "/nssi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>"):
-			parameters = enquiry["parameters"]
-			nsi_name = parameters["nsi_name"]
-			nssi_name = parameters["nssi_name"]
-			nssi_key = parameters["nssi_key"]
-			res = self.nfvo_jox.get_slice_context(nsi_name, nssi_name, nssi_key, slice_info=False)
-			if res[0]:
+					response = {
+						"ACK": False,
+						"data": onboard_files[1],
+						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+					}
+				self.send_ack(ch, method, props, response, send_reply)
+			elif (enquiry["request-uri"] == "/log") or (enquiry["request-uri"] == "/log/<string:log_source>") or (enquiry["request-uri"] == "/log/<string:log_source>/<string:log_type>"):
+				parameters = enquiry["parameters"]
+				log_source = parameters["log_source"]
+				log_type = parameters["log_type"]
+				res=None
+				if log_source == "jox":
+					file = open("jox.log", 'r')
+					data_tmp=file.readlines()
+					data=[s.replace('\n','') for s in data_tmp]
+					if log_type == None:
+						res=data
+					elif log_type == 'all':
+						res=data
+					elif log_type== 'error' or 'debug' or 'info':
+						data_log_type=[]
+						for line in data:
+							if re.findall(log_type.upper(), line):
+								data_log_type.append(line)
+						res=data_log_type
+					else:
+						res = "This log type is not supported. Supported types all, debug, error, info, time {today, start, end}"
+					file.close()
+				if log_source == "juju":
+					file = open("juju.log", 'w')
+					cmd_log = ["juju", "debug-log", "--lines", str(10000)]
+					cmd_out = loop.run(run_command(cmd_log))
+					file.write(cmd_out)
+					file.close()
+					file = open("juju.log", 'r')
+					data_tmp=file.readlines()
+					data=[s.replace('\n','') for s in data_tmp]
+					if log_type == None:
+						res=data
+					elif log_type == 'all':
+						res=data
+					elif log_type== 'error' or 'debug' or 'info':
+						data_log_type=[]
+						for line in data:
+							if re.findall(log_type.upper(), line):
+								data_log_type.append(line)
+						res=data_log_type
+					else:
+						res = "This log type is not supported. Supported types all, debug, error, info, time {today, start, end}"
+					file.close()
 				response = {
 					"ACK": True,
-					"data": res[1],
+					"data": res,
 					"status_code": self.nfvo_jox.gv.HTTP_200_OK
 				}
-			else:
+				self.send_ack(ch, method, props, response, send_reply)
+			elif (enquiry["request-uri"] == "/nssi/all") or (enquiry["request-uri"] == "/nssi"):
+				res = self.nfvo_jox.get_subslices_context()
 				response = {
-					"ACK": False,
-					"data": res[1],
-					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+					"ACK": True,
+					"data": res,
+					"status_code": self.nfvo_jox.gv.HTTP_200_OK
 				}
-		elif (enquiry["request-uri"] == "/nssi/<string:nsi_name>/<string:nssi_name>"):
-			parameters = enquiry["parameters"]
-			nsi_name = parameters["nsi_name"]
-			nssi_name = parameters["nssi_name"]
-			request_type = enquiry["request-type"]
-			if request_type == "get":
-				res = self.nfvo_jox.get_slice_context(nsi_name, nssi_name)
+				self.send_ack(ch, method, props, response, send_reply)
+			elif (enquiry["request-uri"] == "/nssi/<string:nsi_name>") or \
+					(enquiry["request-uri"] == "/nssi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>"):
+				parameters = enquiry["parameters"]
+				nsi_name = parameters["nsi_name"]
+				nssi_name = parameters["nssi_name"]
+				nssi_key = parameters["nssi_key"]
+				res = self.nfvo_jox.get_slice_context(nsi_name, nssi_name, nssi_key, slice_info=False)
 				if res[0]:
 					response = {
 						"ACK": True,
@@ -873,61 +861,67 @@ class server_RBMQ(object):
 						"data": res[1],
 						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 					}
-			elif request_type == "post":
-				res = "The method {} of the request {} is not supported".format(request_type, enquiry["request-uri"])
-				response = {
-					"ACK": False,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_400_BAD_REQUEST
-				}
-			elif request_type == "delete":
-				res = "The method {} of the request {} is not supported".format(request_type, enquiry["request-uri"])
-				response = {
-					"ACK": False,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_400_BAD_REQUEST
-				}
-			else:
-				res = "The method {} of the request {} is not supported".format(request_type, enquiry["request-uri"])
-				response = {
-					"ACK": False,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_400_BAD_REQUEST
-				}
-		elif (enquiry["request-uri"] == "/es") \
-				or (enquiry["request-uri"] == "/es/<string:es_index_page>") \
-				or (enquiry["request-uri"] == "/es/<string:es_index_page>/<string:es_key>"):
-			
-			# request_url = enquiry["request-uri"]
-			request_type = enquiry["request-type"]
-			parameters = enquiry["parameters"]
-			template_directory = parameters["template_directory"]
-			es_index_page = parameters["es_index_page"]
-			es_key = parameters["es_key"]
-			if request_type == "get":
-				if self.nfvo_jox.gv.es_status == "Dead":
+				self.send_ack(ch, method, props, response, send_reply)
+			elif (enquiry["request-uri"] == "/nssi/<string:nsi_name>/<string:nssi_name>"):
+				parameters = enquiry["parameters"]
+				nsi_name = parameters["nsi_name"]
+				nssi_name = parameters["nssi_name"]
+				request_type = enquiry["request-type"]
+				if request_type == "get":
+					res = self.nfvo_jox.get_slice_context(nsi_name, nssi_name)
+					if res[0]:
+						response = {
+							"ACK": True,
+							"data": res[1],
+							"status_code": self.nfvo_jox.gv.HTTP_200_OK
+						}
+					else:
+						response = {
+							"ACK": False,
+							"data": res[1],
+							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+						}
+				elif request_type == "post":
+					res = "The method {} of the request {} is not supported".format(request_type, enquiry["request-uri"])
 					response = {
-						"ACK": True,
-						"data": "Elasticsearch is not active",
-						"status_code": self.nfvo_jox.gv.HTTP_200_OK
+						"ACK": False,
+						"data": res,
+						"status_code": self.nfvo_jox.gv.HTTP_400_BAD_REQUEST
+					}
+				elif request_type == "delete":
+					res = "The method {} of the request {} is not supported".format(request_type, enquiry["request-uri"])
+					response = {
+						"ACK": False,
+						"data": res,
+						"status_code": self.nfvo_jox.gv.HTTP_400_BAD_REQUEST
 					}
 				else:
-					if (es_index_page is None):
-						res = self.nfvo_jox.jesearch.get_all_indices_from_es()
-						if res[0]:
-							response = {
-								"ACK": True,
-								"data": res[1],
-								"status_code": self.nfvo_jox.gv.HTTP_200_OK
-							}
-						else:
-							response = {
-								"ACK": False,
-								"data": res[1],
-								"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-							}
+					res = "The method {} of the request {} is not supported".format(request_type, enquiry["request-uri"])
+					response = {
+						"ACK": False,
+						"data": res,
+						"status_code": self.nfvo_jox.gv.HTTP_400_BAD_REQUEST
+					}
+				self.send_ack(ch, method, props, response, send_reply)
+			elif (enquiry["request-uri"] == "/es") \
+					or (enquiry["request-uri"] == "/es/<string:es_index_page>") \
+					or (enquiry["request-uri"] == "/es/<string:es_index_page>/<string:es_key>"):
+
+				# request_url = enquiry["request-uri"]
+				request_type = enquiry["request-type"]
+				parameters = enquiry["parameters"]
+				template_directory = parameters["template_directory"]
+				es_index_page = parameters["es_index_page"]
+				es_key = parameters["es_key"]
+				if request_type == "get":
+					if not self.nfvo_jox.jesearch.ping():
+						response = {
+							"ACK": True,
+							"data": "Elasticsearch is not active",
+							"status_code": self.nfvo_jox.gv.HTTP_200_OK
+						}
 					else:
-						if (es_index_page == "_all") or (es_index_page == "all") or (es_index_page == "*"):
+						if (es_index_page is None):
 							res = self.nfvo_jox.jesearch.get_all_indices_from_es()
 							if res[0]:
 								response = {
@@ -942,625 +936,679 @@ class server_RBMQ(object):
 									"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 								}
 						else:
-							if es_key is None:
-								message = "get the index-page {} ".format(es_index_page)
-								self.logger.info(message)
-								self.logger.debug(message)
-								res = self.nfvo_jox.jesearch.get_source_index(es_index_page)
-								
+							if (es_index_page == "_all") or (es_index_page == "all") or (es_index_page == "*"):
+								res = self.nfvo_jox.jesearch.get_all_indices_from_es()
 								if res[0]:
-									res = res[1]
 									response = {
 										"ACK": True,
-										"data": res,
+										"data": res[1],
 										"status_code": self.nfvo_jox.gv.HTTP_200_OK
 									}
 								else:
-									res = res[1]
 									response = {
 										"ACK": False,
-										"data": res,
+										"data": res[1],
 										"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 									}
-							
-							
 							else:
-								message = "get the key {} from the index-page {} ".format(es_key, es_index_page)
-								self.logger.info(message)
-								self.logger.debug(message)
-								res = self.nfvo_jox.jesearch.get_json_from_es(es_index_page, es_key)
-								if res[0]:
-									res = res[1]
-									response = {
-										"ACK": True,
-										"data": res,
-										"status_code": self.nfvo_jox.gv.HTTP_200_OK
-									}
+								if es_key is None:
+									message = "get the index-page {} ".format(es_index_page)
+									self.logger.info(message)
+									self.logger.debug(message)
+									res = self.nfvo_jox.jesearch.get_source_index(es_index_page)
+
+									if res[0]:
+										res = res[1]
+										response = {
+											"ACK": True,
+											"data": res,
+											"status_code": self.nfvo_jox.gv.HTTP_200_OK
+										}
+									else:
+										res = res[1]
+										response = {
+											"ACK": False,
+											"data": res,
+											"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+										}
+
+
 								else:
-									res = res[1]
-									response = {
-										"ACK": False,
-										"data": res,
-										"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-									}
-									
-			elif request_type == "post":
-				full_path = self.check_existence_path(template_directory, es_index_page)
-				if full_path[0]:
-					full_path = full_path[1]
-					file_content = self.read_yaml_json(full_path)
-					file_content = file_content[1]
-					es_index_page = es_index_page.split('.')
-					es_index_page = (es_index_page[0]).lower()
-					res = self.nfvo_jox.jesearch.set_json_to_es(es_index_page, file_content)
-					if res:
-						res = "The file {} is successfully saved to es".format(full_path)
-						response = {
-							"ACK": False,
-							"data": res,
-							"status_code": self.nfvo_jox.gv.HTTP_200_OK
-						}
+									message = "get the key {} from the index-page {} ".format(es_key, es_index_page)
+									self.logger.info(message)
+									self.logger.debug(message)
+									res = self.nfvo_jox.jesearch.get_json_from_es(es_index_page, es_key)
+									if res[0]:
+										res = res[1]
+										response = {
+											"ACK": True,
+											"data": res,
+											"status_code": self.nfvo_jox.gv.HTTP_200_OK
+										}
+									else:
+										res = res[1]
+										response = {
+											"ACK": False,
+											"data": res,
+											"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+										}
+
+				elif request_type == "post":
+					full_path = self.check_existence_path(template_directory, es_index_page)
+					if full_path[0]:
+						full_path = full_path[1]
+						file_content = self.read_yaml_json(full_path)
+						file_content = file_content[1]
+						es_index_page = es_index_page.split('.')
+						es_index_page = (es_index_page[0]).lower()
+						res = self.nfvo_jox.jesearch.set_json_to_es(es_index_page, file_content)
+						if res:
+							res = "The file {} is successfully saved to es".format(full_path)
+							response = {
+								"ACK": False,
+								"data": res,
+								"status_code": self.nfvo_jox.gv.HTTP_200_OK
+							}
+						else:
+							res = "The file {} can not be saved to es".format(full_path)
+							response = {
+								"ACK": False,
+								"data": res,
+								"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+							}
 					else:
-						res = "The file {} can not be saved to es".format(full_path)
+						res = full_path[1]
 						response = {
 							"ACK": False,
 							"data": res,
 							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 						}
+				elif request_type == "delete":
+					if (es_index_page is None) or (es_index_page == "_all") or (es_index_page == "all") or (
+							es_index_page == "*"):
+						res = self.nfvo_jox.jesearch.delete_all_indices_from_es()
+						if res[0]:
+							res = res[1]
+							response = {
+								"ACK": True,
+								"data": res,
+								"status_code": self.nfvo_jox.gv.HTTP_200_OK
+							}
+						else:
+							res = res[1]
+							response = {
+								"ACK": False,
+								"data": res,
+								"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+							}
+					else:
+						res = self.nfvo_jox.jesearch.del_index_from_es(es_index_page)
+						if res[0]:
+							res = res[1]
+							response = {
+								"ACK": True,
+								"data": res,
+								"status_code": self.nfvo_jox.gv.HTTP_200_OK
+							}
+						else:
+							res = res[1]
+							response = {
+								"ACK": False,
+								"data": res,
+								"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+							}
 				else:
-					res = full_path[1]
+					res = "The method {} for the request {} is not supported".format(request_type, enquiry["request-uri"])
+					response = {
+						"ACK": False,
+						"data": res,
+						"status_code": self.nfvo_jox.gv.HTTP_400_BAD_REQUEST
+					}
+				self.send_ack(ch, method, props, response, send_reply)
+			elif (enquiry["request-uri"] == '/monitor/nsi'):
+				res = {}
+				slcies_context = self.nfvo_jox.get_slice_context()
+				if slcies_context[0]:
+					slcies_context = slcies_context[1]
+					for slice_data in slcies_context:
+						slice_name = slcies_context[slice_data]['slice_name']
+						res[slice_name] = {}
+
+						data_slcie_monitor = ''.join(['slice_monitor_', str(slice_name).lower()])
+						data = self.nfvo_jox.jesearch.get_source_index(data_slcie_monitor)
+						res[slice_name][data_slcie_monitor] = data[1]
+
+						#
+						set_subslices = slcies_context[slice_data]["sub_slices"]
+						for subslcie_name in set_subslices:
+							data_subslcie_monitor = ''.join(['subslice_monitor_', str(subslcie_name).lower()])
+							data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
+							res[slice_name][data_subslcie_monitor] = data[1]
+					response = {
+						"ACK": True,
+						"data": res,
+						"status_code": self.nfvo_jox.gv.HTTP_200_OK
+					}
+				else:
+					res = slcies_context[1]
 					response = {
 						"ACK": False,
 						"data": res,
 						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 					}
-			elif request_type == "delete":
-				if (es_index_page is None) or (es_index_page == "_all") or (es_index_page == "all") or (
-						es_index_page == "*"):
-					res = self.nfvo_jox.jesearch.delete_all_indices_from_es()
-					if res[0]:
-						res = res[1]
-						response = {
-							"ACK": True,
-							"data": res,
-							"status_code": self.nfvo_jox.gv.HTTP_200_OK
-						}
-					else:
-						res = res[1]
-						response = {
-							"ACK": False,
-							"data": res,
-							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-						}
-				else:
-					res = self.nfvo_jox.jesearch.del_index_from_es(es_index_page)
-					if res[0]:
-						res = res[1]
-						response = {
-							"ACK": True,
-							"data": res,
-							"status_code": self.nfvo_jox.gv.HTTP_200_OK
-						}
-					else:
-						res = res[1]
-						response = {
-							"ACK": False,
-							"data": res,
-							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-						}
-			else:
-				res = "The method {} for the request {} is not supported".format(request_type, enquiry["request-uri"])
-				response = {
-					"ACK": False,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_400_BAD_REQUEST
-				}
-		elif (enquiry["request-uri"] == '/monitor/nsi'):
-			res = {}
-			slcies_context = self.nfvo_jox.get_slice_context()
-			if slcies_context[0]:
-				slcies_context = slcies_context[1]
-				for slice_data in slcies_context:
-					slice_name = slcies_context[slice_data]['slice_name']
-					res[slice_name] = {}
-					
-					set_subslices = slcies_context[slice_data]["sub_slices"]
+				self.send_ack(ch, method, props, response, send_reply)
+			elif (enquiry["request-uri"] == '/monitor/nsi/<string:nsi_name>'):
+				parameters = enquiry["parameters"]
+				nsi_name = parameters["nsi_name"]
+
+				slice_data = self.nfvo_jox.get_slice_context(nsi_name)
+				if slice_data[0]:
+					slice_data = slice_data[1]
+					set_subslices = slice_data["sub_slices"]
+					res = {}
+					res[nsi_name] = {}
+
+					data_slcie_monitor = ''.join(['slice_monitor_', str(nsi_name).lower()])
+					data = self.nfvo_jox.jesearch.get_source_index(data_slcie_monitor)
+					res[nsi_name][data_slcie_monitor] = data[1]
+
+
 					for subslcie_name in set_subslices:
-						data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
-						data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
-						res[slice_name][data_subslcie_monitor] = data[1]
-				response = {
-					"ACK": True,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_200_OK
-				}
-			else:
-				res = slcies_context[1]
-				response = {
-					"ACK": False,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-				}
-		elif (enquiry["request-uri"] == '/monitor/nsi/<string:nsi_name>'):
-			parameters = enquiry["parameters"]
-			nsi_name = parameters["nsi_name"]
-			
-			slice_data = self.nfvo_jox.get_slice_context(nsi_name)
-			if slice_data[0]:
-				slice_data = slice_data[1]
-				set_subslices = slice_data["sub_slices"]
-				res = {}
-				res[nsi_name] = {}
-				for subslcie_name in set_subslices:
-					data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
-					data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
-					res[nsi_name][data_subslcie_monitor] = data[1]
-				response = {
-					"ACK": True,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_200_OK
-				}
-			else:
-				res = slice_data[1]
-				response = {
-					"ACK": False,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-				}
-		elif (enquiry["request-uri"] == '/monitor/nsi/<string:nsi_name>/<string:nssi_name>'):
-			parameters = enquiry["parameters"]
-			nsi_name = parameters["nsi_name"]
-			nssi_name = parameters["nssi_name"]
-			
-			slice_data = self.nfvo_jox.get_slice_context(nsi_name)
-			if slice_data[0]:
-				slice_data = slice_data[1]
-				set_subslices = slice_data["sub_slices"]
-				res = {}
-				res[nsi_name] = {}
-				subslice_exist = False
-				for subslcie_name in set_subslices:
-					if nssi_name == subslcie_name:
-						data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
+						data_subslcie_monitor = ''.join(['subslice_monitor_', str(subslcie_name).lower()])
 						data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
 						res[nsi_name][data_subslcie_monitor] = data[1]
-						subslice_exist = True
-				if subslice_exist:
 					response = {
 						"ACK": True,
 						"data": res,
 						"status_code": self.nfvo_jox.gv.HTTP_200_OK
 					}
 				else:
-					res = "The subslice {} does not exist or it is not attached to the slice {}".format(subslcie_name,
-					                                                                                    nssi_name)
+					res = slice_data[1]
 					response = {
 						"ACK": False,
 						"data": res,
 						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 					}
-			else:
-				res = slice_data[1]
-				response = {
-					"ACK": False,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-				}
-		elif (enquiry["request-uri"] == '/monitor/nsi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>'):
-			parameters = enquiry["parameters"]
-			nsi_name = parameters["nsi_name"]
-			nssi_name = parameters["nssi_name"]
-			nssi_key = parameters["nssi_key"]
-			
-			slice_data = self.nfvo_jox.get_slice_context(nsi_name)
-			if slice_data[0]:
-				slice_data = slice_data[1]
-				set_subslices = slice_data["sub_slices"]
-				res = {}
-				res[nsi_name] = {}
-				subslice_exist = False
-				nssi_key_exist = False
-				for subslcie_name in set_subslices:
-					if nssi_name == subslcie_name:
-						subslice_exist = True
-						data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
-						res[nsi_name][data_subslcie_monitor] = {}
-						data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
-						for subslice_key in data[1]:
-							if subslice_key == nssi_key:
-								res[nsi_name][data_subslcie_monitor][subslice_key] = data[1][subslice_key]
-								nssi_key_exist = True
-				
-				if subslice_exist:
-					if nssi_key_exist:
+				self.send_ack(ch, method, props, response, send_reply)
+			elif (enquiry["request-uri"] == '/monitor/nsi/<string:nsi_name>/<string:nssi_name>'):
+				parameters = enquiry["parameters"]
+				nsi_name = parameters["nsi_name"]
+				nssi_name = parameters["nssi_name"]
+
+				slice_data = self.nfvo_jox.get_slice_context(nsi_name)
+				if slice_data[0]:
+					slice_data = slice_data[1]
+					set_subslices = slice_data["sub_slices"]
+					res = {}
+					res[nsi_name] = {}
+					subslice_exist = False
+					for subslcie_name in set_subslices:
+						if nssi_name == subslcie_name:
+							data_subslcie_monitor = ''.join(['subslice_monitor_', str(subslcie_name).lower()])
+							data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
+							res[nsi_name][data_subslcie_monitor] = data[1]
+							subslice_exist = True
+					if subslice_exist:
 						response = {
 							"ACK": True,
 							"data": res,
 							"status_code": self.nfvo_jox.gv.HTTP_200_OK
 						}
 					else:
-						res = "The key entity {} of the subslice {} attached to slice {} does not exist".format(
-							nssi_key, nssi_name, nsi_name)
+						res = "The subslice {} does not exist or it is not attached to the slice {}".format(subslcie_name,
+																											nssi_name)
 						response = {
 							"ACK": False,
 							"data": res,
 							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 						}
 				else:
-					res = "The subslice {} attached to slice {} does not exist".format(nssi_name, nsi_name)
+					res = slice_data[1]
 					response = {
 						"ACK": False,
 						"data": res,
 						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 					}
-			else:
-				res = slice_data[1]
-				response = {
-					"ACK": False,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-				}
-		elif enquiry["request-uri"] == '/monitor/service/<string:nsi_name>':
-			parameters = enquiry["parameters"]
-			nsi_name = parameters["nsi_name"]
-			slice_data = self.nfvo_jox.get_slice_context(nsi_name)
-			if slice_data[0]:
-				slice_data = slice_data[1]
-				set_subslices = slice_data["sub_slices"]
-				res = {}
-				res[nsi_name] = {}
-				for subslcie_name in set_subslices:
-					data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
-					data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
-					
-					res[nsi_name][data_subslcie_monitor] = {}
-					res[nsi_name][data_subslcie_monitor]["service_status"] = data[1]["service_status"]
-				response = {
-					"ACK": True,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_200_OK
-				}
-			else:
-				res = slice_data[1]
-				response = {
-					"ACK": False,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-				}
-		elif enquiry["request-uri"] == '/monitor/service/<string:nsi_name>/<string:nssi_name>':
-			parameters = enquiry["parameters"]
-			nsi_name = parameters["nsi_name"]
-			nssi_name = parameters["nssi_name"]
-			nssi_key = parameters["nssi_key"]
-			
-			slice_data = self.nfvo_jox.get_slice_context(nsi_name)
-			if slice_data[0]:
-				slice_data = slice_data[1]
-				set_subslices = slice_data["sub_slices"]
-				res = {}
-				res[nsi_name] = {}
-				subslice_exist = False
-				for subslcie_name in set_subslices:
-					if nssi_name == subslcie_name:
-						subslice_exist = True
-						data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
+				self.send_ack(ch, method, props, response, send_reply)
+			elif (enquiry["request-uri"] == '/monitor/nsi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>'):
+				parameters = enquiry["parameters"]
+				nsi_name = parameters["nsi_name"]
+				nssi_name = parameters["nssi_name"]
+				nssi_key = parameters["nssi_key"]
+
+				slice_data = self.nfvo_jox.get_slice_context(nsi_name)
+				if slice_data[0]:
+					slice_data = slice_data[1]
+					set_subslices = slice_data["sub_slices"]
+					res = {}
+					res[nsi_name] = {}
+					subslice_exist = False
+					nssi_key_exist = False
+					for subslcie_name in set_subslices:
+						if nssi_name == subslcie_name:
+							subslice_exist = True
+							data_subslcie_monitor = ''.join(['subslice_monitor_', str(subslcie_name).lower()])
+							res[nsi_name][data_subslcie_monitor] = {}
+							data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
+							for subslice_key in data[1]:
+								if subslice_key == nssi_key:
+									res[nsi_name][data_subslcie_monitor][subslice_key] = data[1][subslice_key]
+									nssi_key_exist = True
+
+					if subslice_exist:
+						if nssi_key_exist:
+							response = {
+								"ACK": True,
+								"data": res,
+								"status_code": self.nfvo_jox.gv.HTTP_200_OK
+							}
+						else:
+							res = "The key entity {} of the subslice {} attached to slice {} does not exist".format(
+								nssi_key, nssi_name, nsi_name)
+							response = {
+								"ACK": False,
+								"data": res,
+								"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+							}
+					else:
+						res = "The subslice {} attached to slice {} does not exist".format(nssi_name, nsi_name)
+						response = {
+							"ACK": False,
+							"data": res,
+							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+						}
+				else:
+					res = slice_data[1]
+					response = {
+						"ACK": False,
+						"data": res,
+						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+					}
+				self.send_ack(ch, method, props, response, send_reply)
+			elif enquiry["request-uri"] == '/monitor/service/<string:nsi_name>':
+				parameters = enquiry["parameters"]
+				nsi_name = parameters["nsi_name"]
+				slice_data = self.nfvo_jox.get_slice_context(nsi_name)
+				if slice_data[0]:
+					slice_data = slice_data[1]
+					set_subslices = slice_data["sub_slices"]
+					res = {}
+					res[nsi_name] = {}
+					for subslcie_name in set_subslices:
+						data_subslcie_monitor = ''.join(['subslice_monitor_', str(subslcie_name).lower()])
 						data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
+
 						res[nsi_name][data_subslcie_monitor] = {}
 						res[nsi_name][data_subslcie_monitor]["service_status"] = data[1]["service_status"]
-				if subslice_exist:
 					response = {
 						"ACK": True,
 						"data": res,
 						"status_code": self.nfvo_jox.gv.HTTP_200_OK
 					}
 				else:
-					res = "The subslice {} attached to slice {} does not exist".format(nssi_name, nsi_name)
+					res = slice_data[1]
 					response = {
 						"ACK": False,
 						"data": res,
 						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 					}
-			else:
-				res = slice_data[1]
-				response = {
-					"ACK": False,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-				}
-		elif enquiry["request-uri"] == '/monitor/service/<string:nsi_name>/<string:nssi_name>/<string:service_name>':
-			parameters = enquiry["parameters"]
-			nsi_name = parameters["nsi_name"]
-			nssi_name = parameters["nssi_name"]
-			service_name = parameters["service_name"]
-			
-			slice_data = self.nfvo_jox.get_slice_context(nsi_name)
-			if slice_data[0]:
-				slice_data = slice_data[1]
-				set_subslices = slice_data["sub_slices"]
-				res = {}
-				res[nsi_name] = {}
-				required_entity_exist = False
-				subslice_exist = False
-				for subslcie_name in set_subslices:
-					if nssi_name == subslcie_name:
-						subslice_exist = True
-						data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
-						data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
-						res[nsi_name][data_subslcie_monitor] = {}
-						list_services = data[1]["service_status"]
-						for service_tmp in list_services:
-							if [*service_tmp][0] == service_name:
-								res[nsi_name][data_subslcie_monitor]["service_status"] = service_tmp
-								required_entity_exist = True
-				if subslice_exist:
-					if required_entity_exist:
+				self.send_ack(ch, method, props, response, send_reply)
+			elif enquiry["request-uri"] == '/monitor/service/<string:nsi_name>/<string:nssi_name>':
+				parameters = enquiry["parameters"]
+				nsi_name = parameters["nsi_name"]
+				nssi_name = parameters["nssi_name"]
+				nssi_key = parameters["nssi_key"]
+
+				slice_data = self.nfvo_jox.get_slice_context(nsi_name)
+				if slice_data[0]:
+					slice_data = slice_data[1]
+					set_subslices = slice_data["sub_slices"]
+					res = {}
+					res[nsi_name] = {}
+					subslice_exist = False
+					for subslcie_name in set_subslices:
+						if nssi_name == subslcie_name:
+							subslice_exist = True
+							data_subslcie_monitor = ''.join(['subslice_monitor_', str(subslcie_name).lower()])
+							data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
+							res[nsi_name][data_subslcie_monitor] = {}
+							res[nsi_name][data_subslcie_monitor]["service_status"] = data[1]["service_status"]
+					if subslice_exist:
 						response = {
 							"ACK": True,
 							"data": res,
 							"status_code": self.nfvo_jox.gv.HTTP_200_OK
 						}
 					else:
-						res = "The entity {} of the subslcie {} attached to the slice {} does not exist".format(
-							service_name, subslcie_name, nsi_name)
+						res = "The subslice {} attached to slice {} does not exist".format(nssi_name, nsi_name)
 						response = {
 							"ACK": False,
 							"data": res,
 							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 						}
 				else:
-					res = "The subslcie {} attached to the slice {} does not exist".format(subslcie_name, nsi_name)
+					res = slice_data[1]
 					response = {
 						"ACK": False,
 						"data": res,
 						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 					}
-			
-			else:
-				res = slice_data[1]
-				response = {
-					"ACK": False,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-				}
-		elif enquiry["request-uri"] == '/monitor/machine/<string:nsi_name>':
-			parameters = enquiry["parameters"]
-			nsi_name = parameters["nsi_name"]
-			slice_data = self.nfvo_jox.get_slice_context(nsi_name)
-			if slice_data[0]:
-				slice_data = slice_data[1]
-				set_subslices = slice_data["sub_slices"]
-				res = {}
-				res[nsi_name] = {}
-				for subslcie_name in set_subslices:
-					data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
-					data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
-					
-					res[nsi_name][data_subslcie_monitor] = {}
-					res[nsi_name][data_subslcie_monitor]["machine_status"] = data[1]["machine_status"]
-				response = {
-					"ACK": True,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_200_OK
-				}
-			else:
-				res = slice_data[1]
-				response = {
-					"ACK": False,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-				}
-		elif enquiry["request-uri"] == '/monitor/machine/<string:nsi_name>/<string:nssi_name>':
-			parameters = enquiry["parameters"]
-			nsi_name = parameters["nsi_name"]
-			nssi_name = parameters["nssi_name"]
-			
-			slice_data = self.nfvo_jox.get_slice_context(nsi_name)
-			if slice_data[0]:
-				slice_data = slice_data[1]
-				set_subslices = slice_data["sub_slices"]
-				res = {}
-				res[nsi_name] = {}
-				subslice_exist = False
-				for subslcie_name in set_subslices:
-					if nssi_name == subslcie_name:
-						subslice_exist = True
-						data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
+				self.send_ack(ch, method, props, response, send_reply)
+			elif enquiry["request-uri"] == '/monitor/service/<string:nsi_name>/<string:nssi_name>/<string:service_name>':
+				parameters = enquiry["parameters"]
+				nsi_name = parameters["nsi_name"]
+				nssi_name = parameters["nssi_name"]
+				service_name = parameters["service_name"]
+
+				slice_data = self.nfvo_jox.get_slice_context(nsi_name)
+				if slice_data[0]:
+					slice_data = slice_data[1]
+					set_subslices = slice_data["sub_slices"]
+					res = {}
+					res[nsi_name] = {}
+					required_entity_exist = False
+					subslice_exist = False
+					for subslcie_name in set_subslices:
+						if nssi_name == subslcie_name:
+							subslice_exist = True
+							data_subslcie_monitor = ''.join(['subslice_monitor_', str(subslcie_name).lower()])
+							data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
+							res[nsi_name][data_subslcie_monitor] = {}
+							list_services = data[1]["service_status"]
+							for service_tmp in list_services:
+								if [*service_tmp][0] == service_name:
+									res[nsi_name][data_subslcie_monitor]["service_status"] = service_tmp
+									required_entity_exist = True
+					if subslice_exist:
+						if required_entity_exist:
+							response = {
+								"ACK": True,
+								"data": res,
+								"status_code": self.nfvo_jox.gv.HTTP_200_OK
+							}
+						else:
+							res = "The entity {} of the subslcie {} attached to the slice {} does not exist".format(
+								service_name, subslcie_name, nsi_name)
+							response = {
+								"ACK": False,
+								"data": res,
+								"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+							}
+					else:
+						res = "The subslcie {} attached to the slice {} does not exist".format(subslcie_name, nsi_name)
+						response = {
+							"ACK": False,
+							"data": res,
+							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+						}
+
+				else:
+					res = slice_data[1]
+					response = {
+						"ACK": False,
+						"data": res,
+						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+					}
+				self.send_ack(ch, method, props, response, send_reply)
+			elif enquiry["request-uri"] == '/monitor/machine/<string:nsi_name>':
+				parameters = enquiry["parameters"]
+				nsi_name = parameters["nsi_name"]
+				slice_data = self.nfvo_jox.get_slice_context(nsi_name)
+				if slice_data[0]:
+					slice_data = slice_data[1]
+					set_subslices = slice_data["sub_slices"]
+					res = {}
+					res[nsi_name] = {}
+					for subslcie_name in set_subslices:
+						data_subslcie_monitor = ''.join(['subslice_monitor_', str(subslcie_name).lower()])
 						data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
+
 						res[nsi_name][data_subslcie_monitor] = {}
 						res[nsi_name][data_subslcie_monitor]["machine_status"] = data[1]["machine_status"]
-				if subslice_exist:
 					response = {
 						"ACK": True,
 						"data": res,
 						"status_code": self.nfvo_jox.gv.HTTP_200_OK
 					}
 				else:
-					res = "The subslcie {} attached to the slice {} does not exist".format(subslcie_name, nsi_name)
+					res = slice_data[1]
 					response = {
 						"ACK": False,
 						"data": res,
 						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 					}
-			else:
-				res = slice_data[1]
-				response = {
-					"ACK": False,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-				}
-		elif enquiry["request-uri"] == '/monitor/machine/<string:nsi_name>/<string:nssi_name>/<string:machine_name>':
-			parameters = enquiry["parameters"]
-			nsi_name = parameters["nsi_name"]
-			nssi_name = parameters["nssi_name"]
-			machine_name = parameters["machine_name"]
-			
-			slice_data = self.nfvo_jox.get_slice_context(nsi_name)
-			if slice_data[0]:
-				slice_data = slice_data[1]
-				set_subslices = slice_data["sub_slices"]
-				res = {}
-				res[nsi_name] = {}
-				subslice_exist = False
-				entity_key_exist = False
-				for subslcie_name in set_subslices:
-					if nssi_name == subslcie_name:
-						subslice_exist = True
-						data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
-						data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
-						res[nsi_name][data_subslcie_monitor] = {}
-						list_machines = data[1]["machine_status"]
-						for machine_tmp in list_machines:
-							if [*machine_tmp][0] == machine_name:
-								res[nsi_name][data_subslcie_monitor]["machine_status"] = machine_tmp
-								entity_key_exist = True
-				
-				if subslice_exist:
-					if entity_key_exist:
+				self.send_ack(ch, method, props, response, send_reply)
+			elif enquiry["request-uri"] == '/monitor/machine/<string:nsi_name>/<string:nssi_name>':
+				parameters = enquiry["parameters"]
+				nsi_name = parameters["nsi_name"]
+				nssi_name = parameters["nssi_name"]
+
+				slice_data = self.nfvo_jox.get_slice_context(nsi_name)
+				if slice_data[0]:
+					slice_data = slice_data[1]
+					set_subslices = slice_data["sub_slices"]
+					res = {}
+					res[nsi_name] = {}
+					subslice_exist = False
+					for subslcie_name in set_subslices:
+						if nssi_name == subslcie_name:
+							subslice_exist = True
+							data_subslcie_monitor = ''.join(['subslice_monitor_', str(subslcie_name).lower()])
+							data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
+							res[nsi_name][data_subslcie_monitor] = {}
+							res[nsi_name][data_subslcie_monitor]["machine_status"] = data[1]["machine_status"]
+					if subslice_exist:
 						response = {
 							"ACK": True,
 							"data": res,
 							"status_code": self.nfvo_jox.gv.HTTP_200_OK
 						}
 					else:
-						res = "The entity {} of the subslcie {} attached to the slice {} does not exist".format(
-							machine_name, subslcie_name, nsi_name)
+						res = "The subslcie {} attached to the slice {} does not exist".format(subslcie_name, nsi_name)
 						response = {
 							"ACK": False,
 							"data": res,
 							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 						}
 				else:
-					res = "The subslcie {} attached to the slice {} does not exist".format(subslcie_name, nsi_name)
+					res = slice_data[1]
 					response = {
 						"ACK": False,
 						"data": res,
 						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 					}
-			else:
-				res = slice_data[1]
-				response = {
-					"ACK": False,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-				}
-		
-		elif enquiry["request-uri"] == '/monitor/relation/<string:nsi_name>':
-			parameters = enquiry["parameters"]
-			nsi_name = parameters["nsi_name"]
-			slice_data = self.nfvo_jox.get_slice_context(nsi_name)
-			if slice_data[0]:
-				slice_data = slice_data[1]
-				set_subslices = slice_data["sub_slices"]
-				res = {}
-				res[nsi_name] = {}
-				for subslcie_name in set_subslices:
-					data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
-					data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
-					
-					res[nsi_name][data_subslcie_monitor] = {}
-					res[nsi_name][data_subslcie_monitor]["relation_status"] = data[1]["relation_status"]
-				response = {
-					"ACK": True,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_200_OK
-				}
-			else:
-				res = slice_data[1]
-				response = {
-					"ACK": False,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-				}
-		
-		elif enquiry["request-uri"] == '/monitor/relation/<string:nsi_name>/<string:nssi_name_source>':
-			parameters = enquiry["parameters"]
-			nsi_name = parameters["nsi_name"]
-			nssi_name_source = parameters["nssi_name_source"]
-			
-			slice_data = self.nfvo_jox.get_slice_context(nsi_name)
-			if slice_data[0]:
-				slice_data = slice_data[1]
-				set_subslices = slice_data["sub_slices"]
-				res = {}
-				res[nsi_name] = {}
-				subslice_exist = False
-				for subslcie_name in set_subslices:
-					if nssi_name_source == subslcie_name:
-						subslice_exist = True
-						data_subslcie_monitor = ''.join(['slice_monitor_', str(subslcie_name).lower()])
+				self.send_ack(ch, method, props, response, send_reply)
+			elif enquiry["request-uri"] == '/monitor/machine/<string:nsi_name>/<string:nssi_name>/<string:machine_name>':
+				parameters = enquiry["parameters"]
+				nsi_name = parameters["nsi_name"]
+				nssi_name = parameters["nssi_name"]
+				machine_name = parameters["machine_name"]
+
+				slice_data = self.nfvo_jox.get_slice_context(nsi_name)
+				if slice_data[0]:
+					slice_data = slice_data[1]
+					set_subslices = slice_data["sub_slices"]
+					res = {}
+					res[nsi_name] = {}
+					subslice_exist = False
+					entity_key_exist = False
+					for subslcie_name in set_subslices:
+						if nssi_name == subslcie_name:
+							subslice_exist = True
+							data_subslcie_monitor = ''.join(['subslice_monitor_', str(subslcie_name).lower()])
+							data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
+							res[nsi_name][data_subslcie_monitor] = {}
+							list_machines = data[1]["machine_status"]
+							for machine_tmp in list_machines:
+								if [*machine_tmp][0] == machine_name:
+									res[nsi_name][data_subslcie_monitor]["machine_status"] = machine_tmp
+									entity_key_exist = True
+
+					if subslice_exist:
+						if entity_key_exist:
+							response = {
+								"ACK": True,
+								"data": res,
+								"status_code": self.nfvo_jox.gv.HTTP_200_OK
+							}
+						else:
+							res = "The entity {} of the subslcie {} attached to the slice {} does not exist".format(
+								machine_name, subslcie_name, nsi_name)
+							response = {
+								"ACK": False,
+								"data": res,
+								"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+							}
+					else:
+						res = "The subslcie {} attached to the slice {} does not exist".format(subslcie_name, nsi_name)
+						response = {
+							"ACK": False,
+							"data": res,
+							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+						}
+				else:
+					res = slice_data[1]
+					response = {
+						"ACK": False,
+						"data": res,
+						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+					}
+				self.send_ack(ch, method, props, response, send_reply)
+			elif enquiry["request-uri"] == '/monitor/relation/<string:nsi_name>':
+				parameters = enquiry["parameters"]
+				nsi_name = parameters["nsi_name"]
+				slice_data = self.nfvo_jox.get_slice_context(nsi_name)
+				if slice_data[0]:
+					slice_data = slice_data[1]
+					set_subslices = slice_data["sub_slices"]
+					res = {}
+					res[nsi_name] = {}
+
+					data_slcie_monitor = ''.join(['slice_monitor_', str(nsi_name).lower()])
+					data = self.nfvo_jox.jesearch.get_source_index(data_slcie_monitor)
+
+					res[nsi_name][data_slcie_monitor] = {}
+					res[nsi_name][data_slcie_monitor]["relation_status"] = data[1]["relation_status"]
+
+					for subslcie_name in set_subslices:
+						data_subslcie_monitor = ''.join(['subslice_monitor_', str(subslcie_name).lower()])
 						data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
+
 						res[nsi_name][data_subslcie_monitor] = {}
 						res[nsi_name][data_subslcie_monitor]["relation_status"] = data[1]["relation_status"]
-				if subslice_exist:
 					response = {
 						"ACK": True,
 						"data": res,
 						"status_code": self.nfvo_jox.gv.HTTP_200_OK
 					}
 				else:
-					res = "The subslcie {} attached to the slice {} does not exist".format(subslcie_name, nsi_name)
+					res = slice_data[1]
 					response = {
 						"ACK": False,
 						"data": res,
 						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 					}
+				self.send_ack(ch, method, props, response, send_reply)
+			elif enquiry["request-uri"] == '/monitor/relation/<string:nsi_name>/<string:nssi_name_source>':
+				parameters = enquiry["parameters"]
+				nsi_name = parameters["nsi_name"]
+				nssi_name_source = parameters["nssi_name_source"]
+
+				slice_data = self.nfvo_jox.get_slice_context(nsi_name)
+				if slice_data[0]:
+					slice_data = slice_data[1]
+					set_subslices = slice_data["sub_slices"]
+					res = {}
+					res[nsi_name] = {}
+					subslice_exist = False
+					for subslcie_name in set_subslices:
+						if nssi_name_source == subslcie_name:
+							subslice_exist = True
+							data_subslcie_monitor = ''.join(['subslice_monitor_', str(subslcie_name).lower()])
+							data = self.nfvo_jox.jesearch.get_source_index(data_subslcie_monitor)
+							res[nsi_name][data_subslcie_monitor] = {}
+							res[nsi_name][data_subslcie_monitor]["relation_status"] = data[1]["relation_status"]
+					if subslice_exist:
+						response = {
+							"ACK": True,
+							"data": res,
+							"status_code": self.nfvo_jox.gv.HTTP_200_OK
+						}
+					else:
+						res = "The subslcie {} attached to the slice {} does not exist".format(subslcie_name, nsi_name)
+						response = {
+							"ACK": False,
+							"data": res,
+							"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+						}
+				else:
+					res = slice_data[1]
+					response = {
+						"ACK": False,
+						"data": res,
+						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+					}
+				self.send_ack(ch, method, props, response, send_reply)
+			elif (enquiry["request-uri"] == '/monitor/juju') or (
+					enquiry["request-uri"] == '/monitor/juju/<string:juju_key_val>')\
+					or(enquiry["request-uri"] == '/monitor/juju/<string:juju_key_val>/<string:cloud_name>/<string:model_name>'):
+				parameters = enquiry["parameters"]
+				juju_key_val = parameters["juju_key_val"]
+				cloud_name = parameters["cloud_name"]
+				model_name = parameters["model_name"]
+
+				data = loop.run(jmonitor_get_juju_status(juju_key_val, cloud_name, model_name))
+
+				if data[0]:
+					res = data[1]
+					response = {
+						"ACK": False,
+						"data": res,
+						"status_code": self.nfvo_jox.gv.HTTP_200_OK
+					}
+				else:
+					res = data[1]
+					response = {
+						"ACK": False,
+						"data": res,
+						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+					}
+				self.send_ack(ch, method, props, response, send_reply)
 			else:
-				res = slice_data[1]
+				response = "Reqquest not supported"
 				response = {
 					"ACK": False,
-					"data": res,
+					"data": response,
 					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 				}
-		elif (enquiry["request-uri"] == '/monitor/juju') or (
-				enquiry["request-uri"] == '/monitor/juju/<string:juju_key_val>')\
-				or(enquiry["request-uri"] == '/monitor/juju/<string:juju_key_val>/<string:cloud_name>/<string:model_name>'):
-			parameters = enquiry["parameters"]
-			juju_key_val = parameters["juju_key_val"]
-			cloud_name = parameters["cloud_name"]
-			model_name = parameters["model_name"]
-			
-			data = loop.run(jmonitor_get_juju_status(juju_key_val, cloud_name, model_name))
-			
-			if data[0]:
-				res = data[1]
-				response = {
-					"ACK": False,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_200_OK
-				}
-			else:
-				res = data[1]
-				response = {
-					"ACK": False,
-					"data": res,
-					"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
-				}
+				self.send_ack(ch, method, props, response, send_reply)
 		else:
-			response = "Reqquest not supported"
 			response = {
 				"ACK": False,
-				"data": response,
-				"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+				"data": None,
+				"status_code": self.nfvo_jox.gv.HTTP_200_OK
 			}
-		
+			send_reply = True
+			self.send_ack(ch, method, props, response, send_reply)
+	def send_ack(self, ch, method, props, response, send_reply):
+
+		if send_reply:
+			response = json.dumps(response)
+			try:
+				ch.basic_publish(exchange='',
+								 routing_key=props.reply_to,
+								 properties=pika.BasicProperties(correlation_id= \
+																	 props.correlation_id),
+								 body=str(response))
+				ch.basic_ack(delivery_tag=method.delivery_tag)
+			except pika_exceptions.ConnectionClosed:
+				pass
+			except Exception as ex:
+				logger.critical("Error while sending response: {}".format(ex))
 		print(colored(' [*] Waiting for messages. To exit press CTRL+C', 'green'))
-		response = json.dumps(response)
-		try:
-			ch.basic_publish(exchange='',
-			                 routing_key=props.reply_to,
-			                 properties=pika.BasicProperties(correlation_id= \
-				                                                 props.correlation_id),
-			                 body=str(response))
-			ch.basic_ack(delivery_tag=method.delivery_tag)
-			response = None
-		except pika_exceptions.ConnectionClosed:
-			pass
-		except Exception as ex:
-			logger.critical("Error while sending response: {}".format(ex))
-	
+
 	def check_existence_path(self, file_directory, nsi_name):
 		if file_directory is None:
-			# file_directory = self.nfvo_jox.dir_slice
 			file_directory = self.nfvo_jox.gv.STORE_DIR
 		if not os.path.exists(file_directory):
 			message = self.path_not_found(file_directory)

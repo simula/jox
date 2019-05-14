@@ -43,12 +43,11 @@ logger = logging.getLogger('jox.templateManager')
 
 
 dir_path = os.path.dirname(os.path.abspath(__file__ + "/../../../"))
-import json, yaml
-from src.core.ro.plugins import es
-from elasticsearch import Elasticsearch
-import datetime, time
+import yaml
+import datetime
+import time
 
-service_keys = {}    # local key dictionary for slice component's context matching
+service_keys = {} # local key dictionary for slice component's context matching
 machine_keys = {}
 relation_keys = {}
 
@@ -76,43 +75,9 @@ vdu_requirement_additional_skeleton = {
 
 
 anyval_inlist = lambda a, b: any(i in b for i in a)
-# dsl_definitions = {
-# 	"host":{
-# 			"tiny":{
-# 				"disk_size": 1, #GB
-# 				"num_cpus": 1,
-# 				"mem_size": 256, #MB
-# 			},
-# 			"small":{
-# 				"disk_size": 3, #GB
-# 				"num_cpus": 1,
-# 				"mem_size": 512, #MB
-# 			}
-# 		},
-# 	"os":{
-# 			"ubuntu_14_64":{
-# 				"architecture": "x86_64",
-# 				"type": "Linux",
-# 				"distribution": "Ubuntu",
-# 				"version": "14.04"
-# 			},
-# 			"ubuntu_16_64":{
-# 				"architecture": "x86_64",
-# 				"type": "Linux",
-# 				"distribution": "Ubuntu",
-# 				"version": "16.04"
-# 			},
-# 			"ubuntu_18_64":{
-# 				"architecture": "x86_64",
-# 				"type": "Linux",
-# 				"distribution": "Ubuntu",
-# 				"version": "18.04"
-# 			}
-# 		},
-# }
 class TemplateManager():
 
-	def __init__(self, global_variables):
+	def __init__(self, global_variables, jesearch):
 		self.gv = global_variables
 		self.es_host = self.gv.ELASTICSEARCH_HOSt
 		self.es_port = self.gv.ELASTICSEARCH_PORT
@@ -124,11 +89,7 @@ class TemplateManager():
 		self.map_userNssiId_NssiId = {}
 		self.NSI_template = None
 		self.NSSI_template = list()
-		self.jesearch = es.JESearch(self.es_host, self.es_port, self.es_log_level)
-		if self.gv.es_status=="Dead":
-			pass
-		else:
-			es.del_all_from_es(self.es_host, self.es_port, 'slice_keys')
+		self.jesearch = jesearch
 		
 		self.logger = logging.getLogger('jox.TemplateManager')
 		self.log_config()
@@ -146,15 +107,6 @@ class TemplateManager():
 		else:
 			self.logger.setLevel(logging.INFO)
 	def build(self, slice_name_yml, nsi_dir, nssi_dir):
-		if not self.jesearch.ping():
-			message = "Elasticsearch is not working while it is enabled. Either disable elasticsearch or run it"
-			self.logger.error(message)
-			#self.es_status="Dead"
-			self.gv.es_status="Dead"
-		else:
-			# self.es_status="Active"
-			self.gv.es_status="Active"
-			self.jesearch = es.JESearch(self.es_host, self.es_port, self.es_log_level)
 		
 		slice_full_path = ''.join([nsi_dir, slice_name_yml])
 		try:
@@ -170,8 +122,7 @@ class TemplateManager():
 		self.NSI_template = slice_data_file
 		self.NSI_ID = slice_data_file['metadata']['ID']
 
-		#if self.es_status == "Active":
-		if self.gv.es_status == "Active":
+		if self.jesearch.ping():
 			self.set_NSI_monitor_index(self.NSI_ID)
 			message = "Deleting the index {} from elasticsearch if alredy exist".format((self.NSI_ID).lower())
 			logger.info(message)
@@ -204,7 +155,7 @@ class TemplateManager():
 			logger.info(message)
 			logger.debug(message)
 
-			if self.gv.es_status == "Active":
+			if self.jesearch.ping():
 				self.jesearch.del_index_from_es(nssi_id)
 				message = "Saving the index {} to elasticsearch".format(nssi_id)
 				logger.info(message)
@@ -383,9 +334,7 @@ class TemplateManager():
 
 
 
-		if not self.jesearch.ping():
-			pass
-		else:
+		if self.jesearch.ping():
 			self.set_NSSI_monitor_index(nssi_id, self.get_NSI_ID(), list_services, list_machines) # Add monitoring template for this subslice
 		return [slice_version, list_services, list_machines, abort_deploy_subslice]
 
@@ -412,18 +361,47 @@ class TemplateManager():
 				return nssi_template
 
 	def set_NSI_monitor_index(self, nsi_id):
+		# slice keys
 		date = (datetime.datetime.now()).isoformat()
 		slice_skeleton = {"date": date,
 							"machine_keys": [],
 							"service_keys": [],
-							"relation_keys": []} # Relation key not required for now
-		es.del_all_from_es(self.es_host, self.es_port, 'slice_keys_' + nsi_id.lower()) # this is per  slice index (runtime updates)
-		es.set_json_to_es(self.es_host, self.es_port, 'slice_keys_' + nsi_id.lower(), slice_skeleton)
+							"relation_keys": []
+						  } # Relation key not required for now
+		self.jesearch.del_index_from_es('slice_keys_' + nsi_id.lower())
+		self.jesearch.set_json_to_es('slice_keys_' + nsi_id.lower(), slice_skeleton)
+		""" slice monitor """
+		self.jesearch.del_index_from_es('slice_monitor_' + nsi_id.lower())
 
+		date = (datetime.datetime.now()).isoformat()
 
+		slice_skeleton = {"date": date,
+						  "relation_status": []}  # Create Empty container
+		self.jesearch.set_json_to_es('slice_monitor_' + nsi_id.lower(), slice_skeleton)
 
+		inter_nsi_relations = self.get_inter_nssi_relations()
+		relations_list = []
+		for inter_rel in inter_nsi_relations:
+			relation_name = {"date": date,
+							"nsi_id": nsi_id,
+							"nssi_source": inter_nsi_relations[inter_rel]["nssi_source"],
+							"nssi_node_source": inter_nsi_relations[inter_rel]["nssi_node_source"],
+							"nssi_target": inter_nsi_relations[inter_rel]["nssi_target"],
+							"nssi_node_target": inter_nsi_relations[inter_rel]["nssi_node_target"],
+							"prejoining_since": date,
+							"prejoining_time": "0",
+							"joining_since": "0",
+							"joining_time": "0",
+							"joined_since": "0",
+							"joined_time": "0",
+							"current_state": "prejoining",
+ 							}
+			relations_list.append(relation_name)
+		self.jesearch.update_index_with_content('slice_monitor_' + nsi_id.lower(),
+												'relation_status',
+												relations_list)
 	def set_NSSI_monitor_index(self, nssi_id, nsi_id, list_services, list_machines):
-		es.del_all_from_es(self.es_host, self.es_port, 'slice_monitor_' + nssi_id.lower()) # this is per sub slice index (runtime updates)
+		self.jesearch.del_index_from_es('subslice_monitor_' + nssi_id.lower())
 		services_list = []
 		machines_list = []
 		relations_list = []
@@ -433,22 +411,31 @@ class TemplateManager():
 							"machine_status": [],
 							"service_status": [],
 							"relation_status": []}  # Create Empty container
-		es.set_json_to_es(self.es_host, self.es_port, 'slice_monitor_' + nssi_id.lower(), slice_skeleton)
+		self.jesearch.set_json_to_es('subslice_monitor_' + nssi_id.lower(), slice_skeleton)
+
+		# es.set_json_to_es(self.es_host, self.es_port, 'subslice_monitor_' + nssi_id.lower(), slice_skeleton)
 		service_list = list(list_services.keys())  # List of applications
-		ES = Elasticsearch([{'host': self.es_host, 'port': self.es_port, 'use_ssl': False}])
+		# ES = Elasticsearch([{'host': self.es_host, 'port': self.es_port, 'use_ssl': False}])
 		for service in range(len(service_list)):
 			service_name = {service_list[service]: [{"date": date,
-													 "waiting": "0",
-													 "maintenance": "0",
+													 "maintenance_time": "0",
+													 "maintenance_since": "0",
 													 "active_since": "0",
-													 "requirement_wait": "0",
-													 "error": "0",
+													 "active_time": "0",
+													 "error_time": "0",
+													 "error_since": "0",
+													 "blocked": "0",
+													 "blocked_since": "0",
+													 "waiting_since": date,
+													 "waiting_time": "0",
+													 "current_state": "waiting",
 													 "nsi_id": nsi_id,
 													 "nssi_id": nssi_id
 													 }]}
 			services_list.append(service_name)
-		ES.update(index='slice_monitor_'+nssi_id.lower(), doc_type='post', id=1,
-				  body={'doc': {'service_status': services_list}}, retry_on_conflict=0)
+		self.jesearch.update_index_with_content('subslice_monitor_'+nssi_id.lower(),
+												'service_status',
+												services_list)
 		for service in range(len(service_list)):
 			service_name = {service_list[service]: [{"date": date,
 													 "nssi_id": nssi_id
@@ -466,26 +453,39 @@ class TemplateManager():
 							data.append(key_list[num])
 				data.append(service_name)
 				service_keys.update({nsi_id: [{'service_keys': data}]})  # Update local list
-		ES.update(index='slice_keys_'+(self.get_NSI_ID()).lower(), doc_type='post', id=1,
-				  body={'doc': {'service_keys': service_keys[nsi_id][0]['service_keys']}}, retry_on_conflict=0)
+
+		self.jesearch.update_index_with_content('slice_keys_'+(self.get_NSI_ID()).lower(),
+												'service_keys', service_keys[nsi_id][0]['service_keys'])
 
 		for machine in range(len(service_list)):
 			machine_name = {service_list[machine]: [{"date":date,
-													 "juju_mid":"0",
+													 "juju_mid":"",
 													 "nsi_id": nsi_id,
 													 "nssi_id": nssi_id,
-													 "type":"0",
+													 "type":"",
                                                      "down":"0",
-													 "address_ipv4_public":"0",
-                                                     "launch_time":"0"
+													 "address_ipv4_public":"",
+													 "prepending_since": date,
+													 "prepending_time": "0",
+                                                     "pending_since":"0",
+                                                     "pending_time":"0",
+                                                     "started_since":"0",
+                                                     "started_time":"0",
+                                                     "error_since":"0",
+                                                     "error_time":"0",
+                                                     "down_since":"0",
+                                                     "down_time":"0",
+                                                     "launch_time":"0", # it it the time taken to become the machine in started state
+													 "current_state": "prepending", # prepending, pending, started, down, error
+													 "stopped_since":"0"
                                                      }]}
 			machines_list.append(machine_name)
-		ES.update(index='slice_monitor_'+nssi_id.lower(), doc_type='post', id=1,   # Putting in subslice index
-				  body={'doc': {'machine_status': machines_list	}}, retry_on_conflict=0)
-
+		self.jesearch.update_index_with_content('subslice_monitor_'+nssi_id.lower(),
+												'machine_status',
+												machines_list)
 		for machine in range(len(service_list)):
 			machine_name = {service_list[machine]: [{"date": date,
-													 "juju_mid":"0",
+													 "juju_mid":"",
 													 "nsi_id": nsi_id,
 													 "nssi_id": nssi_id
 													 }]}
@@ -501,43 +501,60 @@ class TemplateManager():
 							data.append(key_list[num])
 				data.append(machine_name)
 				machine_keys.update({nsi_id:[{'machine_keys':data}]})  # Update local list
-		ES.update(index='slice_keys_' + (self.get_NSI_ID()).lower(), doc_type='post', id=1,
-				  body={'doc': {'machine_keys': machine_keys[nsi_id][0]['machine_keys']}}, retry_on_conflict=0)
 
+		self.jesearch.update_index_with_content('slice_keys_' + (self.get_NSI_ID()).lower(),
+												'machine_keys',
+												machine_keys[nsi_id][0]['machine_keys'])
 
-		for machine in range(len(service_list)):
-			machine_name = {service_list[machine]: [{"date": date,
-													 "nsi_id": nsi_id,
-													 "nssi_id": nssi_id,
-													 "requirement_wait": "0",
-													 "requirement": list_services[service_list[machine]]['relation']
-													 }]}
-			relations_list.append(machine_name)
-		ES.update(index='slice_monitor_'+ nssi_id.lower(), doc_type='post', id=1,  # Putting in subslice index
-				  body={'doc': {'relation_status': relations_list}}, retry_on_conflict=0)
+		relations_list = list()
+		for item in range(len(service_list)):
+			if (list_services[service_list[item]]['relation'] is not None) and (list_services[service_list[item]]['relation'] in service_list):
+				relation_name = {"date": date,
+								 "nsi_id": nsi_id,
+								 "nssi_source": nssi_id,
+								 "nssi_node_source": service_list[item],
+								 "nssi_target": nssi_id,
+								 "nssi_node_target": list_services[service_list[item]]['relation'],
+								 "prejoining_since": date,
+								 "prejoining_time": "0",
+								 "joining_since": "0",
+								 "joining_time": "0",
+								 "joined_since": "0",
+								 "joined_time": "0",
+								 "current_state": "prejoining",
+								 }
+				relations_list.append(relation_name)
+		if len(relations_list) > 0:
+			self.jesearch.update_index_with_content('subslice_monitor_'+nssi_id.lower(),
+												'relation_status',
+												relations_list)
 
+	def update_slice_monitor_index(self, index_page, container_type, container_name, container_data, nsi_id):
+		if self.jesearch.ping():
+			slice_data = self.jesearch.get_json_from_es(index_page, container_type)
+			container_data.items()
+			leaf_keys = list(container_data.keys())
+			leaf_values = list(container_data.values())
+			if slice_data[0]:
+				slice_data = slice_data[1]
+				for machines in range(len(slice_data)):  # Update the container
+					machines_list = slice_data[machines]
+					machine = list(machines_list.keys())
+					for num in range(len(machine)):
+						if machine[num] == container_name:
+							for number in range(len(container_data)):
+								leaf_key = leaf_keys[number - 1]
+								leaf_value = leaf_values[number - 1]
+								slice_data[machines][container_name][0][leaf_key] = leaf_value
+				self.jesearch.update_index_with_content(index_page, container_type, slice_data)
 
-
-	def update_slice_monitor_index(self, index_page, container_type, container_name, leaf_key, leaf_value, nsi_id):
-		if self.gv.es_status == "Active":
-			slice_data = es.get_json_from_es(self.es_host, self.es_port, index_page, container_type)
-			for machines in range(len(slice_data)):  # Update the container
-				machines_list = slice_data[machines]
-				machine = list(machines_list.keys())
-				for num in range(len(machine)):
-					if machine[num] == container_name:
-						slice_data[machines][container_name][0][leaf_key] = leaf_value
-			ES = Elasticsearch([{'host': self.es_host, 'port': self.es_port, 'use_ssl': False}])
-			ES.update(index=index_page, doc_type='post', id=1,  # Push the container with updates
-					  body={'doc': {container_type: slice_data}}, retry_on_conflict=0)
-
-			if container_type=="machine_keys":
-				machine_keys[nsi_id][0]['machine_keys'].clear()
-				for machine in range(len(slice_data)):
-					machine_keys[nsi_id][0]['machine_keys'].append(slice_data[machine])
-			if container_type=="service_keys":
-				service_keys[nsi_id][0]['service_keys'][0].clear()
-				for service in range(len(slice_data)):
-					service_keys[nsi_id][0]['service_keys'].append(slice_data[service])
+				if container_type=="machine_keys":
+					machine_keys[nsi_id][0]['machine_keys'].clear()
+					for machine in range(len(slice_data)):
+						machine_keys[nsi_id][0]['machine_keys'].append(slice_data[machine])
+				if container_type=="service_keys":
+					service_keys[nsi_id][0]['service_keys'][0].clear()
+					for service in range(len(slice_data)):
+						service_keys[nsi_id][0]['service_keys'].append(slice_data[service])
 
 

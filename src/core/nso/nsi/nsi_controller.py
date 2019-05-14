@@ -100,7 +100,7 @@ class NetworkSliceController(object):
 	
 	def add_network_slice(self, slice_name_yml, subslices_controller, nsi_dir, nssi_dir):
 		self.logger.info("Adding the slice {}".format(slice_name_yml))
-		new_slice = JSlice(self.gv)
+		new_slice = JSlice(self.gv, self.jesearch)
 		build_slice = new_slice.build_jslice(slice_name_yml, nsi_dir, nssi_dir)
 		if build_slice[0]:
 			add_nsi = new_slice.add_slice(subslices_controller)
@@ -125,10 +125,12 @@ class NetworkSliceController(object):
 			list_inter_nssi_relations = slice_data['inter_nssi_relation']
 			for current_nssi in list_subslices:
 				subslices_controller.destroy_subslice(current_nssi, slice_name)
-				index_subslcie_monitor = ''.join(['slice_monitor_', str(current_nssi).lower()])
-				if self.gv.es_status == "Active":
-					jesearch.del_index_from_es(current_nssi)
-					jesearch.del_index_from_es(index_subslcie_monitor)
+				index_subslcie_monitor = ''.join(['subslice_monitor_', str(current_nssi).lower()])
+
+
+				if self.jesearch.ping():
+					self.jesearch.del_index_from_es(current_nssi)
+					self.jesearch.del_index_from_es(index_subslcie_monitor)
 			for relation in list_inter_nssi_relations:
 				juju_controller_a = relation['service_a']['jcloud']
 				juju_model_a = relation['service_a']['jmodel']
@@ -151,12 +153,12 @@ class NetworkSliceController(object):
 						pass
 				
 			self.remove_slice_object(slice_name)
-			if self.gv.es_status == "Active":
-				slice_keys_tmp = ''.join(['slice_keys_tmp_', str(slice_name).lower()])
+			if self.jesearch.ping():
+				slice_monitor = ''.join(['slice_monitor_', str(slice_name).lower()])
 				slice_keys = ''.join(['slice_keys_', str(slice_name).lower()])
-				jesearch.del_index_from_es(slice_name)
-				jesearch.del_index_from_es(slice_keys_tmp)
-				jesearch.del_index_from_es(slice_keys)
+				self.jesearch.del_index_from_es(slice_name)
+				self.jesearch.del_index_from_es(slice_monitor)
+				self.jesearch.del_index_from_es(slice_keys)
 			
 			return [True, "Removing the slice {} already started in the background".format(slice_name)]
 		else:
