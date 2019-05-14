@@ -129,26 +129,43 @@ class listTasks(object):
 		if self.corr_id == props.correlation_id:
 			self.response = body
 			
-	def call(self, msg):
-		messahe_not_sent = True
-		while messahe_not_sent:
-			try:
-				self.response = None
-				self.corr_id = str(uuid.uuid4())
-				self.channel.basic_publish(exchange='',
-				                           routing_key=self.queue_name,
-				                           properties=pika.BasicProperties(
-					                           reply_to=self.callback_queue,
-					                           correlation_id=self.corr_id,
-				                           ),
-				                           body=msg)
-				messahe_not_sent = False
-			except:
-				time.sleep(0.5)
-				self.run(True)
-		while self.response is None:
-			self.connection.process_data_events()
-		
+	def call(self, msg, reply=True):
+		if reply:
+			messahe_not_sent = True
+			while messahe_not_sent:
+				try:
+					self.response = None
+					self.corr_id = str(uuid.uuid4())
+					self.channel.basic_publish(exchange='',
+											   routing_key=self.queue_name,
+											   properties=pika.BasicProperties(
+												   reply_to=self.callback_queue,
+												   correlation_id=self.corr_id,
+											   ),
+											   body=msg)
+					messahe_not_sent = False
+				except:
+					time.sleep(0.5)
+					self.run(True)
+
+			while self.response is None:
+				self.connection.process_data_events()
+		else:
+			messahe_not_sent = True
+			while messahe_not_sent:
+				try:
+					self.response = None
+					self.corr_id = str(uuid.uuid4())
+					self.channel.basic_publish(exchange='',
+											   routing_key=self.queue_name,
+											   properties=pika.BasicProperties(
+											   ),
+											   body=msg)
+					messahe_not_sent = False
+				except:
+					time.sleep(0.5)
+					self.run(True)
+			return None
 		
 		return self.response
 
