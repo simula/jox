@@ -1,0 +1,87 @@
+description: template for deploying package <nsi-oai-5g-cran> with 3 subslices
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+imports: [nssi_1, nssi_2, nssi_3]
+metadata:
+  ID: nsi-oai-5g-cran
+  author: Eurecom
+  vendor: Eurecom
+  version: 1.0
+  date: 2019-03-10}
+
+relationships_template:
+  connection_epc:
+    type: tosca.relationships.ConnectsTo
+    source:
+      inputs:
+        type: tosca.relationships.AttachesTo
+        name: eg1
+        node: oai-hss
+      node: nss_first
+      parameters: nssi_1
+    target:
+      inputs:
+        name: ing1
+        node: oai-mme
+        type: tosca.relationships.DependsOn
+      node: nss_second
+      parameters: nssi_2
+  connection_ran:
+    type: tosca.relationships.ConnectsTo
+    source:
+      inputs:
+        name: eg1
+        node: oai-mme
+        type: tosca.relationships.AttachesTo
+      node: nss_first
+      parameters: nssi_2
+    target:
+      inputs:
+        name: ing1
+        node: oai-ran
+        type: tosca.relationships.DependsOn
+      node: nss_second
+      parameters: nssi_3
+
+topology_template:
+  node_templates:
+    nss1:
+      requirements:
+        egress:
+          eg1:
+            node: oai-hss
+            relationship:
+              type: tosca.relationships.AttachesTo
+        nssi: nssi_1
+      type: tosca.nodes.JOX.NSSI
+    nss2:
+      requirements:
+        ingress:
+          ing1:
+            node: oai-mme
+            relationship:
+              type: tosca.relationships.DependsOn
+        nssi: nssi_2
+      type: tosca.nodes.JOX.NSSI
+    nss3:
+      requirements:
+        egress:
+          eg1:
+            node: oai-mme
+            relationship:
+              type: tosca.relationships.AttachesTo
+        nssi: nssi_2
+      type: tosca.nodes.JOX.NSSI
+    nss4:
+      requirements:
+        ingress:
+          ing1:
+            node: oai-ran
+            relationship:
+              type: tosca.relationships.DependsOn
+        nssi: nssi_3
+      type: tosca.nodes.JOX.NSSI
+
+
+
+

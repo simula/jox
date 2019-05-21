@@ -29,7 +29,6 @@ export DEBIAN_FRONTEND=noninteractive
 ###################################
 # colorful echos
 ###################################
-
 black='\E[30m'
 red='\E[31m'
 green='\E[32m'
@@ -123,7 +122,7 @@ Options
 -s | --src-dir [dir]
    Directory to use to create a package. Default is set to : current directory.
 -t | --pkg-template)
-   Set the template to generate the package. Available options: clean, oai-epc(default).
+   Set the template to generate the package. Available options: wordpress, oai-epc(default), oai-4g, oai-5g-cran, oai-nfv-rrh, oai-nfv-sim.
 -v | --pkg-vendor [vendor]
    Package vendor name for descriptor. Default is set to: Eurecom
 
@@ -884,7 +883,8 @@ function main() {
 
 	    -t | --pkg-template)
 		pkg_template=$2
-		if [ "$pkg_template" != "clean" -a  "$pkg_template" != "oai-epc" ] ; then
+		#wordpress, oai-epc(default), oai-4g, oai-5g-cran, oai-nfv-rrh, oai-nfv-sim.
+		if [ "$pkg_template" != "wordpress" -a  "$pkg_template" != "oai-epc" -a  "$pkg_template" != "oai-4g" -a  "$pkg_template" != "oai-5g-cran" -a  "$pkg_template" != "oai-nfv-rrh" -a  "$pkg_template" != "oai-nfv-sim" ] ; then
 		    echo_warning "Unsupported package template $pkg_template, Resetting to default template (oai-epc)"
 		    pkg_template="oai-epc"
 		else

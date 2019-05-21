@@ -1,0 +1,17 @@
+Package Name:            oai-epc
+Package description:     template for deploying package <oai-4G> with 3 subslices
+Package version:         1.0
+Package vendor:          Eurecom
+Package date:            2019-03-08 
+Package structure:       /home/rosberg/jox/scripts/oai-4G
+├── charms
+├── icon
+├── nsi
+│   └── oai-epc.yaml
+├── nssi
+│   ├── nssi_1.yaml
+│   ├── nssi_2.yaml
+│   └── nssi_3.yaml
+└── README
+
+4 directories, 5 files
