@@ -20,7 +20,7 @@
   },
 
   "flask-config":{
-    "flask-server": "localhost",
+    "flask-server": "192.168.1.78",
     "flask-port": 5000,
     "flask-debug": "FALSE"
   },
@@ -192,9 +192,9 @@
       "description": "credentials of your juju controller",
       "cloud-name": "localhost",
       "cloud-type": "lxd",
-      "cloud-endpoint": "10.180.125.158:17070",
+      "cloud-endpoint": "10.124.51.83:17070",
       "cloud-username": "admin",
-      "cloud-password": "cad0dce46537672a437d0c00e764819e"
+      "cloud-password": "2dfabf48abb9b4277c5a629645962dfb"
     }
   ],
 

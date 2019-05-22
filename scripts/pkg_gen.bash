@@ -215,7 +215,7 @@ description: $pkg_description
 tosca_definitions_version: tosca_simple_yaml_1_0
 imports: [nssi_1, nssi_2]
 metadata:
-  ID: oai-epc
+  ID: wordpress
   author: $pkg_name
   vendor: $pkg_name
   version: $pkg_version
@@ -298,7 +298,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.39.202.0/24"
+      cidr: "10.124.51.0/24"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -364,7 +364,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:trusty/wordpress-5'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -396,7 +396,7 @@ topology_template:
           properties:
             supported_virtualisation_environments:
               entry_schema: default
-              type: kvm
+              type: lxc
 
       capabilities:
         host:
@@ -423,7 +423,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -438,7 +438,7 @@ topology_template:
         binding:
           node: VDU_mysql
         link:
-          node: *data_network_2
+          node: *data_network_1
           type: tosca.nodes.network.Network
 EOF
     fi
@@ -547,7 +547,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.39.202.0/24"
+      cidr: "10.124.51.0/24"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -644,7 +644,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -660,7 +660,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -759,7 +759,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-mme-18'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -775,7 +775,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-spgw-16'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -820,7 +820,7 @@ description: $pkg_description
 tosca_definitions_version: tosca_simple_yaml_1_0
 imports: [nssi_1, nssi_2, nssi_3]
 metadata:
-  ID: oai-epc
+  ID: oai-4g
   author: $pkg_name
   vendor: $pkg_name
   version: $pkg_version
@@ -947,7 +947,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.39.202.0/24"
+      cidr: "10.124.51.0/24"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -1044,7 +1044,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1060,7 +1060,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1156,7 +1156,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-mme-18'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1172,7 +1172,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-spgw-16'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1242,7 +1242,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-enb-33'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1276,7 +1276,7 @@ description: $pkg_description
 tosca_definitions_version: tosca_simple_yaml_1_0
 imports: [nssi_1, nssi_2, nssi_3]
 metadata:
-  ID: oai-epc
+  ID: oai-5g-cran
   author: $pkg_name
   vendor: $pkg_name
   version: $pkg_version
@@ -1401,7 +1401,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.39.202.0/24"
+      cidr: "10.124.51.0/24"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -1498,7 +1498,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1514,7 +1514,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1613,7 +1613,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-mme-18'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1629,7 +1629,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-spgw-16'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1730,7 +1730,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-enb-33'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1742,7 +1742,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-rru-15'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1785,7 +1785,7 @@ description: $pkg_description
 tosca_definitions_version: tosca_simple_yaml_1_0
 imports: [nssi_1, nssi_2, nssi_3]
 metadata:
-  ID: oai-epc
+  ID: oai-nfv-rrh
   author: $pkg_name
   vendor: $pkg_name
   version: $pkg_version
@@ -1910,7 +1910,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.39.202.0/24"
+      cidr: "10.124.51.0/24"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -2007,7 +2007,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2023,7 +2023,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2092,7 +2092,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/trusty/oai-epc-27'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2184,7 +2184,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-enb-33'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2196,7 +2196,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/trusty/oai-rrh-10'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2240,7 +2240,7 @@ description: $pkg_description
 tosca_definitions_version: tosca_simple_yaml_1_0
 imports: [nssi_1, nssi_2, nssi_3]
 metadata:
-  ID: oai-epc
+  ID: oai-nfv-sim
   author: $pkg_name
   vendor: $pkg_name
   version: $pkg_version
@@ -2365,7 +2365,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.39.202.0/24"
+      cidr: "10.124.51.0/24"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -2462,7 +2462,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2478,7 +2478,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2547,7 +2547,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/trusty/oai-epc-27'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2610,7 +2610,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/trusty/oaisim-enb-ue-8'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2738,7 +2738,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: '10.39.202.0/24'
+      cidr: '10.124.51.0/24'
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -2823,7 +2823,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:vnf1'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2839,7 +2839,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:vnf2'
-        endpoint: localhost
+        endpoint: sakura-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version

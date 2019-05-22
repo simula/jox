@@ -184,44 +184,44 @@ install_python_packages(){
     echo_info "Installing python libraries"
 
     echo_info "Installing flask"
-    pip3 install flask --user
+    sudo pip3 install flask --user
     echo_success "flask is successfully installed"
 
     echo_info "Installing juju"
-    pip3 install --force-reinstall juju==0.11.2 --user
+    sudo pip3 install --force-reinstall juju==0.11.2 --user
     echo_success "juju is successfully installed"
 
     echo_info "Installing termcolor"
-    pip3 install termcolor --user
+    sudo pip3 install termcolor --user
     echo_success "termcolor is successfully installed"
 
     echo_info "Installing jsonpickle"
-    pip3 install jsonpickle --user
+    sudo pip3 install jsonpickle --user
     echo_success "jsonpickle is successfully installed"
 
     echo_info "Installing pika"
-    pip3 install --force-reinstall pika==0.12.0 --user
+    sudo pip3 install --force-reinstall pika==0.12.0 --user
     echo_success "pika is successfully installed"
 
     echo_info "Installing cryptography"
-    pip3 install --force-reinstall cryptography==2.4.2 --user
+    sudo pip3 install --force-reinstall cryptography==2.4.2 --user
     echo_success "cryptography is successfully installed"
 
 
     echo_info "Installing netaddr"
-    pip3 install netaddr --user
+    sudo pip3 install netaddr --user
     echo_success "netaddr is successfully installed"
 
     echo_info "Installing netaddr"
-    pip3 install ipaddress --user
+    sudo pip3 install ipaddress --user
     echo_success "netaddr is successfully installed"
 
     echo_info "Installing elasticsearch"
-    pip3 install elasticsearch --user
+    sudo pip3 install elasticsearch --user
     echo_success "elasticsearch is successfully installed"
 
     echo_info "Installing jsonschema"
-    pip3 install jsonschema --user
+    sudo pip3 install jsonschema --user
     echo_success "jsonschema is successfully installed"
 
 
