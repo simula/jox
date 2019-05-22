@@ -298,7 +298,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.124.51.0/24"
+      cidr: "10.146.98.0/24"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -364,7 +364,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:trusty/wordpress-5'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -396,7 +396,7 @@ topology_template:
           properties:
             supported_virtualisation_environments:
               entry_schema: default
-              type: lxc
+              type: kvm
 
       capabilities:
         host:
@@ -423,7 +423,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -438,7 +438,7 @@ topology_template:
         binding:
           node: VDU_mysql
         link:
-          node: *data_network_1
+          node: *data_network_2
           type: tosca.nodes.network.Network
 EOF
     fi
@@ -547,7 +547,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.124.51.0/24"
+      cidr: "10.146.98.0/24"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -644,7 +644,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -660,7 +660,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -759,7 +759,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-mme-18'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -775,7 +775,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-spgw-16'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -947,7 +947,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.124.51.0/24"
+      cidr: "10.146.98.0/24"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -1044,7 +1044,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1060,7 +1060,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1156,7 +1156,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-mme-18'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1172,7 +1172,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-spgw-16'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1242,7 +1242,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-enb-33'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1311,7 +1311,7 @@ relationships_template:
     target:
       inputs:
         name: ing1
-        node: oai-ran
+        node: oai-enb
         type: tosca.relationships.DependsOn
       node: nss_second
       parameters: nssi_3
@@ -1401,7 +1401,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.124.51.0/24"
+      cidr: "10.146.98.0/24"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -1498,7 +1498,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1514,7 +1514,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1591,7 +1591,7 @@ topology_template:
       capabilities:
         host:
           type: tosca.capabilities.Compute
-          properties: ""$machine_flavor"
+          properties: "$machine_flavor"
         os:
           type: tosca.capabilities.OperatingSystem
           properties: "ubuntu_16_64"
@@ -1613,7 +1613,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-mme-18'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1629,7 +1629,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-spgw-16'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1730,7 +1730,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-enb-33'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1738,11 +1738,14 @@ topology_template:
         req1:
           node: VDU_oai-enb
           relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-rru
+          relationship: tosca.relationships.AttachesTo
     oai-rru:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-rru-15'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1750,9 +1753,7 @@ topology_template:
         req1:
           node: VDU_oai-rru
           relationship: tosca.relationships.HostedOn
-        req2:
-          node: oai-rru
-          relationship: tosca.relationships.AttachesTo
+
     oai-enb_port:
       type: tosca.nodes.network.Port
       requirements:
@@ -1820,7 +1821,7 @@ relationships_template:
     target:
       inputs:
         name: ing1
-        node: oai-ran
+        node: oai-enb
         type: tosca.relationships.DependsOn
       node: nss_second
       parameters: nssi_3
@@ -1858,7 +1859,7 @@ topology_template:
       requirements:
         ingress:
           ing1:
-            node: oai-ran
+            node: oai-enb
             relationship:
               type: tosca.relationships.DependsOn
         nssi: nssi_3
@@ -1910,7 +1911,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.124.51.0/24"
+      cidr: "10.146.98.0/24"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -2007,7 +2008,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2023,7 +2024,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2092,7 +2093,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/trusty/oai-epc-27'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2184,7 +2185,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-enb-33'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2192,11 +2193,14 @@ topology_template:
         req1:
           node: VDU_oai-enb
           relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-rrh
+          relationship: tosca.relationships.AttachesTo
     oai-rrh:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/trusty/oai-rrh-10'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2204,9 +2208,7 @@ topology_template:
         req1:
           node: VDU_oai-rrh
           relationship: tosca.relationships.HostedOn
-        req2:
-          node: oai-rrh
-          relationship: tosca.relationships.AttachesTo
+
     oai-enb_port:
       type: tosca.nodes.network.Port
       requirements:
@@ -2365,7 +2367,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.124.51.0/24"
+      cidr: "10.146.98.0/24"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -2462,7 +2464,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2478,7 +2480,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2547,7 +2549,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/trusty/oai-epc-27'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2610,7 +2612,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/trusty/oaisim-enb-ue-8'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2738,7 +2740,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: '10.124.51.0/24'
+      cidr: '10.146.98.0/24'
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -2823,7 +2825,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:vnf1'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2839,7 +2841,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:vnf2'
-        endpoint: sakura-home
+        endpoint: adalia-home
         model: default
         vendor: $pkg_vendor
         version: $pkg_version

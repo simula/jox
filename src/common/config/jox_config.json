@@ -20,7 +20,7 @@
   },
 
   "flask-config":{
-    "flask-server": "192.168.1.78",
+    "flask-server": "localhost",
     "flask-port": 5000,
     "flask-debug": "FALSE"
   },
@@ -79,6 +79,19 @@
         "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
         "scope": "private",
         "domain": "10.124.51.0/24",
+        "_Comment_3": "ssh config",
+        "ssh-private-key": "",
+        "ssh-user": "",
+        "ssh-password": "",
+        "managed-by": "lxd"
+      },
+      {
+        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+        "pop-name": "default-5",
+        "zone": "1",
+        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+        "scope": "private",
+        "domain": "10.146.98.0/24",
         "_Comment_3": "ssh config",
         "ssh-private-key": "",
         "ssh-user": "",
@@ -195,6 +208,14 @@
       "cloud-endpoint": "10.124.51.83:17070",
       "cloud-username": "admin",
       "cloud-password": "2dfabf48abb9b4277c5a629645962dfb"
+    },
+    {
+      "description": "credentials of your juju controller",
+      "cloud-name": "adalia-home",
+      "cloud-type": "lxd",
+      "cloud-endpoint": "10.146.98.21:17070",
+      "cloud-username": "admin",
+      "cloud-password": "4f1d6e5586321627aed23473c7a174ef"
     }
   ],
 
@@ -252,7 +273,7 @@
   },
   "ssh-config": {
     "_Comment": "ssh connection is needed when adding kvm machines",
-    "ssh-key-directory": "/home/borer/.ssh/",
+    "ssh-key-directory": "/home/adalia/.ssh/",
     "ssh-key-name": "id_juju2",
     "ssh-user": "ubuntu",
     "ssh-password": "linux"
