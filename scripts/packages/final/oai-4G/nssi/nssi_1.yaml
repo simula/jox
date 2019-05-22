@@ -10,13 +10,13 @@ metadata:
   date: 2019-03-08
 
 dsl_definitions:
-  host_small: &host_small
-    disk_size: 5
-    mem_size: 1024
-    num_cpus: 1
   host_tiny: &host_tiny
     disk_size: 5
     mem_size: 512
+    num_cpus: 1
+  host_small: &host_small
+    disk_size: 5
+    mem_size: 1024
     num_cpus: 1
   os_linux_u_14_x64: &os_u14
     architecture: x86_64
