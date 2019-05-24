@@ -39,7 +39,7 @@
         "zone": "1",
         "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
         "scope": "private",
-        "domain": "10.39.202.0/24",
+        "domain": "10.6.6.0/24",
         "_Comment_3": "ssh config",
         "ssh-private-key": "",
         "ssh-user": "",
@@ -166,6 +166,19 @@
         "ssh-user": "",
         "ssh-password": "",
         "managed-by": "none"
+      },
+      {
+        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+        "pop-name": "zone-5-phy",
+        "zone": "1",
+        "scope": "private",
+        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+        "domain": "192.168.1.0/24",
+        "_Comment_3": "ssh config",
+        "ssh-private-key": "",
+        "ssh-user": "",
+        "ssh-password": "",
+        "managed-by": "none"
       }
     ]
   },
@@ -189,9 +202,9 @@
       "description": "credentials of your juju controller",
       "cloud-name": "sakura-home",
       "cloud-type": "manual",
-      "cloud-endpoint": "10.124.51.249:17070",
+      "cloud-endpoint": "192.168.122.126:17070",
       "cloud-username": "admin",
-      "cloud-password": "0ff27627bdb42216ec2c0c6296d832c9"
+      "cloud-password": "426423b2019681c0a76e52810cbeb40c"
     },
     {
       "description": "credentials of your juju controller",
@@ -273,7 +286,7 @@
   },
   "ssh-config": {
     "_Comment": "ssh connection is needed when adding kvm machines",
-    "ssh-key-directory": "/home/adalia/.ssh/",
+    "ssh-key-directory": "/home/sakura/.ssh/",
     "ssh-key-name": "id_juju2",
     "ssh-user": "ubuntu",
     "ssh-password": "linux"
