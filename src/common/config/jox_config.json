@@ -20,7 +20,7 @@
   },
 
   "flask-config":{
-    "flask-server": "localhost",
+    "flask-server": "192.168.1.78",
     "flask-port": 5000,
     "flask-debug": "FALSE"
   },
@@ -39,7 +39,7 @@
         "zone": "1",
         "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
         "scope": "private",
-        "domain": "10.6.6.0/24",
+        "domain": "10.189.155.0/24",
         "_Comment_3": "ssh config",
         "ssh-private-key": "",
         "ssh-user": "",
@@ -200,6 +200,14 @@
     },
     {
       "description": "credentials of your juju controller",
+      "cloud-name": "localhost-gatto",
+      "cloud-type": "lxd",
+      "cloud-endpoint": "10.189.155.201:17070",
+      "cloud-username": "admin",
+      "cloud-password": "a7ba5d6fa23c3985d7bc7fcbeb071a38"
+    },
+    {
+      "description": "credentials of your juju controller",
       "cloud-name": "sakura-home",
       "cloud-type": "manual",
       "cloud-endpoint": "192.168.122.126:17070",
@@ -286,8 +294,8 @@
   },
   "ssh-config": {
     "_Comment": "ssh connection is needed when adding kvm machines",
-    "ssh-key-directory": "/home/sakura/.ssh/",
-    "ssh-key-name": "id_juju2",
+    "ssh-key-directory": "/home/gatto/.ssh/",
+    "ssh-key-name": "id_rsa",
     "ssh-user": "ubuntu",
     "ssh-password": "linux"
   },

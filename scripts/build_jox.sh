@@ -188,7 +188,7 @@ install_python_packages(){
     echo_success "flask is successfully installed"
 
     echo_info "Installing juju"
-    pip3 install --force-reinstall juju==0.11.2 --user
+    pip3 install --force-reinstall juju --user
     echo_success "juju is successfully installed"
 
     echo_info "Installing termcolor"
