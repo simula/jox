@@ -18,7 +18,6 @@
     "rabbit-mq-server-port":5672,
     "rabbit-mq-queue":"QueueJox"
   },
-
   "flask-config":{
     "flask-server": "192.168.1.78",
     "flask-port": 5000,

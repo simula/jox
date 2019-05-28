@@ -214,7 +214,8 @@ class JSubSlice(JSONEncoder):
                 else:
                     self.logger.debug("The model {} under the juju controller {} is already added".format(juju_model, juju_cloud))
             if len(list_crossModelRelation) > 0:
-                self.add_cross_model_relation(list_crossModelRelation)
+                self.add_cross_model_relations(list_crossModelRelation)
+
         except Exception as ex:
             raise ex
                      
@@ -250,7 +251,33 @@ class JSubSlice(JSONEncoder):
         on success add cross model relation, appen it to "self.list_crossModelRelations"
         self.list_crossModelRelations.append(crm_relation)
         """
-        raise NotImplementedError
+        from src.core.ro.vim_driver.vimdriver import run_command
+        controller_source = "localhost"
+        model_source = "default"
+        application_source = "mysql"
+        endpoint_application_source = "db"
+
+        controller_target = "localhost"
+        model_source = "default"
+        application_target = "mediawiki"
+        endpoint_application_target = "db"
+
+        cmd_juju_offer_application_endpoint = ["juju", "offer", "{}:{}".format(application_source, endpoint_application_source)]
+        cmd_juju_add_cmr = ["juju", "add-relation",
+                                    "-m", "{}:{}".format(controller_target, model_source),
+                                    "{}:{}".format(application_source, endpoint_application_source),
+                                    "{}:{}/{}.{}".format(controller_source, "admin"), model_source, application_source]
+
+        cmd_out_offer_app_endpoint = loop.run(run_command(cmd_juju_offer_application_endpoint))
+        cmd_out_add_cmr = loop.run(run_command(cmd_juju_add_cmr))
+        """
+        juju offer mysql:db
+        juju bootstrap localhost lxd-cmr-2
+        juju add-model cmr-model-2
+        juju deploy mediawiki
+        juju add-relation mediawiki:db lxd-cmr-1:admin/cmr-model-1.mysql
+        """
+        #raise NotImplementedError
     
     def check_existence_model(self, juju_cloud, juju_model):
         for model in self.subslice_models:

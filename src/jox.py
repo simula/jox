@@ -75,7 +75,6 @@ __author__ = "Eurecom"
 jox_version = '1.0'
 jox_version_date = '2019-02-01'
 
-
 class NFVO_JOX(object):
 	def __init__(self, loop):
 		# TODO
