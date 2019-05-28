@@ -19,7 +19,7 @@
     "rabbit-mq-queue":"QueueJox"
   },
   "flask-config":{
-    "flask-server": "192.168.1.78",
+    "flask-server": "192.168.12.46",
     "flask-port": 5000,
     "flask-debug": "FALSE"
   },
@@ -38,7 +38,7 @@
         "zone": "1",
         "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
         "scope": "private",
-        "domain": "10.189.155.0/24",
+        "domain": "10.104.8.0/24",
         "_Comment_3": "ssh config",
         "ssh-private-key": "",
         "ssh-user": "",
@@ -86,11 +86,11 @@
       },
       {
         "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "default-5",
+        "pop-name": "default-borer",
         "zone": "1",
         "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
         "scope": "private",
-        "domain": "10.146.98.0/24",
+        "domain": "10.184.36.0/24",
         "_Comment_3": "ssh config",
         "ssh-private-key": "",
         "ssh-user": "",
@@ -165,19 +165,6 @@
         "ssh-user": "",
         "ssh-password": "",
         "managed-by": "none"
-      },
-      {
-        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "zone-5-phy",
-        "zone": "1",
-        "scope": "private",
-        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "domain": "192.168.1.0/24",
-        "_Comment_3": "ssh config",
-        "ssh-private-key": "",
-        "ssh-user": "",
-        "ssh-password": "",
-        "managed-by": "none"
       }
     ]
   },
@@ -185,7 +172,8 @@
     "1": {
       "domain-1": "192.168.1.0/24",
       "domain-2": "1000.99.104.54/24",
-      "domain-3": "192.168.12.0/24"
+      "domain-3": "192.168.12.0/24",
+      "domain-4": "10.104.8.0/24"
     }
   },
   "clouds-list": [
@@ -193,25 +181,17 @@
       "description": "credentials of your juju controller",
       "cloud-name": "localhost-borer",
       "cloud-type": "lxd",
-      "cloud-endpoint": "10.39.202.144:17070",
+      "cloud-endpoint": "10.104.8.162:17070",
       "cloud-username": "admin",
-      "cloud-password": "3dbdaa9798613ea747fe9096a95c140b"
-    },
-    {
-      "description": "credentials of your juju controller",
-      "cloud-name": "localhost-gatto",
-      "cloud-type": "lxd",
-      "cloud-endpoint": "10.189.155.201:17070",
-      "cloud-username": "admin",
-      "cloud-password": "a7ba5d6fa23c3985d7bc7fcbeb071a38"
+      "cloud-password": "3a135db52a2419c469ebd53757fa9275"
     },
     {
       "description": "credentials of your juju controller",
       "cloud-name": "sakura-home",
       "cloud-type": "manual",
-      "cloud-endpoint": "192.168.122.126:17070",
+      "cloud-endpoint": "10.124.51.249:17070",
       "cloud-username": "admin",
-      "cloud-password": "426423b2019681c0a76e52810cbeb40c"
+      "cloud-password": "0ff27627bdb42216ec2c0c6296d832c9"
     },
     {
       "description": "credentials of your juju controller",
@@ -236,7 +216,16 @@
       "cloud-endpoint": "10.146.98.21:17070",
       "cloud-username": "admin",
       "cloud-password": "4f1d6e5586321627aed23473c7a174ef"
+    },
+    {
+      "description": "credentials of your juju controller",
+      "cloud-name": "adalia-edu",
+      "cloud-type": "manual",
+      "cloud-endpoint": "192.168.12.162:17070",
+      "cloud-username": "admin",
+      "cloud-password": "468a141af452b0f096584e86d02d4991"
     }
+
   ],
 
   "stats-timer":100,
@@ -293,8 +282,8 @@
   },
   "ssh-config": {
     "_Comment": "ssh connection is needed when adding kvm machines",
-    "ssh-key-directory": "/home/gatto/.ssh/",
-    "ssh-key-name": "id_rsa",
+    "ssh-key-directory": "/home/borer/.ssh/",
+    "ssh-key-name": "id_juju2",
     "ssh-user": "ubuntu",
     "ssh-password": "linux"
   },

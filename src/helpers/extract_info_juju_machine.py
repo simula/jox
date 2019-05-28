@@ -13,7 +13,8 @@ class extract_info(object):
 		self.gv = global_variables
 	def extract_info_juju_machine(self):
 		set_addresses = self.juju_machine['ip-addresses']
-		# ip_address = set_addresses[0]
+		ip_address = set_addresses[0]
+		ip_address_final = ''
 		for ip_addr in set_addresses:
 			test_message = "testConnection"
 			check_conn = ["ssh", "-o", "ConnectTimeout=5", "-o", "StrictHostKeyChecking=no", "echo", test_message]
@@ -23,10 +24,13 @@ class extract_info(object):
 			check_conn_out = check_conn_out.split('\n')
 			for item in check_conn_out:
 				if item == test_message:
-					ip_address = ip_addr
-					break
+					# ip_address = ip_addr
+					if ip_addr in self.juju_machine['instance-id']:
+						ip_address_final = ip_addr
+						break
 
-
+		if ip_address_final != '':
+			ip_address = ip_address_final
 		sys_info = self.get_system_info(ip_address)
 		sys_info = sys_info[1]
 		if sys_info["virt_type"] is None:
