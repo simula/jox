@@ -14,9 +14,31 @@
     "jox-timeout-request": 300
   },
   "rabbit-mq-config":{
+    "_Comment": "config for jox server",
     "rabbit-mq-server-ip":"localhost",
     "rabbit-mq-server-port":5672,
     "rabbit-mq-queue":"QueueJox"
+  },
+  "flexran-plugin-config":{
+    "rabbit-mq-server-ip":"localhost",
+    "rabbit-mq-server-port":5672,
+    "rabbit-mq-queue":"QueueFlexRAN",
+    "es-index-name":"flexran_plugin",
+    "plugin-status":"enabled",
+    "timeout-request":300
+  },
+
+  "flexran-config":{
+    "host":"localhost",
+    "port": 9999
+  },
+
+  "llmec-config":{
+    "llmec-ip":"localhost",
+    "llmec-port":"9999",
+    "rabbit-mq-server-port":5672,
+    "rabbit-mq-queue":"QueuellMEC",
+    "plugin-status":"disabled"
   },
 
   "flask-config":{
