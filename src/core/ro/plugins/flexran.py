@@ -36,6 +36,7 @@ __email__ = 'contact@mosaic5g.io'
 __status__ = 'Development'
 __description__ = "Plugin to interact with FlexRAN (Flexible and Programmable Platform for SD-RAN) controller"
 """
+
 import pika
 import os, time
 import json
@@ -91,7 +92,6 @@ class FlexRAN_plugin(object):
         else:
             message = "JOX Configuration file Loaded"
             self.logger.info(message)
-            self.logger.debug(message)
 
         # Elasticsearch configuration
         self.gv.ELASTICSEARCH_HOST = self.jox_config['elasticsearch-config']["elasticsearch-host"]
@@ -134,13 +134,11 @@ class FlexRAN_plugin(object):
 
             # Create es index to maintain statistics for flexRAN plugin viz. enb_stats, ue_stats
             if self.jesearch.ping():
-                message = "Deleting the index {} from elasticsearch if alredy exist".format((self.es_flexran_index))
+                message = " Deleting the index <{}> from elasticsearch if alredy exist".format((self.es_flexran_index))
                 self.logger.info(message)
-                self.logger.debug(message)
                 self.jesearch.del_index_from_es((self.es_flexran_index))  # Adding slice data to elasticsearch
                 message = "Saving the index {} to elasticsearch".format((self.es_flexran_index))
                 self.logger.info(message)
-                self.logger.debug(message)
                 date = (datetime.datetime.now()).isoformat()
                 index_data = {"date": date,
                             "enb_stats": [],
@@ -151,7 +149,6 @@ class FlexRAN_plugin(object):
                 message = " Elasticsearch is disabled !! Enable elasticsearch to get FlexRAN notifications"
                 self.logger.info(message)
                 self.gv.FLEXRAN_ES_INDEX_STATUS="disabled"
-
         except pika_exceptions.ConnectionClosed or \
                pika_exceptions.ChannelAlreadyClosing or \
                pika_exceptions.ChannelClosed or \
@@ -161,7 +158,7 @@ class FlexRAN_plugin(object):
     def start_consuming(self):
         while True:
             try:
-                self.channel.basic_consume(self.on_request, queue=self.rbmq_queue_name)
+                self.channel.basic_consume(self.on_request, queue=self.rbmq_queue_name, no_ack=True)
                 print(colored('[*] FlexRAN plugin message thread -- > Waiting for messages. To exit press CTRL+C', 'yellow'))
                 self.channel.start_consuming()
             except pika_exceptions.ConnectionClosed or \
@@ -174,18 +171,19 @@ class FlexRAN_plugin(object):
         print(colored('[*] FlexRAN plugin notifications thread -- > Waiting for messages. To exit press CTRL+C', 'blue'))
         while True:
             try:
-                #self.update_flexRAN_endpoint()
-                enb_agent_id, enb_data = self.get_eNB_list()
-                # check this if changed i.e. if this is new eNB
-                container_name = "enb_agent_"+str(enb_agent_id)
-                message = "Notify - New eNB with id {} and info {}".format(enb_agent_id, enb_data)
-                self.logger.info(message)
-                if self.gv.FLEXRAN_ES_INDEX_STATUS == "disabled":
-                    message = " Elasticsearch is disabled !! No more notifications are maintained"
+                if self.get_status_flexRAN_endpoint():
+                    self.get_ran_stats()
+                    enb_agent_id, enb_data = self.get_eNB_list()
+                    # check this if changed i.e. if this is new eNB
+                    container_name = "enb_agent_"+str(enb_agent_id)
+                    message = "Notify - New eNB with id {} and info {}".format(enb_agent_id, enb_data)
                     self.logger.info(message)
-                else:
-                    self.update_flexran_plugin_index(self.es_flexran_index, "enb_stats", container_name, enb_data)
-                time.sleep(3600)
+                    if self.gv.FLEXRAN_ES_INDEX_STATUS == "disabled":
+                        message = " Elasticsearch is disabled !! No more notifications are maintained"
+                        self.logger.info(message)
+                    else:
+                        self.update_flexran_plugin_index(self.es_flexran_index, "enb_stats", container_name, enb_data)
+                    time.sleep(3600)
             except pika_exceptions.ConnectionClosed or \
                    pika_exceptions.ChannelAlreadyClosing or \
                    pika_exceptions.ChannelClosed or \
@@ -195,45 +193,159 @@ class FlexRAN_plugin(object):
     def on_request(self, ch, method, props, body):
         enquiry = body.decode(self.gv.ENCODING_TYPE)
         enquiry = json.loads(enquiry)
-        param = enquiry["parameters"]
-        elapsed_time_on_request = datetime.datetime.now() - datetime.datetime.strptime(enquiry["datetime"],
-                                                                                       '%Y-%m-%d %H:%M:%S.%f')
+        message = " Message received -> {} ".format(enquiry["plugin_message"])
+        self.logger.info(message)
+        elapsed_time_on_request = datetime.datetime.now() - datetime.datetime.strptime(enquiry["datetime"],'%Y-%m-%d %H:%M:%S.%f')
+
         if elapsed_time_on_request.total_seconds() < self.gv.FLEXRAN_TIMEOUT_REQUEST:
             send_reply = True
-            if "get_ran_record" in enquiry["plugin_message"]:
-                self.get_ran_record(param)
-            if "get_ran_stats" in enquiry["plugin_message"]:
-                self.get_ran_stats(param)
-            if "get_ue_stats" in enquiry["plugin_message"]:
-                self.get_ue_stats(param)
+            if enquiry["plugin_message"] == "get_ran_stats":
+                result = self.get_ran_stats()
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                }
+                #self.send_ack(ch, method, props, response, send_reply)
+
+            if enquiry["plugin_message"] == "get_ran_record" :
+                result = self.get_ran_record(enquiry["parameters"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                }
+                #self.send_ack(ch, method, props, response, send_reply)
+
+            if enquiry["plugin_message"] == "get_ue_stats" :
+                result = self.get_ue_stats(enquiry["parameters"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                }
+                #self.send_ack(ch, method, props, response, send_reply)
+
             if "create_slice" in enquiry["plugin_message"]:
-                self.prepare_slice(param)
-            if "remove_slice" in enquiry["plugin_message"]:
-                self.remove_slice(param)
-            if "add_ue_to_slice" in enquiry["plugin_message"]:
-                self.add_ues_to_slice(param)
-            if "remove_ue_from_slice" in enquiry["plugin_message"]:
-                self.remove_ues_from_slice(param)
-            if "get_num_slice" in enquiry["plugin_message"]:
-                self.get_num_slices(param)
-            if "set_num_slice" in enquiry["plugin_message"]:
-                self.set_num_slices(param)
-            if "set_slice_rb" in enquiry["plugin_message"]:
-                self.set_slice_rb(param)
-            if "get_slice_rb" in enquiry["plugin_message"]:
-                self.get_slice_rb(param)
-            if "set_slice_max_mcs" in enquiry["plugin_message"]:
-                self.set_slice_max_mcs(param)
-            if "get_slice_max_mcs" in enquiry["plugin_message"]:
-                self.get_slice_max_mcs(param)
-            if "update_flexRAN_endpoint" in enquiry["plugin_message"]:
-                raise NotImplementedError()
-                # self.update_flexRAN_endpoint()
-            if "update_flexRAN_endpoint" in enquiry["plugin_message"]:
-                # self.get_status_flexRAN_endpoint()
-                raise NotImplementedError
+                self.prepare_slice(enquiry["parameters"])
+
+
+            if  enquiry["plugin_message"] == "remove_slice":
+                result = self.remove_slice(enquiry["parameters"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                }
+                #self.send_ack(ch, method, props, response, send_reply)
+
+            if  enquiry["plugin_message"] == "add_ue_to_slice":
+                result = self.add_ues_to_slice(enquiry["parameters"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                }
+                #self.send_ack(ch, method, props, response, send_reply)
+
+            if  enquiry["plugin_message"] == "remove_ue_from_slice":
+                result = self.remove_ues_from_slice(enquiry["parameters"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                }
+                #self.send_ack(ch, method, props, response, send_reply)
+
+            if  enquiry["plugin_message"] == "get_num_slice":
+                result = self.get_num_slices(enquiry["parameters"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                }
+                #self.send_ack(ch, method, props, response, send_reply)
+
+            if  enquiry["plugin_message"] == "set_num_slice":
+                result = self.set_num_slices(enquiry["parameters"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                }
+                self.send_ack(ch, method, props, response, send_reply)
+
+            if  enquiry["plugin_message"] == "set_slice_rb":
+                result = self.set_slice_rb(enquiry["parameters"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                }
+                #self.send_ack(ch, method, props, response, send_reply)
+
+            if  enquiry["plugin_message"] == "get_slice_rb":
+                result = self.get_slice_rb(enquiry["parameters"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                }
+                self.send_ack(ch, method, props, response, send_reply)
+
+            if  enquiry["plugin_message"] == "set_slice_max_mcs":
+                result = self.set_slice_max_mcs(enquiry["parameters"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                }
+                #self.send_ack(ch, method, props, response, send_reply)
+
+            if enquiry["plugin_message"] == "get_slice_max_mcs" :
+                result = self.get_slice_max_mcs(enquiry["parameters"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                }
+                #self.send_ack(ch, method, props, response, send_reply)
+
+            if enquiry["plugin_message"] == "update_flexRAN_endpoint":
+                result = self.update_flexRAN_endpoint(enquiry["param"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                }
+                # self.send_ack(ch, method, props, response, send_reply)
+
+            if enquiry["plugin_message"] == "get_status_flexRAN_endpoint":
+                if self.get_status_flexRAN_endpoint():
+                    body = "Default FlexRAN endpoint is active"
+                    status = "OK"
+                else:
+                    body = "Default FlexRAN endpoint is not active"
+                    status = "NOT OK"
+                response= {
+                    "ACK": True,
+                    "data": body,
+                    "status_code": status
+                }
+                # self.send_ack(ch, method, props, response, send_reply)
 
     ##### Consume callbacks ######
+    def get_ran_stats(self):
+        try:
+            """Get RAN statistics. 
+            *@return: The RAN statistics as dictionary in json format
+            """
+            response = requests.get(self.flexran_endpoint+"stats/")
+            data = response.text
+            return data
+        except Exception as ex:
+            print(ex)
+
     def get_ran_record(self):
         try:
             response = requests.get(self.flexran_endpoint+"record/:id")
@@ -243,16 +355,7 @@ class FlexRAN_plugin(object):
             return json_data
         except Exception as ex:
             print(ex)
-    """
-    *
-    *@param 
-    """
-    def get_ran_stats(self):
-        try:
-            response = requests.get(self.flexran_endpoint+"stats/")
-            print(response)
-        except Exception as ex:
-            print(ex)
+
 
     def get_ue_stats(self,id):
         try:
@@ -275,12 +378,6 @@ class FlexRAN_plugin(object):
         except Exception as ex:
             print(ex)
 
-        """!@brief Delet a slice and its associated policy . 
-        @param enb_id: eNB ID 
-        @param nssi_id: slice id 
-        @param policy_data: content of the policy file of type str
-        @return: The status of the request as str
-        """
     def remove_slice(self,enb_id, nssi_id, policy=""):
         try:
             if policy == '':
@@ -314,22 +411,42 @@ class FlexRAN_plugin(object):
 
     def get_slice_max_mcs(self, param):
         raise NotImplementedError()
-    
-    def update_flexRAN_endpoint(self, param):
-        raise NotImplementedError()
 
-    def get_status_flexRAN_endpoint(self, param):
-        raise NotImplementedError()
+    def update_flexRAN_endpoint(self, param):
+        """Update the FlexRAN endpoint.
+        *@host : host address
+        *@port : port number
+        *@return: The result
+        """
+        try:
+            self.flexran_endpoint = ''.join(['http://', str(param["host"]), ':', str(param["port"]), '/'])
+            return "OK"
+        except Exception as ex:
+            print(ex)
+
+    def get_status_flexRAN_endpoint(self):
+        try:
+            """Get default or latest FlexRAN endpoint. 
+            *@return: The host and port for FlexRAN controller in standard URI format
+            """
+            requests.get(self.flexran_endpoint + "stats/")
+            message=" FlexRAN endpoint {} is valid".format(self.flexran_endpoint)
+            self.logger.error(message)
+            return True
+        except Exception as ex:
+            message=" FlexRAN endpoint {} is not valid".format(self.flexran_endpoint, ex)
+
+            self.logger.error(message)
+            return False
 
     ###### Notification callbacks ######
     def get_eNB_list(self):
         try:
-            pass
-            # response = requests.get(self.flexran_endpoint+"stats/")
-            response =  {"eNB_config":[{"agent_id": 0, "eNBId": 234881024,"eNB": {"header": {"version": 0,"type": 8,"xid": 0}}}]}
-            agent_id = response["eNB_config"][0]['agent_id']
+            response = requests.get(self.flexran_endpoint+"stats/")
+            response=json.loads(response.text)
+            agent_id = response["eNB_config"][0]['agent_info'][0]['agent_id']
             time.sleep(1)
-            agent_info = {'eNBId' : response["eNB_config"][0]['eNBId'],'ipv4_address' : 'None' }
+            agent_info = {'eNBId' : response["eNB_config"][0]['bs_id'],'ipv4_address' : 'None' }
             return agent_id, agent_info
         except Exception as ex:
             print(ex)
@@ -354,6 +471,22 @@ class FlexRAN_plugin(object):
             if bool(slice_data) == False:
                 slice_data = [{container_name : [container_data]}]
             self.jesearch.update_index_with_content(index_page, container_type, slice_data)
+
+
+    def send_ack(self, ch, method, props, response, send_reply):
+        if send_reply:
+            response = json.dumps(response)
+            try:
+                ch.basic_publish(exchange='',
+                                 routing_key=props.reply_to,
+                                 properties=pika.BasicProperties(correlation_id= \
+                                                                     props.correlation_id),
+                                 body=str(response))
+                ch.basic_ack(delivery_tag=method.delivery_tag)
+            except pika_exceptions.ConnectionClosed:
+                pass
+            except Exception as ex:
+                self.logger.critical("Error while sending response: {}".format(ex))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process commandline arguments and override configurations in jox_config.json')
