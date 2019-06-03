@@ -266,6 +266,8 @@ class LxcDriver(object):
 					machine_id_service = app_values.units[0].machine.id
 					add_new_context_machine = False
 			if application_NotExist and machine_id_service is None:
+				lxc_anchor = "remote_pou"
+				# provider_type = "test"
 				if provider_type == "lxd":
 					if new_machine.auto:
 						juju_machine = await model.add_machine()
@@ -283,7 +285,7 @@ class LxcDriver(object):
 							series=new_machine.os_series,
 						)
 				else:
-					cmd_list_lxc = ["lxc", "list", "--format", "json"]
+					cmd_list_lxc = ["lxc", "list", "{}:".format(lxc_anchor), "--format", "json"]
 					cmd_list_lxc_out = await run_command(cmd_list_lxc)
 					cmd_list_lxc_out = json.loads(cmd_list_lxc_out)
 					machine_name_exist = True
@@ -304,7 +306,11 @@ class LxcDriver(object):
 							machine_lxd_name = machine_lxd_name_tmp
 
 					container_name = machine_lxd_name
-					cmd_lxc_create = ["lxc", "launch", "ubuntu:{}".format(new_machine.os_version), container_name]
+
+
+					cmd_lxc_create = ["lxc", "launch", "juju/xenial/amd64", "{}:{}".format(lxc_anchor, container_name)]
+					# cmd_lxc_create = ["lxc", "launch", "-p", "default", "-p", "bridgeprofile", "juju/xenial/amd64", "{}:{}".format(lxc_anchor, container_name)]
+					# cmd_lxc_create = ["lxc", "launch", "ubuntu:{}".format(new_machine.os_version), "{}:{}".format(lxc_anchor, container_name)]
 					cmd_lxc_create_out = await run_command(cmd_lxc_create)
 					self.logger.info(cmd_lxc_create_out)
 					""" Get the ip addresss of the machine"""
@@ -350,12 +356,12 @@ class LxcDriver(object):
 					message = "Injecting the public key in the lxd machine"
 					self.logger.info(message)
 					cmd_lxc_inject_ssh_key = ["lxc", "file", "push", ssh_key_puplic,
-											  "{}/root/.ssh/authorized_keys".format(container_name)]
+											  "{}:{}/root/.ssh/authorized_keys".format(lxc_anchor, container_name)]
 					cmd_lxc_inject_ssh_key_out = await run_command(cmd_lxc_inject_ssh_key)
 
 					message = "Injecting the public key in the lxd machine"
 					self.logger.info(message)
-					cmd_lxc_chmod = ["lxc", "exec", container_name, "--", "sh", "-c",
+					cmd_lxc_chmod = ["lxc", "exec", "{}:{}".format(lxc_anchor, container_name), "--", "sh", "-c",
 									 str(
 										 "chmod 600 /root/.ssh/authorized_keys && sudo chown root: /root/.ssh/authorized_keys")]
 					cmd_lxc_chmod_out = await run_command(cmd_lxc_chmod)

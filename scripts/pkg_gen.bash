@@ -318,6 +318,14 @@ dsl_definitions:
       start_ip: ""
       end_ip: ""
       gateway_ip: "192.168.12.254"
+  data_network_4: &data_network_4
+    properties:
+      network_name: "net4"
+      ip_version: 4
+      cidr: "192.168.1.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "192.168.1.254"
   containers:
     region1:
       - network: *data_network_1
@@ -364,7 +372,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:trusty/wordpress-5'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -423,7 +431,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -567,6 +575,14 @@ dsl_definitions:
       start_ip: ""
       end_ip: ""
       gateway_ip: "192.168.12.254"
+  data_network_4: &data_network_4
+    properties:
+      network_name: "net4"
+      ip_version: 4
+      cidr: "192.168.1.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "192.168.1.254"
   containers:
     region1:
       - network: *data_network_1
@@ -644,7 +660,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -660,7 +676,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -759,7 +775,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-mme-18'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -775,7 +791,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-spgw-16'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -967,6 +983,14 @@ dsl_definitions:
       start_ip: ""
       end_ip: ""
       gateway_ip: "192.168.12.254"
+  data_network_4: &data_network_4
+    properties:
+      network_name: "net4"
+      ip_version: 4
+      cidr: "192.168.1.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "192.168.1.254"
   containers:
     region1:
       - network: *data_network_1
@@ -1044,7 +1068,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1060,7 +1084,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1156,7 +1180,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-mme-18'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1172,7 +1196,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-spgw-16'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1242,7 +1266,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-enb-33'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1421,6 +1445,14 @@ dsl_definitions:
       start_ip: ""
       end_ip: ""
       gateway_ip: "192.168.12.254"
+  data_network_4: &data_network_4
+    properties:
+      network_name: "net4"
+      ip_version: 4
+      cidr: "192.168.1.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "192.168.1.254"
   containers:
     region1:
       - network: *data_network_1
@@ -1498,7 +1530,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1514,7 +1546,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1613,7 +1645,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-mme-18'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1629,7 +1661,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-spgw-16'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1730,7 +1762,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-enb-33'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1745,7 +1777,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-rru-15'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -1931,6 +1963,14 @@ dsl_definitions:
       start_ip: ""
       end_ip: ""
       gateway_ip: "192.168.12.254"
+  data_network_4: &data_network_4
+    properties:
+      network_name: "net4"
+      ip_version: 4
+      cidr: "192.168.1.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "192.168.1.254"
   containers:
     region1:
       - network: *data_network_1
@@ -2008,7 +2048,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2024,7 +2064,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2093,7 +2133,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/trusty/oai-epc-27'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2185,7 +2225,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-enb-33'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2200,7 +2240,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/trusty/oai-rrh-10'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2387,6 +2427,14 @@ dsl_definitions:
       start_ip: ""
       end_ip: ""
       gateway_ip: "192.168.12.254"
+  data_network_4: &data_network_4
+    properties:
+      network_name: "net4"
+      ip_version: 4
+      cidr: "192.168.1.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "192.168.1.254"
   containers:
     region1:
       - network: *data_network_1
@@ -2464,7 +2512,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2480,7 +2528,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2549,7 +2597,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/trusty/oai-epc-27'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2612,7 +2660,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/trusty/oaisim-enb-ue-8'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2752,6 +2800,22 @@ dsl_definitions:
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
+  data_network_3: &data_network_3
+    properties:
+      network_name: "net3"
+      ip_version: 4
+      cidr: "192.168.12.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "192.168.12.254"
+  data_network_4: &data_network_4
+    properties:
+      network_name: "net4"
+      ip_version: 4
+      cidr: "192.168.1.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "192.168.1.254"
 
   containers:
     region1:
@@ -2825,7 +2889,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:vnf1'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -2841,7 +2905,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:vnf2'
-        endpoint: adalia-edu
+        endpoint: nymphe-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version

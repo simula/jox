@@ -18,8 +18,9 @@
     "rabbit-mq-server-port":5672,
     "rabbit-mq-queue":"QueueJox"
   },
+
   "flask-config":{
-    "flask-server": "192.168.12.46",
+    "flask-server": "localhost",
     "flask-port": 5000,
     "flask-debug": "FALSE"
   },
@@ -38,7 +39,20 @@
         "zone": "1",
         "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
         "scope": "private",
-        "domain": "10.104.8.0/24",
+        "domain": "10.184.36.0/24",
+        "_Comment_3": "ssh config",
+        "ssh-private-key": "",
+        "ssh-user": "",
+        "ssh-password": "",
+        "managed-by": "lxd"
+      },
+      {
+        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+        "pop-name": "default-lxc-remote",
+        "zone": "1",
+        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+        "scope": "private",
+        "domain": "192.168.1.0/24",
         "_Comment_3": "ssh config",
         "ssh-private-key": "",
         "ssh-user": "",
@@ -177,6 +191,38 @@
     }
   },
   "clouds-list": [
+    {
+      "description": "credentials of your juju controller",
+      "cloud-name": "nymphe-edu",
+      "cloud-type": "manual",
+      "cloud-endpoint": "192.168.1.65:17070",
+      "cloud-username": "admin",
+      "cloud-password": "71ea95adf14fa003832340c5f90145df"
+    },
+    {
+      "description": "credentials of your juju controller",
+      "cloud-name": "nympheController-edu",
+      "cloud-type": "manual",
+      "cloud-endpoint": "192.168.1.42:17070",
+      "cloud-username": "admin",
+      "cloud-password": "841073c837889f34abcb15d205eeccd9"
+    },
+    {
+      "description": "credentials of your juju controller",
+      "cloud-name": "localhost-borer-1",
+      "cloud-type": "lxd",
+      "cloud-endpoint": "10.184.36.163:17070",
+      "cloud-username": "admin",
+      "cloud-password": "00a13dcd87b63988c8a8de1a1ad8165c"
+    },
+    {
+      "description": "credentials of your juju controller",
+      "cloud-name": "localhost-borer-2",
+      "cloud-type": "lxd",
+      "cloud-endpoint": "10.184.36.208:17070",
+      "cloud-username": "admin",
+      "cloud-password": "3ca7a4db6ddd9c95ed226abae9a4e2b6"
+    },
     {
       "description": "credentials of your juju controller",
       "cloud-name": "localhost-borer",
