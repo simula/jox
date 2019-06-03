@@ -60,6 +60,7 @@ class ResourcesController(object):
 		try:
 			self.jox_config = jox_config
 			self.jesearch = jesearch
+
 		except Exception as ex:
 			raise ex
 

@@ -25,7 +25,7 @@
  * \company: Eurecom
  * \email:contact@mosaic5g.io
 
-__author__ = 'Eurecom'
+ __author__ = 'Eurecom'
 __date__ = "11-January-2019"
 __version__ = '1.0'
 __version_date__ = "01-March-2019"
@@ -56,11 +56,6 @@ dir_JOX_path = os.path.dirname(os.path.abspath(__file__ + "/../../../"))
 
 class FlexRAN_plugin(object):
     def __init__(self, flex_log_level=None,):
-        ## Loading global variables ##
-        self.dir_config = dir_JOX_path + '/common/config/'
-        self.logger = logging.getLogger("jox-plugin.flexran")
-        self.jox_config = ""
-        self.gv = gv
 
         if flex_log_level:
             if flex_log_level == 'debug':
@@ -72,9 +67,14 @@ class FlexRAN_plugin(object):
             elif flex_log_level == 'error':
                 self.logger.setLevel(logging.ERROR)
             elif flex_log_level == 'critic':
-                self.logger.setLeverbmq_server_ipl(logging.CRITICAL)
-            else:
-                self.logger.setLevel(logging.INFO)
+                self.logger.setLevel(logging.CRITICAL)
+
+        ## Loading global variables ##
+        self.dir_config = dir_JOX_path + '/common/config/'
+        self.logger = logging.getLogger("jox-plugin.flexran")
+        self.jox_config = ""
+        self.gv = gv
+
         try:
             with open(''.join([self.dir_config, gv.CONFIG_FILE])) as data_file:
                 data = json.load(data_file)
@@ -90,14 +90,14 @@ class FlexRAN_plugin(object):
             message = "Error while trying to load JOX configuration"
             self.logger.error(message)
         else:
-            message = "JOX Configuration file Loaded"
+            message = " JOX Configuration file Loaded"
             self.logger.info(message)
 
-        # Elasticsearch configuration
+        #### Elasticsearch configuration
         self.gv.ELASTICSEARCH_HOST = self.jox_config['elasticsearch-config']["elasticsearch-host"]
         self.gv.ELASTICSEARCH_PORT = self.jox_config['elasticsearch-config']["elasticsearch-port"]
         self.gv.ELASTICSEARCH_LOG_LEVEL = self.jox_config['elasticsearch-config']["elasticsearch-log-level"]
-        # FlexRAN and RBMQ configuration
+        #### FlexRAN and RBMQ configuration
         self.gv.FLEXRAN_HOST = self.jox_config["flexran-config"]["host"]
         self.gv.FLEXRAN_PORT = self.jox_config["flexran-config"]["port"]
         self.gv.RBMQ_QUEUE_FlexRAN = self.jox_config["flexran-plugin-config"]["rabbit-mq-queue"]
@@ -132,12 +132,12 @@ class FlexRAN_plugin(object):
             self.channel.queue_declare(self.rbmq_queue_name)
             self.channel.basic_qos(prefetch_count=1)
 
-            # Create es index to maintain statistics for flexRAN plugin viz. enb_stats, ue_stats
+            #### Create es index to maintain statistics for flexRAN plugin viz. enb_stats, ue_stats
             if self.jesearch.ping():
                 message = " Deleting the index <{}> from elasticsearch if alredy exist".format((self.es_flexran_index))
                 self.logger.info(message)
                 self.jesearch.del_index_from_es((self.es_flexran_index))  # Adding slice data to elasticsearch
-                message = "Saving the index {} to elasticsearch".format((self.es_flexran_index))
+                message = " Saving the index {} to elasticsearch".format((self.es_flexran_index))
                 self.logger.info(message)
                 date = (datetime.datetime.now()).isoformat()
                 index_data = {"date": date,
@@ -158,7 +158,7 @@ class FlexRAN_plugin(object):
     def start_consuming(self):
         while True:
             try:
-                self.channel.basic_consume(self.on_request, queue=self.rbmq_queue_name, no_ack=True)
+                self.channel.basic_consume(self.on_request, queue=self.rbmq_queue_name, no_ack=False)
                 print(colored('[*] FlexRAN plugin message thread -- > Waiting for messages. To exit press CTRL+C', 'yellow'))
                 self.channel.start_consuming()
             except pika_exceptions.ConnectionClosed or \
@@ -173,17 +173,18 @@ class FlexRAN_plugin(object):
             try:
                 if self.get_status_flexRAN_endpoint():
                     self.get_ran_stats()
-                    enb_agent_id, enb_data = self.get_eNB_list()
+                    #enb_agent_id, enb_data = self.get_eNB_list()
                     # check this if changed i.e. if this is new eNB
-                    container_name = "enb_agent_"+str(enb_agent_id)
-                    message = "Notify - New eNB with id {} and info {}".format(enb_agent_id, enb_data)
-                    self.logger.info(message)
+                    #container_name = "enb_agent_"+str(enb_agent_id)
+                    #message = "Notify - New eNB with id {} and info {}".format(enb_agent_id, enb_data)
+                    #self.logger.info(message)
                     if self.gv.FLEXRAN_ES_INDEX_STATUS == "disabled":
                         message = " Elasticsearch is disabled !! No more notifications are maintained"
                         self.logger.info(message)
                     else:
-                        self.update_flexran_plugin_index(self.es_flexran_index, "enb_stats", container_name, enb_data)
-                    time.sleep(3600)
+                        pass
+                        # self.update_flexran_plugin_index(self.es_flexran_index, "enb_stats", container_name, enb_data)
+                time.sleep(10)
             except pika_exceptions.ConnectionClosed or \
                    pika_exceptions.ChannelAlreadyClosing or \
                    pika_exceptions.ChannelClosed or \
@@ -206,7 +207,25 @@ class FlexRAN_plugin(object):
                     "data": result,
                     "status_code": "OK"
                 }
-                #self.send_ack(ch, method, props, response, send_reply)
+                self.send_ack(ch, method, props, response, send_reply)
+
+            if enquiry["plugin_message"] == "get_num_enb":
+                result = self.get_num_eNB()
+                response = {
+                    "ACK": True,
+                    "data": str(result),
+                    "status_code": "OK"
+                }
+                self.send_ack(ch, method, props, response, send_reply)
+
+            if enquiry["plugin_message"] == "get_bs_id":
+                result = self.get_num_eNB()
+                response = {
+                    "ACK": True,
+                    "data": str(result),
+                    "status_code": "OK"
+                }
+                self.send_ack(ch, method, props, response, send_reply)
 
             if enquiry["plugin_message"] == "get_ran_record" :
                 result = self.get_ran_record(enquiry["parameters"])
@@ -215,7 +234,7 @@ class FlexRAN_plugin(object):
                     "data": result,
                     "status_code": "OK"
                 }
-                #self.send_ack(ch, method, props, response, send_reply)
+                self.send_ack(ch, method, props, response, send_reply)
 
             if enquiry["plugin_message"] == "get_ue_stats" :
                 result = self.get_ue_stats(enquiry["parameters"])
@@ -224,11 +243,16 @@ class FlexRAN_plugin(object):
                     "data": result,
                     "status_code": "OK"
                 }
-                #self.send_ack(ch, method, props, response, send_reply)
+                self.send_ack(ch, method, props, response, send_reply)
 
             if "create_slice" in enquiry["plugin_message"]:
                 self.prepare_slice(enquiry["parameters"])
-
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                }
+                self.send_ack(ch, method, props, response, send_reply)
 
             if  enquiry["plugin_message"] == "remove_slice":
                 result = self.remove_slice(enquiry["parameters"])
@@ -237,7 +261,7 @@ class FlexRAN_plugin(object):
                     "data": result,
                     "status_code": "OK"
                 }
-                #self.send_ack(ch, method, props, response, send_reply)
+                self.send_ack(ch, method, props, response, send_reply)
 
             if  enquiry["plugin_message"] == "add_ue_to_slice":
                 result = self.add_ues_to_slice(enquiry["parameters"])
@@ -246,7 +270,7 @@ class FlexRAN_plugin(object):
                     "data": result,
                     "status_code": "OK"
                 }
-                #self.send_ack(ch, method, props, response, send_reply)
+                self.send_ack(ch, method, props, response, send_reply)
 
             if  enquiry["plugin_message"] == "remove_ue_from_slice":
                 result = self.remove_ues_from_slice(enquiry["parameters"])
@@ -255,7 +279,7 @@ class FlexRAN_plugin(object):
                     "data": result,
                     "status_code": "OK"
                 }
-                #self.send_ack(ch, method, props, response, send_reply)
+                self.send_ack(ch, method, props, response, send_reply)
 
             if  enquiry["plugin_message"] == "get_num_slice":
                 result = self.get_num_slices(enquiry["parameters"])
@@ -264,7 +288,7 @@ class FlexRAN_plugin(object):
                     "data": result,
                     "status_code": "OK"
                 }
-                #self.send_ack(ch, method, props, response, send_reply)
+                self.send_ack(ch, method, props, response, send_reply)
 
             if  enquiry["plugin_message"] == "set_num_slice":
                 result = self.set_num_slices(enquiry["parameters"])
@@ -282,7 +306,7 @@ class FlexRAN_plugin(object):
                     "data": result,
                     "status_code": "OK"
                 }
-                #self.send_ack(ch, method, props, response, send_reply)
+                self.send_ack(ch, method, props, response, send_reply)
 
             if  enquiry["plugin_message"] == "get_slice_rb":
                 result = self.get_slice_rb(enquiry["parameters"])
@@ -300,7 +324,7 @@ class FlexRAN_plugin(object):
                     "data": result,
                     "status_code": "OK"
                 }
-                #self.send_ack(ch, method, props, response, send_reply)
+                self.send_ack(ch, method, props, response, send_reply)
 
             if enquiry["plugin_message"] == "get_slice_max_mcs" :
                 result = self.get_slice_max_mcs(enquiry["parameters"])
@@ -309,7 +333,7 @@ class FlexRAN_plugin(object):
                     "data": result,
                     "status_code": "OK"
                 }
-                #self.send_ack(ch, method, props, response, send_reply)
+                self.send_ack(ch, method, props, response, send_reply)
 
             if enquiry["plugin_message"] == "update_flexRAN_endpoint":
                 result = self.update_flexRAN_endpoint(enquiry["param"])
@@ -318,7 +342,7 @@ class FlexRAN_plugin(object):
                     "data": result,
                     "status_code": "OK"
                 }
-                # self.send_ack(ch, method, props, response, send_reply)
+                self.send_ack(ch, method, props, response, send_reply)
 
             if enquiry["plugin_message"] == "get_status_flexRAN_endpoint":
                 if self.get_status_flexRAN_endpoint():
@@ -332,7 +356,7 @@ class FlexRAN_plugin(object):
                     "data": body,
                     "status_code": status
                 }
-                # self.send_ack(ch, method, props, response, send_reply)
+                self.send_ack(ch, method, props, response, send_reply)
 
     ##### Consume callbacks ######
     def get_ran_stats(self):
@@ -350,12 +374,9 @@ class FlexRAN_plugin(object):
         try:
             response = requests.get(self.flexran_endpoint+"record/:id")
             json_data = json.loads(response.text)
-            response.close()
-            requests.session().close()
             return json_data
         except Exception as ex:
             print(ex)
-
 
     def get_ue_stats(self,id):
         try:
@@ -366,14 +387,14 @@ class FlexRAN_plugin(object):
 
     def prepare_slice(self,enb_id, slice_id):
         try:
-            response = requests.get(self.flexran_endpoint+"slice/enb/"+enb_id+"slice"+slice_id)
+            response = requests.post(self.flexran_endpoint+"slice/enb/"+enb_id+"/slice/"+slice_id)
             print(response)
         except Exception as ex:
             print(ex)
 
     def create_slice(self,enb_id, slice_id):
         try:
-            response = requests.get(self.flexran_endpoint+"slice/enb/"+enb_id+"slice"+slice_id)
+            response = requests.post(self.flexran_endpoint+"slice/enb/"+enb_id+"/slice/"+slice_id)
             print(response)
         except Exception as ex:
             print(ex)
@@ -430,14 +451,40 @@ class FlexRAN_plugin(object):
             *@return: The host and port for FlexRAN controller in standard URI format
             """
             requests.get(self.flexran_endpoint + "stats/")
-            message=" FlexRAN endpoint {} is valid".format(self.flexran_endpoint)
-            self.logger.error(message)
             return True
         except Exception as ex:
-            message=" FlexRAN endpoint {} is not valid".format(self.flexran_endpoint, ex)
-
-            self.logger.error(message)
+            message=" FlexRAN endpoint {} is not active".format(self.flexran_endpoint, ex)
+            self.logger.info(message)
             return False
+
+    def get_num_eNB(self):
+        try:
+            response = requests.get(self.flexran_endpoint+"stats/")
+            response=json.loads(response.text)
+            response_data = response["eNB_config"][0]
+            return len(response_data)
+        except Exception as ex:
+            print(ex)
+
+    def get_bs_id(self, param):
+        try:
+            enb=param["enb"]
+            response = requests.get(self.flexran_endpoint+"stats/")
+            response=json.loads(response.text)
+            response_data = response["eNB_config"][0]
+            return response_data[enb]['eNB']['eNBId']
+        except Exception as ex:
+            print(ex)
+
+    def get_enb_config(self, param):
+        try:
+            enb=param["enb"]
+            response = requests.get(self.flexran_endpoint+"stats/")
+            response=json.loads(response.text)
+            response_data = response["eNB_config"][0]
+            return response_data[enb]['eNB']['eNBId']
+        except Exception as ex:
+            print(ex)
 
     ###### Notification callbacks ######
     def get_eNB_list(self):

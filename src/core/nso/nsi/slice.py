@@ -85,7 +85,7 @@ class JSlice(JSONEncoder):
 			self.logger.error(traceback.format_exc())
 			raise ex
 		
-	def add_slice(self, subslices_controller):
+	def add_slice(self, subslices_controller, rbmq_channel_object):
 		list_config_NSSI = {}
 		add_nssi_success = True
 		for nssi_id in self.template_manager.get_NSSIs_ID():
@@ -204,7 +204,7 @@ class JSlice(JSONEncoder):
 				return [jcloud, jmodel]
 		return False
 
-	def add_subslice(self, subslices_controller, subslice_config):
+	def add_subslice(self, subslices_controller, subslice_config, rbmq_channel_object):
 		add_nssi = subslices_controller.add_subslice(subslice_config, self.list_all_jujuModel_attachedWatcher)
 		return add_nssi
 	def attache_subslice(self): # attache the current slice to already exist NSSI

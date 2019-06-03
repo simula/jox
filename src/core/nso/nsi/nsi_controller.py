@@ -98,7 +98,9 @@ class NetworkSliceController(object):
 				return True
 		return False
 	
-	def add_network_slice(self, slice_name_yml, subslices_controller, nsi_dir, nssi_dir):
+	def add_network_slice(self, slice_name_yml, subslices_controller, nsi_dir, nssi_dir, send_to_plugin):
+		msg = "skduhvksduhv"
+		send_to_plugin(msg, False)
 		self.logger.info("Adding the slice {}".format(slice_name_yml))
 		new_slice = JSlice(self.gv, self.jesearch)
 		build_slice = new_slice.build_jslice(slice_name_yml, nsi_dir, nssi_dir)

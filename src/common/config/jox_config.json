@@ -19,6 +19,16 @@
     "rabbit-mq-server-port":5672,
     "rabbit-mq-queue":"QueueJox"
   },
+
+  "llmec-plugin-config":{
+    "rabbit-mq-server-ip":"localhost",
+    "rabbit-mq-server-port":5672,
+    "rabbit-mq-queue":"QueuellMEC",
+    "es-index-name":"llmec_plugin",
+    "plugin-status":"enabled",
+    "timeout-request":300
+  },
+
   "flexran-plugin-config":{
     "rabbit-mq-server-ip":"localhost",
     "rabbit-mq-server-port":5672,
@@ -29,8 +39,8 @@
   },
 
   "flexran-config":{
-    "host":"localhost",
-    "port": 9999
+    "host":"127.0.0.1",
+    "port": 5000
   },
 
   "llmec-config":{
