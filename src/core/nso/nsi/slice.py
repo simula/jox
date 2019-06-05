@@ -194,7 +194,6 @@ class JSlice(JSONEncoder):
 		
 	async def add_relation_interNssi_interModel(self, nssi_source, source_jcloud, source_jmodel, nssi_node_source,
 	                                      nssi_target, target_jcloud, target_jmodel, nssi_node_target):
-		#source_jcloud, source_jmodel, target_jcloud, target_jmodel, nssi_node_source, nssi_node_target
 		set_relations = {
 			"mysql":{
 				"oai-hss":["mysql:db", "oai-hss:db"],
@@ -205,6 +204,11 @@ class JSlice(JSONEncoder):
 			},
 			"oai-ran": {
 				"oai-mme": ["oai-ran:mme", "oai-mme:mme"],
+				"flexran": ["oai-ran:rtc", "flexran:rtc"],
+			},
+			"oai-enb": {
+				"oai-mme": ["oai-enb:mme", "oai-mme:mme"],
+				"flexran": ["oai-enb:rtc", "flexran:rtc"],
 			},
 			"oai-hss": {
 				"mysql": ["oai-hss:db", "mysql:db"],
@@ -214,6 +218,11 @@ class JSlice(JSONEncoder):
 				"oai-hss": ["oai-mme:hss", "oai-hss:hss"],
 				"oai-spgw": ["oai-mme:spgw", "oai-spgw:spgw"],
 				"oai-ran": ["oai-mme:mme", "oai-ran:mme"],
+				"oai-enb": ["oai-mme:mme", "oai-enb:mme"],
+			},
+			"flexran": {
+				"oai-enb": ["flexran:rtc", "oai-enb:rtc"],
+				"oai-ran": ["flexran:rtc", "oai-ran:rtc"],
 			},
 		}
 		"juju deploy cs:~navid-nikaein/xenial/oai-mme-18"

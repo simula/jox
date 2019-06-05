@@ -189,24 +189,45 @@ class JSubSlice(JSONEncoder):
                 try:
                     relation_node = subslice_config["list_services"][service_model]['relation']
                     # search for the cross model relations for among the models of the current NSSI only
-                    if relation_node in list_service:
-                        juju_cloud_relation_node = subslice_config["list_services"][relation_node]['jcloud']
-                        juju_model_relation_node = subslice_config["list_services"][relation_node]['jmodel']
-                        model_relation = {
-                            "source": {
-                                "service": service_model,
-                                "juju_cloud": juju_cloud,
-                                "juju_model": juju_model
-                            },
-                            "target": {
-                                "service": relation_node,
-                                "juju_cloud": juju_cloud_relation_node,
-                                "juju_model": juju_model_relation_node
-                            }
-                        }
-                        self.subslice_relations.append(model_relation)
-                        if juju_cloud != juju_cloud_relation_node or juju_model != juju_model_relation_node:
-                            list_crossModelRelation.append(model_relation)
+                    if len(relation_node) > 0:
+                        for service_target in relation_node:
+                            if service_target in list_service:
+                                juju_cloud_service_target = subslice_config["list_services"][service_target]['jcloud']
+                                juju_model_service_target = subslice_config["list_services"][service_target]['jmodel']
+                                model_relation = {
+                                    "source": {
+                                        "service": service_model,
+                                        "juju_cloud": juju_cloud,
+                                        "juju_model": juju_model
+                                    },
+                                    "target": {
+                                        "service": service_target,
+                                        "juju_cloud": juju_cloud_service_target,
+                                        "juju_model": juju_model_service_target
+                                    }
+                                }
+                                self.subslice_relations.append(model_relation)
+                                if juju_cloud != juju_cloud_service_target or juju_model != juju_model_service_target:
+                                    list_crossModelRelation.append(model_relation)
+                            # pass
+                    # if relation_node in list_service:
+                    #     juju_cloud_relation_node = subslice_config["list_services"][relation_node]['jcloud']
+                    #     juju_model_relation_node = subslice_config["list_services"][relation_node]['jmodel']
+                    #     model_relation = {
+                    #         "source": {
+                    #             "service": service_model,
+                    #             "juju_cloud": juju_cloud,
+                    #             "juju_model": juju_model
+                    #         },
+                    #         "target": {
+                    #             "service": relation_node,
+                    #             "juju_cloud": juju_cloud_relation_node,
+                    #             "juju_model": juju_model_relation_node
+                    #         }
+                    #     }
+                    #     self.subslice_relations.append(model_relation)
+                    #     if juju_cloud != juju_cloud_relation_node or juju_model != juju_model_relation_node:
+                    #         list_crossModelRelation.append(model_relation)
                 except Exception as ex:
                     raise ex
                 if not self.check_existence_model(juju_cloud, juju_model):

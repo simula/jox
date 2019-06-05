@@ -1,7 +1,7 @@
 https://blog.simos.info/how-to-make-your-lxd-containers-get-ip-addresses-from-your-lan-using-a-bridge/
 
 # macvtap
-sudo ip link add link wlp2s0 name macvtap0 address 52:54:00:b8:9c:58 type macvtap mode bridge
+sudo ip link add link enp0s31f6 name macvtap0 address ec:21:e5:64:44:58 type macvtap mode bridge
 sudo ip link add link enp0s31f6 name macvtap0 address 52:54:00:b8:9c:58 type macvtap mode bridge
 sudo ip link set macvtap0 up
 ip link show macvtap0
@@ -52,7 +52,7 @@ ip link show macvlanvepa0
  qemu -net nic,model=virtio,addr=52:54:00:b8:9c:60 -net tap,fd=3 3<>/dev/tap11
  
 
-uvt-kvm create machine1  release=xenial --memory 1024 --cpu 1 --disk 3 --bridge macvtap0  --ssh-public-key-file /home/borer/.ssh/id_juju2.pub --password linux
+uvt-kvm create machine1  release=xenial --memory 1024 --cpu 1 --disk 3  --ssh-public-key-file /home/borer/.ssh/id_juju2.pub --password linux
 
 
 in order to link lxd to kvm:
