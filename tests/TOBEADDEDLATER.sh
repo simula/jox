@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+watch -n 1 --color  juju status --relations  -m localhost-borer:default-2 --color
 
 juju model-config enable-os-refresh-update=false enable-os-upgrade=false
 
