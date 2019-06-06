@@ -170,7 +170,7 @@ class JSubSlice(JSONEncoder):
         raise NotImplementedError()
 
                     
-    def add_models(self, subslice_config, resourceController, list_all_jujuModel_attachedWatcher, rbmq_channel_object):
+    def add_models(self, subslice_config, resourceController, list_all_jujuModel_attachedWatcher):
         """
         subslice_config = {
             "slice_name": nssi_id,

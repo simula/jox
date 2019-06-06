@@ -111,7 +111,7 @@ class JModel(JSONEncoder):
                 self.subslice_name = subslice_name
                 self.slice_name = slice_name
                 self.config = model_config
-
+                
                 self.machines_config = model_config["list_machines"]
                 self.services_config = model_config["list_services"]
                 
@@ -217,7 +217,7 @@ class JModel(JSONEncoder):
             machine_key = allocated_machine
             new_service.to = machine_key
             
-            loop.run(self.juju_serviceModel.deploy_service(new_service))
+            loop.run(self.juju_serviceModel.deploy_service(new_service, self.slice_name))
             self.services.append(new_service) 
             return     
         except Exception as ex:

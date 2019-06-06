@@ -112,7 +112,7 @@ class SubSlicesController(object):
 				message = "There is no deployed subslice with the given name {}".format(subslice_name)
 				return [False, message]
 	
-	def add_subslice(self, subslice_config, list_all_jujuModel_attachedWatcher, rbmq_channel_object):
+	def add_subslice(self, subslice_config, list_all_jujuModel_attachedWatcher):
 		##
 		""" The structure of subslice_config is as follows
 		subslice_config = {

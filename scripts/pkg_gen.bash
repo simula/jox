@@ -29,7 +29,6 @@ export DEBIAN_FRONTEND=noninteractive
 ###################################
 # colorful echos
 ###################################
-
 black='\E[30m'
 red='\E[31m'
 green='\E[32m'
@@ -77,7 +76,7 @@ pkg_type=""
 pkg_ext=""
 pkg_template="oai-epc"
 num_subslices=2
-pkg_description="template for deploying package <$pkg_template> with $num_subslices subslices"
+
 
 machine_flavor="small"
 os_flavor="ubuntu_16_64"
@@ -123,7 +122,7 @@ Options
 -s | --src-dir [dir]
    Directory to use to create a package. Default is set to : current directory.
 -t | --pkg-template)
-   Set the template to generate the package. Available options: clean, oai-epc(default).
+   Set the template to generate the package. Available options: wordpress, oai-epc(default), oai-4g, oai-5g-cran, oai-nfv-rrh, oai-nfv-sim.
 -v | --pkg-vendor [vendor]
    Package vendor name for descriptor. Default is set to: Eurecom
 
@@ -204,6 +203,249 @@ EOF
 
 }
 
+
+###### wordpress
+function write_nsi_wordpress_template() {
+    date=$(date +%F)
+    name=$(basename $1)
+    desc_file="${1}/nsi/${pkg_name}.yaml"
+
+    cat >$desc_file <<EOF
+description: $pkg_description
+tosca_definitions_version: tosca_simple_yaml_1_0
+imports: [nssi_1, nssi_2]
+metadata:
+  ID: wordpress
+  author: $pkg_name
+  vendor: $pkg_name
+  version: $pkg_version
+  date: $date
+relationships_template:
+  connection_server_client:
+    source:
+      inputs: {name: eg1, node: wordpress, type: tosca.relationships.AttachesTo}
+      node: nss_first
+      parameters: nssi_1
+    target:
+      inputs: {name: ing1, node: mysql, type: tosca.relationships.DependsOn}
+      node: nss_second
+      parameters: nssi_2
+    type: tosca.relationships.ConnectsTo
+
+topology_template:
+  node_templates:
+    nss1:
+      requirements:
+        egress:
+          eg1:
+            node: wordpress
+            relationship: {type: tosca.relationships.AttachesTo}
+        nssi: nssi_1
+      type: tosca.nodes.JOX.NSSI
+    nss2:
+      requirements:
+        ingress:
+          ing1:
+            node: mysql
+            relationship: {type: tosca.relationships.DependsOn}
+        nssi: nssi_2
+      type: tosca.nodes.JOX.NSSI
+EOF
+
+}
+function write_nssi_wordpress_template() {
+    date=$(date +%F)
+    name=$(basename $1)
+    desc_file="${1}/nssi/${2}.yaml"
+
+    cat >$desc_file <<EOF
+description: $pkg_description ($2)
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+imports: []
+metadata:
+  ID: $2
+  author: $pkg_vendor
+  vendor: $pkg_vendor
+  version: $pkg_version
+  date: $date
+
+dsl_definitions:
+  host_tiny: &host_tiny
+    disk_size: 5
+    mem_size: 512
+    num_cpus: 1
+  host_small: &host_small
+    disk_size: 5
+    mem_size: 1024
+    num_cpus: 1
+  os_linux_u_14_x64: &os_u14
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 14.04
+  os_linux_u_16_x64: &os_u16
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 16.04
+  os_linux_u_18_x64: &os_u18
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 18.04
+  data_network: &data_network_1
+    properties:
+      network_name: "net1"
+      ip_version: 4
+      cidr: "10.82.35.0/24" 
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "0.0.0.0"
+  data_network_2: &data_network_2
+    properties:
+      network_name: "net2"
+      ip_version: 4
+      cidr: "192.168.122.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "0.0.0.0"
+  data_network_3: &data_network_3
+    properties:
+      network_name: "net3"
+      ip_version: 4
+      cidr: "192.168.12.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "192.168.12.254"
+  containers:
+    region1:
+      - network: *data_network_1
+      - network2: *data_network_2
+      - network3: *data_network_3
+EOF
+
+
+    if [ "$2" == "nssi_1" ] ; then
+	cat >>$desc_file <<EOF
+topology_template:
+  node_templates:
+    VDU_wordpress:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: lxc
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "$os_flavor"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: wordpress_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "10.180.125.225"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    wordpress:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:trusty/wordpress-5'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_wordpress
+          relationship: tosca.relationships.HostedOn
+
+    wordpress_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_wordpress
+        link:
+          node: *data_network_1
+          type: tosca.nodes.network.Network
+
+EOF
+	elif [ "$2" == "nssi_2" ] ; then
+	cat >>$desc_file <<EOF
+
+topology_template:
+  node_templates:
+    VDU_mysql:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: kvm
+
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "$os_flavor"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: mysql_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "10.180.125.225"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    mysql:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:mysql-58'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_mysql
+          relationship: tosca.relationships.HostedOn
+
+    mysql_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_mysql
+        link:
+          node: *data_network_2
+          type: tosca.nodes.network.Network
+EOF
+    fi
+}
+
+
+###### oai-epc
 function write_nsi_epc_template() {
     date=$(date +%F)
     name=$(basename $1)
@@ -260,7 +502,6 @@ topology_template:
 EOF
 
 }
-
 function write_nssi_epc_template() {
     date=$(date +%F)
     name=$(basename $1)
@@ -279,13 +520,13 @@ metadata:
   date: $date
 
 dsl_definitions:
-  host_small: &host_small
-    disk_size: 5
-    mem_size: 1024
-    num_cpus: 1
   host_tiny: &host_tiny
     disk_size: 5
     mem_size: 512
+    num_cpus: 1
+  host_small: &host_small
+    disk_size: 5
+    mem_size: 1024
     num_cpus: 1
   os_linux_u_14_x64: &os_u14
     architecture: x86_64
@@ -306,7 +547,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: '10.39.202.0/24'
+      cidr: "10.82.35.0/24"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -318,11 +559,19 @@ dsl_definitions:
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
-
+  data_network_3: &data_network_3
+    properties:
+      network_name: "net3"
+      ip_version: 4
+      cidr: "192.168.12.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "192.168.12.254"
   containers:
     region1:
       - network: *data_network_1
       - network2: *data_network_2
+      - network3: *data_network_3
 EOF
 
 
@@ -395,7 +644,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: localhost-default
+        endpoint: adalia-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -411,7 +660,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
-        endpoint: localhost-default
+        endpoint: adalia-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -510,7 +759,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-mme-18'
-        endpoint: localhost-default
+        endpoint: adalia-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -526,7 +775,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-spgw-16'
-        endpoint: localhost-default
+        endpoint: adalia-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -558,6 +807,1832 @@ topology_template:
 EOF
     fi
 }
+
+
+###### oai-4g
+function write_nsi_oai4g_template() {
+    date=$(date +%F)
+    name=$(basename $1)
+    desc_file="${1}/nsi/${pkg_name}.yaml"
+
+    cat >$desc_file <<EOF
+description: $pkg_description
+tosca_definitions_version: tosca_simple_yaml_1_0
+imports: [nssi_1, nssi_2, nssi_3]
+metadata:
+  ID: oai-4g
+  author: $pkg_name
+  vendor: $pkg_name
+  version: $pkg_version
+  date: $date
+
+relationships_template:
+  connection_epc:
+    type: tosca.relationships.ConnectsTo
+    source:
+      inputs:
+        type: tosca.relationships.AttachesTo
+        name: eg1
+        node: oai-hss
+      node: nss_first
+      parameters: nssi_1
+    target:
+      inputs:
+        name: ing1
+        node: oai-mme
+        type: tosca.relationships.DependsOn
+      node: nss_second
+      parameters: nssi_2
+
+  connection_ran:
+    type: tosca.relationships.ConnectsTo
+    source:
+      inputs:
+        name: eg1
+        node: oai-mme
+        type: tosca.relationships.AttachesTo
+      node: nss_first
+      parameters: nssi_2
+    target:
+      inputs:
+        name: ing1
+        node: oai-ran
+        type: tosca.relationships.DependsOn
+      node: nss_second
+      parameters: nssi_3
+
+topology_template:
+  node_templates:
+    nss1:
+      requirements:
+        egress:
+          eg1:
+            node: oai-hss
+            relationship:
+              type: tosca.relationships.AttachesTo
+        nssi: nssi_1
+      type: tosca.nodes.JOX.NSSI
+    nss2:
+      requirements:
+        ingress:
+          ing1:
+            node: oai-mme
+            relationship:
+              type: tosca.relationships.DependsOn
+        nssi: nssi_2
+      type: tosca.nodes.JOX.NSSI
+
+    nss3:
+      requirements:
+        egress:
+          eg1:
+            node: oai-mme
+            relationship:
+              type: tosca.relationships.AttachesTo
+        nssi: nssi_2
+      type: tosca.nodes.JOX.NSSI
+    nss4:
+      requirements:
+        ingress:
+          ing1:
+            node: oai-ran
+            relationship:
+              type: tosca.relationships.DependsOn
+        nssi: nssi_3
+      type: tosca.nodes.JOX.NSSI
+EOF
+}
+function write_nssi_oai4g_template() {
+    date=$(date +%F)
+    name=$(basename $1)
+    desc_file="${1}/nssi/${2}.yaml"
+
+    cat >$desc_file <<EOF
+description: $pkg_description ($2)
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+imports: []
+metadata:
+  ID: $2
+  author: $pkg_vendor
+  vendor: $pkg_vendor
+  version: $pkg_version
+  date: $date
+
+dsl_definitions:
+  host_tiny: &host_tiny
+    disk_size: 5
+    mem_size: 512
+    num_cpus: 1
+  host_small: &host_small
+    disk_size: 5
+    mem_size: 1024
+    num_cpus: 1
+  os_linux_u_14_x64: &os_u14
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 14.04
+  os_linux_u_16_x64: &os_u16
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 16.04
+  os_linux_u_18_x64: &os_u18
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 18.04
+  data_network: &data_network_1
+    properties:
+      network_name: "net1"
+      ip_version: 4
+      cidr: "10.82.35.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "0.0.0.0"
+  data_network_2: &data_network_2
+    properties:
+      network_name: "net2"
+      ip_version: 4
+      cidr: "192.168.122.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "0.0.0.0"
+  data_network_3: &data_network_3
+    properties:
+      network_name: "net3"
+      ip_version: 4
+      cidr: "192.168.12.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "192.168.12.254"
+  containers:
+    region1:
+      - network: *data_network_1
+      - network2: *data_network_2
+      - network3: *data_network_3
+EOF
+
+
+    if [ "$2" == "nssi_1" ] ; then
+	cat >>$desc_file <<EOF
+topology_template:
+  node_templates:
+    VDU_mysql:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: lxc
+
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "$os_flavor"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: mysql_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "10.180.125.225"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    VDU_oai_hss:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: lxc
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "$os_flavor"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: hss_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "192.168.1.2"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    mysql:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:mysql-58'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_mysql
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-hss
+          relationship: tosca.relationships.AttachesTo
+
+    oai-hss:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_oai_hss
+          relationship: tosca.relationships.HostedOn
+
+    mysql_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_mysql
+        link:
+          node: *data_network_1
+          type: tosca.nodes.network.Network
+
+    hss_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai_hss
+        link:
+          node: *data_network_1
+          type: tosca.nodes.network.Network
+EOF
+	elif [ "$2" == "nssi_2" ] ; then
+	cat >>$desc_file <<EOF
+topology_template:
+  node_templates:
+    VDU_oai-mme:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: lxc
+
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "ubuntu_16_64"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: oai-mme_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "172.24.11.1"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    VDU_oai-spgw:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: kvm
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "ubuntu_16_64"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: oai-spgw_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "172.24.11.2"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    oai-mme:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:~navid-nikaein/xenial/oai-mme-18'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_oai-mme
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-spgw
+          relationship: tosca.relationships.AttachesTo
+
+    oai-spgw:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm:  'cs:~navid-nikaein/xenial/oai-spgw-16'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_oai-spgw
+          relationship: tosca.relationships.HostedOn
+
+    oai-mme_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai-mme
+        link:
+          node: *data_network_1
+          type: tosca.nodes.network.Network
+
+    oai-spgw_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai-spgw
+        link:
+          node: *data_network_2
+          type: tosca.nodes.network.Network
+EOF
+    elif [ "$2" == "nssi_3" ] ; then
+	cat >>$desc_file <<EOF
+topology_template:
+  node_templates:
+    VDU_oai-ran:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: kvm
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "$os_flavor"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: oai-ran_port
+#        tag_usrp:
+#          type: tosca.capabilities.Endpoint
+#          protocol:
+#            - VRT # protocol for usrp
+#            - CHDR # protocol for usrp
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "172.24.12.1"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    oai-ran:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:~navid-nikaein/xenial/oai-enb-33'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_oai-ran
+          relationship: tosca.relationships.HostedOn
+
+    oai-ran_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai-ran
+        link:
+          node: *data_network_2
+          type: tosca.nodes.network.Network
+EOF
+
+    fi
+}
+
+
+###### oai-5g-cran
+function write_nsi_oai5gcran_template() {
+    date=$(date +%F)
+    name=$(basename $1)
+    desc_file="${1}/nsi/${pkg_name}.yaml"
+
+    cat >$desc_file <<EOF
+description: $pkg_description
+tosca_definitions_version: tosca_simple_yaml_1_0
+imports: [nssi_1, nssi_2, nssi_3]
+metadata:
+  ID: oai-5g-cran
+  author: $pkg_name
+  vendor: $pkg_name
+  version: $pkg_version
+  date: $date
+
+relationships_template:
+  connection_epc:
+    type: tosca.relationships.ConnectsTo
+    source:
+      inputs:
+        type: tosca.relationships.AttachesTo
+        name: eg1
+        node: oai-hss
+      node: nss_first
+      parameters: nssi_1
+    target:
+      inputs:
+        name: ing1
+        node: oai-mme
+        type: tosca.relationships.DependsOn
+      node: nss_second
+      parameters: nssi_2
+  connection_ran:
+    type: tosca.relationships.ConnectsTo
+    source:
+      inputs:
+        name: eg1
+        node: oai-mme
+        type: tosca.relationships.AttachesTo
+      node: nss_first
+      parameters: nssi_2
+    target:
+      inputs:
+        name: ing1
+        node: oai-enb
+        type: tosca.relationships.DependsOn
+      node: nss_second
+      parameters: nssi_3
+
+topology_template:
+  node_templates:
+    nss1:
+      requirements:
+        egress:
+          eg1:
+            node: oai-hss
+            relationship:
+              type: tosca.relationships.AttachesTo
+        nssi: nssi_1
+      type: tosca.nodes.JOX.NSSI
+    nss2:
+      requirements:
+        ingress:
+          ing1:
+            node: oai-mme
+            relationship:
+              type: tosca.relationships.DependsOn
+        nssi: nssi_2
+      type: tosca.nodes.JOX.NSSI
+    nss3:
+      requirements:
+        egress:
+          eg1:
+            node: oai-mme
+            relationship:
+              type: tosca.relationships.AttachesTo
+        nssi: nssi_2
+      type: tosca.nodes.JOX.NSSI
+    nss4:
+      requirements:
+        ingress:
+          ing1:
+            node: oai-ran
+            relationship:
+              type: tosca.relationships.DependsOn
+        nssi: nssi_3
+      type: tosca.nodes.JOX.NSSI
+EOF
+}
+function write_nssi_oai5gcran_template() {
+    date=$(date +%F)
+    name=$(basename $1)
+    desc_file="${1}/nssi/${2}.yaml"
+
+    cat >$desc_file <<EOF
+description: $pkg_description ($2)
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+imports: []
+metadata:
+  ID: $2
+  author: $pkg_vendor
+  vendor: $pkg_vendor
+  version: $pkg_version
+  date: $date
+
+dsl_definitions:
+  host_tiny: &host_tiny
+    disk_size: 5
+    mem_size: 512
+    num_cpus: 1
+  host_small: &host_small
+    disk_size: 5
+    mem_size: 1024
+    num_cpus: 1
+  os_linux_u_14_x64: &os_u14
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 14.04
+  os_linux_u_16_x64: &os_u16
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 16.04
+  os_linux_u_18_x64: &os_u18
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 18.04
+  data_network: &data_network_1
+    properties:
+      network_name: "net1"
+      ip_version: 4
+      cidr: "10.82.35.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "0.0.0.0"
+  data_network_2: &data_network_2
+    properties:
+      network_name: "net2"
+      ip_version: 4
+      cidr: "192.168.122.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "0.0.0.0"
+  data_network_3: &data_network_3
+    properties:
+      network_name: "net3"
+      ip_version: 4
+      cidr: "192.168.12.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "192.168.12.254"
+  containers:
+    region1:
+      - network: *data_network_1
+      - network2: *data_network_2
+      - network3: *data_network_3
+EOF
+
+
+    if [ "$2" == "nssi_1" ] ; then
+	cat >>$desc_file <<EOF
+topology_template:
+  node_templates:
+    VDU_mysql:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: lxc
+
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "ubuntu_16_64"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: mysql_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "10.180.125.225"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    VDU_oai_hss:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: lxc
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "ubuntu_16_64"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: hss_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "192.168.1.2"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    mysql:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:mysql-58'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_mysql
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-hss
+          relationship: tosca.relationships.AttachesTo
+
+    oai-hss:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_oai_hss
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-spgw
+          relationship: tosca.relationships.AttachesTo
+
+    mysql_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_mysql
+        link:
+          node: *data_network_1
+          type: tosca.nodes.network.Network
+
+    hss_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai_hss
+        link:
+          node: *data_network_1
+          type: tosca.nodes.network.Network
+EOF
+	elif [ "$2" == "nssi_2" ] ; then
+	cat >>$desc_file <<EOF
+topology_template:
+  node_templates:
+    VDU_oai-mme:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: lxc
+
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "ubuntu_16_64"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: oai-mme_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "172.24.11.1"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    VDU_oai-spgw:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: kvm
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "ubuntu_16_64"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: spgw_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "172.24.11.2"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    oai-mme:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:~navid-nikaein/xenial/oai-mme-18'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_oai-mme
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-spgw
+          relationship: tosca.relationships.AttachesTo
+
+    oai-spgw:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm:  'cs:~navid-nikaein/xenial/oai-spgw-16'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_oai-spgw
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-spgw
+          relationship: tosca.relationships.AttachesTo
+
+    oai-mme_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai-mme
+        link:
+          node: *data_network_1
+          type: tosca.nodes.network.Network
+
+    spgw_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai-spgw
+        link:
+          node: *data_network_2
+          type: tosca.nodes.network.Network
+EOF
+    elif [ "$2" == "nssi_3" ] ; then
+	cat >>$desc_file <<EOF
+topology_template:
+  node_templates:
+    VDU_oai-enb:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: kvm
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "ubuntu_16_64"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: oai-enb_port
+#        tag_usrp:
+#          type: tosca.capabilities.Endpoint
+#          protocol:
+#            - VRT # protocol for usrp
+#            - CHDR # protocol for usrp
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "172.24.12.1"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+    VDU_oai-rru:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: kvm
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "ubuntu_16_64"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: rru_port
+      #      attributes:
+      #        endpoint:
+      #          type: tosca.capabilities.Endpoint
+      #          ip_address: "172.24.11.2"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+    oai-enb:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:~navid-nikaein/xenial/oai-enb-33'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_oai-enb
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-rru
+          relationship: tosca.relationships.AttachesTo
+    oai-rru:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm:  'cs:~navid-nikaein/xenial/oai-rru-15'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_oai-rru
+          relationship: tosca.relationships.HostedOn
+
+    oai-enb_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai-enb
+        link:
+          node: *data_network_2
+          type: tosca.nodes.network.Network
+    rru_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai-rru
+        link:
+          node: *data_network_2
+          type: tosca.nodes.network.Network
+EOF
+
+    fi
+}
+
+###### oai-nfv-rrh
+function write_nsi_oainfvrrh_template() {
+    date=$(date +%F)
+    name=$(basename $1)
+    desc_file="${1}/nsi/${pkg_name}.yaml"
+
+    cat >$desc_file <<EOF
+description: $pkg_description
+tosca_definitions_version: tosca_simple_yaml_1_0
+imports: [nssi_1, nssi_2, nssi_3]
+metadata:
+  ID: oai-nfv-rrh
+  author: $pkg_name
+  vendor: $pkg_name
+  version: $pkg_version
+  date: $date
+
+relationships_template:
+  connection_epc:
+    type: tosca.relationships.ConnectsTo
+    source:
+      inputs:
+        type: tosca.relationships.AttachesTo
+        name: eg1
+        node: oai-hss
+      node: nss_first
+      parameters: nssi_1
+    target:
+      inputs:
+        name: ing1
+        node: oai-epc
+        type: tosca.relationships.DependsOn
+      node: nss_second
+      parameters: nssi_2
+  connection_ran:
+    type: tosca.relationships.ConnectsTo
+    source:
+      inputs:
+        name: eg1
+        node: oai-epc
+        type: tosca.relationships.AttachesTo
+      node: nss_first
+      parameters: nssi_2
+    target:
+      inputs:
+        name: ing1
+        node: oai-enb
+        type: tosca.relationships.DependsOn
+      node: nss_second
+      parameters: nssi_3
+
+topology_template:
+  node_templates:
+    nss1:
+      requirements:
+        egress:
+          eg1:
+            node: oai-hss
+            relationship:
+              type: tosca.relationships.AttachesTo
+        nssi: nssi_1
+      type: tosca.nodes.JOX.NSSI
+    nss2:
+      requirements:
+        ingress:
+          ing1:
+            node: oai-epc
+            relationship:
+              type: tosca.relationships.DependsOn
+        nssi: nssi_2
+      type: tosca.nodes.JOX.NSSI
+    nss3:
+      requirements:
+        egress:
+          eg1:
+            node: oai-epc
+            relationship:
+              type: tosca.relationships.AttachesTo
+        nssi: nssi_2
+      type: tosca.nodes.JOX.NSSI
+    nss4:
+      requirements:
+        ingress:
+          ing1:
+            node: oai-enb
+            relationship:
+              type: tosca.relationships.DependsOn
+        nssi: nssi_3
+      type: tosca.nodes.JOX.NSSI
+EOF
+}
+function write_nssi_oainfvrrh_template() {
+    date=$(date +%F)
+    name=$(basename $1)
+    desc_file="${1}/nssi/${2}.yaml"
+
+    cat >$desc_file <<EOF
+description: $pkg_description ($2)
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+imports: []
+metadata:
+  ID: $2
+  author: $pkg_vendor
+  vendor: $pkg_vendor
+  version: $pkg_version
+  date: $date
+
+dsl_definitions:
+  host_tiny: &host_tiny
+    disk_size: 5
+    mem_size: 512
+    num_cpus: 1
+  host_small: &host_small
+    disk_size: 5
+    mem_size: 1024
+    num_cpus: 1
+  os_linux_u_14_x64: &os_u14
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 14.04
+  os_linux_u_16_x64: &os_u16
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 16.04
+  os_linux_u_18_x64: &os_u18
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 18.04
+  data_network: &data_network_1
+    properties:
+      network_name: "net1"
+      ip_version: 4
+      cidr: "10.82.35.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "0.0.0.0"
+  data_network_2: &data_network_2
+    properties:
+      network_name: "net2"
+      ip_version: 4
+      cidr: "192.168.122.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "0.0.0.0"
+  data_network_3: &data_network_3
+    properties:
+      network_name: "net3"
+      ip_version: 4
+      cidr: "192.168.12.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "192.168.12.254"
+  containers:
+    region1:
+      - network: *data_network_1
+      - network2: *data_network_2
+      - network3: *data_network_3
+EOF
+
+
+    if [ "$2" == "nssi_1" ] ; then
+	cat >>$desc_file <<EOF
+topology_template:
+  node_templates:
+    VDU_mysql:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: lxc
+
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "ubuntu_16_64"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: mysql_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "10.180.125.225"
+      policies:
+        policy1:
+          type: tosca.policy.placement
+          container_type: region
+          container_number: 1
+
+    VDU_oai_hss:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: lxc
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "ubuntu_16_64"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: hss_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "192.168.1.2"
+      policies:
+        policy1:
+          type: tosca.policy.placement
+          container_type: region
+          container_number: 1
+
+    mysql:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:mysql-58'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_mysql
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-hss
+          relationship: tosca.relationships.AttachesTo
+
+    oai-hss:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_oai_hss
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-spgw
+          relationship: tosca.relationships.AttachesTo
+
+    mysql_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_mysql
+        link:
+          node: *data_network_1
+          type: tosca.nodes.network.Network
+
+    hss_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai_hss
+        link:
+          node: *data_network_1
+          type: tosca.nodes.network.Network
+EOF
+	elif [ "$2" == "nssi_2" ] ; then
+	cat >>$desc_file <<EOF
+topology_template:
+  node_templates:
+    VDU_oai-epc:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: lxc
+
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "ubuntu_14_64"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: oai-epc_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "172.24.11.1"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    oai-epc:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:~navid-nikaein/trusty/oai-epc-27'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_oai-epc
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-spgw
+          relationship: tosca.relationships.AttachesTo
+
+    oai-epc_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai-epc
+        link:
+          node: *data_network_1
+          type: tosca.nodes.network.Network
+EOF
+    elif [ "$2" == "nssi_3" ] ; then
+	cat >>$desc_file <<EOF
+topology_template:
+  node_templates:
+    VDU_oai-enb:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: kvm
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "ubuntu_16_64"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: oai-enb_port
+#        tag_usrp:
+#          type: tosca.capabilities.Endpoint
+#          protocol:
+#            - VRT # protocol for usrp
+#            - CHDR # protocol for usrp
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "172.24.12.1"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+    VDU_oai-rrh:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: kvm
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "ubuntu_14_64"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: rru_port
+      #      attributes:
+      #        endpoint:
+      #          type: tosca.capabilities.Endpoint
+      #          ip_address: "172.24.11.2"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+    oai-enb:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:~navid-nikaein/xenial/oai-enb-33'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_oai-enb
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-rrh
+          relationship: tosca.relationships.AttachesTo
+    oai-rrh:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm:  'cs:~navid-nikaein/trusty/oai-rrh-10'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_oai-rrh
+          relationship: tosca.relationships.HostedOn
+
+    oai-enb_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai-enb
+        link:
+          node: *data_network_2
+          type: tosca.nodes.network.Network
+    rru_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai-rrh
+        link:
+          node: *data_network_2
+          type: tosca.nodes.network.Network
+EOF
+
+    fi
+}
+
+
+###### oai-nfv-sim
+function write_nsi_oainfvsim_template() {
+    date=$(date +%F)
+    name=$(basename $1)
+    desc_file="${1}/nsi/${pkg_name}.yaml"
+
+    cat >$desc_file <<EOF
+description: $pkg_description
+tosca_definitions_version: tosca_simple_yaml_1_0
+imports: [nssi_1, nssi_2, nssi_3]
+metadata:
+  ID: oai-nfv-sim
+  author: $pkg_name
+  vendor: $pkg_name
+  version: $pkg_version
+  date: $date
+
+relationships_template:
+  connection_epc:
+    type: tosca.relationships.ConnectsTo
+    source:
+      inputs:
+        type: tosca.relationships.AttachesTo
+        name: eg1
+        node: oai-hss
+      node: nss_first
+      parameters: nssi_1
+    target:
+      inputs:
+        name: ing1
+        node: oai-epc
+        type: tosca.relationships.DependsOn
+      node: nss_second
+      parameters: nssi_2
+  connection_ran:
+    type: tosca.relationships.ConnectsTo
+    source:
+      inputs:
+        name: eg1
+        node: oai-epc
+        type: tosca.relationships.AttachesTo
+      node: nss_first
+      parameters: nssi_2
+    target:
+      inputs:
+        name: ing1
+        node: oai-enb
+        type: tosca.relationships.DependsOn
+      node: nss_second
+      parameters: nssi_3
+
+topology_template:
+  node_templates:
+    nss1:
+      requirements:
+        egress:
+          eg1:
+            node: oai-hss
+            relationship:
+              type: tosca.relationships.AttachesTo
+        nssi: nssi_1
+      type: tosca.nodes.JOX.NSSI
+    nss2:
+      requirements:
+        ingress:
+          ing1:
+            node: oai-epc
+            relationship:
+              type: tosca.relationships.DependsOn
+        nssi: nssi_2
+      type: tosca.nodes.JOX.NSSI
+    nss3:
+      requirements:
+        egress:
+          eg1:
+            node: oai-epc
+            relationship:
+              type: tosca.relationships.AttachesTo
+        nssi: nssi_2
+      type: tosca.nodes.JOX.NSSI
+    nss4:
+      requirements:
+        ingress:
+          ing1:
+            node: oai-enb
+            relationship:
+              type: tosca.relationships.DependsOn
+        nssi: nssi_3
+      type: tosca.nodes.JOX.NSSI
+EOF
+}
+function write_nssi_oainfvsim_template() {
+    date=$(date +%F)
+    name=$(basename $1)
+    desc_file="${1}/nssi/${2}.yaml"
+
+    cat >$desc_file <<EOF
+description: $pkg_description ($2)
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+imports: []
+metadata:
+  ID: $2
+  author: $pkg_vendor
+  vendor: $pkg_vendor
+  version: $pkg_version
+  date: $date
+
+dsl_definitions:
+  host_tiny: &host_tiny
+    disk_size: 5
+    mem_size: 512
+    num_cpus: 1
+  host_small: &host_small
+    disk_size: 5
+    mem_size: 1024
+    num_cpus: 1
+  os_linux_u_14_x64: &os_u14
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 14.04
+  os_linux_u_16_x64: &os_u16
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 16.04
+  os_linux_u_18_x64: &os_u18
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 18.04
+  data_network: &data_network_1
+    properties:
+      network_name: "net1"
+      ip_version: 4
+      cidr: "10.82.35.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "0.0.0.0"
+  data_network_2: &data_network_2
+    properties:
+      network_name: "net2"
+      ip_version: 4
+      cidr: "192.168.122.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "0.0.0.0"
+  data_network_3: &data_network_3
+    properties:
+      network_name: "net3"
+      ip_version: 4
+      cidr: "192.168.12.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "192.168.12.254"
+  containers:
+    region1:
+      - network: *data_network_1
+      - network2: *data_network_2
+      - network3: *data_network_3
+EOF
+
+
+    if [ "$2" == "nssi_1" ] ; then
+	cat >>$desc_file <<EOF
+topology_template:
+  node_templates:
+    VDU_mysql:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: lxc
+
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "ubuntu_16_64"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: mysql_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "10.180.125.225"
+      policies:
+        policy1:
+          type: tosca.policy.placement
+          container_type: region
+          container_number: 1
+
+    VDU_oai_hss:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: lxc
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "ubuntu_16_64"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: hss_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "192.168.1.2"
+      policies:
+        policy1:
+          type: tosca.policy.placement
+          container_type: region
+          container_number: 1
+
+    mysql:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:mysql-58'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_mysql
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-hss
+          relationship: tosca.relationships.AttachesTo
+
+    oai-hss:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_oai_hss
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-spgw
+          relationship: tosca.relationships.AttachesTo
+
+    mysql_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_mysql
+        link:
+          node: *data_network_1
+          type: tosca.nodes.network.Network
+
+    hss_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai_hss
+        link:
+          node: *data_network_1
+          type: tosca.nodes.network.Network
+EOF
+	elif [ "$2" == "nssi_2" ] ; then
+	cat >>$desc_file <<EOF
+topology_template:
+  node_templates:
+    VDU_oai-epc:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: lxc
+
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "ubuntu_14_64"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: oai-epc_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "172.24.11.1"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    oai-epc:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:~navid-nikaein/trusty/oai-epc-27'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_oai-epc
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-spgw
+          relationship: tosca.relationships.AttachesTo
+
+    oai-epc_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai-epc
+        link:
+          node: *data_network_1
+          type: tosca.nodes.network.Network
+EOF
+    elif [ "$2" == "nssi_3" ] ; then
+	cat >>$desc_file <<EOF
+topology_template:
+  node_templates:
+    VDU_oai-enb:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: kvm
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "ubuntu_14_64"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: oai-enb_port
+#        tag_usrp:
+#          type: tosca.capabilities.Endpoint
+#          protocol:
+#            - VRT # protocol for usrp
+#            - CHDR # protocol for usrp
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "172.24.12.1"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+    oai-enb:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:~navid-nikaein/trusty/oaisim-enb-ue-8'
+        endpoint: adalia-edu
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_oai-enb
+          relationship: tosca.relationships.HostedOn
+    oai-enb_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai-enb
+        link:
+          node: *data_network_2
+          type: tosca.nodes.network.Network
+EOF
+
+    fi
+}
+
 
 
 function write_nsi_template() {
@@ -665,7 +2740,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: '10.39.202.0/24'
+      cidr: '10.146.98.0/24'
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -750,7 +2825,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:vnf1'
-        endpoint: localhost-default
+        endpoint: adalia-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -766,7 +2841,7 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:vnf2'
-        endpoint: localhost-default
+        endpoint: adalia-edu
         model: default
         vendor: $pkg_vendor
         version: $pkg_version
@@ -884,12 +2959,13 @@ function main() {
 
 	    -t | --pkg-template)
 		pkg_template=$2
-		if [ "$pkg_template" != "clean" -a  "$pkg_template" != "oai-epc" ] ; then
+		if [ "$pkg_template" != "wordpress" -a  "$pkg_template" != "oai-epc" -a  "$pkg_template" != "oai-4g" -a  "$pkg_template" != "oai-5g-cran" -a  "$pkg_template" != "oai-nfv-rrh" -a  "$pkg_template" != "oai-nfv-sim" ] ; then
 		    echo_warning "Unsupported package template $pkg_template, Resetting to default template (oai-epc)"
 		    pkg_template="oai-epc"
 		else
 		    echo_info "Set the package template=$pkg_template"
 		fi
+		pkg_name="mosaic5g-$pkg_template"
 		shift 2;;
 
 
@@ -927,14 +3003,52 @@ function main() {
 	    dir_path=${pkg_dst_dir}/${pkg_name}/${sub_dir}
 	    mkdir -p ${dir_path}
 	done
-	if [ "$pkg_template" == "oai-epc" ] ; then
+	if [ "$pkg_template" == "wordpress" ] ; then
+	    num_subslices=2
+	    pkg_description="template for deploying package <$pkg_template> with $num_subslices subslices"
+	    write_nsi_wordpress_template $pkg_dst_dir/${pkg_name}
+	    write_nssi_wordpress_template $pkg_dst_dir/${pkg_name} nssi_1
+	    write_nssi_wordpress_template $pkg_dst_dir/${pkg_name} nssi_2
+    elif [ "$pkg_template" == "oai-epc" ] ; then
+	    num_subslices=2
+	    pkg_description="template for deploying package <$pkg_template> with $num_subslices subslices"
 	    write_nsi_epc_template $pkg_dst_dir/${pkg_name}
 	    write_nssi_epc_template $pkg_dst_dir/${pkg_name} nssi_1
 	    write_nssi_epc_template $pkg_dst_dir/${pkg_name} nssi_2
+    elif [ "$pkg_template" == "oai-4g" ] ; then
+        num_subslices=3
+	    pkg_description="template for deploying package <$pkg_template> with $num_subslices subslices"
+	    write_nsi_oai4g_template $pkg_dst_dir/${pkg_name}
+	    write_nssi_oai4g_template $pkg_dst_dir/${pkg_name} nssi_1
+	    write_nssi_oai4g_template $pkg_dst_dir/${pkg_name} nssi_2
+	    write_nssi_oai4g_template $pkg_dst_dir/${pkg_name} nssi_3
+    elif [ "$pkg_template" == "oai-5g-cran" ] ; then
+	    num_subslices=3
+	    pkg_description="template for deploying package <$pkg_template> with $num_subslices subslices"
+	    write_nsi_oai5gcran_template $pkg_dst_dir/${pkg_name}
+	    write_nssi_oai5gcran_template $pkg_dst_dir/${pkg_name} nssi_1
+	    write_nssi_oai5gcran_template $pkg_dst_dir/${pkg_name} nssi_2
+	    write_nssi_oai5gcran_template $pkg_dst_dir/${pkg_name} nssi_3
+    elif [ "$pkg_template" == "oai-nfv-rrh" ] ; then
+	    num_subslices=3
+	    pkg_description="template for deploying package <$pkg_template> with $num_subslices subslices"
+	    write_nsi_oainfvrrh_template $pkg_dst_dir/${pkg_name}
+	    write_nssi_oainfvrrh_template $pkg_dst_dir/${pkg_name} nssi_1
+	    write_nssi_oainfvrrh_template $pkg_dst_dir/${pkg_name} nssi_2
+	    write_nssi_oainfvrrh_template $pkg_dst_dir/${pkg_name} nssi_3
+    elif [ "$pkg_template" == "oai-nfv-sim" ] ; then
+	    num_subslices=3
+	    pkg_description="template for deploying package <$pkg_template> with $num_subslices subslices"
+	    write_nsi_oainfvsim_template $pkg_dst_dir/${pkg_name}
+	    write_nssi_oainfvsim_template $pkg_dst_dir/${pkg_name} nssi_1
+	    write_nssi_oainfvsim_template $pkg_dst_dir/${pkg_name} nssi_2
+	    write_nssi_oainfvsim_template $pkg_dst_dir/${pkg_name} nssi_3
 	elif [ "$pkg_template" == "clean" ] ; then
+	    num_subslices=3
+	    pkg_description="template for deploying package <$pkg_template> with $num_subslices subslices"
 	    write_nsi_template $pkg_dst_dir/${pkg_name} $num_subslices
 	    write_nssi_template $pkg_dst_dir/${pkg_name}  $num_subslices
-       	else
+    else
 	    echo_error "Unsupported template"
 	    exit 1
 	fi

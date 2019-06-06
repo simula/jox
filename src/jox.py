@@ -71,7 +71,6 @@ import asyncio
 import re
 from src.core.ro.vim_driver.vimdriver import run_command
 import uuid
-
 __author__ = "Eurecom"
 jox_version = '1.0'
 jox_version_date = '2019-02-01'
@@ -92,8 +91,6 @@ class NFVO_JOX(object):
 		self.end_time = 0
 		self.jox_config = ""  # jox configuration, it exists in the file jox_config.json  in com/config
 		self.jesearch = None  # to interact with Elasticsearch
-		self.rbmq_channel = None
-
 		self.gv = gv  # the global variables of JOX
 		# related to log
 		self.logger = logging.getLogger("jox")
@@ -101,7 +98,7 @@ class NFVO_JOX(object):
 		self.console = None
 		self.formatter = None
 		self.log_format = None
-
+		
 		self.resourceController = None
 		self.slices_controller = None
 		self.subslices_controller = None
@@ -112,6 +109,12 @@ class NFVO_JOX(object):
 				data_file.close()
 			
 			self.jox_config = data
+			with open(''.join([self.dir_config, gv.FLEXRAN_SLICE_CONFIG_FILE])) as data_file:
+				data = json.load(data_file)
+				data_file.close()
+
+			self.gv.FLEXRAN_SLICE_CONFIG = data # later on this should be passed by template
+
 		except IOError as ex:
 			message = "Could not load JOX Configuration file.I/O error({0}): {1}".format(ex.errno, ex.strerror)
 			self.logger.error(message)
@@ -149,7 +152,12 @@ class NFVO_JOX(object):
 				"connect-model-accessible-max-retry"]
 			self.gv.JUJU_INTERVAL_CONNECTION_MODEL_ACCESSIBLE = self.jox_config['juju-config'][
 				"connect-model-accessible-interval"]
-			
+
+			# FlexRAN plugin config
+			self.gv.FLEXRAN_RBMQ_QUEUE_NAME = self.jox_config["flexran-plugin-config"]["rabbit-mq-queue"]
+			self.gv.FLEXRAN_PLUGIN_STATUS = self.jox_config["flexran-plugin-config"]["plugin-status"]
+			self.gv.FLEXRAN_TIMEOUT_REQUEST = self.jox_config["flexran-plugin-config"]['timeout-request']
+			self.gv.FLEXRAN_PORT = self.jox_config['flexran-config']['port']
 			# ssh config
 			self.gv.SSH_KEY_DIRECTORY = self.jox_config['ssh-config']["ssh-key-directory"]
 			self.gv.SSH_KEY_NAME = self.jox_config['ssh-config']["ssh-key-name"]
@@ -165,13 +173,7 @@ class NFVO_JOX(object):
 			self.gv.HOST_OS_CONFIG = {}
 			self.gv.HOST_OS_CONFIG["host"] = self.jox_config["host-config"]
 			self.gv.HOST_OS_CONFIG["os"] = self.jox_config["os-config"]
-
-			# FlexRAN plugin config
-			self.gv.RBMQ_QUEUE_FlexRAN = self.jox_config["flexran-plugin-config"]["rabbit-mq-queue"]
-			self.gv.FLEXRAN_PLUGIN_STATUS = self.jox_config["flexran-plugin-config"]["plugin-status"]
-			self.gv.FLEXRAN_TIMEOUT_REQUEST = self.jox_config["flexran-plugin-config"]['timeout-request']
-
-
+			
 			self.gv.HTTP_200_OK = self.jox_config["http"]["200"]["ok"]
 			self.gv.HTTP_204_NO_CONTENT = self.jox_config["http"]["200"]["no-content"]
 			self.gv.HTTP_400_BAD_REQUEST = self.jox_config["http"]["400"]["bad-request"]
@@ -180,7 +182,6 @@ class NFVO_JOX(object):
 			self.gv.ZONES = self.jox_config['zones']
 
 			self.gv.JOX_TIMEOUT_REQUEST = self.jox_config["jox-config"]['jox-timeout-request']
-			
 			
 		except jsonschema.ValidationError as ex:
 			self.logger.error("Error happened while validating the jox config: {}".format(ex.message))
@@ -317,6 +318,7 @@ class NFVO_JOX(object):
 		else:
 			message = "JOX Web API loaded!"
 			self.logger.info(message)
+
 	def resource_discovery(self, juju_cloud_name=None, juju_model_name=None, user="admin"):
 		"""
 		This methods discover the available resources that are already provisioned to certain juju model and register them at RO, to be later used
@@ -397,12 +399,14 @@ class NFVO_JOX(object):
 			self.logger.debug(message)
 		else:
 			self.logger.debug("The following cloud is successfully  added".format(cloud_config))
-	
+
+
+
 	def add_slice(self, slice_name_yml, nsi_dir=None, nssi_dir=None):
 		self.logger.info("Adding the slice {}".format(slice_name_yml))
 		nsi_dir = self.dir_slice if nsi_dir == None else nsi_dir
 		nssi_dir = self.dir_subslice if nssi_dir == None else nssi_dir
-
+		
 		nsi_deploy = self.slices_controller.add_network_slice(slice_name_yml, self.subslices_controller, nsi_dir,
 		                                                      nssi_dir)
 		return nsi_deploy
@@ -503,20 +507,15 @@ class server_RBMQ(object):
 		
 		self.host = self.nfvo_jox.gv.RBMQ_SERVER_IP
 		self.port = self.nfvo_jox.gv.RBMQ_SERVER_PORT
+		self.rbmq_queue_name_flexran = self.nfvo_jox.gv.FLEXRAN_RBMQ_QUEUE_NAME
 		self.connection = None
 		self.channel = None
-
 		self.queue_name = self.nfvo_jox.gv.RBMQ_QUEUE
 		self.logger = logging.getLogger("server_RBMQ")
 
-		self.rbmq_flexran_queue_name = self.nfvo_jox.gv.RBMQ_QUEUE_FlexRAN
-		self.flexran_plugin_status = self.nfvo_jox.gv.FLEXRAN_PLUGIN_STATUS
-		self.flexran_request_timeout = self.nfvo_jox.gv.FLEXRAN_TIMEOUT_REQUEST
-	
 	def run(self):
 		while True:
 			try:
-				# Broker register for JoX queue. (Consumer for NBI)
 				self.connection = pika.BlockingConnection(pika.ConnectionParameters(
 					host=self.host, port=self.port))
 				self.channel = self.connection.channel()
@@ -524,35 +523,69 @@ class server_RBMQ(object):
 				self.channel.basic_qos(prefetch_count=1)
 				self.channel.basic_consume(self.on_request, queue=self.queue_name)
 
-				self.result = self.channel.queue_declare(exclusive=True)
-				self.callback_queue = self.result.method.queue
-
-				self.nfvo_jox.gv.rbmq_flexran_queue_name = self.rbmq_flexran_queue_name
-				self.nfvo_jox.gv.CALLBACK_QUEUE = self.callback_queue
-				self.nfvo_jox.gv.C = self.channel
-				self.nfvo_jox.gv.connection = self.connection
-
-
-				print(colored(' [*] Waiting for messages. To exit press CTRL+C', 'green'))
+				print(colored(' [*] Waiting for messages. To exit press CTRL+C', 'green', ))
 				self.channel.start_consuming()
 
 			except pika_exceptions.ConnectionClosed or \
 			       pika_exceptions.ChannelAlreadyClosing or \
 			       pika_exceptions.ChannelClosed or \
 			       pika_exceptions.ChannelError:
-
+				
 				self.connection.close()
 				time.sleep(0.5)
 			except KeyboardInterrupt:
 				exit()
 
-	
+	def send_to_plugin(self, msg, rbmq_queue_name, reply=True):
+		if reply:
+			message_not_sent = True
+			while message_not_sent:
+				try:
+					self.response = None
+					self.corr_id = str(uuid.uuid4())
+					self.channel.basic_publish(exchange='',
+													routing_key=rbmq_queue_name,
+													properties=pika.BasicProperties(
+														reply_to=self.callback_queue,
+														correlation_id=self.corr_id,
+													),
+													body=msg)
+					message_not_sent = False
+				except:
+					time.sleep(0.5)
+			self.channel.basic_consume(self.on_response, no_ack=True,
+									   queue=self.callback_queue)
+			while self.response is None:
+				self.connection.process_data_events()
+		else:
+			message_not_sent = True
+			while message_not_sent:
+				try:
+					self.response = None
+					self.corr_id = str(uuid.uuid4())
+					self.channel.basic_publish(exchange='',
+													routing_key=rbmq_queue_name,
+													properties=pika.BasicProperties(
+													),
+													body=msg)
+					message_not_sent = False
+				except:
+					time.sleep(0.5)
+			return None
+		return self.response
+
+	def on_response(self, ch, method, props, body):
+		if self.corr_id == props.correlation_id:
+			self.response = body
+			print(self.response)
+			message = "Response from plgin -> {}".format(self.response)
+			self.logger.info(message)
+
 	def on_request(self, ch, method, props, body):
 		enquiry = body.decode(self.nfvo_jox.gv.ENCODING_TYPE)
 		enquiry = json.loads(enquiry)
 
 		elapsed_time_on_request = datetime.datetime.now() - datetime.datetime.strptime(enquiry["datetime"], '%Y-%m-%d %H:%M:%S.%f')
-		print(enquiry)
 
 		if elapsed_time_on_request.total_seconds() < self.nfvo_jox.gv.JOX_TIMEOUT_REQUEST:
 			send_reply = True
@@ -594,6 +627,7 @@ class server_RBMQ(object):
 			elif (enquiry["request-uri"] == '/list') \
 					or (enquiry["request-uri"] == '/ls') \
 					or (enquiry["request-uri"] == '/show/<string:nsi_name>'):
+
 				# request_type = enquiry["request-type"]
 				parameters = enquiry["parameters"]
 				nsi_name = parameters["nsi_name"]
@@ -745,9 +779,7 @@ class server_RBMQ(object):
 								"status_code": self.nfvo_jox.gv.HTTP_200_OK
 							}
 							self.send_ack(ch, method, props, response, send_reply)
-
 							nsi_deploy = self.nfvo_jox.add_slice(nsi_name, nsi_dir, nssi_dir)
-
 					else:
 						message = "package {} does not exists in {}".format(package_name, self.nfvo_jox.gv.STORE_DIR)
 						response = {
@@ -1611,8 +1643,8 @@ class server_RBMQ(object):
 			}
 			send_reply = True
 			self.send_ack(ch, method, props, response, send_reply)
-	def send_ack(self, ch, method, props, response, send_reply):
 
+	def send_ack(self, ch, method, props, response, send_reply):
 		if send_reply:
 			response = json.dumps(response)
 			try:
@@ -1772,6 +1804,7 @@ class server_RBMQ(object):
 		except Exception as ex:
 			message = "Error while opening the zip file: {}".format(str(ex.args[0]))
 			return [False, message]
+
 
 if __name__ == '__main__':
 

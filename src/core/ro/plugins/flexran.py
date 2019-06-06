@@ -36,26 +36,29 @@ __email__ = 'contact@mosaic5g.io'
 __status__ = 'Development'
 __description__ = "Plugin to interact with FlexRAN (Flexible and Programmable Platform for SD-RAN) controller"
 """
-
+import atexit
 import pika
-import os, time
+import os, time, sys
 import json
 import logging
 import requests
 import datetime
 from threading import Thread
 from termcolor import colored
-from src.common.config import gv
-from src.core.ro.plugins import es
-import pika.exceptions as pika_exceptions
 import argparse
-
+import pika.exceptions as pika_exceptions
 dir_path = os.path.dirname(os.path.realpath(__file__))
 dir_parent_path = os.path.dirname(os.path.abspath(__file__ + "/../"))
 dir_JOX_path = os.path.dirname(os.path.abspath(__file__ + "/../../../"))
+sys.path.append(dir_parent_path)
+sys.path.append(dir_path)
+from jox.src.common.config import gv
+from jox.src.core.ro.plugins import es
 
 class FlexRAN_plugin(object):
     def __init__(self, flex_log_level=None,):
+        self.logger = logging.getLogger("jox-plugin.flexran")
+        atexit.register(self.goodbye)  # register a message to print out when exit
 
         if flex_log_level:
             if flex_log_level == 'debug':
@@ -71,7 +74,6 @@ class FlexRAN_plugin(object):
 
         ## Loading global variables ##
         self.dir_config = dir_JOX_path + '/common/config/'
-        self.logger = logging.getLogger("jox-plugin.flexran")
         self.jox_config = ""
         self.gv = gv
 
@@ -106,11 +108,14 @@ class FlexRAN_plugin(object):
         self.gv.FLEXRAN_ES_INDEX_NAME = self.jox_config["flexran-plugin-config"]['es-index-name']
         self.gv.RBMQ_SERVER_IP = self.jox_config['rabbit-mq-config']["rabbit-mq-server-ip"]
         self.gv.RBMQ_SERVER_PORT = self.jox_config['rabbit-mq-config']["rabbit-mq-server-port"]
+
         self.jesearch = None
         self.credentials=None
         self.parameters=None
         self.connection=None
         self.channel=None
+        self.flexran_default_slice_config=None
+        self.slice_config=None
         self.es_flexran_index = self.gv.FLEXRAN_ES_INDEX_NAME
         self.rbmq_server_ip = self.gv.RBMQ_SERVER_IP
         self.rbmq_server_port = self.gv.RBMQ_SERVER_PORT
@@ -119,9 +124,16 @@ class FlexRAN_plugin(object):
         self.flexran_port= self.gv.FLEXRAN_PORT
         self.flexran_plugin_status=self.gv.FLEXRAN_PLUGIN_STATUS
         self.flexran_endpoint = ''.join(['http://', str(self.flexran_host), ':', str(self.flexran_port), '/'])
+        self.standard_slice_error_percentage = 'resulting DL slice sum percentage exceeds 100'
+        self.standard_slice_error_bs_not_found = 'can not find BS'
 
     def build(self):
         try:
+            with open(''.join([self.dir_config, gv.FLEXRAN_PLUGIN_SLICE_CONFIG_FILE])) as data_file:
+                data = json.load(data_file)
+                data_file.close()
+            self.gv.flexran_default_slice_config = data  # This config to be used if DL % excceed 100
+
             self.logger.info(" FlexRAN default endpoint is {}".format(self.flexran_endpoint))
             if self.gv.ELASTICSEARCH_ENABLE:
                 self.jesearch = es.JESearch(self.gv.ELASTICSEARCH_HOST, self.gv.ELASTICSEARCH_PORT,
@@ -174,17 +186,10 @@ class FlexRAN_plugin(object):
                 if self.get_status_flexRAN_endpoint():
                     self.get_ran_stats()
                     #enb_agent_id, enb_data = self.get_eNB_list()
-                    # check this if changed i.e. if this is new eNB
-                    #container_name = "enb_agent_"+str(enb_agent_id)
-                    #message = "Notify - New eNB with id {} and info {}".format(enb_agent_id, enb_data)
-                    #self.logger.info(message)
                     if self.gv.FLEXRAN_ES_INDEX_STATUS == "disabled":
                         message = " Elasticsearch is disabled !! No more notifications are maintained"
                         self.logger.info(message)
-                    else:
-                        pass
-                        # self.update_flexran_plugin_index(self.es_flexran_index, "enb_stats", container_name, enb_data)
-                time.sleep(10)
+                time.sleep(10) # Periodic Notification
             except pika_exceptions.ConnectionClosed or \
                    pika_exceptions.ChannelAlreadyClosing or \
                    pika_exceptions.ChannelClosed or \
@@ -200,6 +205,7 @@ class FlexRAN_plugin(object):
 
         if elapsed_time_on_request.total_seconds() < self.gv.FLEXRAN_TIMEOUT_REQUEST:
             send_reply = True
+            ############################################
             if enquiry["plugin_message"] == "get_ran_stats":
                 result = self.get_ran_stats()
                 response = {
@@ -208,7 +214,9 @@ class FlexRAN_plugin(object):
                     "status_code": "OK"
                 }
                 self.send_ack(ch, method, props, response, send_reply)
-
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)
+            ############################################
             if enquiry["plugin_message"] == "get_num_enb":
                 result = self.get_num_eNB()
                 response = {
@@ -217,139 +225,180 @@ class FlexRAN_plugin(object):
                     "status_code": "OK"
                 }
                 self.send_ack(ch, method, props, response, send_reply)
-
-            if enquiry["plugin_message"] == "get_bs_id":
-                result = self.get_num_eNB()
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)
+            ############################################
+            if enquiry["plugin_message"] == "get_num_ue":
+                result = self.get_num_ue(enquiry["param"])
                 response = {
                     "ACK": True,
                     "data": str(result),
                     "status_code": "OK"
                 }
                 self.send_ack(ch, method, props, response, send_reply)
-
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)
+            ############################################
+            if enquiry["plugin_message"] == "get_enb_id":
+                result = self.get_enb_id()
+                response = {
+                    "ACK": True,
+                    "data": str(result),
+                    "status_code": "OK"
+                }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)
+            ############################################
             if enquiry["plugin_message"] == "get_ran_record" :
-                result = self.get_ran_record(enquiry["parameters"])
+                result = self.get_ran_record(enquiry["param"])
                 response = {
                     "ACK": True,
                     "data": result,
                     "status_code": "OK"
                 }
                 self.send_ack(ch, method, props, response, send_reply)
-
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)
+            ############################################
             if enquiry["plugin_message"] == "get_ue_stats" :
-                result = self.get_ue_stats(enquiry["parameters"])
+                result = self.get_ue_stats(enquiry["param"])
                 response = {
                     "ACK": True,
                     "data": result,
                     "status_code": "OK"
                 }
                 self.send_ack(ch, method, props, response, send_reply)
-
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)
+            ############################################
             if "create_slice" in enquiry["plugin_message"]:
-                self.prepare_slice(enquiry["parameters"])
+                result = self.create_slice(enquiry["param"])
                 response = {
                     "ACK": True,
                     "data": result,
                     "status_code": "OK"
                 }
                 self.send_ack(ch, method, props, response, send_reply)
-
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)
+            ############################################
             if  enquiry["plugin_message"] == "remove_slice":
-                result = self.remove_slice(enquiry["parameters"])
+                result = self.remove_slice(enquiry["param"])
                 response = {
                     "ACK": True,
                     "data": result,
                     "status_code": "OK"
                 }
                 self.send_ack(ch, method, props, response, send_reply)
-
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)
+            ############################################
             if  enquiry["plugin_message"] == "add_ue_to_slice":
-                result = self.add_ues_to_slice(enquiry["parameters"])
+                result = self.add_ues_to_slice(enquiry["param"])
                 response = {
                     "ACK": True,
                     "data": result,
                     "status_code": "OK"
                 }
                 self.send_ack(ch, method, props, response, send_reply)
-
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)
+            ############################################
             if  enquiry["plugin_message"] == "remove_ue_from_slice":
-                result = self.remove_ues_from_slice(enquiry["parameters"])
+                result = self.remove_ues_from_slice(enquiry["param"])
                 response = {
                     "ACK": True,
                     "data": result,
                     "status_code": "OK"
                 }
                 self.send_ack(ch, method, props, response, send_reply)
-
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)
+            ############################################
             if  enquiry["plugin_message"] == "get_num_slice":
-                result = self.get_num_slices(enquiry["parameters"])
+                result = self.get_num_slices(enquiry["param"])
                 response = {
                     "ACK": True,
                     "data": result,
                     "status_code": "OK"
                 }
                 self.send_ack(ch, method, props, response, send_reply)
-
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)
+            ############################################
             if  enquiry["plugin_message"] == "set_num_slice":
-                result = self.set_num_slices(enquiry["parameters"])
+                result = self.set_num_slices(enquiry["param"])
                 response = {
                     "ACK": True,
                     "data": result,
                     "status_code": "OK"
                 }
                 self.send_ack(ch, method, props, response, send_reply)
-
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)
+            ############################################
             if  enquiry["plugin_message"] == "set_slice_rb":
-                result = self.set_slice_rb(enquiry["parameters"])
+                result = self.set_slice_rb(enquiry["param"])
                 response = {
                     "ACK": True,
                     "data": result,
                     "status_code": "OK"
                 }
                 self.send_ack(ch, method, props, response, send_reply)
-
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)
+            ############################################
             if  enquiry["plugin_message"] == "get_slice_rb":
-                result = self.get_slice_rb(enquiry["parameters"])
+                result = self.get_slice_rb(enquiry["param"])
                 response = {
                     "ACK": True,
                     "data": result,
                     "status_code": "OK"
                 }
                 self.send_ack(ch, method, props, response, send_reply)
-
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)
+            ############################################
             if  enquiry["plugin_message"] == "set_slice_max_mcs":
-                result = self.set_slice_max_mcs(enquiry["parameters"])
+                result = self.set_slice_max_mcs(enquiry["param"])
                 response = {
                     "ACK": True,
                     "data": result,
                     "status_code": "OK"
                 }
                 self.send_ack(ch, method, props, response, send_reply)
-
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)
+            ############################################
             if enquiry["plugin_message"] == "get_slice_max_mcs" :
-                result = self.get_slice_max_mcs(enquiry["parameters"])
+                result = self.get_slice_max_mcs(enquiry["param"])
                 response = {
                     "ACK": True,
                     "data": result,
                     "status_code": "OK"
                 }
                 self.send_ack(ch, method, props, response, send_reply)
-
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)
+            ############################################
             if enquiry["plugin_message"] == "update_flexRAN_endpoint":
                 result = self.update_flexRAN_endpoint(enquiry["param"])
                 response = {
                     "ACK": True,
                     "data": result,
-                    "status_code": "OK"
+                    "status_code": 'OK'
                 }
                 self.send_ack(ch, method, props, response, send_reply)
-
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)
+            ############################################
             if enquiry["plugin_message"] == "get_status_flexRAN_endpoint":
                 if self.get_status_flexRAN_endpoint():
-                    body = "Default FlexRAN endpoint is active"
+                    body = " FlexRAN endpoint is active"
                     status = "OK"
                 else:
-                    body = "Default FlexRAN endpoint is not active"
+                    body = " FlexRAN endpoint is not active"
                     status = "NOT OK"
                 response= {
                     "ACK": True,
@@ -357,28 +406,36 @@ class FlexRAN_plugin(object):
                     "status_code": status
                 }
                 self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)
 
     ##### Consume callbacks ######
     def get_ran_stats(self):
+        """Get RAN statistics.
+        *@return: The RAN statistics as dictionary in json format
+        """
         try:
-            """Get RAN statistics. 
-            *@return: The RAN statistics as dictionary in json format
-            """
             response = requests.get(self.flexran_endpoint+"stats/")
             data = response.text
             return data
         except Exception as ex:
             print(ex)
 
-    def get_ran_record(self):
+    def get_ran_record(self, id):
+        """Get RAN Record.
+        *@return: The RAN record as dictionary in json format
+        """
         try:
-            response = requests.get(self.flexran_endpoint+"record/:id")
-            json_data = json.loads(response.text)
-            return json_data
+            response = requests.get(self.flexran_endpoint+"record/"+id)
+            response = json.loads(response.text)
+            return response
         except Exception as ex:
             print(ex)
 
     def get_ue_stats(self,id):
+        """Get UE statistics.
+        *@return: The UE statistics as dictionary in json format
+        """
         try:
             response = requests.get(self.flexran_endpoint+"stats/ue"+id)
             print(response)
@@ -392,22 +449,50 @@ class FlexRAN_plugin(object):
         except Exception as ex:
             print(ex)
 
-    def create_slice(self,enb_id, slice_id):
+    def create_slice(self,param):
+        """Create slice on Flexran.
+        *@enb_id : enb id to add slice
+        *@nsi_id : slice id
+        *@return: The result
+        """
         try:
+            slice_id=param['nsi_id']
+            enb_id=param['enb_id']
+            self.slice_config = param['slice_config']
+            print('here',self.flexran_default_slice_config)
             response = requests.post(self.flexran_endpoint+"slice/enb/"+enb_id+"/slice/"+slice_id)
-            print(response)
+            if response.text is not None:
+                standard_error = (json.loads(response.text))['error']
+                if standard_error == self.standard_slice_error_percentage:
+                    self.set_enb_config(enb_id, self.gv.flexran_default_slice_config)
+                if standard_error == self.standard_slice_error_bs_not_found:
+                    pass
+                    #self.prepare_slice(param)
+
+            return response.text
         except Exception as ex:
             print(ex)
 
-    def remove_slice(self,enb_id, nssi_id, policy=""):
+    def remove_slice(self,param):
+        """Remove slice on Flexran.
+        *@enb_id : enb id to add slice
+        *@nsi_id : slice id
+        *@return: The result
+        """
         try:
-            if policy == '':
-                response = requests.get(self.flexran_endpoint+'/enb/'+str(enb_id)+'/slice/'+str(nssi_id))
-            else:
-                requests.pay
-            print(response)
+            response = requests.delete(self.flexran_endpoint+'/enb/'+str(param['enb_id'])+'/slice/'+str(param['nss_id']))
+            return response.text
         except Exception as ex:
             print(ex)
+
+    def remove_slices(self,param):
+        """Remove slice on Flexran.
+        *@enb_id : enb id to add slice
+        *@nsi_id : slice id
+        *@slice_config : slice config
+        *@return: The result
+        """
+        raise NotImplementedError()
 
     def add_ues_to_slice(self, param):
         raise NotImplementedError()
@@ -441,15 +526,17 @@ class FlexRAN_plugin(object):
         """
         try:
             self.flexran_endpoint = ''.join(['http://', str(param["host"]), ':', str(param["port"]), '/'])
-            return "OK"
+            message = " FlexRAN endpoint updated. New endpoint is {}".format(self.flexran_endpoint)
+            self.logger.info(message)
+            return "FlexRAN endpoint updated"
         except Exception as ex:
             print(ex)
 
     def get_status_flexRAN_endpoint(self):
+        """Get default or latest FlexRAN endpoint.
+        *@return: The host and port for FlexRAN controller in standard URI format
+        """
         try:
-            """Get default or latest FlexRAN endpoint. 
-            *@return: The host and port for FlexRAN controller in standard URI format
-            """
             requests.get(self.flexran_endpoint + "stats/")
             return True
         except Exception as ex:
@@ -458,47 +545,72 @@ class FlexRAN_plugin(object):
             return False
 
     def get_num_eNB(self):
+        """Get the number of connected eNB to this controller.
+        *@return: The result.
+        """
         try:
             response = requests.get(self.flexran_endpoint+"stats/")
             response=json.loads(response.text)
-            response_data = response["eNB_config"][0]
-            return len(response_data)
+            response = response["eNB_config"]
+            return len(response)
         except Exception as ex:
             print(ex)
 
-    def get_bs_id(self, param):
+    def get_num_ue(self, param):
+        """Get the number of connected UE to to a given eNB.
+        *@enb_id : enb id
+        *@return: The result.
+        """
         try:
-            enb=param["enb"]
             response = requests.get(self.flexran_endpoint+"stats/")
-            response=json.loads(response.text)
-            response_data = response["eNB_config"][0]
-            return response_data[enb]['eNB']['eNBId']
+            return len(response['mac_stats'][(param['enb_id'])]['ue_mac_stats'])
         except Exception as ex:
             print(ex)
 
-    def get_enb_config(self, param):
+    def get_enb_id(self, param):
+        """Get enb_id.
+        *@return: The result
+        """
+        raise NotImplementedError()
+
+
+    def get_enb_config(self):
+        """Set slice config.
+        *@return: The result
+        """
         try:
-            enb=param["enb"]
-            response = requests.get(self.flexran_endpoint+"stats/")
+            response = requests.get(self.flexran_endpoint+'slice/enb_config')
             response=json.loads(response.text)
-            response_data = response["eNB_config"][0]
-            return response_data[enb]['eNB']['eNBId']
+            return response
+        except Exception as ex:
+            print(ex)
+
+    def set_enb_config(self,  enb_id, slice_config):
+        """Set slice config.
+        *@enb_id : enb id to add slice
+        *@slice_config : slice config
+        *@return: The result
+        """
+        try:
+            pass
+            temp = open('temp_config.json','rw')
+            temp.write(slice_config)
+            temp.close()
+            conf_path = dir_path+'temp_config.json'
+            response = requests.get(self.flexran_endpoint+"slice/enb/"+enb_id+' --data-binary'+'@/'+conf_path)
+            response=json.loads(response.text)
+            return response
         except Exception as ex:
             print(ex)
 
     ###### Notification callbacks ######
     def get_eNB_list(self):
-        try:
-            response = requests.get(self.flexran_endpoint+"stats/")
-            response=json.loads(response.text)
-            agent_id = response["eNB_config"][0]['agent_info'][0]['agent_id']
-            time.sleep(1)
-            agent_info = {'eNBId' : response["eNB_config"][0]['bs_id'],'ipv4_address' : 'None' }
-            return agent_id, agent_info
-        except Exception as ex:
-            print(ex)
+        """Get list of eNBs registered at flexRAN.
+        *@return: The result.
+        """
+        raise NotImplementedError()
 
-    # method to update es index with container unlike single keys
+    # method to update es index with container data
     def update_flexran_plugin_index(self, index_page, container_type, container_name, container_data):
         slice_data = self.jesearch.get_json_from_es(index_page, container_type)
         container_data.items()
@@ -519,7 +631,6 @@ class FlexRAN_plugin(object):
                 slice_data = [{container_name : [container_data]}]
             self.jesearch.update_index_with_content(index_page, container_type, slice_data)
 
-
     def send_ack(self, ch, method, props, response, send_reply):
         if send_reply:
             response = json.dumps(response)
@@ -534,6 +645,9 @@ class FlexRAN_plugin(object):
                 pass
             except Exception as ex:
                 self.logger.critical("Error while sending response: {}".format(ex))
+
+    def goodbye(self):
+        print("\n You are now leaving FlexRAN plugin framework .....")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process commandline arguments and override configurations in jox_config.json')

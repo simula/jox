@@ -26,21 +26,14 @@
  * \email:contact@mosaic5g.io
 """
 
-import os, sys
-
-dir_path = os.path.dirname(os.path.realpath(__file__))
-dir_parent_path = os.path.dirname(os.path.abspath(__file__ + "/../"))
-dir_JOX_path = os.path.dirname(os.path.abspath(__file__ + "/"))
-
-sys.path.append(dir_parent_path)
-sys.path.append(dir_path)
 
 import logging
 from juju.controller import Controller
 import asyncio
 from juju.model import Model
-import pika
-import time, uuid
+import time, datetime
+import pika, uuid, json, os
+import utils
 
 class JujuController(object):
     """Juju JujuController: Shared between Slices """
@@ -51,7 +44,6 @@ class JujuController(object):
         self.controller = None
         self.logger = logging.getLogger('jox.juju')
         self.log_config()
-
     def log_config(self):
         LOGFILE= self.gv.LOGFILE
         file_handler = logging.FileHandler(LOGFILE)
@@ -69,13 +61,13 @@ class JujuController(object):
         # add the handlers to the self.logger
         self.logger.addHandler(file_handler)
         self.logger.addHandler(console)
-        self.result = None
-
-
+        
+    
     async def build(self,name):
         """ Initiate the juju cloud controllers"""
         self.controller_name = name    #e.g. manual
         self.controller = Controller()
+
         
     def validate(self,cloud_name):
         """ Validate the jujuclient and its availability"""    
@@ -108,10 +100,8 @@ class JujuController(object):
         data=await self.controller.add_user(slice_name)
         await self.controller.disconnect()
         return data
-    
 
     async def add_juju_model(self,model_name,cloud_name, credential_name,owner, config, region):
-    
         config = {
             "enable-os-refresh-update": False,
             "enable-os-upgrade": False,
@@ -122,7 +112,6 @@ class JujuController(object):
         await self.controller.disconnect()
         """
         """
-        
 
         retry_connect = True
         number_retry = 0
@@ -148,19 +137,16 @@ class JujuController(object):
                 await asyncio.sleep(10)
         return model
        
-       
     async def destroy_juju_model(self,model_uuid):
         await self.controller.connect(self.controller_name)
         _response=await self.controller.destroy_model(model_uuid)
         await self.controller.disconnect()
         return _response   
        
-       
     def grant_access_level(self, username, acl):
         changes=self.controller.grant(username, acl)
         return changes
-        
-   
+
     async def disconnect(self):
         await self.controller.disconnect()
 
@@ -171,12 +157,23 @@ class JujuModelServiceController(object):
         self.gv = global_variables
         self.logger = logging.getLogger('jox.JujuModelServiceController')
         self.controller = None
-        self.rbmq_plugin_object = None
-        
+
         self.controller_name = ""  # juju controller name
         self.model_name = ""  # juju model name
         self.user_name = ""  # juju user name
-        
+        self.host_name = self.gv.RBMQ_SERVER_IP
+        self.port = self.gv.RBMQ_SERVER_PORT
+
+        self.queue_name_flexran = self.gv.FLEXRAN_RBMQ_QUEUE_NAME
+        self.standard_reqst = {
+            "datetime": None,
+            "plugin_message": None,
+            "param": {
+                "host": None,
+                "port": None,
+                "slice_config": None
+            }
+        }
         # self.watcher = None
         LOGFILE = self.gv.LOGFILE
         file_handler = logging.FileHandler(LOGFILE)
@@ -194,19 +191,13 @@ class JujuModelServiceController(object):
         # add the handlers to the self.logger
         self.logger.addHandler(file_handler)
         self.logger.addHandler(console)
-
-        self.connection = None
-        self.channel = None
-
     def build(self, juju_controller, juju_model, juju_user="admin"):
         self.controller_name = juju_controller
         self.model_name = juju_model
         self.user_name = juju_user
+        self.run()
 
-        self.callback_queue = self.gv.CALLBACK_QUEUE
-        self.channel = self.gv.CHANNEL
-
-    async def deploy_service(self, new_service):
+    async def deploy_service(self, new_service, nsi_name):
         try:
             model = Model()
             model_name = self.controller_name + ":" + self.user_name + '/' + self.model_name
@@ -234,15 +225,38 @@ class JujuModelServiceController(object):
                     series=new_service.series,
                     channel=new_service.channel,
                     to=new_service.to,
-                )
+            )
+            time.sleep(2)
 
-            # Callback to FlexRAN plugin methods
-            if new_service.application_name == self.gv.FLEXRAN_PLUGIN_SERVICE_OAI_ENB:
-                msg="encode your message here"
-                self.send_to_plugin(msg,self.gv.RBMQ_QUEUE_FlexRAN)
+            machine_ip = model.machines[new_service.to].dns_name
+            self.gv.FLEXRAN_HOST = str(machine_ip)
+
             if new_service.application_name == self.gv.FLEXRAN_PLUGIN_SERVICE_FLEXRAN:
-                msg="encode your message here"
-                self.send_to_plugin(msg,self.gv.RBMQ_QUEUE_FlexRAN)
+                enquiry = self.standard_reqst
+                current_time = datetime.datetime.now()
+                enquiry["datetime"] = str(current_time)
+                enquiry["plugin_message"] = "update_flexRAN_endpoint"
+                enquiry["param"]["host"] = str(machine_ip)
+                enquiry["param"]["port"] = self.gv.FLEXRAN_PORT
+                enquiry = json.dumps(enquiry)
+                enquiry.encode("utf-8")
+                self.send_to_plugin(enquiry, self.queue_name_flexran)
+
+            if new_service.application_name == self.gv.FLEXRAN_PLUGIN_SERVICE_OAI_ENB:
+                #enb_id = os.system("(juju config oai-ran | grep "default: "0x""* | awk {'print $2'})")
+                #os.system('juju config oai-ran flexran_active=yes')
+                enquiry = self.standard_reqst
+                current_time = datetime.datetime.now()
+                enquiry["datetime"] = str(current_time)
+                enquiry["plugin_message"] = "create_slice"
+                enquiry["param"]["enb_id"] = '-1' # last added enb
+                enquiry["param"]["nsi_id"] = '5' # update this slice mapping
+                enquiry["param"]["slice_config"] = self.gv.FLEXRAN_SLICE_CONFIG
+                enquiry = json.dumps(enquiry)
+                enquiry.encode("utf-8")
+                print(enquiry)
+                self.send_to_plugin(enquiry, self.queue_name_flexran)
+
             self.logger.info("The servce {} is deployed".format(new_service.application_name))
             self.logger.debug("The servce {} is deployed".format(new_service.application_name))
             
@@ -269,54 +283,58 @@ class JujuModelServiceController(object):
     async def destroy_relation_intra_model(self, service_a, service_b, jcloud, jmodel):
        raise NotImplementedError
 
-    def on_response(self, ch, method, props, body):
-        if self.corr_id == props.correlation_id:
-            self.response = body
-            print(self.response)
-            message = "Response from plgin -> {}".format(self.response)
-            self.logger.info(message)
+    def run(self, retry=False):
+        if retry:
+            self.connection.close()
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.host_name, port=self.port))
+        self.channel = self.connection.channel()
 
-    def send_to_plugin(self, msg, queue_name, reply=True):
+        self.result = self.channel.queue_declare(exclusive=True)
+        self.callback_queue = self.result.method.queue
+
+        self.channel.basic_consume(self.on_response, no_ack=True,
+                                   queue=self.callback_queue)
+
+    def send_to_plugin(self, msg, rbmq_queue_name, reply=True):
         if reply:
-            messahe_not_sent = True
-            while messahe_not_sent:
+            message_not_sent = True
+            while message_not_sent:
                 try:
                     self.response = None
                     self.corr_id = str(uuid.uuid4())
                     self.channel.basic_publish(exchange='',
-                                               routing_key=queue_name,
+                                               routing_key=rbmq_queue_name,
                                                properties=pika.BasicProperties(
                                                    reply_to=self.callback_queue,
                                                    correlation_id=self.corr_id,
                                                ),
                                                body=msg)
-                    messahe_not_sent = False
+                    message_not_sent = False
                 except:
                     time.sleep(0.5)
-                    self.run(True)
-
+                    self.run()
             while self.response is None:
                 self.connection.process_data_events()
         else:
-            messahe_not_sent = True
-            while messahe_not_sent:
+            message_not_sent = True
+            while message_not_sent:
                 try:
                     self.response = None
                     self.corr_id = str(uuid.uuid4())
                     self.channel.basic_publish(exchange='',
-                                               routing_key=queue_name,
+                                               routing_key=rbmq_queue_name,
                                                properties=pika.BasicProperties(
                                                ),
                                                body=msg)
-                    messahe_not_sent = False
+                    message_not_sent = False
                 except:
                     time.sleep(0.5)
-                    self.run(True)
+                    self.run()
             return None
         return self.response
 
-    def run(self, retry=False):
-        if retry:
-            self.connection.close()
-        self.channel.basic_consume(self.on_response, no_ack=True,
-                                   queue=self.callback_queue)
+    def on_response(self, ch, method, props, body):
+        if self.corr_id == props.correlation_id:
+            self.response = body.decode("utf-8")
+            message = "Response from plgin -> {}".format(self.response)
+            self.logger.info(message)

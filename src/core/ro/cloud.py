@@ -37,8 +37,8 @@ import logging
 
 from juju import loop
 from threading import Thread
-import src.common.config.gv as gv
-from src.core.ro import monitor
+import time, datetime
+import pika, uuid, json
 from src.core.ro.monitor import Monitor
 
 
@@ -54,6 +54,11 @@ class JCloud(JSONEncoder):
         self.logger = logging.getLogger('jox.JCloud')
         self.log_config()
         self.monitor = None
+
+        self.connection = None
+        self.channel = None
+        self.result = None
+        self.callback_queue = None
 
     def log_config(self):
         if self.gv.LOG_LEVEL == 'debug':
@@ -143,6 +148,8 @@ class JCloud(JSONEncoder):
         loop.run_forever()
 
     async def on_model_change(self, delta, old, new, model):
+
+
         if self.jesearch.ping():
             if delta.entity=="machine" and (delta.type=="add" or delta.type=="change"):
                 current_state_machine = delta.data['agent-status']['current']
@@ -171,3 +178,6 @@ class JCloud(JSONEncoder):
 
         except Exception as ex:
             self.logger.error(ex)
+
+
+

@@ -82,7 +82,7 @@ class JESearch(object):
                 list_index = list_index[1]
                 if index_page in list_index:
                     self.logger.debug("es -->> Deleting index ".format(index_page))
-                    self.es.indices.delete(index=index_page, ignore=[400, 404],)
+                    self.es.indices.delete(index=index_page, ignore=[400, 404], )
                     message = "The index {} is successfully removed from elasticsearch".format(index_page)
                     self.logger.info(message)
                     return [True, message]
@@ -111,7 +111,6 @@ class JESearch(object):
                 self.del_index_from_es(index_page)
             self.es.indices.create(index=index_page)
             json_data = json.dumps(json_object)
-
             self.es.index(index=index_page, doc_type='post', id=1, body=json.loads(json_data))
             message = "The file {} is successfully Loaded to ES".format(index_page)
             self.logger.debug(message)
@@ -217,7 +216,7 @@ class JESearch(object):
             return [True, (self.es.get(index_page, doc_type='post', id=1)['_source'])]
         except Exception as ex:
             message = "Error while getting the source of the index of {} from elasticsearch: {}".format(index_page, ex)
-            # self.logger.error(message)
+            self.logger.error(message)
             return [False, message]
 
     def get_json_from_es(self, index_page, key):
@@ -230,7 +229,7 @@ class JESearch(object):
             return [False, message]
         try:
             # response = self.es.search(index=index_page, doc_type="post", _source_include=key)
-            response = self.es.search(index=index_page, _source_includes=key)
+            response = self.es.search(index=index_page, _source_include=key)
             for doc in response['hits']['hits']:
                 if key not in doc['_source']:
                     message = "The key {} does not exist in the index {}".format(key, index_page)

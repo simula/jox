@@ -14,13 +14,12 @@
     "jox-timeout-request": 300
   },
   "rabbit-mq-config":{
-    "_Comment": "config for jox server",
     "rabbit-mq-server-ip":"localhost",
     "rabbit-mq-server-port":5672,
     "rabbit-mq-queue":"QueueJox"
   },
 
-  "llmec-plugin-config":{
+    "llmec-plugin-config":{
     "rabbit-mq-server-ip":"localhost",
     "rabbit-mq-server-port":5672,
     "rabbit-mq-queue":"QueuellMEC",
@@ -39,8 +38,8 @@
   },
 
   "flexran-config":{
-    "host":"127.0.0.1",
-    "port": 5000
+    "host":"192.168.122.29",
+    "port": 9999
   },
 
   "llmec-config":{
@@ -71,46 +70,7 @@
         "zone": "1",
         "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
         "scope": "private",
-        "domain": "10.39.202.0/24",
-        "_Comment_3": "ssh config",
-        "ssh-private-key": "",
-        "ssh-user": "",
-        "ssh-password": "",
-        "managed-by": "lxd"
-      },
-      {
-        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "default-2",
-        "zone": "1",
-        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "scope": "private",
-        "domain": "10.180.125.0/24",
-        "_Comment_3": "ssh config",
-        "ssh-private-key": "",
-        "ssh-user": "",
-        "ssh-password": "",
-        "managed-by": "lxd"
-      },
-      {
-        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "default-3",
-        "zone": "1",
-        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "scope": "private",
-        "domain": "10.39.202.0/24",
-        "_Comment_3": "ssh config",
-        "ssh-private-key": "",
-        "ssh-user": "",
-        "ssh-password": "",
-        "managed-by": "lxd"
-      },
-      {
-        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "default-4",
-        "zone": "1",
-        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "scope": "private",
-        "domain": "10.124.51.0/24",
+        "domain": "10.146.98.0/24",
         "_Comment_3": "ssh config",
         "ssh-private-key": "",
         "ssh-user": "",
@@ -190,15 +150,15 @@
   },
   "zones": {
     "1": {
-      "domain-1": "192.168.1.0/24",
-      "domain-2": "1000.99.104.54/24",
+      "domain-1": "10.146.98.0/24",
+      "domain-2": "192.168.122.0/24",
       "domain-3": "192.168.12.0/24"
     }
   },
   "clouds-list": [
     {
       "description": "credentials of your juju controller",
-      "cloud-name": "localhost-borer",
+      "cloud-name": "localhost",
       "cloud-type": "lxd",
       "cloud-endpoint": "10.39.202.144:17070",
       "cloud-username": "admin",
@@ -206,27 +166,11 @@
     },
     {
       "description": "credentials of your juju controller",
-      "cloud-name": "sakura-home",
+      "cloud-name": "nymphe-edu",
       "cloud-type": "manual",
-      "cloud-endpoint": "10.124.51.249:17070",
+      "cloud-endpoint": "192.168.12.124:17070",
       "cloud-username": "admin",
-      "cloud-password": "0ff27627bdb42216ec2c0c6296d832c9"
-    },
-    {
-      "description": "credentials of your juju controller",
-      "cloud-name": "psoque-home",
-      "cloud-type": "manual",
-      "cloud-endpoint": "192.168.1.100:17070",
-      "cloud-username": "admin",
-      "cloud-password": "c9db02159a4400f6756af2df370b42c5"
-    },
-    {
-      "description": "credentials of your juju controller",
-      "cloud-name": "localhost",
-      "cloud-type": "lxd",
-      "cloud-endpoint": "10.180.125.158:17070",
-      "cloud-username": "admin",
-      "cloud-password": "cad0dce46537672a437d0c00e764819e"
+      "cloud-password": "8e64b0fe81d6b11ff893de4f8b705e9e"
     }
   ],
 
@@ -284,8 +228,8 @@
   },
   "ssh-config": {
     "_Comment": "ssh connection is needed when adding kvm machines",
-    "ssh-key-directory": "/home/borer/.ssh/",
-    "ssh-key-name": "id_juju2",
+    "ssh-key-directory": "/home/psoque/.ssh/",
+    "ssh-key-name": "id_rsa",
     "ssh-user": "ubuntu",
     "ssh-password": "linux"
   },

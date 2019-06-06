@@ -166,6 +166,8 @@ class listTasks(object):
 					time.sleep(0.5)
 					self.run(True)
 			return None
+		
 		return self.response
+
 	def exit(self):
 		self.connection.close()
