@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 # VM image info
-IMAGE_PATH=/opt/OAI/images
-EPC_IMG=epc.img
+IMAGE_PATH=/home/borer/Downloads
+EPC_IMG=ubuntu-16.04-server-cloudimg-arm64-disk1.img
 SGW_IMG=spgw-mec.vmdk
-HTTP_IMG=httpserver.img
-IPERF_IMG=ncserver.img
+HTTP_IMG=ubuntu-16.04-server-cloudimg-arm64-disk1.img
+IPERF_IMG=ubuntu-16.04-server-cloudimg-arm64-disk1.img
+
+#EPC_IMG=epc.img
+#SGW_IMG=spgw-mec.vmdk
+#HTTP_IMG=httpserver.img
+#IPERF_IMG=ncserver.img
 
 # networking params
 MTU=1464
@@ -28,14 +33,7 @@ sleep 2
 # start spgw
 echo "Booting SPGW"
 
-
-
-
-kvm -hda $IMAGE_PATH/$SGW_IMG -netdev tap,id=net2,ifname=tap1,vhost=on -device
-e1000,netdev=net2,mac=52:54:00:12:34:58 -smp 3 -m 3G -netdev
-tap,id=net3,ifname=tap2,vhost=on -device e1000,netdev=net3,mac=52:54:00:12:34:59 -netdev
-tap,id=net4,ifname=tap3,vhost=on -device e1000,netdev=net4,mac=52:54:00:12:34:aa -usb
--usbdevice tablet -daemonize
+kvm -hda /home/borer/vmware/Ubuntu18/Ubuntu18.vmdk -netdev tap,id=net2,ifname=tap1,vhost=on -device e1000,netdev=net2,mac=52:54:00:12:34:58 -smp 3 -m 3G -netdev tap,id=net3,ifname=tap2,vhost=on -device e1000,netdev=net3,mac=52:54:00:12:34:59 -netdev tap,id=net4,ifname=tap3,vhost=on -device e1000,netdev=net4,mac=52:54:00:12:34:aa -usb -usbdevice tablet -daemonize
 sleep 2
 
 # Configure the MAC addr of the intenal NAT interface
@@ -51,7 +49,7 @@ kvm -drive file=$IMAGE_PATH/$IPERF_IMG -smp 1 -m 512M -netdev tap,id=net11,ifnam
 -netdev tap,id=netMGMT2,ifname=tapM2,vhost=on -device e1000,netdev=netMGMT2,mac=52:54:00:12:aa:bb -daemonize -vnc :2
 sleep 2
 
-sudo kvm -hda /home/borer/Downloads/ubuntu-16.04-server-cloudimg-arm64-disk1.img -netdev tap,id=net2,ifname=tap1,vhost=on -device e1000,netdev=net2,mac=52:54:00:12:34:58 -smp 3 -m 3G -netdev tap,id=net3,ifname=tap2,vhost=on -device e1000,netdev=net3,mac=52:54:00:10:34:59 -netdev tap,id=net4,ifname=tap3,vhost=on -device e1000,netdev=net4,mac=52:54:00:10:34:aa -usb -usbdevice tablet -daemonize
+#sudo kvm -hda /home/borer/Downloads/ubuntu-16.04-server-cloudimg-arm64-disk1.img -netdev tap,id=net2,ifname=tap1,vhost=on -device e1000,netdev=net2,mac=52:54:00:12:34:58 -smp 3 -m 3G -netdev tap,id=net3,ifname=tap2,vhost=on -device e1000,netdev=net3,mac=52:54:00:10:34:59 -netdev tap,id=net4,ifname=tap3,vhost=on -device e1000,netdev=net4,mac=52:54:00:10:34:aa -usb -usbdevice tablet -daemonize
 
 # add interfaces to bridges
 brctl addif br0 eno1
@@ -82,4 +80,4 @@ iptables -t nat -A POSTROUTING -o wlp2s0 -j MASQUERADE
 iptables -A FORWARD -i $NAT_PUB_IF -o $NAT_SGW_IF -m state --state RELATED,ESTABLISHED -j ACCEPT
 iptables -A FORWARD -i $NAT_SGW_IF -o $NAT_PUB_IF -j ACCEPT
 iptables -A FORWARD -i $NAT_PUB_IF -o $NAT_MEC_IF -m state --state RELATED,ESTABLISHED -j ACCEPT
-iptables -A FORWARD -i $NAT_MEC_IF -o $NAT_PUB_IF -j ACCEPT#!/usr/bin/env bash
+iptables -A FORWARD -i $NAT_MEC_IF -o $NAT_PUB_IF -j ACCEPT
