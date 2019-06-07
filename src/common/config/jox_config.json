@@ -14,7 +14,7 @@
     "jox-timeout-request": 300
   },
   "rabbit-mq-config":{
-    "rabbit-mq-server-ip":"localhost",
+    "rabbit-mq-server-ip":"192.168.12.96",
     "rabbit-mq-server-port":5672,
     "rabbit-mq-queue":"QueueJox"
   },
@@ -286,7 +286,7 @@
       "cloud-type": "manual",
       "cloud-endpoint": "192.168.12.162:17070",
       "cloud-username": "admin",
-      "cloud-password": "468a141af452b0f096584e86d02d4991"
+      "cloud-password": "67190255d5d59d0aa98861d1c01456a3"
     }
 
   ],
@@ -345,7 +345,7 @@
   },
   "ssh-config": {
     "_Comment": "ssh connection is needed when adding kvm machines",
-    "ssh-key-directory": "/home/borer/.ssh/",
+    "ssh-key-directory": "/home/pou/.ssh/",
     "ssh-key-name": "id_juju2",
     "ssh-user": "ubuntu",
     "ssh-password": "linux"
