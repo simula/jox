@@ -459,7 +459,7 @@ class FlexRAN_plugin(object):
             slice_id=param['nsi_id']
             enb_id=param['enb_id']
             self.slice_config = param['slice_config']
-            print('here',self.flexran_default_slice_config)
+            print(self.gv.flexran_default_slice_config)
             response = requests.post(self.flexran_endpoint+"slice/enb/"+enb_id+"/slice/"+slice_id)
             if response.text is not None:
                 standard_error = (json.loads(response.text))['error']
