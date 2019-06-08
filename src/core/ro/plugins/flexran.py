@@ -52,8 +52,8 @@ dir_parent_path = os.path.dirname(os.path.abspath(__file__ + "/../"))
 dir_JOX_path = os.path.dirname(os.path.abspath(__file__ + "/../../../"))
 sys.path.append(dir_parent_path)
 sys.path.append(dir_path)
-from jox.src.common.config import gv
-from jox.src.core.ro.plugins import es
+from src.common.config import gv
+from src.core.ro.plugins import es
 
 class FlexRAN_plugin(object):
     def __init__(self, flex_log_level=None,):
@@ -133,7 +133,6 @@ class FlexRAN_plugin(object):
                 data = json.load(data_file)
                 data_file.close()
             self.gv.flexran_default_slice_config = data  # This config to be used if DL % excceed 100
-
             self.logger.info(" FlexRAN default endpoint is {}".format(self.flexran_endpoint))
             if self.gv.ELASTICSEARCH_ENABLE:
                 self.jesearch = es.JESearch(self.gv.ELASTICSEARCH_HOST, self.gv.ELASTICSEARCH_PORT,
@@ -443,33 +442,64 @@ class FlexRAN_plugin(object):
             print(ex)
 
     def prepare_slice(self,enb_id, slice_id):
+        enb_id = enb_id
+        slice_id = slice_id
         try:
-            response = requests.post(self.flexran_endpoint+"slice/enb/"+enb_id+"/slice/"+slice_id)
-            print(response)
+            bs_connected = False
+            while(bs_connected == False):
+                message = " Waiting for BS to be connected"
+                self.logger.info(message)
+                response = requests.post(self.flexran_endpoint+"slice/enb/"+enb_id+"/slice/"+slice_id)
+                response = json.loads(response.text)
+                if response['error'] == self.standard_slice_error_bs_not_found:
+                    message = " Wait interval of 2 seconds"
+                    self.logger.info(message)
+                    time.sleep(2)
+                else:
+                    message = " BS Connected"
+                    self.logger.info(message)
+                    response = requests.post(self.flexran_endpoint + "slice/enb/" + enb_id + "/slice/" + slice_id)
+                    if response['error'] == self.standard_slice_error_percentage:
+                        response=self.set_enb_config(enb_id, self.gv.flexran_default_slice_config)
+                        message = " Create slice attempt unsuccessful - Reseason ".format(response.text)
+                        self.logger.info(message)
+                        message = " Reducing default slice resources "
+                        self.logger.info(message)
+
+                        response = requests.post(self.flexran_endpoint + "slice/enb/" + enb_id + "/slice/" + slice_id)
+                        message = " Create slice last attempt status ".format(response.text)
+                        self.logger.info(message)
+                        bs_connected = True
+                    else:
+                        time.sleep(2)
         except Exception as ex:
-            print(ex)
+            #print(ex)
+            self.prepare_slice(enb_id, slice_id)
 
     def create_slice(self,param):
         """Create slice on Flexran.
         *@enb_id : enb id to add slice
-        *@nsi_id : slice id
+        *@nsi_id : slice idhere
         *@return: The result
         """
         try:
-            slice_id=param['nsi_id']
+            #slice_id=param['nsi_id']
+            slice_id='8'
             enb_id=param['enb_id']
             self.slice_config = param['slice_config']
-            print(self.gv.flexran_default_slice_config)
-            response = requests.post(self.flexran_endpoint+"slice/enb/"+enb_id+"/slice/"+slice_id)
-            if response.text is not None:
+            req = self.flexran_endpoint+"slice/enb/"+enb_id+"/slice/"+slice_id
+            response = requests.post(req)
+            if (response.text is None) or (response.text == ""):
+                response = 'Slice is added, or already exist '
+                return response
+            else:
                 standard_error = (json.loads(response.text))['error']
                 if standard_error == self.standard_slice_error_percentage:
                     self.set_enb_config(enb_id, self.gv.flexran_default_slice_config)
+                    response = requests.post(req)
                 if standard_error == self.standard_slice_error_bs_not_found:
-                    pass
-                    #self.prepare_slice(param)
-
-            return response.text
+                    t3 = Thread(target=self.prepare_slice, args=(enb_id, slice_id)).start()
+                return response.text
         except Exception as ex:
             print(ex)
 
@@ -585,7 +615,7 @@ class FlexRAN_plugin(object):
         except Exception as ex:
             print(ex)
 
-    def set_enb_config(self,  enb_id, slice_config):
+    def set_enb_config(self, enb_id, slice_config):
         """Set slice config.
         *@enb_id : enb id to add slice
         *@slice_config : slice config
@@ -593,11 +623,16 @@ class FlexRAN_plugin(object):
         """
         try:
             pass
-            temp = open('temp_config.json','rw')
-            temp.write(slice_config)
+            temp = open('dir_path/temp_config.json','w')
+            temp.write(str(slice_config))
             temp.close()
-            conf_path = dir_path+'temp_config.json'
-            response = requests.get(self.flexran_endpoint+"slice/enb/"+enb_id+' --data-binary'+'@/'+conf_path)
+            conf_path = dir_path+'/temp_config.json'
+            conf_path_temp = dir_path+'/flexran_plugin_default_slice_config.json'
+            # print(self.flexran_endpoint+"slice/enb/"+enb_id+' --data-binary'+'@'+conf_path_temp)
+            req = "{}slice/enb/{} --data-binary '@{}'".format(self.flexran_endpoint, enb_id, conf_path_temp)
+            print("req={}".format(req))
+            response = requests.post(req)
+            # response = requests.post(self.flexran_endpoint+"slice/enb/"+enb_id+' --data-binary'+' '+'"@/'+conf_path_temp+'"')
             response=json.loads(response.text)
             return response
         except Exception as ex:
@@ -660,9 +695,3 @@ if __name__ == '__main__':
     fs.build()
     t1 = Thread(target=fs.start_consuming).start()
     t2 = Thread(target=fs.start_notifications).start()
-
-
-
-
-
-
