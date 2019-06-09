@@ -272,6 +272,19 @@ class JModel(JSONEncoder):
     async def destroy_service(self, service_name, user_name="admin"):
         service_removed = False
         try:
+            """ To Be Tested
+            if service_name == self.gv.FLEXRAN_PLUGIN_SERVICE_FLEXRAN:
+                enquiry = self.standard_reqst
+                current_time = datetime.datetime.now()
+                enquiry["datetime"] = str(current_time)
+                enquiry["plugin_message"] = "remove_slice"
+                enquiry["param"]["enb_id"] = '-1'
+                enquiry["param"]["nsi_id"] = '8', self.gv.nsi_id
+                enquiry = json.dumps(enquiry)
+                enquiry.encode("utf-8")
+                self.juju_serviceModel.send_to_plugin(enquiry, self.queue_name_flexran)
+            """
+
             model = Model()
             model_name = self.cloud_name + ":" + user_name + '/' + self.model_name
             await model.connect(model_name)

@@ -28,6 +28,11 @@
     "timeout-request":300
   },
 
+    "llmec-config":{
+    "host":"192.168.122.28",
+    "port": 9999
+  },
+
   "flexran-plugin-config":{
     "rabbit-mq-server-ip":"localhost",
     "rabbit-mq-server-port":5672,

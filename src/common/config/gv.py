@@ -41,7 +41,6 @@ global console
 
 # config file param
 CONFIG_FILE= "jox_config.json"
-FLEXRAN_SLICE_CONFIG_FILE= "flexran_default_slice_config.json"   # This file for JoX, add this via template in future
 FLEXRAN_PLUGIN_SLICE_CONFIG_FILE= "flexran_plugin_default_slice_config.json"   # This file is for plugin
 
 FLEXRAN_SLICE_CONFIG= ""
@@ -64,6 +63,17 @@ FLEXRAN_PLUGIN_SERVICE_OAI_ENB="oai-ran"
 FLEXRAN_PLUGIN_SERVICE_FLEXRAN="flexran"
 SLICE_ADJUST_FACTOR=25
 FLEXRAN_SLICE_CONFIG=""
+
+# LL_MEC param
+LL_MEC_HOST=""
+LL_MEC_PORT=""
+LL_MEC_RBMQ_QUEUE_NAME=""
+LL_MEC_PLUGIN_STATUS=""
+LL_MEC_TIMEOUT_REQUEST=""
+LL_MEC_ES_INDEX_STATUS=""
+LL_MEC_ES_INDEX_NAME=""
+LL_MEC_SLICE_CONFIG=""
+
 
 """ FLASK param """
 FLASK_SERVER_IP=""

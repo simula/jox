@@ -109,11 +109,6 @@ class NFVO_JOX(object):
 				data_file.close()
 			
 			self.jox_config = data
-			with open(''.join([self.dir_config, gv.FLEXRAN_SLICE_CONFIG_FILE])) as data_file:
-				data = json.load(data_file)
-				data_file.close()
-
-			self.gv.FLEXRAN_SLICE_CONFIG = data # later on this should be passed by template
 
 		except IOError as ex:
 			message = "Could not load JOX Configuration file.I/O error({0}): {1}".format(ex.errno, ex.strerror)

@@ -33,7 +33,6 @@ import asyncio
 from juju.model import Model
 import time, datetime
 import pika, uuid, json, os
-import utils
 
 class JujuController(object):
     """Juju JujuController: Shared between Slices """
@@ -208,7 +207,7 @@ class JujuModelServiceController(object):
             model_name = self.controller_name + ":" + self.user_name + '/' + self.model_name
             await model.connect(model_name)
 
-            self.nsi_id.append(nsi_name , self.nsi_id) # To Do
+            # self.nsi_id.append(nsi_name , self.nsi_id) # To Do
 
             app_keys = model.applications.keys()
             application_NotExist = True
