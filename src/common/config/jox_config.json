@@ -168,7 +168,7 @@
       "description": "credentials of your juju controller",
       "cloud-name": "nymphe-edu",
       "cloud-type": "manual",
-      "cloud-endpoint": "192.168.12.124:17070",
+      "cloud-endpoint": "192.168.12.220:17070",
       "cloud-username": "admin",
       "cloud-password": "8e64b0fe81d6b11ff893de4f8b705e9e"
     }

@@ -41,6 +41,8 @@ import pika
 import os, time, sys
 import json
 import logging
+logging.basicConfig(format='%(asctime)s] %(filename)s:%(lineno)d %(levelname)s '
+                           '- %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 import requests
 import datetime
 from threading import Thread
@@ -108,7 +110,7 @@ class FlexRAN_plugin(object):
         self.gv.FLEXRAN_ES_INDEX_NAME = self.jox_config["flexran-plugin-config"]['es-index-name']
         self.gv.RBMQ_SERVER_IP = self.jox_config['rabbit-mq-config']["rabbit-mq-server-ip"]
         self.gv.RBMQ_SERVER_PORT = self.jox_config['rabbit-mq-config']["rabbit-mq-server-port"]
-
+        #### FlexRAN plugin local variables
         self.jesearch = None
         self.credentials=None
         self.parameters=None
@@ -132,7 +134,7 @@ class FlexRAN_plugin(object):
             with open(''.join([self.dir_config, gv.FLEXRAN_PLUGIN_SLICE_CONFIG_FILE])) as data_file:
                 data = json.load(data_file)
                 data_file.close()
-            self.gv.flexran_default_slice_config = data  # This config to be used if DL % excceed 100
+            self.flexran_default_slice_config = data  # This config is to be used if DL % excceed 100
             self.logger.info(" FlexRAN default endpoint is {}".format(self.flexran_endpoint))
             if self.gv.ELASTICSEARCH_ENABLE:
                 self.jesearch = es.JESearch(self.gv.ELASTICSEARCH_HOST, self.gv.ELASTICSEARCH_PORT,
@@ -271,7 +273,7 @@ class FlexRAN_plugin(object):
                 message=" RPC acknowledged - {}".format(response)
                 self.logger.info(message)
             ############################################
-            if "create_slice" in enquiry["plugin_message"]:
+            if enquiry["plugin_message"] == "create_slice":
                 result = self.create_slice(enquiry["param"])
                 response = {
                     "ACK": True,
@@ -442,6 +444,11 @@ class FlexRAN_plugin(object):
             print(ex)
 
     def prepare_slice(self,enb_id, slice_id):
+        """Wait for BS to be connected before deploying slice.
+        *@enb_id : enb id to add slice
+        *@nsi_id : slice id
+        *@return: The result
+        """
         enb_id = enb_id
         slice_id = slice_id
         try:
@@ -449,42 +456,51 @@ class FlexRAN_plugin(object):
             while(bs_connected == False):
                 message = " Waiting for BS to be connected"
                 self.logger.info(message)
-                response = requests.post(self.flexran_endpoint+"slice/enb/"+enb_id+"/slice/"+slice_id)
-                response = json.loads(response.text)
-                if response['error'] == self.standard_slice_error_bs_not_found:
-                    message = " Wait interval of 2 seconds"
+                req=self.flexran_endpoint+"slice/enb/"+enb_id+"/slice/"+slice_id
+                response = requests.post(req)
+                if (response.text is None) or (response.text == ""):
+                    message = " BS is now connected"
                     self.logger.info(message)
-                    time.sleep(2)
+                    bs_connected = True
+                    message = " Slice is added, or already exist "
+                    self.logger.info(message)
                 else:
-                    message = " BS Connected"
-                    self.logger.info(message)
-                    response = requests.post(self.flexran_endpoint + "slice/enb/" + enb_id + "/slice/" + slice_id)
+                    response=json.loads(response.text)
                     if response['error'] == self.standard_slice_error_percentage:
-                        response=self.set_enb_config(enb_id, self.gv.flexran_default_slice_config)
-                        message = " Create slice attempt unsuccessful - Reseason ".format(response.text)
+                        message = " Create slice attempt unsuccessful, Reseason -  {}".format(self.standard_slice_error_percentage)
                         self.logger.info(message)
-                        message = " Reducing default slice resources "
-                        self.logger.info(message)
+                        message = " Reducing default slice resources by  {} percent".format(self.gv.SLICE_ADJUST_FACTOR)
+                        self.flexran_default_slice_config['dl'][0]['percentage'] = self.flexran_default_slice_config['dl'][0]['percentage'] -\
+                                                                                   self.gv.SLICE_ADJUST_FACTOR
+                        self.flexran_default_slice_config['ul'][0]['percentage'] = self.flexran_default_slice_config['ul'][0]['percentage'] -\
+                                                                                   self.gv.SLICE_ADJUST_FACTOR
 
-                        response = requests.post(self.flexran_endpoint + "slice/enb/" + enb_id + "/slice/" + slice_id)
-                        message = " Create slice last attempt status ".format(response.text)
                         self.logger.info(message)
+                        self.set_enb_config(enb_id, self.flexran_default_slice_config)
+                        response = requests.post(req)
+                        if (response.text is None) or (response.text == ""):
+                            message = " Slice is added, or already exist "
+                            self.logger.info(message)
+                        #else:
+                            #NotImplementedError()
                         bs_connected = True
                     else:
+                        message = " Wait interval of 2 seconds"
+                        self.logger.info(message)
                         time.sleep(2)
+
         except Exception as ex:
-            #print(ex)
+            print(ex)
             self.prepare_slice(enb_id, slice_id)
 
     def create_slice(self,param):
         """Create slice on Flexran.
         *@enb_id : enb id to add slice
-        *@nsi_id : slice idhere
+        *@nsi_id : slice id
         *@return: The result
         """
         try:
-            #slice_id=param['nsi_id']
-            slice_id='8'
+            slice_id=param['nsi_id']
             enb_id=param['enb_id']
             self.slice_config = param['slice_config']
             req = self.flexran_endpoint+"slice/enb/"+enb_id+"/slice/"+slice_id
@@ -495,10 +511,11 @@ class FlexRAN_plugin(object):
             else:
                 standard_error = (json.loads(response.text))['error']
                 if standard_error == self.standard_slice_error_percentage:
-                    self.set_enb_config(enb_id, self.gv.flexran_default_slice_config)
+                    self.set_enb_config(enb_id, self.flexran_default_slice_config)
                     response = requests.post(req)
                 if standard_error == self.standard_slice_error_bs_not_found:
                     t3 = Thread(target=self.prepare_slice, args=(enb_id, slice_id)).start()
+                    #t3.join()
                 return response.text
         except Exception as ex:
             print(ex)
@@ -622,19 +639,13 @@ class FlexRAN_plugin(object):
         *@return: The result
         """
         try:
-            pass
-            temp = open('dir_path/temp_config.json','w')
-            temp.write(str(slice_config))
-            temp.close()
-            conf_path = dir_path+'/temp_config.json'
-            conf_path_temp = dir_path+'/flexran_plugin_default_slice_config.json'
-            # print(self.flexran_endpoint+"slice/enb/"+enb_id+' --data-binary'+'@'+conf_path_temp)
-            req = "{}slice/enb/{} --data-binary '@{}'".format(self.flexran_endpoint, enb_id, conf_path_temp)
-            print("req={}".format(req))
-            response = requests.post(req)
-            # response = requests.post(self.flexran_endpoint+"slice/enb/"+enb_id+' --data-binary'+' '+'"@/'+conf_path_temp+'"')
-            response=json.loads(response.text)
-            return response
+            slice_config = json.dumps(slice_config)
+            req = "{}slice/enb/{}".format(self.flexran_endpoint, enb_id)
+            header = {'Content-Type':  'application/octet-stream'}
+            response = requests.post(req, data=slice_config, headers =header)
+            message = " Resources now available for new slices "
+            self.logger.info(message)
+            return
         except Exception as ex:
             print(ex)
 
@@ -666,6 +677,7 @@ class FlexRAN_plugin(object):
                 slice_data = [{container_name : [container_data]}]
             self.jesearch.update_index_with_content(index_page, container_type, slice_data)
 
+    # Acknowledge RPC
     def send_ack(self, ch, method, props, response, send_reply):
         if send_reply:
             response = json.dumps(response)

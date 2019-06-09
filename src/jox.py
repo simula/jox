@@ -174,6 +174,9 @@ class NFVO_JOX(object):
 			self.gv.HOST_OS_CONFIG["host"] = self.jox_config["host-config"]
 			self.gv.HOST_OS_CONFIG["os"] = self.jox_config["os-config"]
 			
+			
+			
+			
 			self.gv.HTTP_200_OK = self.jox_config["http"]["200"]["ok"]
 			self.gv.HTTP_204_NO_CONTENT = self.jox_config["http"]["200"]["no-content"]
 			self.gv.HTTP_400_BAD_REQUEST = self.jox_config["http"]["400"]["bad-request"]
@@ -182,6 +185,7 @@ class NFVO_JOX(object):
 			self.gv.ZONES = self.jox_config['zones']
 
 			self.gv.JOX_TIMEOUT_REQUEST = self.jox_config["jox-config"]['jox-timeout-request']
+			
 			
 		except jsonschema.ValidationError as ex:
 			self.logger.error("Error happened while validating the jox config: {}".format(ex.message))

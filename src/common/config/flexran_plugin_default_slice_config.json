@@ -2,14 +2,14 @@
     "dl": [
         {
             "id": 0,
-            "percentage": 50,
+            "percentage": 100,
             "maxmcs": 10
         }
     ],
     "ul": [
         {
             "id": 0,
-            "percentage": 50,
+            "percentage": 100,
             "maxmcs": 20
         }
     ],

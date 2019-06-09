@@ -143,10 +143,12 @@ class JujuController(object):
         await self.controller.disconnect()
         return _response   
        
+       
     def grant_access_level(self, username, acl):
         changes=self.controller.grant(username, acl)
         return changes
-
+        
+   
     async def disconnect(self):
         await self.controller.disconnect()
 
@@ -157,6 +159,9 @@ class JujuModelServiceController(object):
         self.gv = global_variables
         self.logger = logging.getLogger('jox.JujuModelServiceController')
         self.controller = None
+
+        self.nsi_id_list =[]  # FlexRAN plugin
+        self.nsi_id = 100 # FlexRAN plugin
 
         self.controller_name = ""  # juju controller name
         self.model_name = ""  # juju model name
@@ -203,6 +208,8 @@ class JujuModelServiceController(object):
             model_name = self.controller_name + ":" + self.user_name + '/' + self.model_name
             await model.connect(model_name)
 
+            self.nsi_id.append(nsi_name , self.nsi_id) # To Do
+
             app_keys = model.applications.keys()
             application_NotExist = True
             for app in app_keys:
@@ -225,8 +232,8 @@ class JujuModelServiceController(object):
                     series=new_service.series,
                     channel=new_service.channel,
                     to=new_service.to,
-            )
-            time.sleep(2)
+                    )
+                time.sleep(1)
 
             machine_ip = model.machines[new_service.to].dns_name
             self.gv.FLEXRAN_HOST = str(machine_ip)
@@ -243,14 +250,12 @@ class JujuModelServiceController(object):
                 self.send_to_plugin(enquiry, self.queue_name_flexran)
 
             if new_service.application_name == self.gv.FLEXRAN_PLUGIN_SERVICE_OAI_ENB:
-                #enb_id = os.system("(juju config oai-ran | grep "default: "0x""* | awk {'print $2'})")
-                #os.system('juju config oai-ran flexran_active=yes')
                 enquiry = self.standard_reqst
                 current_time = datetime.datetime.now()
                 enquiry["datetime"] = str(current_time)
                 enquiry["plugin_message"] = "create_slice"
-                enquiry["param"]["enb_id"] = '-1' # last added enb
-                enquiry["param"]["nsi_id"] = '5' # update this slice mapping
+                enquiry["param"]["enb_id"] = '-1' # Last added eNB
+                enquiry["param"]["nsi_id"] = '8' # self.nsi_id
                 enquiry["param"]["slice_config"] = self.gv.FLEXRAN_SLICE_CONFIG
                 enquiry = json.dumps(enquiry)
                 enquiry.encode("utf-8")
