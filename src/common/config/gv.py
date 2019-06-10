@@ -51,6 +51,9 @@ RBMQ_SERVER_IP=""
 RBMQ_SERVER_PORT=""
 RBMQ_QUEUE=""
 
+# General
+ENABLED ='enabled'
+DISABLED = 'disabled'
 # FlexRAN param
 FLEXRAN_HOST=""
 FLEXRAN_PORT=""

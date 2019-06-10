@@ -32,7 +32,8 @@ from juju.controller import Controller
 import asyncio
 from juju.model import Model
 import time, datetime
-import pika, uuid, json, os
+import pika, uuid, json
+import random
 
 class JujuController(object):
     """Juju JujuController: Shared between Slices """
@@ -161,6 +162,7 @@ class JujuModelServiceController(object):
 
         self.nsi_id_list =[]  # FlexRAN plugin
         self.nsi_id = 100 # FlexRAN plugin
+        self.enb_id = None
 
         self.controller_name = ""  # juju controller name
         self.model_name = ""  # juju model name
@@ -236,29 +238,41 @@ class JujuModelServiceController(object):
 
             machine_ip = model.machines[new_service.to].dns_name
             self.gv.FLEXRAN_HOST = str(machine_ip)
+            if self.gv.FLEXRAN_PLUGIN_STATUS == self.gv.ENABLED:
+                if new_service.application_name == self.gv.FLEXRAN_PLUGIN_SERVICE_FLEXRAN:
+                    enquiry = self.standard_reqst
+                    current_time = datetime.datetime.now()
+                    enquiry["datetime"] = str(current_time)
+                    enquiry["plugin_message"] = "update_flexRAN_endpoint"
+                    enquiry["param"]["host"] = str(machine_ip)
+                    enquiry["param"]["port"] = self.gv.FLEXRAN_PORT
 
-            if new_service.application_name == self.gv.FLEXRAN_PLUGIN_SERVICE_FLEXRAN:
-                enquiry = self.standard_reqst
-                current_time = datetime.datetime.now()
-                enquiry["datetime"] = str(current_time)
-                enquiry["plugin_message"] = "update_flexRAN_endpoint"
-                enquiry["param"]["host"] = str(machine_ip)
-                enquiry["param"]["port"] = self.gv.FLEXRAN_PORT
+
+                if new_service.application_name == self.gv.FLEXRAN_PLUGIN_SERVICE_OAI_ENB:
+                    enquiry = self.standard_reqst
+                    # self.enb_id = hex(random.randint(1040000,1048575)) # 20 bit LTE enb_id
+                    # self.enb_id = hex(random.randint(4294900000,4294967295)) # 28 bit LTE enb_id
+                    # enquiry = self.standard_reqst
+                    # current_time = datetime.datetime.now()
+                    # enquiry["datetime"] = str(current_time)
+                    # enquiry["plugin_message"] = "set_enb_config"
+                    # enquiry["param"]["enb_id"] = '-1' # Last added eNB
+                    # enquiry["param"]["nsi_id"] = self.nsi_id # mpped nsi_id
+                    # enquiry["param"]["slice_config"] = self.gv.FLEXRAN_SLICE_CONFIG # this config should set enb_id that is generated above
+                    # enquiry = json.dumps(enquiry)
+                    # enquiry.encode("utf-8")
+                    # print(enquiry)
+                    # self.send_to_plugin(enquiry, self.queue_name_flexran)
+
+                    current_time = datetime.datetime.now()
+                    enquiry["datetime"] = str(current_time)
+                    enquiry["plugin_message"] = "create_slice"
+                    enquiry["param"]["enb_id"] = '-1' # Last added eNB
+                    enquiry["param"]["nsi_id"] = '8' # self.nsi_id
+                    enquiry["param"]["slice_config"] = self.gv.FLEXRAN_SLICE_CONFIG
+
                 enquiry = json.dumps(enquiry)
                 enquiry.encode("utf-8")
-                self.send_to_plugin(enquiry, self.queue_name_flexran)
-
-            if new_service.application_name == self.gv.FLEXRAN_PLUGIN_SERVICE_OAI_ENB:
-                enquiry = self.standard_reqst
-                current_time = datetime.datetime.now()
-                enquiry["datetime"] = str(current_time)
-                enquiry["plugin_message"] = "create_slice"
-                enquiry["param"]["enb_id"] = '-1' # Last added eNB
-                enquiry["param"]["nsi_id"] = '8' # self.nsi_id
-                enquiry["param"]["slice_config"] = self.gv.FLEXRAN_SLICE_CONFIG
-                enquiry = json.dumps(enquiry)
-                enquiry.encode("utf-8")
-                print(enquiry)
                 self.send_to_plugin(enquiry, self.queue_name_flexran)
 
             self.logger.info("The servce {} is deployed".format(new_service.application_name))
