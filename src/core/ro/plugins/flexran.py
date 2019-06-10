@@ -147,7 +147,7 @@ class FlexRAN_plugin(object):
 
             #### Create es index to maintain statistics for flexRAN plugin viz. enb_stats, ue_stats
             if self.jesearch.ping():
-                message = " Deleting the index <{}> from elasticsearch if alredy exist".format((self.es_flexran_index))
+                message = " Deleting the index <{}> from elasticsearch if already exist".format((self.es_flexran_index))
                 self.logger.info(message)
                 self.jesearch.del_index_from_es((self.es_flexran_index))  # Adding slice data to elasticsearch
                 message = " Saving the index {} to elasticsearch".format((self.es_flexran_index))
@@ -519,6 +519,16 @@ class FlexRAN_plugin(object):
             else:
                 standard_error = (json.loads(response.text))['error']
                 if standard_error == self.standard_slice_error_percentage:
+                    message = " Create slice attempt unsuccessful, Reseason -  {}".format(self.standard_slice_error_percentage)
+                    self.logger.info(message)
+                    message = " Reducing default slice resources by  {} percent".format(self.gv.SLICE_ADJUST_FACTOR)
+                    self.flexran_default_slice_config['dl'][0]['percentage'] = \
+                    self.flexran_default_slice_config['dl'][0]['percentage'] - \
+                    self.gv.SLICE_ADJUST_FACTOR
+                    self.flexran_default_slice_config['ul'][0]['percentage'] = \
+                    self.flexran_default_slice_config['ul'][0]['percentage'] - \
+                    self.gv.SLICE_ADJUST_FACTOR
+                    self.logger.info(message)
                     self.set_enb_config(enb_id, self.flexran_default_slice_config)
                     response = requests.post(req)
                 if standard_error == self.standard_slice_error_bs_not_found:

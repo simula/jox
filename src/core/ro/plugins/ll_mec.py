@@ -150,7 +150,7 @@ class ll_mec_plugin(object):
 
             #### Create es index to maintain statistics for LL_MEC plugin
             if self.jesearch.ping():
-                message = " Deleting the index <{}> from elasticsearch if alredy exist".format((self.es_LL_MEC_index))
+                message = " Deleting the index <{}> from elasticsearch if already exist".format((self.es_LL_MEC_index))
                 self.logger.info(message)
                 self.jesearch.del_index_from_es((self.es_LL_MEC_index))  # Adding slice data to elasticsearch
                 message = " Saving the index {} to elasticsearch".format((self.es_LL_MEC_index))

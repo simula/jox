@@ -124,7 +124,7 @@ class TemplateManager():
 
 		if self.jesearch.ping():
 			self.set_NSI_monitor_index(self.NSI_ID)
-			message = "Deleting the index {} from elasticsearch if alredy exist".format((self.NSI_ID).lower())
+			message = "Deleting the index {} from elasticsearch if already exist".format((self.NSI_ID).lower())
 			logger.info(message)
 			logger.debug(message)
 			self.jesearch.del_index_from_es((self.NSI_ID).lower())    			# Adding slice data to elasticsearch
