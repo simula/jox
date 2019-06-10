@@ -171,9 +171,13 @@ class FlexRAN_plugin(object):
     def start_consuming(self):
         while True:
             try:
-                self.channel.basic_consume(self.on_request, queue=self.rbmq_queue_name, no_ack=False)
-                print(colored('[*] FlexRAN plugin message thread -- > Waiting for messages. To exit press CTRL+C', 'yellow'))
-                self.channel.start_consuming()
+                if self.gv.FLEXRAN_ES_INDEX_STATUS == self.gv.ENABLED:
+                    self.channel.basic_consume(self.on_request, queue=self.rbmq_queue_name, no_ack=False)
+                    print(colored('[*] FlexRAN plugin message thread -- > Waiting for messages. To exit press CTRL+C', 'yellow'))
+                    self.channel.start_consuming()
+                else:
+                    message = "FlexRAN plugin not enabled"
+                    self.logger.error(message)
             except pika_exceptions.ConnectionClosed or \
                    pika_exceptions.ChannelAlreadyClosing or \
                    pika_exceptions.ChannelClosed or \
@@ -184,13 +188,17 @@ class FlexRAN_plugin(object):
         print(colored('[*] FlexRAN plugin notifications thread -- > Waiting for messages. To exit press CTRL+C', 'blue'))
         while True:
             try:
-                if self.get_status_flexRAN_endpoint():
-                    self.get_ran_stats()
-                    #enb_agent_id, enb_data = self.get_eNB_list()
-                    if self.gv.FLEXRAN_ES_INDEX_STATUS == "disabled":
-                        message = " Elasticsearch is disabled !! No more notifications are maintained"
-                        self.logger.info(message)
-                time.sleep(10) # Periodic Notification
+                if self.gv.FLEXRAN_ES_INDEX_STATUS == self.gv.ENABLED:
+                    if self.get_status_flexRAN_endpoint():
+                        self.get_ran_stats()
+                        #enb_agent_id, enb_data = self.get_eNB_list()
+                        if self.gv.FLEXRAN_ES_INDEX_STATUS == "disabled":
+                            message = " Elasticsearch is disabled !! No more notifications are maintained"
+                            self.logger.info(message)
+                    time.sleep(10) # Periodic Notification
+                else:
+                    message = "FlexRAN plugin not enabled"
+                    self.logger.error(message)
             except pika_exceptions.ConnectionClosed or \
                    pika_exceptions.ChannelAlreadyClosing or \
                    pika_exceptions.ChannelClosed or \
