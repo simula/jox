@@ -171,7 +171,7 @@ class FlexRAN_plugin(object):
     def start_consuming(self):
         while True:
             try:
-                if self.gv.FLEXRAN_ES_INDEX_STATUS == self.gv.ENABLED:
+                if self.gv.FLEXRAN_PLUGIN_STATUS == self.gv.ENABLED:
                     self.channel.basic_consume(self.on_request, queue=self.rbmq_queue_name, no_ack=False)
                     print(colored('[*] FlexRAN plugin message thread -- > Waiting for messages. To exit press CTRL+C', 'yellow'))
                     self.channel.start_consuming()
@@ -188,7 +188,7 @@ class FlexRAN_plugin(object):
         print(colored('[*] FlexRAN plugin notifications thread -- > Waiting for messages. To exit press CTRL+C', 'blue'))
         while True:
             try:
-                if self.gv.FLEXRAN_ES_INDEX_STATUS == self.gv.ENABLED:
+                if self.gv.FLEXRAN_PLUGIN_STATUS == self.gv.ENABLED:
                     if self.get_status_flexRAN_endpoint():
                         self.get_ran_stats()
                         #enb_agent_id, enb_data = self.get_eNB_list()
