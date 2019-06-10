@@ -519,7 +519,9 @@ class ResourcesController(object):
 							if machine_id == mid.tmp_mid_ro:
 								list_machines[machine_id] = mid.mid_vnfm
 								list_machines_id_jmodel[mid.mid_user_defined] = mid.mid_vnfm
-			if (machine_type == self.gv.PHY) or (machine_type is None) or (machine_type == "none"):
+
+			if [(self.gv.PHY == pop_type or self.gv.PHY_2 == pop_type) for pop_type in machine_types]:
+			# if (machine_type == self.gv.PHY) or (machine_type is None) or (machine_type == "none"):
 				for machine_id in list_machines.keys():
 					for driver in self.pop_phy_list:
 						for mid in driver.machine_list:

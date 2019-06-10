@@ -102,6 +102,7 @@ KVM_2="qemu"
 
 LXC="lxc"
 PHY="phy" # physical machine
+PHY_2="none" # physical machine
 
 """  config param """
 LOG_FILE=""

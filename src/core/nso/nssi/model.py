@@ -230,12 +230,13 @@ class JModel(JSONEncoder):
             for service in range(len(service_list)):
                 service_name=service_list[service]
                 source = service_name
-                target = relations_config[service_name]['relation']
-                if relations_config[source]['jcloud'] == relations_config[target]['jcloud'] and \
-                    relations_config[source]['jmodel'] == relations_config[target]['jmodel']:
-                    self.logger.info("Adding relation between {} and {}".format(source, target))
-                    
-                    self.add_relation_intramodel(source, target, relations_config[source]['jcloud'], relations_config[source]['jmodel'])
+                if len(relations_config[service_name]['relation']) > 0:
+                    for target in relations_config[service_name]['relation']:
+                        if relations_config[source]['jcloud'] == relations_config[target]['jcloud'] and \
+                            relations_config[source]['jmodel'] == relations_config[target]['jmodel']:
+                            self.logger.info("Adding relation between {} and {}".format(source, target))
+
+                            self.add_relation_intramodel(source, target, relations_config[source]['jcloud'], relations_config[source]['jmodel'])
         except Exception as ex:
             self.logger.info("No juju relation requirements for ".format(service_name))
             return
@@ -272,19 +273,6 @@ class JModel(JSONEncoder):
     async def destroy_service(self, service_name, user_name="admin"):
         service_removed = False
         try:
-            """ To Be Tested
-            if service_name == self.gv.FLEXRAN_PLUGIN_SERVICE_FLEXRAN:
-                enquiry = self.standard_reqst
-                current_time = datetime.datetime.now()
-                enquiry["datetime"] = str(current_time)
-                enquiry["plugin_message"] = "remove_slice"
-                enquiry["param"]["enb_id"] = '-1'
-                enquiry["param"]["nsi_id"] = '8', self.gv.nsi_id
-                enquiry = json.dumps(enquiry)
-                enquiry.encode("utf-8")
-                self.juju_serviceModel.send_to_plugin(enquiry, self.queue_name_flexran)
-            """
-
             model = Model()
             model_name = self.cloud_name + ":" + user_name + '/' + self.model_name
             await model.connect(model_name)

@@ -100,8 +100,11 @@ class JujuController(object):
         data=await self.controller.add_user(slice_name)
         await self.controller.disconnect()
         return data
-
+    
+    
+    
     async def add_juju_model(self,model_name,cloud_name, credential_name,owner, config, region):
+    
         config = {
             "enable-os-refresh-update": False,
             "enable-os-upgrade": False,
@@ -112,6 +115,7 @@ class JujuController(object):
         await self.controller.disconnect()
         """
         """
+        
 
         retry_connect = True
         number_retry = 0
@@ -136,6 +140,7 @@ class JujuController(object):
                 await model_2.disconnect()
                 await asyncio.sleep(10)
         return model
+       
        
     async def destroy_juju_model(self,model_uuid):
         await self.controller.connect(self.controller_name)
@@ -208,8 +213,6 @@ class JujuModelServiceController(object):
             model = Model()
             model_name = self.controller_name + ":" + self.user_name + '/' + self.model_name
             await model.connect(model_name)
-
-            # self.nsi_id.append(nsi_name , self.nsi_id) # To Do
 
             app_keys = model.applications.keys()
             application_NotExist = True

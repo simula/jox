@@ -1,0 +1,820 @@
+#!/bin/bash
+
+function print_set_vars(){
+
+    echo_info "base dir:  $base_dir"
+    echo_info "root path: $root_path"
+    echo_info "src dir :  $pkg_src_dir"
+    echo_info "dst dir :  $pkg_dst_dir"
+    echo ""
+
+    #resetting vars
+    pkg_description="template for deploying package <$pkg_template> with $num_subslices subslices"
+
+}
+
+function chksum() {
+    echo_info  "Adding file $1 to $pkg_src_dir/$pkg_chksums"
+    md5sum $1 >> $pkg_chksums
+}
+
+# Check if the array contains a specific value
+# Taken from
+# http://stackoverflow.com/questions/3685970/check-if-an-array-contains-a-value
+function contains() {
+    local n=$#
+    local value=${!n}
+    for ((i=1;i < $#;i++)); do
+        if [ "${!i}" == "${value}" ]; then
+            echo "y"
+            return 0
+        fi
+    done
+    echo "n"
+    return 1
+}
+
+function check_pkg_type() {
+    type=$1
+    if [ $(contains "${pkg_desc_type[@]}" $type) == "y" ]; then
+	pkg_type=$type
+    else
+	echo_error "Unknown descriptor type $type!" >&2
+	pkg_type=""
+    fi
+}
+
+function check_pkg_ext() {
+    ext=$1
+    if [ $(contains "${pkg_desc_ext[@]}" $ext) == "y" ]; then
+	pkg_ext=$ext
+    else
+	echo_error "Unknown descriptor extension $ext!" >&2
+	pkg_ext=""
+    fi
+}
+
+
+function write_readme() {
+    file=${1}/README
+    date=$(date +%F)
+    dir_tree=`tree $1`
+
+    cat >$file <<EOF
+Package Name:            $pkg_name
+Package description:     $pkg_description
+Package version:         $pkg_version
+Package vendor:          $pkg_vendor
+Package date:            $date
+Package structure:       $dir_tree
+EOF
+
+}
+
+function write_nssi_epc_template() {
+    date=$(date +%F)
+    name=$(basename $1)
+    desc_file="${1}/nssi/${2}.yaml"
+
+    cat >$desc_file <<EOF
+description: $pkg_description ($2)
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+imports: []
+metadata:
+  ID: $2
+  author: $pkg_vendor
+  vendor: $pkg_vendor
+  version: $pkg_version
+  date: $date
+
+dsl_definitions:
+  host_small: &host_small
+    disk_size: 5
+    mem_size: 1024
+    num_cpus: 1
+  host_tiny: &host_tiny
+    disk_size: 5
+    mem_size: 512
+    num_cpus: 1
+  os_linux_u_14_x64: &os_u14
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 14.04
+  os_linux_u_16_x64: &os_u16
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 16.04
+  os_linux_u_18_x64: &os_u18
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 18.04
+  data_network: &data_network_1
+    properties:
+      network_name: "net1"
+      ip_version: 4
+      cidr: '10.39.202.0/24'
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "0.0.0.0"
+  data_network_2: &data_network_2
+    properties:
+      network_name: "net2"
+      ip_version: 4
+      cidr: "192.168.122.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "0.0.0.0"
+
+  containers:
+    region1:
+      - network: *data_network_1
+      - network2: *data_network_2
+EOF
+
+
+    if [ "$2" == "nssi_1" ] ; then
+	cat >>$desc_file <<EOF
+topology_template:
+  node_templates:
+    VDU_mysql:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: lxc
+
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties:  "$os_flavor"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: mysql_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "10.39.202.225"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    VDU_oai_hss:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: lxc
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "$os_flavor"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: hss_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "192.168.122.34"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    mysql:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:mysql-58'
+        endpoint: localhost-default
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_mysql
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-hss
+          relationship: tosca.relationships.AttachesTo
+
+    oai-hss:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
+        endpoint: localhost-default
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_oai_hss
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-spgw
+          relationship: tosca.relationships.AttachesTo
+
+    mysql_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_mysql
+        link:
+          node: *data_network_1
+          type: tosca.nodes.network.Network
+
+    hss_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai_hss
+        link:
+          node: *data_network_1
+          type: tosca.nodes.network.Network
+EOF
+	elif [ "$2" == "nssi_2" ] ; then
+	cat >>$desc_file <<EOF
+topology_template:
+  node_templates:
+    VDU_oai-mme:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: lxc
+
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "$os_flavor"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: oai-mme_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "10.39.202.134"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    VDU_oai-spgw:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: kvm
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "$os_flavor"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: hss_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "192.168.122.54"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    oai-mme:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:~navid-nikaein/xenial/oai-mme-18'
+        endpoint: localhost-default
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_oai-mme
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-spgw
+          relationship: tosca.relationships.AttachesTo
+
+    oai-spgw:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm:  'cs:~navid-nikaein/xenial/oai-spgw-16'
+        endpoint: localhost-default
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_oai-spgw
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-spgw
+          relationship: tosca.relationships.AttachesTo
+
+    oai-mme_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai-mme
+        link:
+          node: *data_network_1
+          type: tosca.nodes.network.Network
+
+    hss_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai-spgw
+        link:
+          node: *data_network_2
+          type: tosca.nodes.network.Network
+EOF
+    fi
+}
+
+
+function write_nsi_template() {
+    date=$(date +%F)
+    name=$(basename $1)
+    desc_file="${1}/nsi/${pkg_name}.yaml"
+
+    cat >$desc_file <<EOF
+description: $pkg_description
+imports: ${nsi_subslices[$2-1]}
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+metadata:
+  ID: oai-epc
+  author: $pkg_name
+  vendor: $pkg_name
+  version: $pkg_version
+  date: $date
+relationships_template:
+  connection_nssi1_nssi2:
+    type: tosca.relationships.ConnectsTo
+    source:
+      inputs:
+        type: tosca.relationships.AttachesTo
+        name: eg1
+        node: node1
+      node: nss_first
+      parameters: nssi_1
+    target:
+      inputs:
+        name: ing1
+        node: node2
+        type: tosca.relationships.DependsOn
+      node: nss_second
+      parameters: nssi_2
+
+topology_template:
+  node_templates:
+    nss_first:
+      requirements:
+        egress:
+          eg1:
+            node: node1
+            relationship:
+              type: tosca.relationships.AttachesTo
+        nssi: nssi_1
+      type: tosca.nodes.JOX.NSSI
+    nss_second:
+      requirements:
+        ingress:
+          ing1:
+            node: node2
+            relationship:
+              type: tosca.relationships.DependsOn
+        nssi: nssi_2
+      type: tosca.nodes.JOX.NSSI
+EOF
+
+}
+
+function write_nssi_template() {
+    date=$(date +%F)
+    name=$(basename $1)
+
+    for i in `seq 1 $num_subslices`; do
+	desc_file="${1}/nssi/nssi_${i}.yaml"
+
+	cat >$desc_file <<EOF
+description: $pkg_description (nssi_$i)
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+imports: []
+metadata:
+  ID: $2
+  author: $pkg_vendor
+  vendor: $pkg_vendor
+  version: $pkg_version
+  date: $date
+
+dsl_definitions:
+  host_small: &host_small
+    disk_size: 5
+    mem_size: 1024
+    num_cpus: 1
+  host_tiny: &host_tiny
+    disk_size: 5
+    mem_size: 512
+    num_cpus: 1
+  os_linux_u_14_x64: &os_u14
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 14.04
+  os_linux_u_16_x64: &os_u16
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 16.04
+  os_linux_u_18_x64: &os_u18
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 18.04
+  data_network: &data_network_1
+    properties:
+      network_name: "net1"
+      ip_version: 4
+      cidr: '10.39.202.0/24'
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "0.0.0.0"
+  data_network_2: &data_network_2
+    properties:
+      network_name: "net2"
+      ip_version: 4
+      cidr: "192.168.122.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "0.0.0.0"
+
+  containers:
+    region1:
+      - network: *data_network_1
+      - network2: *data_network_2
+
+topology_template:
+  node_templates:
+    VDU_vnf1:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: lxc
+
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties:  "$os_flavor"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: vnf1_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "10.39.202.225"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    VDU_vnf2:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: lxc
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "$os_flavor"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: vnf2_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "192.168.122.34"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    vnf1:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:vnf1'
+        endpoint: localhost-default
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_vnf1
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: vnf2
+          relationship: tosca.relationships.AttachesTo
+
+    vnf2:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:vnf2'
+        endpoint: localhost-default
+        model: default
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_vnf2
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-spgw
+          relationship: tosca.relationships.AttachesTo
+
+    vnf1_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_vnf1
+        link:
+          node: *data_network_1
+          type: tosca.nodes.network.Network
+
+    vnf2_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_vnf2
+        link:
+          node: *data_network_1
+          type: tosca.nodes.network.Network
+EOF
+    done
+}
+
+
+function main() {
+    until [ -z "$1" ]; do
+
+	case "$1" in
+
+	    -a | --pkg-description)
+		pkg_description=$2
+		echo_info "Set the package description to $pkg_description"
+		shift 2;;
+
+	    -c | --create-pkg)
+		CREATE_PKG=1
+		echo_info "Will create a package template"
+		shift ;;
+	    -d | --dst-dir)
+		pkg_dst_dir=$2
+		if [ "$pkg_dst_dir" == "" ] ; then
+		    pkg_dst_dir="./"
+		fi
+		echo_info "Set the package destination directory to $pkg_dst_dir"
+		shift 2;;
+
+	    -m | --machine-flavor)
+		machine_flavor=$2
+		if [ "$machine_flavor" == "" ] ; then
+		    machine_flavor="tiny"
+		fi
+		echo_info "Set the machine flavorto $machine_flavor"
+		shift 2;;
+
+	    -n | --num-sublsices)
+		if ! [[ $2 =~ $re ]] ; then
+		    echo_error "Not a number" >&2;
+		    exit 1
+		fi
+		num_subslices=$2
+		if [ $num_subslices -gt 5 -o $num_subslices -lt 1 ] ; then
+		    num_subslices=2
+		fi
+		echo_info "Set the number of subslices to $num_subslices"
+		shift 2;;
+
+	    -o | --os-flavor)
+		os_flavor=$2
+		if [ "$os_flavor" == "" ] ; then
+		    os_flavor="ubuntu_16_64"
+		fi
+		echo_info "Set the OS flavor to $os_flavor"
+		shift 2;;
+
+	    -p | --pkg-name)
+		pkg_name=$2
+		if [ "$pkg_name" == "" ] ; then
+		    pkg_name="mosaic5g"
+		fi
+		echo_info "Will create a package template with name=$pkg_name"
+		shift 2;;
+
+	    -s | --src-dir)
+		pkg_src_dir=$2
+		if [ "$pkg_src_dir" == "" ] ; then
+		    pkg_src_dir="./"
+		fi
+		echo_info "Set the package source directory to $pkg_src_dir"
+		shift 2;;
+
+	    -v | --pkg-vendor)
+		pkg_vendor=$2
+		if [ "$pkg_vendor" == "" ] ; then
+		    pkg_vendor="M5G"
+		fi
+		echo_info "Will create a package template with vendor=$pkg_vendor"
+		shift 2;;
+
+	    -r | --pkg-version)
+		pkg_version=$2
+		if [ "$pkg_version" == "" ] ; then
+		    pkg_version="1.0"
+		fi
+		echo_info "Will create a package template with version=$pkg_version"
+		shift 2;;
+
+	    -t | --pkg-template)
+		pkg_template=$2
+		#wordpress, oai-epc(default), oai-4g, oai-5g-cran, oai-nfv-rrh, oai-nfv-sim.
+		if [ "$pkg_template" != "wordpress" -a  "$pkg_template" != "oai-epc" -a  "$pkg_template" != "oai-4g" -a  "$pkg_template" != "oai-5g-cran" -a  "$pkg_template" != "oai-nfv-rrh" -a  "$pkg_template" != "oai-nfv-sim" ] ; then
+		    echo_warning "Unsupported package template $pkg_template, Resetting to default template (oai-epc)"
+		    pkg_template="oai-epc"
+		else
+		    echo_info "Set the package template=$pkg_template"
+		fi
+		shift 2;;
+
+
+	    -h | --help)
+		print_help
+		exit 1;;
+
+	    *)
+		print_help
+		if [ "$1" != "-h" -o "$1" != "--help" -o "$1" != "-help" ]; then
+		    echo_fatal "Unknown option $1"
+		fi
+		break;;
+	esac
+    done
+
+    if [ "$CREATE_PKG" = "1" ] ; then
+	echo_info "Create the package template $pkg_name in $pkg_dst_dir"
+
+	if [ -z "$pkg_dst_dir" ] ; then
+	    pkg_dst_dir=$base_dir
+	fi
+
+	if [ -z "$pkg_src_dir" ] ; then
+	    pkg_src_dir=$base_dir
+	fi
+
+	print_set_vars
+
+	rm -rf "${pkg_dst_dir}/${pkg_name}"
+
+	mkdir -p "${pkg_dst_dir}/${pkg_name}"
+
+	for sub_dir in ${pkg_dirs[@]}; do
+	    dir_path=${pkg_dst_dir}/${pkg_name}/${sub_dir}
+	    mkdir -p ${dir_path}
+	done
+	if [ "$pkg_template" == "oai-epc" ] ; then
+	    write_nsi_epc_template $pkg_dst_dir/${pkg_name}
+	    write_nssi_epc_template $pkg_dst_dir/${pkg_name} nssi_1
+	    write_nssi_epc_template $pkg_dst_dir/${pkg_name} nssi_2
+	elif [ "$pkg_template" == "clean" ] ; then
+	    write_nsi_template $pkg_dst_dir/${pkg_name} $num_subslices
+	    write_nssi_template $pkg_dst_dir/${pkg_name}  $num_subslices
+       	else
+	    echo_error "Unsupported template"
+	    exit 1
+	fi
+
+
+	for file in ${pkg_files[@]}; do
+	    file_path=${pkg_dst_dir}/${pkg_name}/${file}
+	    touch ${file_path}
+	done
+	write_readme $pkg_dst_dir/${pkg_name}
+
+	echo""
+	cat $pkg_dst_dir/${pkg_name}/README
+	echo_success "package template $pkg_name is generated in $pkg_dst_dir"
+
+    else
+	echo_info "Onboarding the package $pkg_name from source files into JoX"
+
+	if [ ! -d "${pkg_src_dir}" ]; then
+	    echo_error "Please specifiy package source directory"
+	    exit 1
+	fi
+
+	# archive directory for the onboarded packages
+	if [ ! -d "${pkg_arx_dir}" ]; then
+	    mkdir -p "${pkg_arx_dir}"
+	fi
+
+	if [ ! -d "${pkg_dst_dir}" ]; then
+	    pkg_dst_dir=$base_dir
+	    echo_info "setting the package desitination directory to $pkg_dst_dir"
+	fi
+
+	pkg_name=$(basename $pkg_src_dir)
+	cd $pkg_src_dir
+	if [ $? -ne 0 ]; then
+            echo_error "ERROR: changing directory to $pkg_dst_dir failed with error code $?" >&2
+            exit $?
+	fi
+
+	# Remove checksum file, if present
+	rm -f $pkg_chksums
+
+	# Check the folders are supported ones
+	dirs=$( find * -maxdepth 0 -type d )
+	for d in ${dirs[@]}; do
+	    find $d/* -type f  2>/dev/null|
+		while read file; do
+                    chksum $file
+		done
+	done
+
+	cd $base_dir
+
+       	tar zcvf ${pkg_name}.tar.gz "$pkg_src_dir" >/dev/null 2>&1
+
+	if [ $? -ne 0 ]; then
+            echo "ERROR: Creating archive for ${name} in $dest_dir" >&2
+            exit 1
+        fi
+
+	# archive the package
+	cp $pkg_name.tar.gz $pkg_arx_dir
+
+	echo ""
+	echo_success "onboarded package $pkg_name.tar.gz with the following structure:" >&2
+	tree $pkg_src_dir
+    fi
+
+}
+
+main "$@"
