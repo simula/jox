@@ -269,7 +269,7 @@ class JujuModelServiceController(object):
                     enquiry["plugin_message"] = "create_slice"
                     enquiry["param"]["enb_id"] = '-1' # Last added eNB
                     enquiry["param"]["nsi_id"] = '8' # self.nsi_id
-                    enquiry["param"]["slice_config"] = self.gv.FLEXRAN_SLICE_CONFIG
+                    # enquiry["param"]["slice_config"] = self.gv.FLEXRAN_SLICE_CONFIG
 
                 enquiry = json.dumps(enquiry)
                 enquiry.encode("utf-8")
