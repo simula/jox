@@ -19,6 +19,42 @@
     "rabbit-mq-queue":"QueueJox"
   },
 
+    "llmec-plugin-config":{
+    "rabbit-mq-server-ip":"localhost",
+    "rabbit-mq-server-port":5672,
+    "rabbit-mq-queue":"QueuellMEC",
+    "es-index-name":"llmec_plugin",
+    "plugin-status":"enabled",
+    "timeout-request":300
+  },
+
+    "llmec-config":{
+    "host":"192.168.122.28",
+    "port": 9999
+  },
+
+  "flexran-plugin-config":{
+    "rabbit-mq-server-ip":"localhost",
+    "rabbit-mq-server-port":5672,
+    "rabbit-mq-queue":"QueueFlexRAN",
+    "es-index-name":"flexran_plugin",
+    "plugin-status":"enabled",
+    "timeout-request":300
+  },
+
+  "flexran-config":{
+    "host":"192.168.122.29",
+    "port": 9999
+  },
+
+  "llmec-config":{
+    "llmec-ip":"localhost",
+    "llmec-port":"9999",
+    "rabbit-mq-server-port":5672,
+    "rabbit-mq-queue":"QueuellMEC",
+    "plugin-status":"disabled"
+  },
+
   "flask-config":{
     "flask-server": "localhost",
     "flask-port": 5000,

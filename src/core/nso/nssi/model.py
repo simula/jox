@@ -217,7 +217,7 @@ class JModel(JSONEncoder):
             machine_key = allocated_machine
             new_service.to = machine_key
             
-            loop.run(self.juju_serviceModel.deploy_service(new_service))
+            loop.run(self.juju_serviceModel.deploy_service(new_service, self.slice_name))
             self.services.append(new_service) 
             return     
         except Exception as ex:

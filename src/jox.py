@@ -70,7 +70,7 @@ import ipaddress
 import asyncio
 import re
 from src.core.ro.vim_driver.vimdriver import run_command
-
+import uuid
 __author__ = "Eurecom"
 jox_version = '1.0'
 jox_version_date = '2019-02-01'
@@ -145,7 +145,12 @@ class NFVO_JOX(object):
 				"connect-model-accessible-max-retry"]
 			self.gv.JUJU_INTERVAL_CONNECTION_MODEL_ACCESSIBLE = self.jox_config['juju-config'][
 				"connect-model-accessible-interval"]
-			
+
+			# FlexRAN plugin config
+			self.gv.FLEXRAN_RBMQ_QUEUE_NAME = self.jox_config["flexran-plugin-config"]["rabbit-mq-queue"]
+			self.gv.FLEXRAN_PLUGIN_STATUS = self.jox_config["flexran-plugin-config"]["plugin-status"]
+			self.gv.FLEXRAN_TIMEOUT_REQUEST = self.jox_config["flexran-plugin-config"]['timeout-request']
+			self.gv.FLEXRAN_PORT = self.jox_config['flexran-config']['port']
 			# ssh config
 			self.gv.SSH_KEY_DIRECTORY = self.jox_config['ssh-config']["ssh-key-directory"]
 			self.gv.SSH_KEY_NAME = self.jox_config['ssh-config']["ssh-key-name"]
@@ -496,6 +501,7 @@ class server_RBMQ(object):
 		
 		self.host = self.nfvo_jox.gv.RBMQ_SERVER_IP
 		self.port = self.nfvo_jox.gv.RBMQ_SERVER_PORT
+		self.rbmq_queue_name_flexran = self.nfvo_jox.gv.FLEXRAN_RBMQ_QUEUE_NAME
 		self.connection = None
 		self.channel = None
 		self.queue_name = self.nfvo_jox.gv.RBMQ_QUEUE
@@ -526,7 +532,52 @@ class server_RBMQ(object):
 				time.sleep(0.5)
 			except KeyboardInterrupt:
 				exit()
-	
+
+	def send_to_plugin(self, msg, rbmq_queue_name, reply=True):
+		if reply:
+			message_not_sent = True
+			while message_not_sent:
+				try:
+					self.response = None
+					self.corr_id = str(uuid.uuid4())
+					self.channel.basic_publish(exchange='',
+													routing_key=rbmq_queue_name,
+													properties=pika.BasicProperties(
+														reply_to=self.callback_queue,
+														correlation_id=self.corr_id,
+													),
+													body=msg)
+					message_not_sent = False
+				except:
+					time.sleep(0.5)
+			self.channel.basic_consume(self.on_response, no_ack=True,
+									   queue=self.callback_queue)
+			while self.response is None:
+				self.connection.process_data_events()
+		else:
+			message_not_sent = True
+			while message_not_sent:
+				try:
+					self.response = None
+					self.corr_id = str(uuid.uuid4())
+					self.channel.basic_publish(exchange='',
+													routing_key=rbmq_queue_name,
+													properties=pika.BasicProperties(
+													),
+													body=msg)
+					message_not_sent = False
+				except:
+					time.sleep(0.5)
+			return None
+		return self.response
+
+	def on_response(self, ch, method, props, body):
+		if self.corr_id == props.correlation_id:
+			self.response = body
+			print(self.response)
+			message = "Response from plgin -> {}".format(self.response)
+			self.logger.info(message)
+
 	def on_request(self, ch, method, props, body):
 		enquiry = body.decode(self.nfvo_jox.gv.ENCODING_TYPE)
 		enquiry = json.loads(enquiry)
