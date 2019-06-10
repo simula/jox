@@ -8,7 +8,7 @@ ip link show macvtap0
 
 
 
-sudo ip link add link enp0s31f6 name macvlan0 address 52:54:00:b8:9c:44 type macvlan mode bridge
+sudo ip link add link enp0s31f6 name macvlan0 address 52:54:00:b8:9c:33 type macvlan mode bridge
 sudo ip link set macvlan0 up
 ip link show macvlan0
 

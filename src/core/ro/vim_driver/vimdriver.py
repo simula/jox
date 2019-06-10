@@ -268,8 +268,7 @@ class LxcDriver(object):
 					machine_id_service = app_values.units[0].machine.id
 					add_new_context_machine = False
 			if application_NotExist and machine_id_service is None:
-				if provider_type == "test":
-				# if provider_type == "lxd":
+				if provider_type == "lxd":
 					if new_machine.auto:
 						juju_machine = await model.add_machine()
 					else:
@@ -308,13 +307,19 @@ class LxcDriver(object):
 
 					container_name = machine_lxd_name
 					isPrebuiltImage = False
+
+					cmd_lxc_create = ["lxc", "launch", "ubuntu:{}".format(new_machine.os_version),
+									  "{}:{}".format(self.lxc_anchor, container_name)]
+					"""
 					try:
 						machine_series = self.gv.OS_SERIES[new_machine.os_version]
 						prebuilt_image = self.prebuilt_image[machine_series]
-						cmd_lxc_create = ["lxc", "launch", prebuilt_image, "{}:{}".format(self.lxc_anchor, container_name)]
-						isPrebuiltImage = True
+						cmd_lxc_create = ["lxc", "launch", "{}:{}".format(self.lxc_anchor, prebuilt_image), "{}:{}".format(self.lxc_anchor, container_name)]
+						isPrebuiltImage = False
+						# isPrebuiltImage = True
 					except:
 						cmd_lxc_create = ["lxc", "launch", "ubuntu:{}".format(new_machine.os_version), "{}:{}".format(self.lxc_anchor, container_name)]
+					"""
 					# cmd_lxc_create = ["lxc", "launch", "-p", "default", "-p", "bridgeprofile", "juju/xenial/amd64", "{}:{}".format(self.lxc_anchor, container_name)]
 					# cmd_lxc_create = ["lxc", "launch", "ubuntu:{}".format(new_machine.os_version), "{}:{}".format(self.lxc_anchor, container_name)]
 					cmd_lxc_create_out = await run_command(cmd_lxc_create)
