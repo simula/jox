@@ -478,7 +478,6 @@ class FlexRAN_plugin(object):
                 message = " Waiting for BS to be connected"
                 self.logger.info(message)
                 req=self.flexran_endpoint+"slice/enb/"+enb_id+"/slice/"+slice_id
-
                 response = requests.post(req)
                 if (response.text is None) or (response.text == ""):
                     message = " BS is now connected"
@@ -576,12 +575,13 @@ class FlexRAN_plugin(object):
             time.sleep(2)
             if (response.text is None) or (response.text == ""):
                 response = ' Slice is added, or already exist '
-                enb_data = {'enb_id_': enb_id}
-                container_name = 'slice_id ' + str(slice_id)
-                self.update_flexran_plugin_index(self.es_flexran_index, "enb_stats", container_name, enb_data)
-                self.set_slice_policy(enb_id, self.slice_config) # Push default policy
+                # enb_data = {'enb_id_': enb_id}
+                # container_name = 'slice_id ' + str(slice_id)
+                # self.update_flexran_plugin_index(self.es_flexran_index, "enb_stats", container_name, enb_data)
+                # self.set_slice_policy(enb_id, self.slice_config) # Push default policy
                 return response
             else:
+                # better to call prepare slice here
                 standard_error = (json.loads(response.text))['error']
                 if standard_error == self.standard_slice_error_percentage_dl or standard_error == self.standard_slice_error_percentage_ul:
                     req = "{}slice/enb/{}".format(self.flexran_endpoint, enb_id)
@@ -636,7 +636,8 @@ class FlexRAN_plugin(object):
 
                 if standard_error == self.standard_slice_error_bs_not_found:
                     t3 = Thread(target=self.prepare_slice, args=(enb_id, slice_id, self.slice_config)).start()
-                    #t3.join()
+                    #t3.join() # handle join
+                    return 'Base Station is not connected !! Slice is in waiting mode'
                 return response.text
         except Exception as ex:
             print(ex)
@@ -645,7 +646,7 @@ class FlexRAN_plugin(object):
         """Remove slice on Flexran.
         *@enb_id : enb id to add slice
         *@nsi_id : slice id
-        *@return: The result
+        *@return: The response of post method, usually empty if successful
         """
         try:
             slice_config = {"ul":[{"id": param['nsi_id'],"percentage":0}]}
@@ -672,18 +673,28 @@ class FlexRAN_plugin(object):
         raise NotImplementedError()
 
     def get_num_slices(self):
+        """Get both uplink and downlink number of slices.
+        *@enb_id : enb id to add slice
+        *@return: The int value
+        """
         stats = self.get_ran_stats()
         num_of_ul_slices = len(stats['eNB_config'][0]['eNB']['cellConfig'][0]['sliceConfig']['ul'])
         num_of_dl_slices = len(stats['eNB_config'][0]['eNB']['cellConfig'][0]['sliceConfig']['dl'])
         return num_of_dl_slices, num_of_ul_slices
 
     def get_slice_config(self):
+        """Get both uplink and downlink config of slices.
+        *@return: The json value
+        """
         stats = self.get_ran_stats()
         ul_slice_config = (stats['eNB_config'][0]['eNB']['cellConfig'][0]['sliceConfig']['ul'])
         dl_slice_config = (stats['eNB_config'][0]['eNB']['cellConfig'][0]['sliceConfig']['dl'])
         return dl_slice_config, ul_slice_config
 
     def get_available_resources(self):
+        """Get both uplink and downlink number of resources.
+        *@return: The int percentage value
+        """
         downlink_resourse, uplink_resourse = self.get_slice_config()
         total_ul_resource = total_dl_resource = 0
         for i in range(len(downlink_resourse)):
@@ -699,7 +710,10 @@ class FlexRAN_plugin(object):
         raise NotImplementedError()
 
     def get_slice_FirstRB(self, slice_id):
-        stats = self.get_ran_stats()
+        """Get value of FirstRb of reuired slice id.
+        *@slice_id : id of slice
+        *@return: The int value
+        """
         dl_slice_config, ul_slice_config = self.get_slice_config()
         for num in range (len(ul_slice_config)):
             if ul_slice_config[num]['id'] == slice_id and ul_slice_config[num]['firstRb'] is not None:
@@ -778,44 +792,45 @@ class FlexRAN_plugin(object):
         except Exception as ex:
             print(ex)
 
-    # only to push policy related to UL/DL resourses
-    def set_slice_policy(self, enb_id, enb_slice_config):
-        """Set slice config.
-        *@enb_id : enb id to add slice
-        *@slice_config : slice config
-        *@return: The result
-        """
-        try:
-            slice_config = json.dumps(enb_slice_config)
-            req = "{}slice/enb/{}".format(self.flexran_endpoint, enb_id)
-            header = {'Content-Type':  'application/octet-stream'}
-            response = requests.post(req, data=slice_config, headers =header)
+    # # only to push policy related to UL/DL resourses
+    # def set_slice_policy(self, enb_id, enb_slice_config):
+    #     """Set slice config.
+    #     *@enb_id : enb id to add slice
+    #     *@slice_config : slice config
+    #     *@return: The result
+    #     """
+    #     try:
+    #         slice_config = json.dumps(enb_slice_config)
+    #         req = "{}slice/enb/{}".format(self.flexran_endpoint, enb_id)
+    #         header = {'Content-Type':  'application/octet-stream'}
+    #         response = requests.post(req, data=slice_config, headers =header)
+    #
+    #         if (response.text is None) or (response.text == ""):
+    #             message = " Set slice config attempt successful"
+    #             self.logger.info(message)
+    #         else:
+    #             message = " Reducing default slice (slice_id 0) resources by  {} percent".format(
+    #                 self.gv.SLICE_ADJUST_FACTOR)
+    #             self.logger.info(message)
+    #             default_slice_config =copy.deepcopy(self.flexran_default_slice_config)
+    #             default_slice_config['dl'][0]['percentage'] = \
+    #                 default_slice_config['dl'][0]['percentage'] - \
+    #                 self.gv.SLICE_ADJUST_FACTOR
+    #             default_slice_config['ul'][0]['percentage'] = \
+    #                 default_slice_config['ul'][0]['percentage'] - \
+    #                 self.gv.SLICE_ADJUST_FACTOR
+    #             default_slice_config['dl'][0]['id'] = self.gv.DEFAULT_NSI_ID
+    #             default_slice_config['ul'][0]['id'] = self.gv.DEFAULT_NSI_ID
+    #             # print(default_slice_config)
+    #             response = requests.post(req, data=json.dumps(default_slice_config), headers=header)
+    #             message = " Resources now available for new slices "
+    #             self.logger.info(message)
+    #             response = requests.post(req, data=slice_config, headers=header)
+    #
+    #         return response
+    #     except Exception as ex:
+    #         print(ex)
 
-            if (response.text is None) or (response.text == ""):
-                message = " Set slice config attempt successful"
-                self.logger.info(message)
-            else:
-                message = " Reducing default slice (slice_id 0) resources by  {} percent".format(
-                    self.gv.SLICE_ADJUST_FACTOR)
-                self.logger.info(message)
-                default_slice_config =copy.deepcopy(self.flexran_default_slice_config)
-                default_slice_config['dl'][0]['percentage'] = \
-                    default_slice_config['dl'][0]['percentage'] - \
-                    self.gv.SLICE_ADJUST_FACTOR
-                default_slice_config['ul'][0]['percentage'] = \
-                    default_slice_config['ul'][0]['percentage'] - \
-                    self.gv.SLICE_ADJUST_FACTOR
-                default_slice_config['dl'][0]['id'] = self.gv.DEFAULT_NSI_ID
-                default_slice_config['ul'][0]['id'] = self.gv.DEFAULT_NSI_ID
-                # print(default_slice_config)
-                response = requests.post(req, data=json.dumps(default_slice_config), headers=header)
-                message = " Resources now available for new slices "
-                self.logger.info(message)
-                response = requests.post(req, data=slice_config, headers=header)
-
-            return response
-        except Exception as ex:
-            print(ex)
     # Generic slice config push
     def set_enb_slice_config(self, enb_id, slice_config):
         """Set slice config.
