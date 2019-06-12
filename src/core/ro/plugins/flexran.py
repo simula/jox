@@ -542,8 +542,8 @@ class FlexRAN_plugin(object):
                         final_config = json.dumps(
                             {'dl': [default_slice_downlink_config], 'ul': [default_slice_uplink_config]})
                         response = requests.post(req, data=final_config, headers=header)
-                        return 'New slice is added'
                         bs_connected = True
+                        return 'New slice is added'
                     else:
                         message = " Wait interval of 2 seconds"
                         self.logger.info(message)
