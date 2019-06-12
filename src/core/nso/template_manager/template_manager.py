@@ -225,7 +225,7 @@ class TemplateManager():
 					'jmodel': jmodel,
 					'charm': charm,
 					'machine_name': None,
-					'relation': None,
+					'relation': list(),
 				}
 				#  check the requirements
 				for req in NSSI_template['topology_template']['node_templates'][item]['requirements']:
@@ -236,7 +236,8 @@ class TemplateManager():
 					elif 'AttachesTo' in NSSI_template['topology_template']['node_templates'][item]['requirements'][req]['relationship']:
 						# relation
 						relation = NSSI_template['topology_template']['node_templates'][item]['requirements'][req]['node']
-						list_services[app_name]['relation'] = relation
+						list_services[app_name]['relation'].append(relation)
+
 					else:
 						raise NotImplementedError
 
@@ -508,22 +509,41 @@ class TemplateManager():
 
 		relations_list = list()
 		for item in range(len(service_list)):
-			if (list_services[service_list[item]]['relation'] is not None) and (list_services[service_list[item]]['relation'] in service_list):
-				relation_name = {"date": date,
-								 "nsi_id": nsi_id,
-								 "nssi_source": nssi_id,
-								 "nssi_node_source": service_list[item],
-								 "nssi_target": nssi_id,
-								 "nssi_node_target": list_services[service_list[item]]['relation'],
-								 "prejoining_since": date,
-								 "prejoining_time": "0",
-								 "joining_since": "0",
-								 "joining_time": "0",
-								 "joined_since": "0",
-								 "joined_time": "0",
-								 "current_state": "prejoining",
-								 }
-				relations_list.append(relation_name)
+			if len(list_services[service_list[item]]['relation']) > 0:
+				for service_target in list_services[service_list[item]]['relation']:
+					if service_target in service_list:
+						relation_name = {"date": date,
+										 "nsi_id": nsi_id,
+										 "nssi_source": nssi_id,
+										 "nssi_node_source": service_list[item],
+										 "nssi_target": nssi_id,
+										 "nssi_node_target": service_target,
+										 "prejoining_since": date,
+										 "prejoining_time": "0",
+										 "joining_since": "0",
+										 "joining_time": "0",
+										 "joined_since": "0",
+										 "joined_time": "0",
+										 "current_state": "prejoining",
+										 }
+						relations_list.append(relation_name)
+			# 			pass
+			# if (list_services[service_list[item]]['relation'] is not None) and (list_services[service_list[item]]['relation'] in service_list):
+			# 	relation_name = {"date": date,
+			# 					 "nsi_id": nsi_id,
+			# 					 "nssi_source": nssi_id,
+			# 					 "nssi_node_source": service_list[item],
+			# 					 "nssi_target": nssi_id,
+			# 					 "nssi_node_target": list_services[service_list[item]]['relation'],
+			# 					 "prejoining_since": date,
+			# 					 "prejoining_time": "0",
+			# 					 "joining_since": "0",
+			# 					 "joining_time": "0",
+			# 					 "joined_since": "0",
+			# 					 "joined_time": "0",
+			# 					 "current_state": "prejoining",
+			# 					 }
+			# 	relations_list.append(relation_name)
 		if len(relations_list) > 0:
 			self.jesearch.update_index_with_content('subslice_monitor_'+nssi_id.lower(),
 												'relation_status',

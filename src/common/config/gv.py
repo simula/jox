@@ -65,7 +65,7 @@ FLEXRAN_ES_INDEX_STATUS=""
 FLEXRAN_ES_INDEX_NAME=""
 FLEXRAN_PLUGIN_SERVICE_OAI_ENB="oai-ran"
 FLEXRAN_PLUGIN_SERVICE_FLEXRAN="flexran"
-SLICE_ADJUST_FACTOR=20
+SLICE_ADJUST_FACTOR=15
 FLEXRAN_SLICE_CONFIG=""
 NSI_ID_LIST = []  # FlexRAN plugin
 NSI_ID = ''
@@ -106,6 +106,7 @@ KVM_2="qemu"
 
 LXC="lxc"
 PHY="phy" # physical machine
+PHY_2 = "none"  # physical machine
 
 """  config param """
 LOG_FILE=""
@@ -150,4 +151,4 @@ HOST_OS_CONFIG=""
 MB = 1
 GB = 1024
 
-ZONES=""
+ZONES = ""

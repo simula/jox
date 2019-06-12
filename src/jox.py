@@ -109,7 +109,7 @@ class NFVO_JOX(object):
 				data_file.close()
 			
 			self.jox_config = data
-			with open(''.join([self.dir_config, gv.FLEXRAN_SLICE_CONFIG_FILE])) as data_file:
+			with open(''.join([self.dir_config, gv.JOX_SLICE_CONFIG_FILE])) as data_file:
 				data = json.load(data_file)
 				data_file.close()
 

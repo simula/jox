@@ -864,6 +864,7 @@ def resource_discovery():
 	logger.debug("response: {}".format(data))
 	data = jsonify(data)
 	return data, status_code
+
 @app.route('/onboard', methods=['PUT'])
 def jox_package_onboard():
 	"""

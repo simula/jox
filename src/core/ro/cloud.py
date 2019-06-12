@@ -148,8 +148,6 @@ class JCloud(JSONEncoder):
         loop.run_forever()
 
     async def on_model_change(self, delta, old, new, model):
-
-
         if self.jesearch.ping():
             if delta.entity=="machine" and (delta.type=="add" or delta.type=="change"):
                 current_state_machine = delta.data['agent-status']['current']
@@ -178,6 +176,3 @@ class JCloud(JSONEncoder):
 
         except Exception as ex:
             self.logger.error(ex)
-
-
-
