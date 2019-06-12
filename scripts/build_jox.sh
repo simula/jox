@@ -204,7 +204,12 @@ install_python_packages(){
     echo_success "pika is successfully installed"
 
     echo_info "Installing cryptography"
-    pip3 install --force-reinstall cryptography==2.4.2 --user
+    if check_ubuntu_1604; then
+        pip3 install --force-reinstall cryptography --user
+    else
+        echo_info "Installing python3.6"
+        pip3 install --force-reinstall cryptography==2.4.2 --user
+    fi
     echo_success "cryptography is successfully installed"
 
 

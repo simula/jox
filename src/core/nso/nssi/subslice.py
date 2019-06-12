@@ -189,45 +189,24 @@ class JSubSlice(JSONEncoder):
                 try:
                     relation_node = subslice_config["list_services"][service_model]['relation']
                     # search for the cross model relations for among the models of the current NSSI only
-                    if len(relation_node) > 0:
-                        for service_target in relation_node:
-                            if service_target in list_service:
-                                juju_cloud_service_target = subslice_config["list_services"][service_target]['jcloud']
-                                juju_model_service_target = subslice_config["list_services"][service_target]['jmodel']
-                                model_relation = {
-                                    "source": {
-                                        "service": service_model,
-                                        "juju_cloud": juju_cloud,
-                                        "juju_model": juju_model
-                                    },
-                                    "target": {
-                                        "service": service_target,
-                                        "juju_cloud": juju_cloud_service_target,
-                                        "juju_model": juju_model_service_target
-                                    }
-                                }
-                                self.subslice_relations.append(model_relation)
-                                if juju_cloud != juju_cloud_service_target or juju_model != juju_model_service_target:
-                                    list_crossModelRelation.append(model_relation)
-                            # pass
-                    # if relation_node in list_service:
-                    #     juju_cloud_relation_node = subslice_config["list_services"][relation_node]['jcloud']
-                    #     juju_model_relation_node = subslice_config["list_services"][relation_node]['jmodel']
-                    #     model_relation = {
-                    #         "source": {
-                    #             "service": service_model,
-                    #             "juju_cloud": juju_cloud,
-                    #             "juju_model": juju_model
-                    #         },
-                    #         "target": {
-                    #             "service": relation_node,
-                    #             "juju_cloud": juju_cloud_relation_node,
-                    #             "juju_model": juju_model_relation_node
-                    #         }
-                    #     }
-                    #     self.subslice_relations.append(model_relation)
-                    #     if juju_cloud != juju_cloud_relation_node or juju_model != juju_model_relation_node:
-                    #         list_crossModelRelation.append(model_relation)
+                    if relation_node in list_service:
+                        juju_cloud_relation_node = subslice_config["list_services"][relation_node]['jcloud']
+                        juju_model_relation_node = subslice_config["list_services"][relation_node]['jmodel']
+                        model_relation = {
+                            "source": {
+                                "service": service_model,
+                                "juju_cloud": juju_cloud,
+                                "juju_model": juju_model
+                            },
+                            "target": {
+                                "service": relation_node,
+                                "juju_cloud": juju_cloud_relation_node,
+                                "juju_model": juju_model_relation_node
+                            }
+                        }
+                        self.subslice_relations.append(model_relation)
+                        if juju_cloud != juju_cloud_relation_node or juju_model != juju_model_relation_node:
+                            list_crossModelRelation.append(model_relation)
                 except Exception as ex:
                     raise ex
                 if not self.check_existence_model(juju_cloud, juju_model):
@@ -235,8 +214,7 @@ class JSubSlice(JSONEncoder):
                 else:
                     self.logger.debug("The model {} under the juju controller {} is already added".format(juju_model, juju_cloud))
             if len(list_crossModelRelation) > 0:
-                self.add_cross_model_relations(list_crossModelRelation)
-
+                self.add_cross_model_relation(list_crossModelRelation)
         except Exception as ex:
             raise ex
                      
@@ -272,33 +250,7 @@ class JSubSlice(JSONEncoder):
         on success add cross model relation, appen it to "self.list_crossModelRelations"
         self.list_crossModelRelations.append(crm_relation)
         """
-        from src.core.ro.vim_driver.vimdriver import run_command
-        controller_source = "localhost"
-        model_source = "default"
-        application_source = "mysql"
-        endpoint_application_source = "db"
-
-        controller_target = "localhost"
-        model_source = "default"
-        application_target = "mediawiki"
-        endpoint_application_target = "db"
-
-        cmd_juju_offer_application_endpoint = ["juju", "offer", "{}:{}".format(application_source, endpoint_application_source)]
-        cmd_juju_add_cmr = ["juju", "add-relation",
-                                    "-m", "{}:{}".format(controller_target, model_source),
-                                    "{}:{}".format(application_source, endpoint_application_source),
-                                    "{}:{}/{}.{}".format(controller_source, "admin"), model_source, application_source]
-
-        cmd_out_offer_app_endpoint = loop.run(run_command(cmd_juju_offer_application_endpoint))
-        cmd_out_add_cmr = loop.run(run_command(cmd_juju_add_cmr))
-        """
-        juju offer mysql:db
-        juju bootstrap localhost lxd-cmr-2
-        juju add-model cmr-model-2
-        juju deploy mediawiki
-        juju add-relation mediawiki:db lxd-cmr-1:admin/cmr-model-1.mysql
-        """
-        #raise NotImplementedError
+        raise NotImplementedError
     
     def check_existence_model(self, juju_cloud, juju_model):
         for model in self.subslice_models:

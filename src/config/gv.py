@@ -42,8 +42,9 @@ global console
 # config file param
 CONFIG_FILE= "jox_config.json"
 FLEXRAN_PLUGIN_SLICE_CONFIG_FILE= "flexran_plugin_default_slice_config.json"   # This file is for plugin
+JOX_SLICE_CONFIG_FILE= "jox_default_slice_config.json"
+JOX_SLICE_CONFIG=''
 
-FLEXRAN_SLICE_CONFIG= ""
 JOX_CONFIG_KEY=(CONFIG_FILE.split('.'))[0]
 
 # BMQ param
@@ -64,8 +65,11 @@ FLEXRAN_ES_INDEX_STATUS=""
 FLEXRAN_ES_INDEX_NAME=""
 FLEXRAN_PLUGIN_SERVICE_OAI_ENB="oai-ran"
 FLEXRAN_PLUGIN_SERVICE_FLEXRAN="flexran"
-SLICE_ADJUST_FACTOR=25
+SLICE_ADJUST_FACTOR=20
 FLEXRAN_SLICE_CONFIG=""
+NSI_ID_LIST = []  # FlexRAN plugin
+NSI_ID = ''
+DEFAULT_NSI_ID = '0'
 
 # LL_MEC param
 LL_MEC_HOST=""
@@ -102,7 +106,6 @@ KVM_2="qemu"
 
 LXC="lxc"
 PHY="phy" # physical machine
-PHY_2="none" # physical machine
 
 """  config param """
 LOG_FILE=""

@@ -161,8 +161,8 @@ class JSlice(JSONEncoder):
 					message = "adding relation between {} from the nssi {} hosted in {}:{} and {} from the nssi {} hosted in {}:{}".format(nssi_node_source,
 									nssi_source, source_jcloud, source_jmodel, nssi_node_target, nssi_target, target_jcloud, target_jmodel)
 					self.logger.debug(message)
-					loop.run(self.add_relation_interNssi_interModel(nssi_source, source_jcloud, source_jmodel, nssi_node_source, nssi_target, target_jcloud, target_jmodel, nssi_node_target))
-
+					
+					loop.run(self.add_relation_interNssi_interModel(source_jcloud, source_jmodel, target_jcloud, target_jmodel, nssi_node_source, nssi_node_target))
 	async def add_relation_interNssi_IntraModel(self, nssi_source, source_jcloud, source_jmodel, nssi_node_source,
 	                                            nssi_target, target_jcloud, target_jmodel, nssi_node_target):
 		# internal model relation
@@ -192,114 +192,9 @@ class JSlice(JSONEncoder):
 			}}
 		self.list_inter_nssi_relations.append(relation)
 		
-	async def add_relation_interNssi_interModel(self, nssi_source, source_jcloud, source_jmodel, nssi_node_source,
+	def add_relation_interNssi_interModel(self, nssi_source, source_jcloud, source_jmodel, nssi_node_source,
 	                                      nssi_target, target_jcloud, target_jmodel, nssi_node_target):
-		set_relations = {
-			"mysql":{
-				"oai-hss":["mysql:db", "oai-hss:db"],
-				"wordpress":["mysql:db", "wordpress:db"],
-			},
-			"wordpress": {
-				"mysql": ["wordpress:db", "mysql:db"],
-			},
-			"oai-ran": {
-				"oai-mme": ["oai-ran:mme", "oai-mme:mme"],
-				"flexran": ["oai-ran:rtc", "flexran:rtc"],
-			},
-			"oai-enb": {
-				"oai-mme": ["oai-enb:mme", "oai-mme:mme"],
-				"flexran": ["oai-enb:rtc", "flexran:rtc"],
-			},
-			"oai-hss": {
-				"mysql": ["oai-hss:db", "mysql:db"],
-				"oai-mme": ["oai-hss:hss", "oai-mme:hss"],
-			},
-			"oai-mme": {
-				"oai-hss": ["oai-mme:hss", "oai-hss:hss"],
-				"oai-spgw": ["oai-mme:spgw", "oai-spgw:spgw"],
-				"oai-ran": ["oai-mme:mme", "oai-ran:mme"],
-				"oai-enb": ["oai-mme:mme", "oai-enb:mme"],
-			},
-			"flexran": {
-				"oai-enb": ["flexran:rtc", "oai-enb:rtc"],
-				"oai-ran": ["flexran:rtc", "oai-ran:rtc"],
-			},
-		}
-		"juju deploy cs:~navid-nikaein/xenial/oai-mme-18"
-		from src.core.ro.vim_driver.vimdriver import run_command
-		# source_jcloud = "localhost-borer-2"
-		# source_jmodel = "default"
-		# nssi_node_source = "mysql"
-		# endpoint_application_source = "db"
-		# relation_endpoint_source = "{}:{}".format(nssi_node_source, endpoint_application_source)
-
-
-		# target_jcloud = "localhost-borer-1"
-		# target_jmodel = "default"
-		# nssi_node_target = "wordpress"
-		# endpoint_application_target = "db"
-		# relation_endpoint_target = "{}:{}".format(nssi_node_target, endpoint_application_target)
-
-		relation_endpoint_source = set_relations[nssi_node_source][nssi_node_target]
-		relation_endpoint_target = relation_endpoint_source[1]
-		relation_endpoint_source = relation_endpoint_source[0]
-		# relation_endpoint_target = set_relations[nssi_node_target][nssi_node_source]
-
-		cmd_juju_offer_application_endpoint = ["juju", "offer",
-											   "-c", "{}".format(target_jcloud),
-											   relation_endpoint_target]
-		cmd_juju_add_cmr = ["juju", "add-relation",
-							"-m", "{}:{}".format(source_jcloud, source_jmodel),
-							relation_endpoint_source,
-							"{}:{}/{}.{}".format(target_jcloud, "admin", target_jmodel, nssi_node_target)]
-
-		"""
-		cmd_juju_offer_application_endpoint = ["juju", "offer",
-											   "-c", "{}".format(source_jcloud),
-											   relation_endpoint_source]
-		cmd_juju_add_cmr = ["juju", "add-relation",
-							"-m", "{}:{}".format(target_jcloud, target_jmodel),
-							relation_endpoint_target,
-							"{}:{}/{}.{}".format(source_jcloud, "admin", source_jmodel, nssi_node_source)]
-		"""
-		"""
-		if endpoint_application_target == "":
-			cmd_juju_add_cmr = ["juju", "add-relation",
-								"-m", "{}:{}".format(target_jcloud, target_jmodel),
-								"{}".format(nssi_node_target),
-								"{}:{}/{}.{}".format(source_jcloud, "admin", source_jmodel, nssi_node_source)]
-		else:
-			cmd_juju_add_cmr = ["juju", "add-relation",
-								"-m", "{}:{}".format(target_jcloud, target_jmodel),
-								relation_endpoint_target,
-								"{}:{}/{}.{}".format(source_jcloud, "admin", source_jmodel, nssi_node_source)]
-		"""
-		cmd_out_offer_app_endpoint = await run_command(cmd_juju_offer_application_endpoint)
-		cmd_out_add_cmr = await run_command(cmd_juju_add_cmr)
-
-		relation = {
-			"service_a": {
-				"nssi": nssi_source,
-				"jcloud": source_jcloud,
-				"jmodel": source_jmodel,
-				"service": nssi_node_source,
-			},
-			"service_b": {
-				"nssi": nssi_target,
-				"jcloud": target_jcloud,
-				"jmodel": target_jmodel,
-				"service": nssi_node_target,
-			}}
-		self.list_inter_nssi_relations.append(relation)
-		"""
-        juju offer mysql:db
-        juju bootstrap localhost lxd-cmr-2
-        juju add-model cmr-model-2
-        juju deploy mediawiki
-        juju add-relation mediawiki:db lxd-cmr-1:admin/cmr-model-1.mysql
-        """
-
-	# raise NotImplementedError
+		raise NotImplementedError
 	
 	def get_cloud_credential(self, list_config_NSSI, nssi_target, nssi_node_target):
 		for service in list_config_NSSI[nssi_target]['list_services']:

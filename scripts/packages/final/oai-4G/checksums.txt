@@ -1,3 +1,0 @@
-11938d9e14ab8f353f0992264208ed69  nsi/oai-epc.yaml
-2e7a3bbea0fac336d070bb580d7069e9  nssi/nssi_1.yaml
-60527964188988a8d29ec0a3ac0b6557  nssi/nssi_2.yaml

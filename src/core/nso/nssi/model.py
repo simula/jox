@@ -230,13 +230,12 @@ class JModel(JSONEncoder):
             for service in range(len(service_list)):
                 service_name=service_list[service]
                 source = service_name
-                if len(relations_config[service_name]['relation']) > 0:
-                    for target in relations_config[service_name]['relation']:
-                        if relations_config[source]['jcloud'] == relations_config[target]['jcloud'] and \
-                            relations_config[source]['jmodel'] == relations_config[target]['jmodel']:
-                            self.logger.info("Adding relation between {} and {}".format(source, target))
-
-                            self.add_relation_intramodel(source, target, relations_config[source]['jcloud'], relations_config[source]['jmodel'])
+                target = relations_config[service_name]['relation']
+                if relations_config[source]['jcloud'] == relations_config[target]['jcloud'] and \
+                    relations_config[source]['jmodel'] == relations_config[target]['jmodel']:
+                    self.logger.info("Adding relation between {} and {}".format(source, target))
+                    
+                    self.add_relation_intramodel(source, target, relations_config[source]['jcloud'], relations_config[source]['jmodel'])
         except Exception as ex:
             self.logger.info("No juju relation requirements for ".format(service_name))
             return

@@ -100,11 +100,8 @@ class JujuController(object):
         data=await self.controller.add_user(slice_name)
         await self.controller.disconnect()
         return data
-    
-    
-    
+
     async def add_juju_model(self,model_name,cloud_name, credential_name,owner, config, region):
-    
         config = {
             "enable-os-refresh-update": False,
             "enable-os-upgrade": False,
@@ -115,7 +112,6 @@ class JujuController(object):
         await self.controller.disconnect()
         """
         """
-        
 
         retry_connect = True
         number_retry = 0
@@ -141,7 +137,6 @@ class JujuController(object):
                 await asyncio.sleep(10)
         return model
        
-       
     async def destroy_juju_model(self,model_uuid):
         await self.controller.connect(self.controller_name)
         _response=await self.controller.destroy_model(model_uuid)
@@ -159,15 +154,13 @@ class JujuController(object):
 
 
 class JujuModelServiceController(object):
-    
+
     def __init__(self, global_variables):
         self.gv = global_variables
         self.logger = logging.getLogger('jox.JujuModelServiceController')
         self.controller = None
-
-        self.nsi_id_list =[]  # FlexRAN plugin
-        self.nsi_id = 100 # FlexRAN plugin
         self.enb_id = None
+        self.timeout = 10
 
         self.controller_name = ""  # juju controller name
         self.model_name = ""  # juju model name
@@ -213,6 +206,9 @@ class JujuModelServiceController(object):
             model = Model()
             model_name = self.controller_name + ":" + self.user_name + '/' + self.model_name
             await model.connect(model_name)
+            if nsi_name not in self.gv.NSI_ID_LIST:
+                self.gv.NSI_ID = random.randint(1,255)
+                self.gv.NSI_ID_LIST.extend([nsi_name , self.gv.NSI_ID])
 
             app_keys = model.applications.keys()
             application_NotExist = True
@@ -237,7 +233,7 @@ class JujuModelServiceController(object):
                     channel=new_service.channel,
                     to=new_service.to,
                     )
-                time.sleep(1)
+                time.sleep(10)
 
             machine_ip = model.machines[new_service.to].dns_name
             self.gv.FLEXRAN_HOST = str(machine_ip)
@@ -249,6 +245,9 @@ class JujuModelServiceController(object):
                     enquiry["plugin_message"] = "update_flexRAN_endpoint"
                     enquiry["param"]["host"] = str(machine_ip)
                     enquiry["param"]["port"] = self.gv.FLEXRAN_PORT
+                    enquiry = json.dumps(enquiry)
+                    enquiry.encode("utf-8")
+                    self.send_to_plugin(enquiry, self.queue_name_flexran)
 
 
                 if new_service.application_name == self.gv.FLEXRAN_PLUGIN_SERVICE_OAI_ENB:
@@ -267,16 +266,21 @@ class JujuModelServiceController(object):
                     # print(enquiry)
                     # self.send_to_plugin(enquiry, self.queue_name_flexran)
 
+                    self.enb_id = '-1'
+                    print(str(self.gv.NSI_ID))
                     current_time = datetime.datetime.now()
                     enquiry["datetime"] = str(current_time)
                     enquiry["plugin_message"] = "create_slice"
-                    enquiry["param"]["enb_id"] = '-1' # Last added eNB
-                    enquiry["param"]["nsi_id"] = '8' # self.nsi_id
-                    # enquiry["param"]["slice_config"] = self.gv.FLEXRAN_SLICE_CONFIG
+                    enquiry["param"]["enb_id"] = self.enb_id  # Last added eNB
+                    enquiry["param"]["nsi_id"] = str(self.gv.NSI_ID) # self.nsi_id
 
-                enquiry = json.dumps(enquiry)
-                enquiry.encode("utf-8")
-                self.send_to_plugin(enquiry, self.queue_name_flexran)
+                    #self.gv.JOX_SLICE_CONFIG['dl'][0]['id'] = self.gv.NSI_ID
+                    #self.gv.JOX_SLICE_CONFIG['ul'][0]['id'] = self.gv.NSI_ID
+                    #enquiry["param"]["slice_config"] = self.gv.JOX_SLICE_CONFIG
+
+                    enquiry = json.dumps(enquiry)
+                    enquiry.encode("utf-8")
+                    self.send_to_plugin(enquiry, self.queue_name_flexran)
 
             self.logger.info("The servce {} is deployed".format(new_service.application_name))
             self.logger.debug("The servce {} is deployed".format(new_service.application_name))
@@ -308,6 +312,7 @@ class JujuModelServiceController(object):
         if retry:
             self.connection.close()
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.host_name, port=self.port))
+        self.connection.add_timeout(self.timeout, self.on_timeout)
         self.channel = self.connection.channel()
 
         self.result = self.channel.queue_declare(exclusive=True)
@@ -335,7 +340,10 @@ class JujuModelServiceController(object):
                     time.sleep(0.5)
                     self.run()
             while self.response is None:
-                self.connection.process_data_events()
+                if self.gv.FLEXRAN_PLUGIN_STATUS == self.gv.ENABLED:
+                    self.connection.process_data_events()
+                else:
+                    self.response = 'Not received'
         else:
             message_not_sent = True
             while message_not_sent:
@@ -359,3 +367,7 @@ class JujuModelServiceController(object):
             self.response = body.decode("utf-8")
             message = "Response from plgin -> {}".format(self.response)
             self.logger.info(message)
+
+    def on_timeout(self,):
+        self.connection.close()
+        self.gv.FLEXRAN_PLUGIN_STATUS =self.gv.DISABLED

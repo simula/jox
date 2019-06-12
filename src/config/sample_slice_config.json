@@ -1,0 +1,193 @@
+{
+    "date_time": "2019-06-12T10:55:19.802",
+    "eNB_config": [
+        {
+            "bs_id": 10003,
+            "agent_info": [
+                {
+                    "agent_id": 3,
+                    "bs_id": 10003,
+                    "capabilities": [
+                        "LOPHY",
+                        "HIPHY",
+                        "LOMAC",
+                        "HIMAC",
+                        "RLC",
+                        "PDCP",
+                        "SDAP",
+                        "RRC"
+                    ]
+                }
+            ],
+            "eNB": {
+                "header": {
+                    "version": 0,
+                    "type": 8,
+                    "xid": 0
+                },
+                "cellConfig": [
+                    {
+                        "phyCellId": 0,
+                        "puschHoppingOffset": 0,
+                        "hoppingMode": 0,
+                        "nSb": 1,
+                        "phichResource": 0,
+                        "phichDuration": 0,
+                        "initNrPDCCHOFDMSym": 1,
+                        "siConfig": {
+                            "sfn": 377,
+                            "sib1Length": 17,
+                            "siWindowLength": 5
+                        },
+                        "dlBandwidth": 25,
+                        "ulBandwidth": 25,
+                        "ulCyclicPrefixLength": 0,
+                        "dlCyclicPrefixLength": 0,
+                        "antennaPortsCount": 1,
+                        "duplexMode": 1,
+                        "subframeAssignment": 0,
+                        "specialSubframePatterns": 0,
+                        "prachConfigIndex": 0,
+                        "prachFreqOffset": 2,
+                        "raResponseWindowSize": 7,
+                        "macContentionResolutionTimer": 5,
+                        "maxHARQMsg3Tx": 0,
+                        "n1PUCCHAN": 0,
+                        "deltaPUCCHShift": 1,
+                        "nRBCqi": 0,
+                        "srsSubframeConfig": 0,
+                        "srsBwConfig": 0,
+                        "srsMacUpPts": 0,
+                        "enable64QAM": 0,
+                        "carrierIndex": 0,
+                        "dlFreq": 751,
+                        "ulFreq": 782,
+                        "eutraBand": 13,
+                        "dlPdschPower": -27,
+                        "ulPuschPower": -96,
+                        "sliceConfig": {
+                            "dl": [
+                                {
+                                    "id": 0,
+                                    "label": "xMBB",
+                                    "percentage": 40,
+                                    "isolation": false,
+                                    "priority": 10,
+                                    "positionLow": 0,
+                                    "positionHigh": 25,
+                                    "maxmcs": 26,
+                                    "sorting": [
+                                        "CR_ROUND",
+                                        "CR_SRB12",
+                                        "CR_HOL",
+                                        "CR_LC",
+                                        "CR_CQI",
+                                        "CR_LCP"
+                                    ],
+                                    "accounting": "POL_FAIR",
+                                    "schedulerName": "schedule_ue_spec"
+                                },
+                                {
+                                    "id": 4,
+                                    "label": "xMBB",
+                                    "percentage": 10,
+                                    "isolation": false,
+                                    "priority": 10,
+                                    "positionLow": 0,
+                                    "positionHigh": 25,
+                                    "maxmcs": 26,
+                                    "sorting": [
+                                        "CR_ROUND",
+                                        "CR_SRB12",
+                                        "CR_HOL",
+                                        "CR_LC",
+                                        "CR_CQI",
+                                        "CR_LCP"
+                                    ],
+                                    "accounting": "POL_FAIR",
+                                    "schedulerName": "schedule_ue_spec"
+                                },
+                                {
+                                    "id": 3,
+                                    "label": "xMBB",
+                                    "percentage": 10,
+                                    "isolation": false,
+                                    "priority": 10,
+                                    "positionLow": 0,
+                                    "positionHigh": 25,
+                                    "maxmcs": 26,
+                                    "sorting": [
+                                        "CR_ROUND",
+                                        "CR_SRB12",
+                                        "CR_HOL",
+                                        "CR_LC",
+                                        "CR_CQI",
+                                        "CR_LCP"
+                                    ],
+                                    "accounting": "POL_FAIR",
+                                    "schedulerName": "schedule_ue_spec"
+                                }
+                            ],
+                            "ul": [
+                                {
+                                    "id": 0,
+                                    "label": "xMBB",
+                                    "percentage": 25,
+                                    "isolation": false,
+                                    "priority": 0,
+                                    "firstRb": 0,
+                                    "maxmcs": 16,
+                                    "accounting": "POLU_FAIR",
+                                    "schedulerName": "schedule_ulsch_rnti"
+                                },
+                                {
+                                    "id": 13,
+                                    "label": "xMBB",
+                                    "percentage": 25,
+                                    "isolation": false,
+                                    "priority": 0,
+                                    "firstRb": 6,
+                                    "maxmcs": 16,
+                                    "accounting": "POLU_FAIR",
+                                    "schedulerName": "schedule_ulsch_rnti"
+                                },
+                                {
+                                    "id": 3,
+                                    "label": "xMBB",
+                                    "percentage": 30,
+                                    "isolation": false,
+                                    "priority": 0,
+                                    "firstRb": 12,
+                                    "maxmcs": 16,
+                                    "accounting": "POLU_FAIR",
+                                    "schedulerName": "schedule_ulsch_rnti"
+                                },
+                                {
+                                    "id": 5,
+                                    "label": "xMBB",
+                                    "percentage": 5,
+                                    "isolation": false,
+                                    "priority": 0,
+                                    "firstRb": 19,
+                                    "maxmcs": 16,
+                                    "accounting": "POLU_FAIR",
+                                    "schedulerName": "schedule_ulsch_rnti"
+                                }
+                            ],
+                            "intrasliceShareActive": true,
+                            "intersliceShareActive": true
+                        }
+                    }
+                ]
+            },
+            "UE": {},
+            "LC": {}
+        }
+    ],
+    "mac_stats": [
+        {
+            "bs_id": 10003,
+            "ue_mac_stats": []
+        }
+    ]
+}

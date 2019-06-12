@@ -49,7 +49,6 @@ from netaddr import IPNetwork, IPAddress
 class LxcDriver(object):
 	def __init__(self, pop_config, global_variable, jesearch):
 		self.driver_name = pop_config["pop-name"]
-		self.lxc_anchor = pop_config["lxc-anchor"]
 		self.zone = pop_config["zone"]
 		self.domain = pop_config["domain"]
 		self.scope = pop_config["scope"]
@@ -57,7 +56,6 @@ class LxcDriver(object):
 		self.driver_ssh_username = pop_config["ssh-user"]
 		self.driver_ssh_password = pop_config["ssh-password"]
 		self.managed_by = pop_config["managed-by"]
-		self.prebuilt_image = pop_config["prebuilt-image"]
 		self.gv = global_variable
 		self.jesearch = jesearch
 		
@@ -285,7 +283,7 @@ class LxcDriver(object):
 							series=new_machine.os_series,
 						)
 				else:
-					cmd_list_lxc = ["lxc", "list", "{}:".format(self.lxc_anchor), "--format", "json"]
+					cmd_list_lxc = ["lxc", "list", "--format", "json"]
 					cmd_list_lxc_out = await run_command(cmd_list_lxc)
 					cmd_list_lxc_out = json.loads(cmd_list_lxc_out)
 					machine_name_exist = True
@@ -306,22 +304,7 @@ class LxcDriver(object):
 							machine_lxd_name = machine_lxd_name_tmp
 
 					container_name = machine_lxd_name
-					isPrebuiltImage = False
-
-					cmd_lxc_create = ["lxc", "launch", "ubuntu:{}".format(new_machine.os_version),
-									  "{}:{}".format(self.lxc_anchor, container_name)]
-					"""
-					try:
-						machine_series = self.gv.OS_SERIES[new_machine.os_version]
-						prebuilt_image = self.prebuilt_image[machine_series]
-						cmd_lxc_create = ["lxc", "launch", "{}:{}".format(self.lxc_anchor, prebuilt_image), "{}:{}".format(self.lxc_anchor, container_name)]
-						isPrebuiltImage = False
-						# isPrebuiltImage = True
-					except:
-						cmd_lxc_create = ["lxc", "launch", "ubuntu:{}".format(new_machine.os_version), "{}:{}".format(self.lxc_anchor, container_name)]
-					"""
-					# cmd_lxc_create = ["lxc", "launch", "-p", "default", "-p", "bridgeprofile", "juju/xenial/amd64", "{}:{}".format(self.lxc_anchor, container_name)]
-					# cmd_lxc_create = ["lxc", "launch", "ubuntu:{}".format(new_machine.os_version), "{}:{}".format(self.lxc_anchor, container_name)]
+					cmd_lxc_create = ["lxc", "launch", "ubuntu:{}".format(new_machine.os_version), container_name]
 					cmd_lxc_create_out = await run_command(cmd_lxc_create)
 					self.logger.info(cmd_lxc_create_out)
 					""" Get the ip addresss of the machine"""
@@ -367,12 +350,12 @@ class LxcDriver(object):
 					message = "Injecting the public key in the lxd machine"
 					self.logger.info(message)
 					cmd_lxc_inject_ssh_key = ["lxc", "file", "push", ssh_key_puplic,
-											  "{}:{}/root/.ssh/authorized_keys".format(self.lxc_anchor, container_name)]
+											  "{}/root/.ssh/authorized_keys".format(container_name)]
 					cmd_lxc_inject_ssh_key_out = await run_command(cmd_lxc_inject_ssh_key)
 
 					message = "Injecting the public key in the lxd machine"
 					self.logger.info(message)
-					cmd_lxc_chmod = ["lxc", "exec", "{}:{}".format(self.lxc_anchor, container_name), "--", "sh", "-c",
+					cmd_lxc_chmod = ["lxc", "exec", container_name, "--", "sh", "-c",
 									 str(
 										 "chmod 600 /root/.ssh/authorized_keys && sudo chown root: /root/.ssh/authorized_keys")]
 					cmd_lxc_chmod_out = await run_command(cmd_lxc_chmod)
@@ -383,12 +366,11 @@ class LxcDriver(object):
 									  "{}@{}".format(SSH_USER_lxd, machine_ip), "pwd"]
 					cmd_lxc_ssh_vm_out = await run_command(cmd_lxc_ssh_vm)
 
-					if not isPrebuiltImage:
-						await machine_configuration_for_jujuCharm(SSH_USER_lxd, machine_ip, ssh_key_private, self.logger)
+					await machine_configuration_for_jujuCharm(SSH_USER_lxd, machine_ip, ssh_key_private, self.logger)
 
 					cmd_juju_addmachine = ["juju", "add-machine", "ssh:{}@{}".format(SSH_USER_lxd, machine_ip)]
 
-					self.logger.info("add machine: {}".format(cmd_juju_addmachine))
+					self.logger.info("add achine: {}".format(cmd_juju_addmachine))
 					cmd_lxc_ssh_vm_out = await run_command(cmd_juju_addmachine)
 					machineId = str(cmd_lxc_ssh_vm_out).split('\n')
 
@@ -415,11 +397,9 @@ class LxcDriver(object):
 							temp_val_1 = str(temp_val_1).split('"')
 							temp_val_1 = temp_val_1[1]
 
-							try:
-								temp_val_2 = str(temp_val_2).split('"')
-								temp_val_2 = temp_val_2[1]
-							except:
-								temp_val_2 = temp_val_2[0]
+							temp_val_2 = str(temp_val_2).split('"')
+							temp_val_2 = temp_val_2[1]
+
 							cmd_to_execute.append("ssh-keygen")
 							cmd_to_execute.append("-f")
 							cmd_to_execute.append(temp_val_1)
@@ -434,7 +414,7 @@ class LxcDriver(object):
 						self.logger.info("Try cmd_lxc_ssh_vm: {}".format(cmd_lxc_ssh_vm_out))
 
 						#
-						cmd_fix_issues = ["sudo", "apt", "update", "--fix-missing"]
+						cmd_fix_issues = ["sudo apt", "update", "--fix-missing"]
 						cmd_fix_issues_out = await run_command(cmd_fix_issues)
 
 						cmd_lxc_ssh_vm_out = await run_command(cmd_juju_addmachine)

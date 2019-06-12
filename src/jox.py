@@ -75,6 +75,7 @@ __author__ = "Eurecom"
 jox_version = '1.0'
 jox_version_date = '2019-02-01'
 
+
 class NFVO_JOX(object):
 	def __init__(self, loop):
 		# TODO
@@ -108,6 +109,12 @@ class NFVO_JOX(object):
 				data_file.close()
 			
 			self.jox_config = data
+			with open(''.join([self.dir_config, gv.FLEXRAN_SLICE_CONFIG_FILE])) as data_file:
+				data = json.load(data_file)
+				data_file.close()
+
+			self.gv.FLEXRAN_SLICE_CONFIG = data # later on this should be passed by template
+
 		except IOError as ex:
 			message = "Could not load JOX Configuration file.I/O error({0}): {1}".format(ex.errno, ex.strerror)
 			self.logger.error(message)
@@ -315,6 +322,7 @@ class NFVO_JOX(object):
 		else:
 			message = "JOX Web API loaded!"
 			self.logger.info(message)
+
 	def resource_discovery(self, juju_cloud_name=None, juju_model_name=None, user="admin"):
 		"""
 		This methods discover the available resources that are already provisioned to certain juju model and register them at RO, to be later used
@@ -395,7 +403,9 @@ class NFVO_JOX(object):
 			self.logger.debug(message)
 		else:
 			self.logger.debug("The following cloud is successfully  added".format(cloud_config))
-	
+
+
+
 	def add_slice(self, slice_name_yml, nsi_dir=None, nssi_dir=None):
 		self.logger.info("Adding the slice {}".format(slice_name_yml))
 		nsi_dir = self.dir_slice if nsi_dir == None else nsi_dir
@@ -506,7 +516,7 @@ class server_RBMQ(object):
 		self.channel = None
 		self.queue_name = self.nfvo_jox.gv.RBMQ_QUEUE
 		self.logger = logging.getLogger("server_RBMQ")
-	
+
 	def run(self):
 		while True:
 			try:
@@ -514,15 +524,12 @@ class server_RBMQ(object):
 					host=self.host, port=self.port))
 				self.channel = self.connection.channel()
 				self.channel.queue_declare(queue=self.queue_name)
-				
 				self.channel.basic_qos(prefetch_count=1)
-
 				self.channel.basic_consume(self.on_request, queue=self.queue_name)
 
-
-				
-				print(colored(' [*] Waiting for messages. To exit press CTRL+C', 'green'))
+				print(colored(' [*] Waiting for messages. To exit press CTRL+C', 'green', ))
 				self.channel.start_consuming()
+
 			except pika_exceptions.ConnectionClosed or \
 			       pika_exceptions.ChannelAlreadyClosing or \
 			       pika_exceptions.ChannelClosed or \
@@ -624,6 +631,7 @@ class server_RBMQ(object):
 			elif (enquiry["request-uri"] == '/list') \
 					or (enquiry["request-uri"] == '/ls') \
 					or (enquiry["request-uri"] == '/show/<string:nsi_name>'):
+
 				# request_type = enquiry["request-type"]
 				parameters = enquiry["parameters"]
 				nsi_name = parameters["nsi_name"]
@@ -776,7 +784,6 @@ class server_RBMQ(object):
 							}
 							self.send_ack(ch, method, props, response, send_reply)
 							nsi_deploy = self.nfvo_jox.add_slice(nsi_name, nsi_dir, nssi_dir)
-
 					else:
 						message = "package {} does not exists in {}".format(package_name, self.nfvo_jox.gv.STORE_DIR)
 						response = {
@@ -1640,8 +1647,8 @@ class server_RBMQ(object):
 			}
 			send_reply = True
 			self.send_ack(ch, method, props, response, send_reply)
-	def send_ack(self, ch, method, props, response, send_reply):
 
+	def send_ack(self, ch, method, props, response, send_reply):
 		if send_reply:
 			response = json.dumps(response)
 			try:
