@@ -50,7 +50,7 @@ from termcolor import colored
 import argparse
 import pika.exceptions as pika_exceptions
 dir_path = os.path.dirname(os.path.realpath(__file__))
-dir_parent_path = os.path.dirname(os.path.abspath(__file__ + "/../"))
+dir_parent_path = os.path.dirname(os.path.abspath(__file__ + "../../../../../"))
 dir_JOX_path = os.path.dirname(os.path.abspath(__file__ + "/../../../"))
 sys.path.append(dir_parent_path)
 sys.path.append(dir_path)
@@ -510,7 +510,6 @@ class FlexRAN_plugin(object):
         try:
             slice_id=param['nsi_id']
             enb_id=param['enb_id']
-            self.slice_config = param['slice_config']
             req = self.flexran_endpoint+"slice/enb/"+enb_id+"/slice/"+slice_id
             response = requests.post(req)
             if (response.text is None) or (response.text == ""):
@@ -531,6 +530,10 @@ class FlexRAN_plugin(object):
                     self.logger.info(message)
                     self.set_enb_config(enb_id, self.flexran_default_slice_config)
                     response = requests.post(req)
+                    # Set policy to new slice if it is provided
+                    if param['slice_config'] is not None:
+                        self.slice_config = param['slice_config']
+                        self.set_enb_config(enb_id, self.slice_config)
                 if standard_error == self.standard_slice_error_bs_not_found:
                     t3 = Thread(target=self.prepare_slice, args=(enb_id, slice_id)).start()
                     #t3.join()

@@ -28,10 +28,6 @@
     "timeout-request":300
   },
 
-    "llmec-config":{
-    "host":"192.168.122.28",
-    "port": 9999
-  },
 
   "flexran-plugin-config":{
     "rabbit-mq-server-ip":"localhost",
@@ -77,7 +73,7 @@
         "scope": "private",
         "domain": "192.168.1.0/24",
         "_Comment_3": "lxc-anchor is the name of the remote lxc endpoint. To get this name, just type in the terminal (lxc remote list), The default local lxc endpoint is 'default'",
-        "lxc-anchor": "pou_remote",
+        "lxc-anchor": "pou_remote_router",
         "_Comment_4": "ssh config",
         "ssh-private-key": "",
         "ssh-user": "",
@@ -95,7 +91,7 @@
         "zone": "1",
         "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
         "scope": "private",
-        "domain": "10.184.36.0/24",
+        "domain": "10.206.29.0/24",
         "_Comment_3": "lxc-anchor is the name of the remote lxc endpoint. To get this name, just type in the terminal (lxc remote list), The default local lxc endpoint is 'default'",
         "lxc-anchor": "local",
         "_Comment_4": "ssh config",
@@ -293,27 +289,11 @@
     },
     {
       "description": "credentials of your juju controller",
-      "cloud-name": "localhost-borer-1",
-      "cloud-type": "lxd",
-      "cloud-endpoint": "10.184.36.163:17070",
-      "cloud-username": "admin",
-      "cloud-password": "00a13dcd87b63988c8a8de1a1ad8165c"
-    },
-    {
-      "description": "credentials of your juju controller",
-      "cloud-name": "localhost-borer-2",
-      "cloud-type": "lxd",
-      "cloud-endpoint": "10.184.36.208:17070",
-      "cloud-username": "admin",
-      "cloud-password": "3ca7a4db6ddd9c95ed226abae9a4e2b6"
-    },
-    {
-      "description": "credentials of your juju controller",
       "cloud-name": "localhost-borer",
       "cloud-type": "lxd",
-      "cloud-endpoint": "10.184.36.120:17070",
+      "cloud-endpoint": "10.206.29.156:17070",
       "cloud-username": "admin",
-      "cloud-password": "6f3447ac8350f10d1b39216f5d320e11"
+      "cloud-password": "6c0279bedefee1702188acec1be196bc"
     },
     {
       "description": "credentials of your juju controller",

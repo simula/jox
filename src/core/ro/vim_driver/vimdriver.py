@@ -1623,6 +1623,7 @@ async def machine_configuration_for_jujuCharm(ssh_user, machine_ip, ssh_key_priv
 	cmd_ssh_4 = ["ssh", "{}@{}".format(ssh_user, machine_ip), "sudo", "apt-get", "update", "-y"]
 	cmd_ssh_5 = ["ssh", "{}@{}".format(ssh_user, machine_ip), "sudo", "apt-get", "upgrade", "-y"]
 	cmd_ssh_6 = ["ssh", "{}@{}".format(ssh_user, machine_ip), "sudo", "apt-get", "install",
+				 "iperf",
 				 "tmux",
 				 "curl",
 				 "bridge-utils",

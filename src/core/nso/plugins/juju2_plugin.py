@@ -202,6 +202,8 @@ class JujuModelServiceController(object):
         # add the handlers to the self.logger
         self.logger.addHandler(file_handler)
         self.logger.addHandler(console)
+
+        self.test_incremental_sliceId_forFlexran = 0
     def build(self, juju_controller, juju_model, juju_user="admin"):
         self.controller_name = juju_controller
         self.model_name = juju_model
@@ -250,6 +252,9 @@ class JujuModelServiceController(object):
                     enquiry["param"]["host"] = str(machine_ip)
                     enquiry["param"]["port"] = self.gv.FLEXRAN_PORT
 
+                    enquiry = json.dumps(enquiry)
+                    enquiry.encode("utf-8")
+                    self.send_to_plugin(enquiry, self.queue_name_flexran)
 
                 if new_service.application_name == self.gv.FLEXRAN_PLUGIN_SERVICE_OAI_ENB:
                     enquiry = self.standard_reqst
@@ -267,16 +272,21 @@ class JujuModelServiceController(object):
                     # print(enquiry)
                     # self.send_to_plugin(enquiry, self.queue_name_flexran)
 
+
+                    # new_service.flexran_enb_id = list()
+                    # new_service.flexran_slice_id = list()
+                    self.test_incremental_sliceId_forFlexran = self.test_incremental_sliceId_forFlexran + 1
+
                     current_time = datetime.datetime.now()
                     enquiry["datetime"] = str(current_time)
                     enquiry["plugin_message"] = "create_slice"
                     enquiry["param"]["enb_id"] = '-1' # Last added eNB
-                    enquiry["param"]["nsi_id"] = '8' # self.nsi_id
+                    enquiry["param"]["nsi_id"] = str(self.test_incremental_sliceId_forFlexran) # self.nsi_id
                     # enquiry["param"]["slice_config"] = self.gv.FLEXRAN_SLICE_CONFIG
 
-                enquiry = json.dumps(enquiry)
-                enquiry.encode("utf-8")
-                self.send_to_plugin(enquiry, self.queue_name_flexran)
+                    enquiry = json.dumps(enquiry)
+                    enquiry.encode("utf-8")
+                    self.send_to_plugin(enquiry, self.queue_name_flexran)
 
             self.logger.info("The servce {} is deployed".format(new_service.application_name))
             self.logger.debug("The servce {} is deployed".format(new_service.application_name))

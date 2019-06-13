@@ -39,6 +39,7 @@ lxc config set core.trust_password something-secure
 
 #2- local machine where you want to manage lxd for the remote machine
 lxc remote add pou_remote 192.168.1.88
+lxc remote add pou_remote_router 192.168.1.5
 
 
 

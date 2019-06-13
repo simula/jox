@@ -53,6 +53,9 @@ class JService(object):
         self.storage=None
         self.to=None
         self.pointer2_juju_app=None
+        # flexran related variables. It is necessary only for RAN entities
+        self.flexran_enb_id = list()
+        self.flexran_slice_id = list()
 
     def log_config(self):
         if self.gv.LOG_LEVEL == 'debug':
