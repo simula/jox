@@ -41,6 +41,7 @@ import pika
 import os, time, sys
 import json
 import logging
+
 logging.basicConfig(format='%(asctime)s] %(filename)s:%(lineno)d %(levelname)s '
                            '- %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 import requests
@@ -464,7 +465,7 @@ class FlexRAN_plugin(object):
         except Exception as ex:
             print(ex)
 
-    def prepare_slice(self,enb_id, slice_id, slice_config):
+    def prepare_slice(self,enb_id, slice_id):
         """Wait for BS to be connected before deploying slice.
         *@enb_id : enb id to add slice
         *@nsi_id : slice id
@@ -475,8 +476,6 @@ class FlexRAN_plugin(object):
         try:
             bs_connected = False
             while(bs_connected == False):
-                message = " Waiting for BS to be connected"
-                self.logger.info(message)
                 req=self.flexran_endpoint+"slice/enb/"+enb_id+"/slice/"+slice_id
                 response = requests.post(req)
                 if (response.text is None) or (response.text == ""):
@@ -484,13 +483,14 @@ class FlexRAN_plugin(object):
                     self.logger.info(message)
                     bs_connected = True
                     time.sleep(10)
-                    self.prepare_slice(enb_id, slice_id, slice_config)
+                    self.prepare_slice(enb_id, slice_id)
                 else:
                     response=json.loads(response.text)
                     if response['error'] == (self.standard_slice_error_percentage_dl or self.standard_slice_error_percentage_dl):
 
                         req = "{}slice/enb/{}".format(self.flexran_endpoint, enb_id)
                         header = {'Content-Type': 'application/octet-stream'}
+
                         # Get default slice config
                         downlink, uplink = self.get_slice_config()
                         default_slice_downlink_config = downlink[0]
@@ -542,8 +542,12 @@ class FlexRAN_plugin(object):
                             {'dl': [default_slice_downlink_config], 'ul': [default_slice_uplink_config]})
                         response = requests.post(req, data=final_config, headers=header)
                         bs_connected = True
+                        message = " New slice is added"
+                        self.logger.info(message)
                         return 'New slice is added'
                     else:
+                        message = " Waiting for BS to be connected"
+                        self.logger.info(message)
                         message = " Wait interval of 2 seconds"
                         self.logger.info(message)
                         time.sleep(2)
@@ -581,61 +585,12 @@ class FlexRAN_plugin(object):
                 # self.set_slice_policy(enb_id, self.slice_config) # Push default policy
                 return response
             else:
-                # better to call prepare slice here
                 standard_error = (json.loads(response.text))['error']
                 if standard_error == self.standard_slice_error_percentage_dl or standard_error == self.standard_slice_error_percentage_ul:
-                    req = "{}slice/enb/{}".format(self.flexran_endpoint, enb_id)
-                    header = {'Content-Type': 'application/octet-stream'}
-                    # Get default slice config
-                    downlink, uplink = self.get_slice_config()
-                    default_slice_downlink_config = downlink[0]
-                    default_slice_uplink_config = uplink[0]
-                    # Updating slice 0 config as requested slice resources
-                    default_slice_uplink_config['percentage'] = self.slice_config['ul'][0]['percentage']
-                    default_slice_downlink_config['percentage'] = self.slice_config['dl'][0]['percentage']
-                    del default_slice_downlink_config['schedulerName']
-                    del default_slice_uplink_config['schedulerName']
-                    del default_slice_uplink_config['priority']
-                    # Post default slice config
-                    update_config = {'dl':[default_slice_downlink_config],'ul':[default_slice_uplink_config]}
-                    response = requests.post(req, data=json.dumps(update_config), headers=header)
-                    time.sleep(2)
-                    # Duplicate slice 0
-                    req = self.flexran_endpoint + "slice/enb/" + enb_id + "/slice/" + slice_id
-                    response = requests.post(req)
-                    time.sleep(2)
-
-                    # Swap FirstRB for Uplink
-                    # config for new slice
-                    req = "{}slice/enb/{}".format(self.flexran_endpoint, enb_id)
-                    default_slice_uplink_config['id'] = slice_id
-                    new_slice_first_RB = self.get_slice_FirstRB(int(slice_id))
-                    default_slice_firstRB = self.get_slice_FirstRB(0)
-                    default_slice_uplink_config['firstRb'] = default_slice_firstRB
-                    update_config = {'ul':[default_slice_uplink_config]}
-
-                    # config for 0 slice
-                    new_slice_config = copy.deepcopy(default_slice_uplink_config)
-                    new_slice_config['id'] = 0 #
-                    new_slice_config['firstRb'] = new_slice_first_RB
-                    del new_slice_config['percentage']
-                    update_config = json.dumps({'ul':[default_slice_uplink_config, new_slice_config],
-                                                "intrasliceShareActive": 'true', "intersliceShareActive": 'true'})
-                    response = requests.post(req, data=update_config, headers=header)
-                    time.sleep(3)
-
-                    # Make slice 0 resources to available resoures
-                    downlink_resources, uplink_resources = self.get_available_resources()
-                    default_slice_uplink_config['id'] = 0
-                    del default_slice_uplink_config['firstRb']
-                    default_slice_uplink_config['percentage'] = uplink_resources + self.slice_config['ul'][0]['percentage']
-                    default_slice_downlink_config['percentage'] = downlink_resources + self.slice_config['dl'][0]['percentage']
-                    # del default_slice_uplink_config['firstRb']
-                    final_config = json.dumps({'dl':[default_slice_downlink_config],'ul':[default_slice_uplink_config]})
-                    response = requests.post(req, data=final_config, headers=header)
-
+                    response = self.prepare_slice(enb_id, slice_id)
+                    return response
                 if standard_error == self.standard_slice_error_bs_not_found:
-                    t3 = Thread(target=self.prepare_slice, args=(enb_id, slice_id, self.slice_config)).start()
+                    t3 = Thread(target=self.prepare_slice, args=(enb_id, slice_id)).start()
                     #t3.join() # handle join
                     return 'Base Station is not connected !! Slice is in waiting mode'
                 return response.text
@@ -649,7 +604,7 @@ class FlexRAN_plugin(object):
         *@return: The response of post method, usually empty if successful
         """
         try:
-            slice_config = {"ul":[{"id": param['nsi_id'],"percentage":0}]}
+            slice_config = {"ul":[{"id": param['nsi_id'],"percentage":0}],"dl":[{"id": param['nsi_id'],"percentage":0}]}
             req = "{}slice/enb/{}".format(self.flexran_endpoint, str(param['enb_id']))
             header = {'Content-Type':  'application/octet-stream'}
             response = requests.post(req, data=slice_config, headers =header)

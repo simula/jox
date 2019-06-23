@@ -168,7 +168,7 @@
       "description": "credentials of your juju controller",
       "cloud-name": "nymphe-edu",
       "cloud-type": "manual",
-      "cloud-endpoint": "192.168.12.220:17070",
+      "cloud-endpoint": "192.168.12.12:17070",
       "cloud-username": "admin",
       "cloud-password": "8e64b0fe81d6b11ff893de4f8b705e9e"
     }
@@ -228,7 +228,7 @@
   },
   "ssh-config": {
     "_Comment": "ssh connection is needed when adding kvm machines",
-    "ssh-key-directory": "/home/psoque/.ssh/",
+    "ssh-key-directory": "/home/perle/.ssh/",
     "ssh-key-name": "id_rsa",
     "ssh-user": "ubuntu",
     "ssh-password": "linux"

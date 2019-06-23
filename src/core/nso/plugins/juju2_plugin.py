@@ -267,7 +267,6 @@ class JujuModelServiceController(object):
                     # self.send_to_plugin(enquiry, self.queue_name_flexran)
 
                     self.enb_id = '-1'
-                    print(str(self.gv.NSI_ID))
                     current_time = datetime.datetime.now()
                     enquiry["datetime"] = str(current_time)
                     enquiry["plugin_message"] = "create_slice"
@@ -365,7 +364,7 @@ class JujuModelServiceController(object):
     def on_response(self, ch, method, props, body):
         if self.corr_id == props.correlation_id:
             self.response = body.decode("utf-8")
-            message = "Response from plgin -> {}".format(self.response)
+            message = "Response from plugin -> {}".format(self.response)
             self.logger.info(message)
 
     def on_timeout(self,):

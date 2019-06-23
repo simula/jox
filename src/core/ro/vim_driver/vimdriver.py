@@ -719,7 +719,7 @@ class KvmDriver(object):
 			while number_retry <= self.max_retry and retry_connect:
 				try:
 					self.logger.debug(
-						"{} time trying to connect to juju model:{} to add lxc machine".format(number_retry,
+						"{} time trying to connect to juju model:{} to add kvm machine".format(number_retry,
 																							   model_name))
 					await model.connect(model_name)
 					retry_connect = False
@@ -906,6 +906,8 @@ class KvmDriver(object):
 					await asyncio.sleep(self.interval_access)
 			
 			try:
+				#if service_name == self.gv.FLEXRAN_PLUGIN_SERVICE_FLEXRAN:
+					#slice_id=
 				await model.machines[str(machine_name_vnfm)].destroy(force=True)
 				cmd_destroy_kvm = ["uvt-kvm", "destroy", machine_name_userdefined]
 				output_list = await run_command(*cmd_destroy_kvm)

@@ -195,6 +195,10 @@ install_python_packages(){
     pip3 install termcolor --user
     echo_success "termcolor is successfully installed"
 
+    echo_info "Installing color"
+    pip3 install color --user
+    echo_success "color is successfully installed"
+
     echo_info "Installing jsonpickle"
     pip3 install jsonpickle --user
     echo_success "jsonpickle is successfully installed"
