@@ -472,7 +472,6 @@ class FlexRAN_plugin(object):
         *@return: The result
         """
         enb_id = enb_id
-        slice_id = slice_id
         try:
             bs_connected = False
             while(bs_connected == False):
@@ -490,61 +489,111 @@ class FlexRAN_plugin(object):
 
                         req = "{}slice/enb/{}".format(self.flexran_endpoint, enb_id)
                         header = {'Content-Type': 'application/octet-stream'}
+                        # Slice percentage is less than 50
+                        if (self.slice_config['dl'][0]['percentage'] < 50) or (self.slice_config['ul'][0]['percentage'] < 50):
+                            # Get default slice config (slice id 0)
+                            downlink, uplink = self.get_slice_config()
+                            default_slice_downlink_config = downlink[0]
+                            default_slice_uplink_config = uplink[0]
+                            # Updating slice 0 config as requested slice resources
+                            default_slice_uplink_config['percentage'] = self.slice_config['ul'][0]['percentage']
+                            default_slice_downlink_config['percentage'] = self.slice_config['dl'][0]['percentage']
+                            del default_slice_downlink_config['schedulerName']
+                            del default_slice_uplink_config['schedulerName']
+                            del default_slice_uplink_config['priority']
 
-                        # Get default slice config
-                        downlink, uplink = self.get_slice_config()
-                        default_slice_downlink_config = downlink[0]
-                        default_slice_uplink_config = uplink[0]
-                        # Updating slice 0 config as requested slice resources
-                        default_slice_uplink_config['percentage'] = self.slice_config['ul'][0]['percentage']
-                        default_slice_downlink_config['percentage'] = self.slice_config['dl'][0]['percentage']
-                        del default_slice_downlink_config['schedulerName']
-                        del default_slice_uplink_config['schedulerName']
-                        del default_slice_uplink_config['priority']
-                        # Post default slice config
-                        update_config = {'dl': [default_slice_downlink_config], 'ul': [default_slice_uplink_config]}
-                        response = requests.post(req, data=json.dumps(update_config), headers=header)
-                        time.sleep(2)
-                        # Duplicate slice 0
-                        req = self.flexran_endpoint + "slice/enb/" + enb_id + "/slice/" + slice_id
-                        response = requests.post(req)
-                        time.sleep(2)
+                            # Post default slice config
+                            update_config = {'dl': [default_slice_downlink_config], 'ul': [default_slice_uplink_config]}
+                            response = requests.post(req, data=json.dumps(update_config), headers=header)
+                            time.sleep(2)
 
-                        # Swap FirstRB for Uplink
-                        # config for new slice
-                        req = "{}slice/enb/{}".format(self.flexran_endpoint, enb_id)
-                        default_slice_uplink_config['id'] = slice_id
-                        new_slice_first_RB = self.get_slice_FirstRB(int(slice_id))
-                        default_slice_firstRB = self.get_slice_FirstRB(0)
-                        default_slice_uplink_config['firstRb'] = default_slice_firstRB
-                        update_config = {'ul': [default_slice_uplink_config]}
+                            # Duplicate slice 0
+                            req = self.flexran_endpoint + "slice/enb/" + enb_id + "/slice/" + slice_id
+                            response = requests.post(req)
+                            time.sleep(2)
 
-                        # config for 0 slice
-                        new_slice_config = copy.deepcopy(default_slice_uplink_config)
-                        new_slice_config['id'] = 0  #
-                        new_slice_config['firstRb'] = new_slice_first_RB
-                        del new_slice_config['percentage']
-                        update_config = json.dumps({'ul': [default_slice_uplink_config, new_slice_config],
-                                                    "intrasliceShareActive": 'true', "intersliceShareActive": 'true'})
-                        response = requests.post(req, data=update_config, headers=header)
-                        time.sleep(3)
+                            # Swap FirstRB for Uplink
+                            # config for new slice
+                            req = "{}slice/enb/{}".format(self.flexran_endpoint, enb_id)
+                            default_slice_uplink_config['id'] = slice_id
+                            new_slice_first_RB = self.get_slice_FirstRB(int(slice_id))
+                            default_slice_firstRB = self.get_slice_FirstRB(0)
+                            default_slice_uplink_config['firstRb'] = default_slice_firstRB
+                            update_config = {'ul': [default_slice_uplink_config]}
 
-                        # Make slice 0 resources to available resoures
-                        downlink_resources, uplink_resources = self.get_available_resources()
-                        default_slice_uplink_config['id'] = 0
-                        del default_slice_uplink_config['firstRb']
-                        default_slice_uplink_config['percentage'] = uplink_resources + self.slice_config['ul'][0][
-                            'percentage']
-                        default_slice_downlink_config['percentage'] = downlink_resources + self.slice_config['dl'][0][
-                            'percentage']
-                        # del default_slice_uplink_config['firstRb']
-                        final_config = json.dumps(
-                            {'dl': [default_slice_downlink_config], 'ul': [default_slice_uplink_config]})
-                        response = requests.post(req, data=final_config, headers=header)
-                        bs_connected = True
-                        message = " New slice is added"
-                        self.logger.info(message)
-                        return 'New slice is added'
+                            # config for 0 slice
+                            new_slice_config = copy.deepcopy(default_slice_uplink_config)
+                            new_slice_config['id'] = 0  #
+                            new_slice_config['firstRb'] = new_slice_first_RB
+                            del new_slice_config['percentage']
+                            update_config = json.dumps({'ul': [default_slice_uplink_config, new_slice_config],
+                                                        "intrasliceShareActive": 'true', "intersliceShareActive": 'true'})
+                            response = requests.post(req, data=update_config, headers=header)
+                            time.sleep(3)
+
+                            # Make slice 0 resources to available resoures
+                            downlink_resources, uplink_resources = self.get_available_resources()
+                            default_slice_uplink_config['id'] = 0
+                            del default_slice_uplink_config['firstRb']
+                            default_slice_uplink_config['percentage'] = uplink_resources + self.slice_config['ul'][0][
+                                'percentage']
+                            default_slice_downlink_config['percentage'] = downlink_resources + self.slice_config['dl'][0][
+                                'percentage']
+                            # del default_slice_uplink_config['firstRb']
+                            final_config = json.dumps(
+                                {'dl': [default_slice_downlink_config], 'ul': [default_slice_uplink_config]})
+                            response = requests.post(req, data=final_config, headers=header)
+                            bs_connected = True
+                            message = " New slice is added"
+                            self.logger.info(message)
+                            return 'New slice is added'
+
+                        # Slice percentage is greater than 50
+                        else:
+                            # Get default slice config (slice id 0)
+                            downlink, uplink = self.get_slice_config()
+                            default_slice_downlink_config = downlink[0]
+                            default_slice_uplink_config = uplink[0]
+                            # Updating slice 0 config as requested slice resources
+                            default_slice_uplink_config['percentage'] = (100- self.slice_config['ul'][0]['percentage'])
+                            default_slice_downlink_config['percentage'] = (100- self.slice_config['dl'][0]['percentage'])
+                            del default_slice_downlink_config['schedulerName']
+                            del default_slice_uplink_config['schedulerName']
+                            del default_slice_uplink_config['priority']
+
+                            # Post default slice config
+                            update_config = {'dl': [default_slice_downlink_config], 'ul': [default_slice_uplink_config]}
+                            response = requests.post(req, data=json.dumps(update_config), headers=header)
+                            time.sleep(2)
+
+                            # Duplicate slice 0
+                            req = self.flexran_endpoint + "slice/enb/" + enb_id + "/slice/" + slice_id
+                            response = requests.post(req)
+                            time.sleep(2)
+
+                            # Swap FirstRB for Uplink
+                            # config for new slice
+                            req = "{}slice/enb/{}".format(self.flexran_endpoint, enb_id)
+                            default_slice_uplink_config['id'] = slice_id
+
+                            # Make slice 0 resources to available resoures
+                            slice_firstRB = self.get_slice_FirstRB(int(slice_id))
+                            default_slice_uplink_config['id'] = slice_id
+                            default_slice_downlink_config['id'] = slice_id
+
+                            #del default_slice_uplink_config['firstRb']
+                            default_slice_uplink_config['percentage'] = self.slice_config['ul'][0][
+                                'percentage']
+                            default_slice_uplink_config['firstRb'] = slice_firstRB
+                            default_slice_downlink_config['percentage'] = self.slice_config['dl'][0][
+                                'percentage']
+                            # del default_slice_uplink_config['firstRb']
+                            final_config = json.dumps({'dl': [default_slice_downlink_config], 'ul': [default_slice_uplink_config]})
+                            response = requests.post(req, data=final_config, headers=header)
+                            bs_connected = True
+                            message = " New slice is added"
+                            self.logger.info(message)
+                            return 'New slice is added'
                     else:
                         message = " Waiting for BS to be connected"
                         self.logger.info(message)
@@ -554,7 +603,7 @@ class FlexRAN_plugin(object):
 
         except Exception as ex:
             print(ex)
-            self.prepare_slice(enb_id, slice_id, slice_config)
+            self.prepare_slice(enb_id, slice_id)
 
     def create_slice(self,param):
         """Create slice on Flexran.
@@ -737,7 +786,7 @@ class FlexRAN_plugin(object):
 
 
     def get_enb_config(self):
-        """Set slice config.
+        """Get slice config.
         *@return: The result
         """
         try:
@@ -747,46 +796,16 @@ class FlexRAN_plugin(object):
         except Exception as ex:
             print(ex)
 
-    # # only to push policy related to UL/DL resourses
-    # def set_slice_policy(self, enb_id, enb_slice_config):
-    #     """Set slice config.
-    #     *@enb_id : enb id to add slice
-    #     *@slice_config : slice config
-    #     *@return: The result
-    #     """
-    #     try:
-    #         slice_config = json.dumps(enb_slice_config)
-    #         req = "{}slice/enb/{}".format(self.flexran_endpoint, enb_id)
-    #         header = {'Content-Type':  'application/octet-stream'}
-    #         response = requests.post(req, data=slice_config, headers =header)
-    #
-    #         if (response.text is None) or (response.text == ""):
-    #             message = " Set slice config attempt successful"
-    #             self.logger.info(message)
-    #         else:
-    #             message = " Reducing default slice (slice_id 0) resources by  {} percent".format(
-    #                 self.gv.SLICE_ADJUST_FACTOR)
-    #             self.logger.info(message)
-    #             default_slice_config =copy.deepcopy(self.flexran_default_slice_config)
-    #             default_slice_config['dl'][0]['percentage'] = \
-    #                 default_slice_config['dl'][0]['percentage'] - \
-    #                 self.gv.SLICE_ADJUST_FACTOR
-    #             default_slice_config['ul'][0]['percentage'] = \
-    #                 default_slice_config['ul'][0]['percentage'] - \
-    #                 self.gv.SLICE_ADJUST_FACTOR
-    #             default_slice_config['dl'][0]['id'] = self.gv.DEFAULT_NSI_ID
-    #             default_slice_config['ul'][0]['id'] = self.gv.DEFAULT_NSI_ID
-    #             # print(default_slice_config)
-    #             response = requests.post(req, data=json.dumps(default_slice_config), headers=header)
-    #             message = " Resources now available for new slices "
-    #             self.logger.info(message)
-    #             response = requests.post(req, data=slice_config, headers=header)
-    #
-    #         return response
-    #     except Exception as ex:
-    #         print(ex)
+    # Generic slice config push; firstRb is to be calculated
+    def set_enb_slices_config(self, enb_id, slice_config):
+        """Set slice config.
+        *@enb_id : enb id to add slice
+        *@slice_config : slice config
+        *@return: The result
+        """
+        raise NotImplementedError()
 
-    # Generic slice config push
+    # Generic slice config push; firstRb is calculated already
     def set_enb_slice_config(self, enb_id, slice_config):
         """Set slice config.
         *@enb_id : enb id to add slice
@@ -863,4 +882,3 @@ if __name__ == '__main__':
     fs.build()
     t1 = Thread(target=fs.start_consuming).start()
     t2 = Thread(target=fs.start_notifications).start()
-
