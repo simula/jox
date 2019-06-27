@@ -183,6 +183,8 @@ install_juju(){
 install_python_packages(){
     echo_info "Installing python libraries"
 
+    python3 -m pip install --upgrade pip
+
     echo_info "Installing flask"
     pip3 install flask --user
     echo_success "flask is successfully installed"
@@ -202,6 +204,10 @@ install_python_packages(){
     echo_info "Installing pika"
     pip3 install --force-reinstall pika==0.12.0 --user
     echo_success "pika is successfully installed"
+
+    echo_info "Installing paramiko"
+    pip3 install --force-reinstall paramiko==2.4.2 --user
+    echo_success "paramiko is successfully installed"
 
     echo_info "Installing cryptography"
     pip3 install --force-reinstall cryptography==2.4.2 --user
