@@ -83,7 +83,7 @@ os_flavor="ubuntu_16_64"
 
 juju_controller=localhost
 juju_model=default
-CIDR_lxd=10.10.57.0.24
+CIDR_lxd=10.10.57.0/24
 CIDR_kvm=192.168.122.0/24
 CIDR_phy=192.168.1.0/24
 
