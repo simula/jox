@@ -314,7 +314,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: 
+      cidr: "$CIDR_lxd"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -3961,7 +3961,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: '10.206.29.0/24'
+      cidr: "$CIDR_lxd"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
