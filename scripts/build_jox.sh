@@ -123,6 +123,8 @@ install_required_packages(){
     echo_info "Installing tree"
     $SUDO $os_pm $option install tree || true
 
+    echo_info "Installing jq"
+    $SUDO $os_pm $option install jq || true
 
     install_elasticsearch
 }
