@@ -81,6 +81,12 @@ num_subslices=2
 machine_flavor="small"
 os_flavor="ubuntu_16_64"
 
+juju_controller=localhost
+juju_model=default
+CIDR_lxd=10.10.57.0.24
+CIDR_kvm=192.168.122.0/24
+CIDR_phy=192.168.1.0/24
+
 # package descriptor
 pkg_desc_types=(nsi nssi)
 pkg_desc_ext=(yml yaml)
@@ -125,6 +131,16 @@ Options
    Set the template to generate the package. Available options: wordpress, oai-epc(default), oai-4g, oai-5g-cran, oai-5g-cran-flexran, oai-5g-cran-flexran-functionalsplit, oai-nfv-rrh, oai-nfv-sim.
 -v | --pkg-vendor [vendor]
    Package vendor name for descriptor. Default is set to: Eurecom
+-jc | --juju-controller
+   Name of your juju controller
+-jm | --juju-model
+   Name of your juju controller
+-cidr1 | --cidr-first
+   CIDR of the second subnet (used for lxd)
+-cidr2 | --cidr-second
+   CIDR of the third subnet (used for kvm)
+-cidr3 | --cidr-third
+   CIDR of the third subnet (used for physical machines)
 
 Usage: onboard_jox -s <src_directory> -p <dst_directory> -p m5g
 Example:
@@ -298,7 +314,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.206.29.0/24"
+      cidr: 
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -306,7 +322,7 @@ dsl_definitions:
     properties:
       network_name: "net2"
       ip_version: 4
-      cidr: "192.168.122.0/24"
+      cidr: "$CIDR_kvm"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -314,7 +330,7 @@ dsl_definitions:
     properties:
       network_name: "net3"
       ip_version: 4
-      cidr: "192.168.12.0/24"
+      cidr: "$CIDR_phy"
       start_ip: ""
       end_ip: ""
       gateway_ip: "192.168.12.254"
@@ -372,8 +388,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:trusty/wordpress-5'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -431,8 +447,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -555,7 +571,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.206.29.0/24"
+      cidr: "$CIDR_lxd"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -563,7 +579,7 @@ dsl_definitions:
     properties:
       network_name: "net2"
       ip_version: 4
-      cidr: "192.168.122.0/24"
+      cidr: "$CIDR_kvm"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -571,7 +587,7 @@ dsl_definitions:
     properties:
       network_name: "net3"
       ip_version: 4
-      cidr: "192.168.12.0/24"
+      cidr: "$CIDR_phy"
       start_ip: ""
       end_ip: ""
       gateway_ip: "192.168.12.254"
@@ -660,8 +676,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -676,8 +692,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-17'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -772,8 +788,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-mme-19'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -788,8 +804,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-spgw-18'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -960,7 +976,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.206.29.0/24"
+      cidr: "$CIDR_lxd"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -968,7 +984,7 @@ dsl_definitions:
     properties:
       network_name: "net2"
       ip_version: 4
-      cidr: "192.168.122.0/24"
+      cidr: "$CIDR_kvm"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -976,7 +992,7 @@ dsl_definitions:
     properties:
       network_name: "net3"
       ip_version: 4
-      cidr: "192.168.12.0/24"
+      cidr: "$CIDR_phy"
       start_ip: ""
       end_ip: ""
       gateway_ip: "192.168.12.254"
@@ -1065,8 +1081,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1081,8 +1097,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-17'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1177,8 +1193,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-mme-19'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1193,8 +1209,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-spgw-18'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1263,8 +1279,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-enb-43'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1422,7 +1438,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.206.29.0/24"
+      cidr: "$CIDR_lxd"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -1430,7 +1446,7 @@ dsl_definitions:
     properties:
       network_name: "net2"
       ip_version: 4
-      cidr: "192.168.122.0/24"
+      cidr: "$CIDR_kvm"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -1438,7 +1454,7 @@ dsl_definitions:
     properties:
       network_name: "net3"
       ip_version: 4
-      cidr: "192.168.12.0/24"
+      cidr: "$CIDR_phy"
       start_ip: ""
       end_ip: ""
       gateway_ip: "192.168.12.254"
@@ -1527,8 +1543,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1543,8 +1559,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-17'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1639,8 +1655,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-mme-19'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1655,8 +1671,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-spgw-18'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1756,8 +1772,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-enb-43'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1771,8 +1787,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-rru-15'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1938,7 +1954,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.206.29.0/24"
+      cidr: "$CIDR_lxd"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -1946,7 +1962,7 @@ dsl_definitions:
     properties:
       network_name: "net2"
       ip_version: 4
-      cidr: "192.168.122.0/24"
+      cidr: "$CIDR_kvm"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -1954,7 +1970,7 @@ dsl_definitions:
     properties:
       network_name: "net3"
       ip_version: 4
-      cidr: "192.168.12.0/24"
+      cidr: "$CIDR_phy"
       start_ip: ""
       end_ip: ""
       gateway_ip: "192.168.12.254"
@@ -2043,8 +2059,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2059,8 +2075,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-17'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2155,8 +2171,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-mme-19'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2171,8 +2187,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-spgw-18'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2274,8 +2290,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/flexran-rtc-17'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2289,8 +2305,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-enb-43'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2483,7 +2499,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.206.29.0/24"
+      cidr: "$CIDR_lxd"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -2491,7 +2507,7 @@ dsl_definitions:
     properties:
       network_name: "net2"
       ip_version: 4
-      cidr: "192.168.122.0/24"
+      cidr: "$CIDR_kvm"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -2499,7 +2515,7 @@ dsl_definitions:
     properties:
       network_name: "net3"
       ip_version: 4
-      cidr: "192.168.12.0/24"
+      cidr: "$CIDR_phy"
       start_ip: ""
       end_ip: ""
       gateway_ip: "192.168.12.254"
@@ -2588,8 +2604,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2604,8 +2620,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-17'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2700,8 +2716,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-mme-19'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2716,8 +2732,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-spgw-18'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2846,8 +2862,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/flexran-rtc-17'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2864,8 +2880,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-enb-43'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2880,8 +2896,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-enb-43'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -3054,7 +3070,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.206.29.0/24"
+      cidr: "$CIDR_lxd"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -3062,7 +3078,7 @@ dsl_definitions:
     properties:
       network_name: "net2"
       ip_version: 4
-      cidr: "192.168.122.0/24"
+      cidr: "$CIDR_kvm"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -3070,7 +3086,7 @@ dsl_definitions:
     properties:
       network_name: "net3"
       ip_version: 4
-      cidr: "192.168.12.0/24"
+      cidr: "$CIDR_phy"
       start_ip: ""
       end_ip: ""
       gateway_ip: "192.168.12.254"
@@ -3159,8 +3175,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -3175,8 +3191,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-17'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -3241,8 +3257,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/trusty/oai-epc-27'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -3333,8 +3349,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-enb-43'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -3348,8 +3364,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/trusty/oai-rrh-10'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -3515,7 +3531,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.206.29.0/24"
+      cidr: "$CIDR_lxd"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -3523,7 +3539,7 @@ dsl_definitions:
     properties:
       network_name: "net2"
       ip_version: 4
-      cidr: "192.168.122.0/24"
+      cidr: "$CIDR_kvm"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -3531,7 +3547,7 @@ dsl_definitions:
     properties:
       network_name: "net3"
       ip_version: 4
-      cidr: "192.168.12.0/24"
+      cidr: "$CIDR_phy"
       start_ip: ""
       end_ip: ""
       gateway_ip: "192.168.12.254"
@@ -3620,8 +3636,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:mysql-58'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -3636,8 +3652,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-hss-17'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -3732,8 +3748,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/xenial/oai-mme-19'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -3748,8 +3764,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-spgw-18'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -3817,8 +3833,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:~navid-nikaein/trusty/oaisim-enb-ue-8'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -3953,7 +3969,7 @@ dsl_definitions:
     properties:
       network_name: "net2"
       ip_version: 4
-      cidr: "192.168.122.0/24"
+      cidr: "$CIDR_kvm"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -3961,7 +3977,7 @@ dsl_definitions:
     properties:
       network_name: "net3"
       ip_version: 4
-      cidr: "192.168.12.0/24"
+      cidr: "$CIDR_phy"
       start_ip: ""
       end_ip: ""
       gateway_ip: "192.168.12.254"
@@ -4046,8 +4062,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:vnf1'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -4062,8 +4078,8 @@ topology_template:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
         charm: 'cs:vnf2'
-        endpoint: localhost-borer
-        model: default-1
+        endpoint: $juju_controller
+        model: $juju_model
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -4187,6 +4203,46 @@ function main() {
 		    echo_info "Set the package template=$pkg_template"
 		fi
 		pkg_name="mosaic5g-$pkg_template"
+		shift 2;;
+
+		-jc | --juju-controller)
+		juju_controller_tmp=$2
+		if [ "$juju_controller_tmp" != "" ] ; then
+		    juju_controller=$juju_controller_tmp
+		fi
+		echo_info "Name of juju controller: $juju_controller"
+		shift 2;;
+
+		-jm | --juju-model)
+		juju_model_tmp=$2
+		if [ "$juju_model_tmp" != "" ] ; then
+		    juju_model=$juju_model_tmp
+		fi
+		echo_info "Name of juju controller: $juju_model"
+		shift 2;;
+
+		-cidr1 | --cidr-first)
+		CIDR_lxd_tmp=$2
+		if [ "$CIDR_lxd_tmp" != "" ] ; then
+		    CIDR_lxd=$CIDR_lxd_tmp
+		fi
+		echo_info "First subnet (used normally for lxd): $CIDR_lxd"
+		shift 2;;
+
+		-cidr2 | --cidr-second)
+		CIDR_kvm_tmp=$2
+		if [ "$CIDR_kvm_tmp" != "" ] ; then
+		    CIDR_kvm=$CIDR_kvm_tmp
+		fi
+		echo_info "Second subnet (used normally for lxd): $CIDR_kvm"
+		shift 2;;
+
+		-cidr3 | --cidr-third)
+		CIDR_phy_tmp=$2
+		if [ "$CIDR_phy_tmp" != "" ] ; then
+		    CIDR_phy=$CIDR_phy_tmp
+		fi
+		echo_info "Second subnet (used normally for lxd): $CIDR_phy"
 		shift 2;;
 
 
