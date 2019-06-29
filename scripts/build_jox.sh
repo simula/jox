@@ -308,10 +308,10 @@ function main() {
     if [ "$INSTALL_PKG" = "1" ] ; then
 	    install_required_packages
 	    $SUDO adduser $USER docker
-        newgrp docker
-        $SUDO adduser $USER lxd
-        newgrp lxd
-        groups
+	    $SUDO adduser $USER lxd
+	    newgrp docker
+	    newgrp lxd
+	    groups
 	    echo_success "###### JoX built successfully !!! ######"
     fi
     if [ "$DOWNLOAD_UBUNTU_IMAGE" = "1" ] ; then
