@@ -24,9 +24,11 @@ export DEBIAN_FRONTEND=noninteractive
 
 SUDO='sudo -E'
 os_pm="apt-get"
+os_pm_remove="apt-add-repository"
+os_pm_add="add-apt-repository"
 option="-y"
+specific_pkgs="zfsutils-linux"
 
-versionUbuntucloudImage_for_kvm="xenial"
 jox_store=/mnt/jox_store
 
 ###################################
@@ -45,6 +47,9 @@ reset_color='\E[00m'
 COLORIZE=1
 
 cecho()  {
+    # Color-echo
+    # arg1 = message
+    # arg2 = color
     local default_msg="No Message."
     message=${1:-$default_msg}
     color=${2:-$green}
@@ -69,6 +74,9 @@ os_dist=$os$os_release
 echo_info "Detected OS Dist:" $os_dist
 
 case "$os" in
+  fedora) os_base="fedora"; os_pm="dnf"; os_cmake="cmake" ;;
+  rhel)   os_base="fedora"; os_pm="yum"; os_cmake="cmake3" ;;
+  centos) os_base="fedora"; os_pm="yum"; os_cmake="cmake3" ;;
   debian) os_base="debian"; os_pm="apt-get"; os_cmake="cmake" ;;
   ubuntu) os_base="debian"; os_pm="apt-get"; os_cmake="cmake" ;;
 esac
@@ -116,15 +124,12 @@ install_required_packages(){
     echo_info "Installing docker.io"
     $SUDO $os_pm $option install docker.io || true
 
-
     echo_info "Installing curl"
     $SUDO $os_pm $option install curl || true
 
     echo_info "Installing tree"
     $SUDO $os_pm $option install tree || true
 
-    echo_info "Installing jq"
-    $SUDO $os_pm $option install jq || true
 
     install_elasticsearch
 }
@@ -137,9 +142,9 @@ install_uvtool_kvm(){
 }
 
 install_ubuntu_image(){
-    echo_info "fetching cloud image kvm $1"
-    $SUDO uvt-simplestreams-libvirt --verbose sync release=$1 arch=amd64
-    echo_success "cloud images was successfully downloaded for $1"
+    echo_info 'fetching cloud image kvm xenial'
+    $SUDO uvt-simplestreams-libvirt --verbose sync release=xenial arch=amd64
+    echo_success "cloud images was successfully downloaded"
 }
 
 install_elasticsearch(){
@@ -168,7 +173,6 @@ install_juju(){
     echo_info "installing juju "
     $SUDO $os_pm $option install  snapd || true
     $SUDO $os_pm $option install  zfsutils-linux || true
-
     sudo snap install lxd || true
     sudo snap install juju --classic || true
     echo_success "juju is successfully installed"
@@ -179,14 +183,21 @@ install_juju(){
 install_python_packages(){
     echo_info "Installing python libraries"
 
-    python3 -m pip install --upgrade pip
+    echo_info "Installing cryptography"
+    pip3 install --force-reinstall cryptography==2.4.2 --user
+    echo_success "cryptography is successfully installed"
+
+    echo_info "Installing paramiko"
+    pip3 install --force-reinstall paramiko==2.4.2 --user
+    echo_success "paramiko is successfully installed"
+
 
     echo_info "Installing flask"
     pip3 install flask --user
     echo_success "flask is successfully installed"
 
     echo_info "Installing juju"
-    pip3 install --force-reinstall juju==0.11.2 --user
+    pip3 install --force-reinstall juju==0.11.6 --user
     echo_success "juju is successfully installed"
 
     echo_info "Installing termcolor"
@@ -200,14 +211,6 @@ install_python_packages(){
     echo_info "Installing pika"
     pip3 install --force-reinstall pika==0.12.0 --user
     echo_success "pika is successfully installed"
-
-    echo_info "Installing paramiko"
-    pip3 install --force-reinstall paramiko==2.4.2 --user
-    echo_success "paramiko is successfully installed"
-
-    echo_info "Installing cryptography"
-    pip3 install --force-reinstall cryptography==2.4.2 --user
-    echo_success "cryptography is successfully installed"
 
 
     echo_info "Installing netaddr"
@@ -253,69 +256,41 @@ function jox_store(){
 function print_help() {
   echo '
 This program installs the JoX package dependencies
--h                                  Print this help
--i | --install-required-pkg         Install required packages for build and/or snap process
--x | --install-ubuntu-xenial-kvm    Install ubuntu-xenial image for kvm
--u | --download-ubuntu-kvm          Download ubuntu cloud image for kvm, the default version of ubuntu is xenial, expected value are; bionic, xenial, trusty, precise, etc
+-h                                  print this help
+-i | --install-required-pkg         install required packages for build and/or snap process
+-x | --install-ubuntu-xenial-kvm    install ubuntu-xenial image for kvm
+
 '
   exit $1
 }
 
 function main() {
-#    DOWNLOAD_UBUNTU_IMAGE=0
-#    INSTALL_PKG=0
     until [ -z "$1" ]; do
         case "$1" in
             -i | --install-required-pkg)
             INSTALL_PKG=1
             echo_info "Installing the required packages for JoX"
             shift;;
-
             -h | --help | -help )
             print_help 0
             shift;;
-
-#            -x | --install-ubuntu-xenial-kvm )
-#            INSTALL_PKG=2
-#            echo_info "Installing ubuntu xenial image for kvm"
-#            shift;;
-
-            -u | --download-ubuntu-kvm)
-            ubuntu_version_kvm=$2
-            DOWNLOAD_UBUNTU_IMAGE=1
-            if [ "$ubuntu_version_kvm" == "" ] ; then
-                ubuntu_version_kvm="$versionUbuntucloudImage_for_kvm"
-                shift_val=1
-            else
-                shift_val=2
-            fi
-            echo_info "The ubuntu cloud image for the version $ubuntu_version_kvm will be downloaded"
-            shift $shift_val;;
-
-#            *)
-#            echo_error "Unknown option $1"
-#            print_help -1
-#            break;;
+            -x | --install-ubuntu-xenial-kvm )
+            INSTALL_PKG=2
+            echo_info "Installing ubuntu xenial image for kvm"
+            shift;;
             *)
             echo_error "Unknown option $1"
             print_help -1
-            exit 1
-            ;;
-
+            shift;;
         esac
     done
 
     if [ "$INSTALL_PKG" = "1" ] ; then
 	    install_required_packages
-	    $SUDO adduser $USER docker
-	    $SUDO adduser $USER lxd
-	    newgrp docker
-	    newgrp lxd
-	    groups
 	    echo_success "###### JoX built successfully !!! ######"
     fi
-    if [ "$DOWNLOAD_UBUNTU_IMAGE" = "1" ] ; then
-	    install_ubuntu_image $ubuntu_version_kvm
+    if [ "$INSTALL_PKG" = "2" ] ; then
+	    install_ubuntu_image
     fi
 }
 
