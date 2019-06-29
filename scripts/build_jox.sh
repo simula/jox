@@ -115,9 +115,7 @@ install_required_packages(){
 
     echo_info "Installing docker.io"
     $SUDO $os_pm $option install docker.io || true
-    $SUDO adduser $USER docker
-    newgrp docker
-    groups
+
 
     echo_info "Installing curl"
     $SUDO $os_pm $option install curl || true
@@ -168,9 +166,6 @@ install_juju(){
     echo_info "installing juju "
     $SUDO $os_pm $option install  snapd || true
     $SUDO $os_pm $option install  zfsutils-linux || true
-    $SUDO adduser $USER lxd
-    newgrp lxd
-    groups
 
     sudo snap install lxd || true
     sudo snap install juju --classic || true
@@ -310,6 +305,11 @@ function main() {
 
     if [ "$INSTALL_PKG" = "1" ] ; then
 	    install_required_packages
+	    $SUDO adduser $USER docker
+        newgrp docker
+        $SUDO adduser $USER lxd
+        newgrp lxd
+        groups
 	    echo_success "###### JoX built successfully !!! ######"
     fi
     if [ "$DOWNLOAD_UBUNTU_IMAGE" = "1" ] ; then
