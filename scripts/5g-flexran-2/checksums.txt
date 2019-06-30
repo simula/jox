@@ -1,0 +1,4 @@
+ccc4a193b8925335010d7ca12ff1d5ee  nsi/oai-5g-cran-flexran-2.yaml
+aa093d5a6e4d7b8969c7980eceee3a98  nssi/nssi_1.yaml
+a8e54927646261a2200226cae7c015a6  nssi/nssi_2.yaml
+5380738242561706e7df096b7d2b801e  nssi/nssi_3.yaml

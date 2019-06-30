@@ -310,7 +310,7 @@ class LxcDriver(object):
 
 					cmd_lxc_create = ["lxc", "launch", "ubuntu:{}".format(new_machine.os_version),
 									  "{}:{}".format(self.lxc_anchor, container_name)]
-					"""
+					#"""
 					try:
 						machine_series = self.gv.OS_SERIES[new_machine.os_version]
 						prebuilt_image = self.prebuilt_image[machine_series]
@@ -319,7 +319,7 @@ class LxcDriver(object):
 						# isPrebuiltImage = True
 					except:
 						cmd_lxc_create = ["lxc", "launch", "ubuntu:{}".format(new_machine.os_version), "{}:{}".format(self.lxc_anchor, container_name)]
-					"""
+					##"""
 					# cmd_lxc_create = ["lxc", "launch", "-p", "default", "-p", "bridgeprofile", "juju/xenial/amd64", "{}:{}".format(self.lxc_anchor, container_name)]
 					# cmd_lxc_create = ["lxc", "launch", "ubuntu:{}".format(new_machine.os_version), "{}:{}".format(self.lxc_anchor, container_name)]
 					cmd_lxc_create_out = await run_command(cmd_lxc_create)

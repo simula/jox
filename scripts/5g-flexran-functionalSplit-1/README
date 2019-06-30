@@ -1,0 +1,17 @@
+Package Name:            5g-flexran-functionalSplit-1
+Package description:     template for deploying package <oai-5g-cran-flexran-functionalsplit> with 3 subslices
+Package version:         1.0
+Package vendor:          Eurecom
+Package date:            2019-06-13
+Package structure:       /home/borer/JoX/munual_mode_feature/jox/scripts/5g-flexran-functionalSplit-1
+├── charms
+├── icon
+├── nsi
+│   └── 5g-flexran-functionalSplit-1.yaml
+├── nssi
+│   ├── nssi_1.yaml
+│   ├── nssi_2.yaml
+│   └── nssi_3.yaml
+└── README
+
+4 directories, 5 files

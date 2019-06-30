@@ -1,0 +1,4 @@
+70bced3582aa1ce10760c9b2f3e814ee  nsi/5g-flexran-1.yaml
+e2ef7b708f7e0a44e2f92f8f4571ead8  nssi/nssi_1.yaml
+401379ad5f863968295f5f0cffa5e8a8  nssi/nssi_2.yaml
+30de0ae72d446b755249b1cdc3b6cb25  nssi/nssi_3.yaml

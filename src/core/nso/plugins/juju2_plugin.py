@@ -254,7 +254,7 @@ class JujuModelServiceController(object):
 
                     enquiry = json.dumps(enquiry)
                     enquiry.encode("utf-8")
-                    self.send_to_plugin(enquiry, self.queue_name_flexran)
+                    # self.send_to_plugin(enquiry, self.queue_name_flexran)
 
                 if new_service.application_name == self.gv.FLEXRAN_PLUGIN_SERVICE_OAI_ENB:
                     enquiry = self.standard_reqst
@@ -286,7 +286,7 @@ class JujuModelServiceController(object):
 
                     enquiry = json.dumps(enquiry)
                     enquiry.encode("utf-8")
-                    self.send_to_plugin(enquiry, self.queue_name_flexran)
+                    # self.send_to_plugin(enquiry, self.queue_name_flexran)
 
             self.logger.info("The servce {} is deployed".format(new_service.application_name))
             self.logger.debug("The servce {} is deployed".format(new_service.application_name))

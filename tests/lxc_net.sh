@@ -81,3 +81,25 @@ iptables -A FORWARD -i $NAT_PUB_IF -o $NAT_SGW_IF -m state --state RELATED,ESTAB
 iptables -A FORWARD -i $NAT_SGW_IF -o $NAT_PUB_IF -j ACCEPT
 iptables -A FORWARD -i $NAT_PUB_IF -o $NAT_MEC_IF -m state --state RELATED,ESTABLISHED -j ACCEPT
 iptables -A FORWARD -i $NAT_MEC_IF -o $NAT_PUB_IF -j ACCEPT
+
+
+
+
+iptables -t nat -A POSTROUTING -o enp0s31f6 -j MASQUERADE
+iptables -A FORWARD -i wlp2s0 -o virbr0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+
+
+
+#for masquarading, we need to add the following iptable rule:
+iptables -t nat -A POSTROUTING -s [srcIP/24 -o [ifname] -j MASQUERADE
+example:
+iptables -t nat -A POSTROUTING -s 192.168.122.0/24 -o enp0s31f6 -j MASQUERADE
+
+
+iptables -t nat -A POSTROUTING -o enp0s31f6 -j MASQUERADE
+iptables -A FORWARD -i enp0s31f6 -o $NAT_SGW_IF -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A FORWARD -i $NAT_SGW_IF -o enp0s31f6 -j ACCEPT
+
+
+sudo iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE

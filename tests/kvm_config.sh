@@ -80,10 +80,11 @@ echo "Configuring NAT"
 echo 1 > /proc/sys/net/ipv4/ip_forward
 iptables -F
 iptables -F -t nat
-iptables -t nat -A POSTROUTING -o wlp2s0 -j MASQUERADE
-iptables -A FORWARD -i $NAT_PUB_IF -o $NAT_SGW_IF -m state --state RELATED,ESTABLISHED -j
-ACCEPT
-iptables -A FORWARD -i $NAT_SGW_IF -o $NAT_PUB_IF -j ACCEPT
-iptables -A FORWARD -i $NAT_PUB_IF -o $NAT_MEC_IF -m state --state RELATED,ESTABLISHED -j
-ACCEPT
+iptables -t nat -A POSTROUTING -o enp0s31f6 -j MASQUERADE
+iptables -A FORWARD -i enp0s31f6 -o virbr0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A FORWARD -i virbr0 -o enp0s31f6 -j ACCEPT
+
+iptables -A FORWARD -i $NAT_PUB_IF -o $NAT_MEC_IF -m state --state RELATED,ESTABLISHED -j ACCEPT
 iptables -A FORWARD -i $NAT_MEC_IF -o $NAT_PUB_IF -j ACCEPT
+
+

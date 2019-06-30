@@ -210,6 +210,14 @@ class JSlice(JSONEncoder):
 				"oai-mme": ["oai-enb:mme", "oai-mme:mme"],
 				"flexran": ["oai-enb:rtc", "flexran:rtc"],
 			},
+			"oai-cu": {
+				"oai-mme": ["oai-cu:mme", "oai-mme:mme"],
+				"flexran": ["oai-cu:rtc", "flexran:rtc"],
+			},
+			"oai-du": {
+				"oai-mme": ["oai-du:mme", "oai-mme:mme"],
+				"flexran": ["oai-du:rtc", "flexran:rtc"],
+			},
 			"oai-hss": {
 				"mysql": ["oai-hss:db", "mysql:db"],
 				"oai-mme": ["oai-hss:hss", "oai-mme:hss"],
@@ -219,9 +227,13 @@ class JSlice(JSONEncoder):
 				"oai-spgw": ["oai-mme:spgw", "oai-spgw:spgw"],
 				"oai-ran": ["oai-mme:mme", "oai-ran:mme"],
 				"oai-enb": ["oai-mme:mme", "oai-enb:mme"],
+				"oai-cu": ["oai-mme:mme", "oai-cu:mme"],
+				"oai-du": ["oai-mme:mme", "oai-du:mme"],
 			},
 			"flexran": {
 				"oai-enb": ["flexran:rtc", "oai-enb:rtc"],
+				"oai-cu": ["flexran:rtc", "oai-cu:rtc"],
+				"oai-du": ["flexran:rtc", "oai-du:rtc"],
 				"oai-ran": ["flexran:rtc", "oai-ran:rtc"],
 			},
 		}
@@ -274,7 +286,14 @@ class JSlice(JSONEncoder):
 								relation_endpoint_target,
 								"{}:{}/{}.{}".format(source_jcloud, "admin", source_jmodel, nssi_node_source)]
 		"""
+		cmd_juju_switch_to_target_model = ["juju", "switch", "{}:{}".format(target_jcloud, target_jmodel)]
+		cmd_juju_switch_to_source_model = ["juju", "switch", "{}:{}".format(source_jcloud, source_jmodel)]
+
+
+		cmd_out_juju_switch_to_target_model = await run_command(cmd_juju_switch_to_target_model)
 		cmd_out_offer_app_endpoint = await run_command(cmd_juju_offer_application_endpoint)
+
+		cmd_out_juju_switch_to_source_model = await run_command(cmd_juju_switch_to_source_model)
 		cmd_out_add_cmr = await run_command(cmd_juju_add_cmr)
 
 		relation = {

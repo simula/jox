@@ -1,0 +1,41 @@
+{
+    "dl": [
+        {
+            "id": 0,
+            "percentage": 40,
+            "maxmcs": 26
+        },
+        {
+            "id": 1,
+            "percentage": 45,
+            "maxmcs": 26
+        },
+        {
+            "id": 2,
+            "percentage": 15,
+            "maxmcs": 26
+        }
+    ],
+    "ul": [
+        {
+            "id": 0,
+            "percentage": 40,
+            "maxmcs": 18,
+            "firstRb": 0
+        },
+        {
+            "id": 1,
+            "percentage": 45,
+            "maxmcs": 18,
+            "firstRb": 10
+        },
+        {
+            "id": 2,
+            "percentage": 15,
+            "maxmcs": 13,
+            "firstRb": 21
+        }
+    ],
+    "intrasliceShareActive": false,
+    "intersliceShareActive": false
+}

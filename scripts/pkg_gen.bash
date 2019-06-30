@@ -298,7 +298,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.184.36.0/24" 
+      cidr: "10.206.29.0/24" 
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -373,7 +373,7 @@ topology_template:
       properties:
         charm: 'cs:trusty/wordpress-5'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -432,7 +432,7 @@ topology_template:
       properties:
         charm: 'cs:mysql-58'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -555,7 +555,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.184.36.0/24"
+      cidr: "10.206.29.0/24"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -661,7 +661,7 @@ topology_template:
       properties:
         charm: 'cs:mysql-58'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -675,9 +675,9 @@ topology_template:
     oai-hss:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
+        charm: 'cs:~navid-nikaein/xenial/oai-hss-17'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -771,9 +771,9 @@ topology_template:
     oai-mme:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-mme-18'
+        charm: 'cs:~navid-nikaein/xenial/oai-mme-19'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -787,9 +787,9 @@ topology_template:
     oai-spgw:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm:  'cs:~navid-nikaein/xenial/oai-spgw-16'
+        charm:  'cs:~navid-nikaein/xenial/oai-spgw-18'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -960,7 +960,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.184.36.0/24"
+      cidr: "10.206.29.0/24"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -1066,7 +1066,7 @@ topology_template:
       properties:
         charm: 'cs:mysql-58'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1080,9 +1080,9 @@ topology_template:
     oai-hss:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
+        charm: 'cs:~navid-nikaein/xenial/oai-hss-17'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1176,9 +1176,9 @@ topology_template:
     oai-mme:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-mme-18'
+        charm: 'cs:~navid-nikaein/xenial/oai-mme-19'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1192,9 +1192,9 @@ topology_template:
     oai-spgw:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm:  'cs:~navid-nikaein/xenial/oai-spgw-16'
+        charm:  'cs:~navid-nikaein/xenial/oai-spgw-18'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1262,9 +1262,9 @@ topology_template:
     oai-ran:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-enb-33'
+        charm: 'cs:~navid-nikaein/xenial/oai-enb-43'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1422,7 +1422,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.184.36.0/24"
+      cidr: "10.206.29.0/24"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -1528,7 +1528,7 @@ topology_template:
       properties:
         charm: 'cs:mysql-58'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1542,9 +1542,9 @@ topology_template:
     oai-hss:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
+        charm: 'cs:~navid-nikaein/xenial/oai-hss-17'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1638,9 +1638,9 @@ topology_template:
     oai-mme:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-mme-18'
+        charm: 'cs:~navid-nikaein/xenial/oai-mme-19'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1654,9 +1654,9 @@ topology_template:
     oai-spgw:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm:  'cs:~navid-nikaein/xenial/oai-spgw-16'
+        charm:  'cs:~navid-nikaein/xenial/oai-spgw-18'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1755,9 +1755,9 @@ topology_template:
     oai-enb:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-enb-33'
+        charm: 'cs:~navid-nikaein/xenial/oai-enb-43'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1772,7 +1772,7 @@ topology_template:
       properties:
         charm:  'cs:~navid-nikaein/xenial/oai-rru-15'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -1938,7 +1938,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.184.36.0/24"
+      cidr: "10.206.29.0/24"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -2044,7 +2044,7 @@ topology_template:
       properties:
         charm: 'cs:mysql-58'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2058,9 +2058,9 @@ topology_template:
     oai-hss:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
+        charm: 'cs:~navid-nikaein/xenial/oai-hss-17'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2154,9 +2154,9 @@ topology_template:
     oai-mme:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-mme-18'
+        charm: 'cs:~navid-nikaein/xenial/oai-mme-19'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2170,9 +2170,9 @@ topology_template:
     oai-spgw:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm:  'cs:~navid-nikaein/xenial/oai-spgw-16'
+        charm:  'cs:~navid-nikaein/xenial/oai-spgw-18'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2275,7 +2275,7 @@ topology_template:
       properties:
         charm:  'cs:~navid-nikaein/xenial/flexran-rtc-17'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2288,9 +2288,9 @@ topology_template:
     oai-enb:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-enb-33'
+        charm: 'cs:~navid-nikaein/xenial/oai-enb-43'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2368,7 +2368,23 @@ relationships_template:
     target:
       inputs:
         name: ing1
-        node: oai-enb
+        node: oai-cu
+        type: tosca.relationships.DependsOn
+      node: nss_second
+      parameters: nssi_3
+  connection_ran_2:
+    type: tosca.relationships.ConnectsTo
+    source:
+      inputs:
+        name: eg1
+        node: oai-mme
+        type: tosca.relationships.AttachesTo
+      node: nss_first
+      parameters: nssi_2
+    target:
+      inputs:
+        name: ing1
+        node: oai-du
         type: tosca.relationships.DependsOn
       node: nss_second
       parameters: nssi_3
@@ -2406,7 +2422,16 @@ topology_template:
       requirements:
         ingress:
           ing1:
-            node: oai-ran
+            node: oai-cu
+            relationship:
+              type: tosca.relationships.DependsOn
+        nssi: nssi_3
+      type: tosca.nodes.JOX.NSSI
+    nss5:
+      requirements:
+        ingress:
+          ing1:
+            node: oai-du
             relationship:
               type: tosca.relationships.DependsOn
         nssi: nssi_3
@@ -2458,7 +2483,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.184.36.0/24"
+      cidr: "10.206.29.0/24"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -2564,7 +2589,7 @@ topology_template:
       properties:
         charm: 'cs:mysql-58'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2578,9 +2603,9 @@ topology_template:
     oai-hss:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
+        charm: 'cs:~navid-nikaein/xenial/oai-hss-17'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2674,9 +2699,9 @@ topology_template:
     oai-mme:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-mme-18'
+        charm: 'cs:~navid-nikaein/xenial/oai-mme-19'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2690,9 +2715,9 @@ topology_template:
     oai-spgw:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm:  'cs:~navid-nikaein/xenial/oai-spgw-16'
+        charm:  'cs:~navid-nikaein/xenial/oai-spgw-18'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2754,7 +2779,7 @@ topology_template:
           type: tosca.policy.placement  # New
           container_type: region
           container_number: 1
-    VDU_oai-enb:
+    VDU_oai-cu:
       type: tosca.nodes.nfv.VDU.Compute
       artifacts:
         sw_image:
@@ -2762,7 +2787,7 @@ topology_template:
           properties:
             supported_virtualisation_environments:
               entry_schema: default
-              type: kvm
+              type: lxc
       capabilities:
         host:
           type: tosca.capabilities.Compute
@@ -2773,7 +2798,7 @@ topology_template:
       properties:
         port_def:
           type: tosca.capabilities.Endpoint
-          port_name: oai-enb_port
+          port_name: oai-cu_port
 #        tag_usrp:
 #          type: tosca.capabilities.Endpoint
 #          protocol:
@@ -2788,7 +2813,7 @@ topology_template:
           type: tosca.policy.placement  # New
           container_type: region
           container_number: 1
-    VDU_oai-rru:
+    VDU_oai-du:
       type: tosca.nodes.nfv.VDU.Compute
       artifacts:
         sw_image:
@@ -2796,7 +2821,7 @@ topology_template:
           properties:
             supported_virtualisation_environments:
               entry_schema: default
-              type: kvm
+              type: none
       capabilities:
         host:
           type: tosca.capabilities.Compute
@@ -2807,7 +2832,7 @@ topology_template:
       properties:
         port_def:
           type: tosca.capabilities.Endpoint
-          port_name: rru_port
+          port_name: oai-du_port
       #      attributes:
       #        endpoint:
       #          type: tosca.capabilities.Endpoint
@@ -2822,7 +2847,7 @@ topology_template:
       properties:
         charm:  'cs:~navid-nikaein/xenial/flexran-rtc-17'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -2830,38 +2855,38 @@ topology_template:
           node: VDU_flexran
           relationship: tosca.relationships.HostedOn
         req2:
-          node: oai-enb
+          node: oai-cu
           relationship: tosca.relationships.AttachesTo
         req3:
-          node: oai-rru
+          node: oai-du
           relationship: tosca.relationships.AttachesTo
-    oai-enb:
+    oai-cu:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-enb-33'
+        charm: 'cs:~navid-nikaein/xenial/oai-enb-43'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
         req1:
-          node: VDU_oai-enb
+          node: VDU_oai-cu
           relationship: tosca.relationships.HostedOn
-        req2:
-          node: oai-rru
-          relationship: tosca.relationships.AttachesTo
+#        req2:
+#          node: oai-du
+#          relationship: tosca.relationships.AttachesTo
 
-    oai-rru:
+    oai-du:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm:  'cs:~navid-nikaein/xenial/oai-rru-15'
+        charm:  'cs:~navid-nikaein/xenial/oai-enb-43'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
         req1:
-          node: VDU_oai-rru
+          node: VDU_oai-du
           relationship: tosca.relationships.HostedOn
 
     flexran_port:
@@ -2872,21 +2897,21 @@ topology_template:
         link:
           node: *data_network_1
           type: tosca.nodes.network.Network
-    oai-enb_port:
+    oai-cu_port:
       type: tosca.nodes.network.Port
       requirements:
         binding:
-          node: VDU_oai-enb
+          node: VDU_oai-cu
         link:
-          node: *data_network_2
+          node: *data_network_1
           type: tosca.nodes.network.Network
-    rru_port:
+    oai-du_port:
       type: tosca.nodes.network.Port
       requirements:
         binding:
-          node: VDU_oai-rru
+          node: VDU_oai-du
         link:
-          node: *data_network_2
+          node: *data_network_3
           type: tosca.nodes.network.Network
 EOF
 
@@ -3029,7 +3054,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.184.36.0/24"
+      cidr: "10.206.29.0/24"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -3135,7 +3160,7 @@ topology_template:
       properties:
         charm: 'cs:mysql-58'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -3149,9 +3174,9 @@ topology_template:
     oai-hss:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
+        charm: 'cs:~navid-nikaein/xenial/oai-hss-17'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -3217,7 +3242,7 @@ topology_template:
       properties:
         charm: 'cs:~navid-nikaein/trusty/oai-epc-27'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -3307,9 +3332,9 @@ topology_template:
     oai-enb:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-enb-33'
+        charm: 'cs:~navid-nikaein/xenial/oai-enb-43'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -3324,7 +3349,7 @@ topology_template:
       properties:
         charm:  'cs:~navid-nikaein/trusty/oai-rrh-10'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -3384,7 +3409,7 @@ relationships_template:
     target:
       inputs:
         name: ing1
-        node: oai-epc
+        node: oai-mme
         type: tosca.relationships.DependsOn
       node: nss_second
       parameters: nssi_2
@@ -3393,7 +3418,7 @@ relationships_template:
     source:
       inputs:
         name: eg1
-        node: oai-epc
+        node: oai-spgw
         type: tosca.relationships.AttachesTo
       node: nss_first
       parameters: nssi_2
@@ -3420,7 +3445,7 @@ topology_template:
       requirements:
         ingress:
           ing1:
-            node: oai-epc
+            node: oai-mme
             relationship:
               type: tosca.relationships.DependsOn
         nssi: nssi_2
@@ -3429,7 +3454,7 @@ topology_template:
       requirements:
         egress:
           eg1:
-            node: oai-epc
+            node: oai-spgw
             relationship:
               type: tosca.relationships.AttachesTo
         nssi: nssi_2
@@ -3490,7 +3515,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: "10.184.36.0/24"
+      cidr: "10.206.29.0/24"
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -3596,7 +3621,7 @@ topology_template:
       properties:
         charm: 'cs:mysql-58'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -3610,9 +3635,9 @@ topology_template:
     oai-hss:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-hss-16'
+        charm: 'cs:~navid-nikaein/xenial/oai-hss-17'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -3642,7 +3667,7 @@ EOF
 	cat >>$desc_file <<EOF
 topology_template:
   node_templates:
-    VDU_oai-epc:
+    VDU_oai-mme:
       type: tosca.nodes.nfv.VDU.Compute
       artifacts:
         sw_image:
@@ -3658,11 +3683,11 @@ topology_template:
           properties: "$machine_flavor"
         os:
           type: tosca.capabilities.OperatingSystem
-          properties: "ubuntu_14_64"
+          properties: "ubuntu_16_64"
       properties:
         port_def:
           type: tosca.capabilities.Endpoint
-          port_name: oai-epc_port
+          port_name: oai-mme_port
 #      attributes:
 #        endpoint:
 #          type: tosca.capabilities.Endpoint
@@ -3673,29 +3698,81 @@ topology_template:
           container_type: region
           container_number: 1
 
-    oai-epc:
+    VDU_oai-spgw:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: kvm
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "$machine_flavor"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "ubuntu_16_64"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: oai-spgw_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "172.24.11.2"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    oai-mme:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/trusty/oai-epc-27'
+        charm: 'cs:~navid-nikaein/xenial/oai-mme-19'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
         req1:
-          node: VDU_oai-epc
+          node: VDU_oai-mme
           relationship: tosca.relationships.HostedOn
         req2:
           node: oai-spgw
           relationship: tosca.relationships.AttachesTo
 
-    oai-epc_port:
+    oai-spgw:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm:  'cs:~navid-nikaein/xenial/oai-spgw-18'
+        endpoint: localhost-borer
+        model: default-1
+        vendor: $pkg_vendor
+        version: $pkg_version
+      requirements:
+        req1:
+          node: VDU_oai-spgw
+          relationship: tosca.relationships.HostedOn
+
+    oai-mme_port:
       type: tosca.nodes.network.Port
       requirements:
         binding:
-          node: VDU_oai-epc
+          node: VDU_oai-mme
         link:
           node: *data_network_1
+          type: tosca.nodes.network.Network
+
+    oai-spgw_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai-spgw
+        link:
+          node: *data_network_2
           type: tosca.nodes.network.Network
 EOF
     elif [ "$2" == "nssi_3" ] ; then
@@ -3741,7 +3818,7 @@ topology_template:
       properties:
         charm: 'cs:~navid-nikaein/trusty/oaisim-enb-ue-8'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -3868,7 +3945,7 @@ dsl_definitions:
     properties:
       network_name: "net1"
       ip_version: 4
-      cidr: '10.184.36.0/24'
+      cidr: '10.206.29.0/24'
       start_ip: ""
       end_ip: ""
       gateway_ip: "0.0.0.0"
@@ -3970,7 +4047,7 @@ topology_template:
       properties:
         charm: 'cs:vnf1'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:
@@ -3986,7 +4063,7 @@ topology_template:
       properties:
         charm: 'cs:vnf2'
         endpoint: localhost-borer
-        model: default
+        model: default-1
         vendor: $pkg_vendor
         version: $pkg_version
       requirements:

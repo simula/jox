@@ -1,17 +1,35 @@
 https://blog.simos.info/how-to-make-your-lxd-containers-get-ip-addresses-from-your-lan-using-a-bridge/
 
 # macvtap
-sudo ip link add link enp0s31f6 name macvtap0 address ec:21:e5:64:44:58 type macvtap mode bridge
 sudo ip link add link enp0s31f6 name macvtap0 address 52:54:00:b8:9c:58 type macvtap mode bridge
 sudo ip link set macvtap0 up
 ip link show macvtap0
 
 
 
-sudo ip link add link enp0s31f6 name macvlan0 address 52:54:00:b8:9c:33 type macvlan mode bridge
+sudo ip link add link virbr0 name macvlan0 address 52:54:00:b8:9c:35 type macvlan mode bridge
 sudo ip link set macvlan0 up
 ip link show macvlan0
 
+sudo systemctl stop lxd
+sudo systemctl stop lxd.socket
+sudo systemctl start lxd.socket
+
+
+config: {}
+description: Default LXD profile
+devices:
+  eth0:
+    name: eth0
+    nictype: macvlan
+    parent: macvlan0
+    type: nic
+  root:
+    path: /
+    pool: lxd
+    type: disk
+name: default
+used_by: []
 
 
 
@@ -21,7 +39,7 @@ devices:
   eth0:
     name: eth0
     nictype: macvlan
-    parent: macvtap0
+    parent: macvlan0
     type: nic
   eth1:
     name: eth1
@@ -52,7 +70,9 @@ ip link show macvlanvepa0
  qemu -net nic,model=virtio,addr=52:54:00:b8:9c:60 -net tap,fd=3 3<>/dev/tap11
  
 
-uvt-kvm create machine1  release=xenial --memory 1024 --cpu 1 --disk 3  --ssh-public-key-file /home/borer/.ssh/id_juju2.pub --password linux
+uvt-kvm create machine1  release=xenial --memory 1024 --cpu 1 --disk 3  --ssh-public-key-file /home/borer/.ssh/id_rsa.pub --password linux
+uvt-kvm create machine10  release=xenial --memory 2048 --cpu 1 --disk 10  --ssh-public-key-file /home/borer/.ssh/id_rsa.pub --password linux
+uvt-kvm create machine_dhcp  release=trusty --memory 1024 --cpu 1 --disk 3  --ssh-public-key-file /home/pou/.ssh/id_rsa.pub --password linux
 
 
 in order to link lxd to kvm:
@@ -135,7 +155,7 @@ sudo apt-get update
 sudo apt-get install libuhd-dev libuhd003 uhd-host
 
 
-uvt-kvm create machine1  release=xenial --memory 1024 --cpu 1 --disk 3 --bridge macvtap0  --ssh-public-key-file /home/borer/.ssh/id_juju2.pub --password linux
+uvt-kvm create machine1  release=xenial --memory 1024 --cpu 1 --disk 5 --bridge macvtap0  --ssh-public-key-file /home/borer/.ssh/id_juju2.pub --password linux
 
 
 kvm -hda /home/borer/Downloads/ubuntu-16.04-server-amd64.img -netdev tap,id=net0,ifname=tap0,vhost=on -device e1000,netdev=net0,mac=52:54:00:12:34:60 -smp 1 -m 1G -daemonize -vnc :0

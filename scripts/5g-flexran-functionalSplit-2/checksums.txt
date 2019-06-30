@@ -1,0 +1,4 @@
+ff416dedba2abdb0f1af91356318ed2c  nsi/5g-flexran-functionalSplit-2.yaml
+69fea4ed0e37dcf6e76cd9bd1fd2aa8a  nssi/nssi_1.yaml
+74ea87bc3e8040a757ee9191a763be52  nssi/nssi_2.yaml
+79042586cdbdc50930f0e25f663d0e42  nssi/nssi_3.yaml

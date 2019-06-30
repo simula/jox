@@ -101,7 +101,8 @@ KVM="kvm"
 KVM_2="qemu"
 
 LXC="lxc"
-PHY="phy" # physical machine
+PHY="vmware" # physical machine
+# PHY="phy" # physical machine
 PHY_2="none" # physical machine
 
 """  config param """

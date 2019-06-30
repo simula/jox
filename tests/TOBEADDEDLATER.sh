@@ -12,11 +12,16 @@ juju model-config enable-os-refresh-update=false enable-os-upgrade=false
 juju add-model default-2
 juju model-config enable-os-refresh-update=false enable-os-upgrade=false
 
-sudo rm /etc/systemd/system/jujud*
+
+
+sudo rm /etc/systemd/system/*jujud*
 sudo rm -rf /var/lib/juju
 sudo rm /usr/bin/juju-run
+sudo rm -rf /etc/profile.d/*juju*
+sudo rm -rf /etc/systemd/system/*juju*
 
 
+nymphe-cloud-edu
 
 sudo apt-get update
 sudo apt-get upgrade
@@ -38,8 +43,9 @@ lxc config set core.https_address [::]:8443
 lxc config set core.trust_password something-secure
 
 #2- local machine where you want to manage lxd for the remote machine
-lxc remote add pou_remote 192.168.1.88
-lxc remote add pou_remote_router 192.168.1.5
+lxc remote add pou_remote_home 192.168.1.4
+
+
 
 
 
@@ -49,7 +55,53 @@ sudo rabbitmqctl start_app
 
 
 
-         {MCC="208"; MNC="94"; MME_GID="4" ; MME_CODE="1"; }                   # YOUR GUMMEI CONFIG HERE
-    # TA (mcc.mnc:tracking area code) DEFAULT = 208.34:1
-         {MCC="208"; MNC="95";  TAC="1"; }                                 # YOUR TAI CONFIG HERE
+curl http://192.168.1.60:9999/stats/ | jq '.'
+curl -X POST http://192.168.1.32:9999/slice/enb/-1 --data-binary "@slices_demo.json"
 
+curl -X POST http://192.168.1.32:9999/ue_slice_assoc/enb/-1/ue/12286/slice/1
+
+
+
+
+lxc stop c1
+lxc network attach lxdbr0 c1 eth0 eth0
+lxc config device set machine-flexran-1 eth0 ipv4.address 192.168.1.32
+lxc start c1
+
+
+
+
+ mme_ip_address      = ( { ipv4       = "192.168.1.11";
+                              ipv6       = "192:168:30::17";
+                              active     = "yes";
+                              preference = "ipv4";
+                            },
+                            { ipv4       = "192.168.1.13";
+                              ipv6       = "192:168:30::17";
+                              active     = "yes";
+                              preference = "ipv4";
+                            }
+                          );
+
+
+
+# connections from outside
+sudo iptables -I FORWARD -o virbr0 -d  192.168.122.73 -j ACCEPT
+sudo iptables -t nat -I PREROUTING -p tcp --dport 9867 -j DNAT --to 192.168.122.73:22
+
+
+
+# Masquerade local subnet
+sudo iptables -I FORWARD -o virbr0 -d  192.168.122.73 -j ACCEPT
+sudo iptables -t nat -A POSTROUTING -s 192.168.122.0/24 -j MASQUERADE
+sudo iptables -A FORWARD -o virbr0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+sudo iptables -A FORWARD -i virbr0 -o enp0s31f6 -j ACCEPT
+sudo iptables -A FORWARD -i virbr0 -o lo -j ACCEPT
+
+
+#for masquarading, we need to add the following iptable rule:
+iptables -t nat -A POSTROUTING -s [srcIP/24 -o [ifname] -j MASQUERADE
+example:
+iptables -t nat -A POSTROUTING -s 192.168.122.0/24 -o enp0s31f6 -j MASQUERADE
+
+sudo iptables  -t nat -A POSTROUTING -o enp0s31f6 -s 192.168.122.0/24 -j MASQUERADE
