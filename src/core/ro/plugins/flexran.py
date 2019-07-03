@@ -876,7 +876,7 @@ class FlexRAN_plugin(object):
                 self.logger.critical("Error while sending response: {}".format(ex))
 
     def goodbye(self):
-        print("\n You are now leaving FlexRAN plugin microservice framework .....")
+        print(colored('[*] You are now leaving FlexRAN plugin microservice framework .....', 'red'))
         sys.exit(0)
 
 

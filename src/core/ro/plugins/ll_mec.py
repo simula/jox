@@ -41,26 +41,23 @@ import pika
 import os, time, sys
 import json
 import logging
+
+logging.basicConfig(format='%(asctime)s] %(filename)s:%(lineno)d %(levelname)s '
+                           '- %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 import requests
 import datetime
 from threading import Thread
 from termcolor import colored
 import argparse
+import copy
 import pika.exceptions as pika_exceptions
 dir_path = os.path.dirname(os.path.realpath(__file__))
-dir_parent_path = os.path.dirname(os.path.abspath(__file__ + "/../"))
-dir_JOX_path = os.path.dirname(os.path.abspath(__file__ + "../../../../../"))
+dir_parent_path = os.path.dirname(os.path.abspath(__file__ + "../../../../../"))
+dir_JOX_path = os.path.dirname(os.path.abspath(__file__ + "/../../../"))
 sys.path.append(dir_parent_path)
 sys.path.append(dir_path)
-sys.path.append(dir_parent_path)
-sys.path.append(dir_path)
-
 from src.common.config import gv
 from src.core.ro.plugins import es
-logging.basicConfig(format='%(asctime)s] %(filename)s:%(lineno)d %(levelname)s '
-                           '- %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-
-
 
 class ll_mec_plugin(object):
     def __init__(self, flex_log_level=None,):
@@ -107,12 +104,12 @@ class ll_mec_plugin(object):
         self.gv.ELASTICSEARCH_PORT = self.jox_config['elasticsearch-config']["elasticsearch-port"]
         self.gv.ELASTICSEARCH_LOG_LEVEL = self.jox_config['elasticsearch-config']["elasticsearch-log-level"]
         #### llMEC and RBMQ configuration
-        self.gv.LL_MEC_HOST = self.jox_config["ll_mec_config"]["host"]
-        self.gv.LL_MEC_PORT = self.jox_config["ll_mec_config"]["port"]
-        self.gv.RBMQ_QUEUE_LL_MEC = self.jox_config["ll_mec_plugin_config"]["rabbit-mq-queue"]
-        self.gv.LL_MEC_PLUGIN_STATUS = self.jox_config["ll_mec_plugin_config"]["plugin-status"]
-        self.gv.LL_MEC_TIMEOUT_REQUEST = self.jox_config["ll_mec_plugin_config"]['timeout-request']
-        self.gv.LL_MEC_ES_INDEX_NAME = self.jox_config["ll_mec_plugin_config"]['es-index-name']
+        self.gv.LL_MEC_HOST = self.jox_config["llmec-config"]["host"]
+        self.gv.LL_MEC_PORT = self.jox_config["llmec-config"]["port"]
+        self.gv.RBMQ_QUEUE_LL_MEC = self.jox_config["llmec-plugin-config"]["rabbit-mq-queue"]
+        self.gv.LL_MEC_PLUGIN_STATUS = self.jox_config["llmec-plugin-config"]["plugin-status"]
+        self.gv.LL_MEC_TIMEOUT_REQUEST = self.jox_config["llmec-plugin-config"]['timeout-request']
+        self.gv.LL_MEC_ES_INDEX_NAME = self.jox_config["llmec-plugin-config"]['es-index-name']
         self.gv.RBMQ_SERVER_IP = self.jox_config['rabbit-mq-config']["rabbit-mq-server-ip"]
         self.gv.RBMQ_SERVER_PORT = self.jox_config['rabbit-mq-config']["rabbit-mq-server-port"]
         #### LL_MEC plugin local variables
@@ -134,11 +131,11 @@ class ll_mec_plugin(object):
 
     def build(self):
         try:
-            with open(''.join([self.dir_config, gv.LL_MEC_PLUGIN_SLICE_CONFIG_FILE])) as data_file:
-                data = json.load(data_file)
-                data_file.close()
-            self.ll_mec_default_slice_config = data  # This config is to be used if DL % excceed 100
-            self.logger.info(" LL_MEC default endpoint is {}".format(self.LL_MEC_endpoint))
+            # with open(''.join([self.dir_config, gv.LL_MEC_PLUGIN_SLICE_CONFIG_FILE])) as data_file:
+            #     data = json.load(data_file)
+            #     data_file.close()
+            # self.ll_mec_default_slice_config = data  # This config is to be used if DL % excceed 100
+            self.logger.info(" LL_MEC default endpoint is {}".format(self.ll_mec_endpoint))
             if self.gv.ELASTICSEARCH_ENABLE:
                 self.jesearch = es.JESearch(self.gv.ELASTICSEARCH_HOST, self.gv.ELASTICSEARCH_PORT,
                                             self.gv.ELASTICSEARCH_LOG_LEVEL)
@@ -328,7 +325,7 @@ class ll_mec_plugin(object):
             requests.get(self.ll_mec_endpoint + "stats/")
             return True
         except Exception as ex:
-            message=" FlexRAN endpoint {} is not active".format(self.flexran_endpoint, ex)
+            message=" llMEC endpoint {} is not active".format(self.ll_mec_endpoint, ex)
             self.logger.info(message)
             return False
 
@@ -376,7 +373,8 @@ class ll_mec_plugin(object):
                 self.logger.critical("Error while sending response: {}".format(ex))
 
     def goodbye(self):
-        print("\n You are now leaving LL_MEC plugin framework .....")
+        print(colored('[*] You are now leaving llMEC plugin microservice framework .....', 'red'))
+        sys.exit(0)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process commandline arguments and override configurations in jox_config.json')
