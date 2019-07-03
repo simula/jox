@@ -216,7 +216,7 @@ class JESearch(object):
             return [True, (self.es.get(index_page, doc_type='post', id=1)['_source'])]
         except Exception as ex:
             message = "Error while getting the source of the index of {} from elasticsearch: {}".format(index_page, ex)
-            self.logger.error(message)
+            self.logger.warning(message)
             return [False, message]
 
     def get_json_from_es(self, index_page, key):

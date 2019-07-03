@@ -181,6 +181,8 @@ class FlexRAN_plugin(object):
                 else:
                     message = "FlexRAN plugin not enabled"
                     self.logger.error(message)
+                    time.sleep(2)
+                    self.goodbye()
             except pika_exceptions.ConnectionClosed or \
                    pika_exceptions.ChannelAlreadyClosing or \
                    pika_exceptions.ChannelClosed or \
@@ -198,10 +200,16 @@ class FlexRAN_plugin(object):
                         if self.gv.FLEXRAN_ES_INDEX_STATUS == "disabled":
                             message = " Elasticsearch is disabled !! No more notifications are maintained"
                             self.logger.info(message)
+                    else:
+                        message = "Notify >> FlexRAN endpoint not enabled"
+                        self.logger.debug(message)
                     time.sleep(10) # Periodic Notification
+
                 else:
-                    message = "FlexRAN plugin not enabled"
+                    message = "Notify >> FlexRAN plugin not enabled"
                     self.logger.error(message)
+                    self.goodbye()
+
             except pika_exceptions.ConnectionClosed or \
                    pika_exceptions.ChannelAlreadyClosing or \
                    pika_exceptions.ChannelClosed or \
@@ -539,7 +547,7 @@ class FlexRAN_plugin(object):
                                 'percentage']
                             default_slice_downlink_config['percentage'] = downlink_resources + self.slice_config['dl'][0][
                                 'percentage']
-                            # del default_slice_uplink_config['firstRb']
+
                             final_config = json.dumps(
                                 {'dl': [default_slice_downlink_config], 'ul': [default_slice_uplink_config]})
                             response = requests.post(req, data=final_config, headers=header)
@@ -571,7 +579,6 @@ class FlexRAN_plugin(object):
                             response = requests.post(req)
                             time.sleep(2)
 
-                            # Swap FirstRB for Uplink
                             # config for new slice
                             req = "{}slice/enb/{}".format(self.flexran_endpoint, enb_id)
                             default_slice_uplink_config['id'] = slice_id
@@ -656,7 +663,7 @@ class FlexRAN_plugin(object):
             slice_config = {"ul":[{"id": param['nsi_id'],"percentage":0}],"dl":[{"id": param['nsi_id'],"percentage":0}]}
             req = "{}slice/enb/{}".format(self.flexran_endpoint, str(param['enb_id']))
             header = {'Content-Type':  'application/octet-stream'}
-            response = requests.post(req, data=slice_config, headers =header)
+            response = requests.post(req, data=json.dumps(slice_config), headers =header)
             return response.text
         except Exception as ex:
             print(ex)
@@ -751,8 +758,8 @@ class FlexRAN_plugin(object):
             requests.get(self.flexran_endpoint + "stats/")
             return True
         except Exception as ex:
-            message=" FlexRAN endpoint {} is not active".format(self.flexran_endpoint, ex)
-            self.logger.info(message)
+            message="FlexRAN endpoint {} is not active".format(self.flexran_endpoint, ex)
+            self.logger.debug(message)
             return False
 
     def get_num_eNB(self):
@@ -869,7 +876,9 @@ class FlexRAN_plugin(object):
                 self.logger.critical("Error while sending response: {}".format(ex))
 
     def goodbye(self):
-        print("\n You are now leaving FlexRAN plugin framework .....")
+        print("\n You are now leaving FlexRAN plugin microservice framework .....")
+        sys.exit(0)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process commandline arguments and override configurations in jox_config.json')
