@@ -87,16 +87,16 @@ class FlexRAN_plugin(object):
                 data_file.close()
             self.jox_config = data
         except IOError as ex:
-            message = "Could not load JOX Configuration file.I/O error({0}): {1}".format(ex.errno, ex.strerror)
+            message = "Could not load Plugin Configuration file.I/O error({0}): {1}".format(ex.errno, ex.strerror)
             self.logger.error(message)
         except ValueError as error:
             message = "invalid json"
             self.logger.error(message)
         except Exception as ex:
-            message = "Error while trying to load JOX configuration"
+            message = "Error while trying to load plugin configuration"
             self.logger.error(message)
         else:
-            message = " JOX Configuration file Loaded"
+            message = " Plugin Configuration file Loaded"
             self.logger.info(message)
 
         #### Elasticsearch configuration
@@ -204,7 +204,6 @@ class FlexRAN_plugin(object):
                         message = "Notify >> FlexRAN endpoint not enabled"
                         self.logger.debug(message)
                     time.sleep(10) # Periodic Notification
-
                 else:
                     message = "Notify >> FlexRAN plugin not enabled"
                     self.logger.error(message)
