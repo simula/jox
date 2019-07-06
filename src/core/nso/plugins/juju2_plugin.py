@@ -160,7 +160,7 @@ class JujuModelServiceController(object):
         self.logger = logging.getLogger('jox.JujuModelServiceController')
         self.controller = None
         self.enb_id = None
-        self.timeout = 10
+        self.timeout = 20
 
         self.controller_name = ""  # juju controller name
         self.model_name = ""  # juju model name
@@ -369,4 +369,4 @@ class JujuModelServiceController(object):
 
     def on_timeout(self,):
         self.connection.close()
-        self.gv.FLEXRAN_PLUGIN_STATUS =self.gv.DISABLED
+        # self.gv.FLEXRAN_PLUGIN_STATUS =self.gv.DISABLED
