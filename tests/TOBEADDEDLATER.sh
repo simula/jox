@@ -35,6 +35,14 @@ sudo apt-get install tmux curl bridge-utils cloud-image-utils cloud-utils cpu-ch
 sudo add-apt-repository ppa:ettusresearch/uhd
 sudo apt-get update
 sudo apt-get install libuhd-dev libuhd003 uhd-host
+sudo /usr/lib/uhd/utils/uhd_images_downloader.py
+
+lxc config set juju-3ad4c5-4 security.privileged true
+lxc restart juju-3ad4c5-4
+sudo lxc config device add juju-3ad4c5-4 5G_card usb vendorid=2500 productid=0021 path=/usr/bin/uhd_usrp_probe
+stgraber@dakara:~$ lxc config device add c1 sony usb vendorid=0fce productid=51da
+
+sudo lxc config device add net2  path=/usr/bin/uhd_usrp_probe
 
 
 # remote lxd
@@ -43,11 +51,12 @@ lxc config set core.https_address [::]:8443
 lxc config set core.trust_password something-secure
 
 #2- local machine where you want to manage lxd for the remote machine
-lxc remote add pou_remote_home 192.168.1.4
+lxc remote add sakura_remote_home 192.168.1.39
 
 
 
-
+passthrough usrp to lxc  container:
+ sudo lxc config device add net2 5G_card usb vendorid=2500 productid=0021 path=/usr/bin/uhd_usrp_probe
 
 sudo rabbitmqctl stop_app
 sudo rabbitmqctl reset
@@ -100,8 +109,27 @@ sudo iptables -A FORWARD -i virbr0 -o lo -j ACCEPT
 
 
 #for masquarading, we need to add the following iptable rule:
-iptables -t nat -A POSTROUTING -s [srcIP/24 -o [ifname] -j MASQUERADE
+iptables -t nat -A POSTROUTING -s [srcIP/24 -o [ifname] -j MASQUERADEuh
 example:
 iptables -t nat -A POSTROUTING -s 192.168.122.0/24 -o enp0s31f6 -j MASQUERADE
 
 sudo iptables  -t nat -A POSTROUTING -o enp0s31f6 -s 192.168.122.0/24 -j MASQUERADE
+
+
+
+juju config oai-du node_function="enb" eth=enp0s31f6 eutra_band=17 downlink_frequency=737500000L uplink_frequency_offset=-30000000
+juju config oai-cu node_function="enb" eth=eth0 eutra_band=17 downlink_frequency=737500000L uplink_frequency_offset=-30000000
+
+
+
+
+juju config oai-enb node_function="du" eth=enp0s31f6 eutra_band=17 downlink_frequency=737500000L uplink_frequency_offset=-30000000 \
+cu_if_name=eth0 cu_ip_addr=192.168.1.11   \
+du_if_name=enp0s31f6 du_ip_addr=192.168.1.10
+
+
+
+
+juju config oai-cu node_function="cu" eth=eth0 eutra_band=17 downlink_frequency=737500000L uplink_frequency_offset=-30000000 \
+cu_if_name=eth0 cu_ip_addr=192.168.1.11   \
+du_if_name=enp0s31f6 du_ip_addr=192.168.1.10

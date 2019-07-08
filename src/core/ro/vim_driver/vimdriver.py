@@ -311,18 +311,31 @@ class LxcDriver(object):
 					cmd_lxc_create = ["lxc", "launch", "ubuntu:{}".format(new_machine.os_version),
 									  "{}:{}".format(self.lxc_anchor, container_name)]
 					#"""
-					try:
-						machine_series = self.gv.OS_SERIES[new_machine.os_version]
-						prebuilt_image = self.prebuilt_image[machine_series]
-						cmd_lxc_create = ["lxc", "launch", "{}:{}".format(self.lxc_anchor, prebuilt_image), "{}:{}".format(self.lxc_anchor, container_name)]
-						isPrebuiltImage = False
-						# isPrebuiltImage = True
-					except:
+
+					machine_series = self.gv.OS_SERIES[new_machine.os_version]
+					prebuilt_image = self.prebuilt_image[machine_series]
+					cmd_lxc_create = ["lxc", "launch", "{}:{}".format(self.lxc_anchor, prebuilt_image), "{}:{}".format(self.lxc_anchor, container_name)]
+					cmd_lxc_create_out = await run_command(cmd_lxc_create)
+					if 'error' in str(cmd_lxc_create_out).lower() and 'not' in str(cmd_lxc_create_out).lower() and 'found' in str(cmd_lxc_create_out).lower():
 						cmd_lxc_create = ["lxc", "launch", "ubuntu:{}".format(new_machine.os_version), "{}:{}".format(self.lxc_anchor, container_name)]
+						cmd_lxc_create_out = await run_command(cmd_lxc_create)
+					else:
+						isPrebuiltImage = False
+
+					# try:
+					# 	machine_series = self.gv.OS_SERIES[new_machine.os_version]
+					# 	prebuilt_image = self.prebuilt_image[machine_series]
+					# 	cmd_lxc_create = ["lxc", "launch", "{}:{}".format(self.lxc_anchor, prebuilt_image), "{}:{}".format(self.lxc_anchor, container_name)]
+					# 	cmd_lxc_create_out = await run_command(cmd_lxc_create)
+					# 	isPrebuiltImage = False
+					# 	# isPrebuiltImage = True
+					# except:
+					# 	cmd_lxc_create = ["lxc", "launch", "ubuntu:{}".format(new_machine.os_version), "{}:{}".format(self.lxc_anchor, container_name)]
+					# 	cmd_lxc_create_out = await run_command(cmd_lxc_create)
 					##"""
 					# cmd_lxc_create = ["lxc", "launch", "-p", "default", "-p", "bridgeprofile", "juju/xenial/amd64", "{}:{}".format(self.lxc_anchor, container_name)]
 					# cmd_lxc_create = ["lxc", "launch", "ubuntu:{}".format(new_machine.os_version), "{}:{}".format(self.lxc_anchor, container_name)]
-					cmd_lxc_create_out = await run_command(cmd_lxc_create)
+
 					self.logger.info(cmd_lxc_create_out)
 					""" Get the ip addresss of the machine"""
 					machine_ip_tmp = list()
@@ -794,9 +807,10 @@ class KvmDriver(object):
 					juju_cmd = "".join(["ssh:", self.gv.SSH_USER, "@", machine_ip, ":", ssh_key_private])
 
 					juju_machine = await model.add_machine(juju_cmd)
-				except:
+				except Exception as ex:
 					message = "There is error in the ip address of the machine, and thus the machine can not be addedd to juju model"
 					self.logger.error(message)
+					raise ex
 
 
 			else:

@@ -67,13 +67,13 @@
     "lxc": [
       {
         "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "default-kvm-bridge",
+        "pop-name": "default-lxc-bridge",
         "zone": "1",
         "scope": "private",
         "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "domain": "192.168.122.0/24",
+        "domain": "192.168.1.0/24",
         "_Comment_3": "lxc-anchor is the name of the remote lxc endpoint. To get this name, just type in the terminal (lxc remote list), The default local lxc endpoint is 'default'",
-        "lxc-anchor": "local",
+        "lxc-anchor": "sakura_remote_home",
         "_Comment_4": "ssh config",
         "ssh-private-key": "",
         "ssh-user": "",
@@ -93,7 +93,7 @@
         "scope": "private",
         "domain": "192.168.1.0/24",
         "_Comment_3": "lxc-anchor is the name of the remote lxc endpoint. To get this name, just type in the terminal (lxc remote list), The default local lxc endpoint is 'default'",
-        "lxc-anchor": "pou_remote_home",
+        "lxc-anchor": "local",
         "_Comment_4": "ssh config",
         "ssh-private-key": "",
         "ssh-user": "",
@@ -297,7 +297,7 @@
       "cloud-type": "manual",
       "cloud-endpoint": "192.168.1.81:17070",
       "cloud-username": "admin",
-      "cloud-password": "edd666e4163b5c59da0c893aa2120ce8"
+      "cloud-password": "0f771f7a3dd172105efc539fd3d93406"
     },
     {
       "description": "credentials of your juju controller",
@@ -311,9 +311,9 @@
       "description": "credentials of your juju controller",
       "cloud-name": "localhost-borer",
       "cloud-type": "lxd",
-      "cloud-endpoint": "192.168.122.206:17070",
+      "cloud-endpoint": "192.168.1.32:17070",
       "cloud-username": "admin",
-      "cloud-password": "07517ea99ea20b21ce0c5638dc3643f8"
+      "cloud-password": "8b039930a618e3cd794598d987ca32b7"
     },
     {
       "description": "credentials of your juju controller",
