@@ -185,49 +185,49 @@ install_python_packages(){
     echo_info "Installing python libraries"
 
     echo_info "Installing cryptography"
-    sudo pip3 install --force-reinstall cryptography==2.4.2 --user
+    pip3 install --force-reinstall cryptography==2.4.2 --user
     echo_success "cryptography is successfully installed"
 
     echo_info "Installing paramiko"
-    sudo pip3 install --force-reinstall paramiko==2.4.2 --user
+    pip3 install --force-reinstall paramiko==2.4.2 --user
     echo_success "paramiko is successfully installed"
 
 
     echo_info "Installing flask"
-    sudo pip3 install flask --user
+    pip3 install flask --user
     echo_success "flask is successfully installed"
 
     echo_info "Installing juju"
-    sudo pip3 install --force-reinstall juju==0.11.6 --user
+    pip3 install --force-reinstall juju==0.11.6 --user
     echo_success "juju is successfully installed"
 
     echo_info "Installing termcolor"
-    sudo pip3 install termcolor --user
+    pip3 install termcolor --user
     echo_success "termcolor is successfully installed"
 
     echo_info "Installing jsonpickle"
-    sudo pip3 install jsonpickle --user
+    pip3 install jsonpickle --user
     echo_success "jsonpickle is successfully installed"
 
     echo_info "Installing pika"
-    sudo pip3 install --force-reinstall pika==0.12.0 --user
+    pip3 install --force-reinstall pika==0.12.0 --user
     echo_success "pika is successfully installed"
 
 
     echo_info "Installing netaddr"
-    sudo pip3 install netaddr --user
+    pip3 install netaddr --user
     echo_success "netaddr is successfully installed"
 
     echo_info "Installing netaddr"
-    sudo pip3 install ipaddress --user
+    pip3 install ipaddress --user
     echo_success "netaddr is successfully installed"
 
     echo_info "Installing elasticsearch"
-    sudo pip3 install elasticsearch --user
+    pip3 install elasticsearch --user
     echo_success "elasticsearch is successfully installed"
 
     echo_info "Installing jsonschema"
-    sudo pip3 install jsonschema --user
+    pip3 install jsonschema --user
     echo_success "jsonschema is successfully installed"
 
 
