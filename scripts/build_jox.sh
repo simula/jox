@@ -181,16 +181,13 @@ install_juju(){
 
     install_uvtool_kvm
 }
+
 install_python_packages(){
     echo_info "Installing python libraries"
 
     echo_info "Installing flask"
     pip3 install flask --user
     echo_success "flask is successfully installed"
-
-    echo_info "Installing juju"
-    pip3 install --force-reinstall juju==0.11.6 --user
-    echo_success "juju is successfully installed"
 
     echo_info "Installing termcolor"
     pip3 install termcolor --user
@@ -199,11 +196,6 @@ install_python_packages(){
     echo_info "Installing jsonpickle"
     pip3 install jsonpickle --user
     echo_success "jsonpickle is successfully installed"
-
-    echo_info "Installing pika"
-    pip3 install --force-reinstall pika==0.12.0 --user
-    echo_success "pika is successfully installed"
-
 
     echo_info "Installing netaddr"
     pip3 install netaddr --user
@@ -221,14 +213,21 @@ install_python_packages(){
     pip3 install jsonschema --user
     echo_success "jsonschema is successfully installed"
 
+    echo_info "Installing juju"
+    pip3 install --force-reinstall juju==0.11.6 --user
+    echo_success "juju is successfully installed"
 
-    echo_info "Installing cryptography"
-    sudo sudo pip3 install --force-reinstall cryptography==2.4.2 --user
-    echo_success "cryptography is successfully installed"
+    echo_info "Installing pika"
+    pip3 install --force-reinstall pika==0.12.0 --user
+    echo_success "pika is successfully installed"
 
     echo_info "Installing paramiko"
     sudo pip3 install --force-reinstall paramiko==2.4.2 --user
     echo_success "paramiko is successfully installed"
+
+    echo_info "Installing cryptography"
+    sudo sudo pip3 install --force-reinstall cryptography==2.4.2 --user
+    echo_success "cryptography is successfully installed"
 
     install_juju
 }
