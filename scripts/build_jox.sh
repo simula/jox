@@ -184,15 +184,6 @@ install_juju(){
 install_python_packages(){
     echo_info "Installing python libraries"
 
-    echo_info "Installing cryptography"
-    sudo pip3 install --force-reinstall cryptography==2.4.2 --user
-    echo_success "cryptography is successfully installed"
-
-    echo_info "Installing paramiko"
-    pip3 install --force-reinstall paramiko==2.4.2 --user
-    echo_success "paramiko is successfully installed"
-
-
     echo_info "Installing flask"
     pip3 install flask --user
     echo_success "flask is successfully installed"
@@ -230,6 +221,14 @@ install_python_packages(){
     pip3 install jsonschema --user
     echo_success "jsonschema is successfully installed"
 
+
+    echo_info "Installing cryptography"
+    sudo sudo pip3 install --force-reinstall cryptography==2.4.2 --user
+    echo_success "cryptography is successfully installed"
+
+    echo_info "Installing paramiko"
+    sudo pip3 install --force-reinstall paramiko==2.4.2 --user
+    echo_success "paramiko is successfully installed"
 
     install_juju
 }
