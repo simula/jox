@@ -41,6 +41,7 @@ global console
 
 # config file param
 CONFIG_FILE= "jox_config.json"
+
 JOX_CONFIG_KEY=(CONFIG_FILE.split('.'))[0]
 
 # BMQ param
@@ -60,6 +61,7 @@ JOX_TIMEOUT_REQUEST is the timeout for a request received by jox server to be se
 """
 JOX_TIMEOUT_REQUEST=0 #(seconds)
 
+
 """  Elasticsearch param """
 ELASTICSEARCH_ENABLE=True
 ELASTICSEARCH_HOSt=""
@@ -73,6 +75,8 @@ KVM_2="qemu"
 
 LXC="lxc"
 PHY="phy" # physical machine
+# PHY="phy" # physical machine
+PHY_2="none" # physical machine
 
 """  config param """
 LOG_FILE=""
