@@ -287,6 +287,13 @@ function main() {
 
     if [ "$INSTALL_PKG" = "1" ] ; then
 	    install_required_packages
+	    sudo adduser $USER docker
+	    newgrp lxd
+	    groups
+
+	    sudo adduser $USER lxd
+	    newgrp lxd
+	    groups
 	    echo_success "###### JoX built successfully !!! ######"
     fi
     if [ "$INSTALL_PKG" = "2" ] ; then
