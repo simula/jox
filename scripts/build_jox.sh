@@ -28,6 +28,7 @@ os_pm_remove="apt-add-repository"
 os_pm_add="add-apt-repository"
 option="-y"
 specific_pkgs="zfsutils-linux"
+ubuntu_cloud_image_version="xenial"
 
 jox_store=/mnt/jox_store
 
@@ -142,9 +143,9 @@ install_uvtool_kvm(){
 }
 
 install_ubuntu_image(){
-    echo_info 'fetching cloud image kvm xenial'
-    $SUDO uvt-simplestreams-libvirt --verbose sync release=xenial arch=amd64
-    echo_success "cloud images was successfully downloaded"
+    echo_info "fetching cloud image kvm $1"
+    $SUDO uvt-simplestreams-libvirt --verbose sync release=$1 arch=amd64
+    echo_success "cloud image $1 was successfully downloaded"
 }
 
 install_elasticsearch(){
@@ -258,8 +259,7 @@ function print_help() {
 This program installs the JoX package dependencies
 -h                                  print this help
 -i | --install-required-pkg         install required packages for build and/or snap process
--x | --install-ubuntu-xenial-kvm    install ubuntu-xenial image for kvm
-
+-u | --ubuntu-cloud-version         Download ubuntu cloud image to be used for creating kvm machines. default image is xenial
 '
   exit $1
 }
@@ -274,10 +274,19 @@ function main() {
             -h | --help | -help )
             print_help 0
             shift;;
-            -x | --install-ubuntu-xenial-kvm )
+
+            -u | --ubuntu-cloud-version)
             INSTALL_PKG=2
-            echo_info "Installing ubuntu xenial image for kvm"
-            shift;;
+            ubuntu_image_version=$2
+            if [ "$ubuntu_image_version" == "" ] ; then
+                ubuntu_image_version=$ubuntu_cloud_image_version
+                shift_val=1
+            else
+                shift_val=2
+            fi
+            echo_info "Ubuntu cloud image $ubuntu_image_version will be downloaded"
+            shift $shift_val;;
+
             *)
             echo_error "Unknown option $1"
             print_help -1
@@ -297,7 +306,7 @@ function main() {
 	    echo_success "###### JoX built successfully !!! ######"
     fi
     if [ "$INSTALL_PKG" = "2" ] ; then
-	    install_ubuntu_image
+	    install_ubuntu_image $ubuntu_image_version
     fi
 }
 
