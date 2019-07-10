@@ -185,7 +185,7 @@ install_python_packages(){
     echo_info "Installing python libraries"
 
     echo_info "Installing cryptography"
-    pip3 install --force-reinstall cryptography==2.4.2 --user
+    sudo pip3 install --force-reinstall cryptography==2.4.2 --user
     echo_success "cryptography is successfully installed"
 
     echo_info "Installing paramiko"
