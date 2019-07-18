@@ -231,9 +231,9 @@ description: $pkg_description
 tosca_definitions_version: tosca_simple_yaml_1_0
 imports: [nssi_1, nssi_2]
 metadata:
-  ID: wordpress
-  author: $pkg_name
-  vendor: $pkg_name
+  ID: $pkg_name
+  author: $pkg_vendor
+  vendor: $pkg_vendor
   version: $pkg_version
   date: $date
 relationships_template:
@@ -480,9 +480,9 @@ description: $pkg_description
 tosca_definitions_version: tosca_simple_yaml_1_0
 imports: [nssi_1, nssi_2]
 metadata:
-  ID: oai-epc
-  author: $pkg_name
-  vendor: $pkg_name
+  ID: $pkg_name
+  author: $pkg_vendor
+  vendor: $pkg_vendor
   version: $pkg_version
   date: $date
 relationships_template:
@@ -849,9 +849,9 @@ description: $pkg_description
 tosca_definitions_version: tosca_simple_yaml_1_0
 imports: [nssi_1, nssi_2, nssi_3]
 metadata:
-  ID: oai-4g
-  author: $pkg_name
-  vendor: $pkg_name
+  ID: $pkg_name
+  author: $pkg_vendor
+  vendor: $pkg_vendor
   version: $pkg_version
   date: $date
 
@@ -1313,9 +1313,9 @@ description: $pkg_description
 tosca_definitions_version: tosca_simple_yaml_1_0
 imports: [nssi_1, nssi_2, nssi_3]
 metadata:
-  ID: oai-5g-cran
-  author: $pkg_name
-  vendor: $pkg_name
+  ID: $pkg_name
+  author: $pkg_vendor
+  vendor: $pkg_vendor
   version: $pkg_version
   date: $date
 
@@ -1829,9 +1829,9 @@ description: $pkg_description
 tosca_definitions_version: tosca_simple_yaml_1_0
 imports: [nssi_1, nssi_2, nssi_3]
 metadata:
-  ID: oai-5g-cran
-  author: $pkg_name
-  vendor: $pkg_name
+  ID: $pkg_name
+  author: $pkg_vendor
+  vendor: $pkg_vendor
   version: $pkg_version
   date: $date
 
@@ -2349,9 +2349,9 @@ description: $pkg_description
 tosca_definitions_version: tosca_simple_yaml_1_0
 imports: [nssi_1, nssi_2, nssi_3]
 metadata:
-  ID: oai-5g-cran
-  author: $pkg_name
-  vendor: $pkg_name
+  ID: $pkg_name
+  author: $pkg_vendor
+  vendor: $pkg_vendor
   version: $pkg_version
   date: $date
 
@@ -2945,9 +2945,9 @@ description: $pkg_description
 tosca_definitions_version: tosca_simple_yaml_1_0
 imports: [nssi_1, nssi_2, nssi_3]
 metadata:
-  ID: oai-nfv-rrh
-  author: $pkg_name
-  vendor: $pkg_name
+  ID: $pkg_name
+  author: $pkg_vendor
+  vendor: $pkg_vendor
   version: $pkg_version
   date: $date
 
@@ -3406,9 +3406,9 @@ description: $pkg_description
 tosca_definitions_version: tosca_simple_yaml_1_0
 imports: [nssi_1, nssi_2, nssi_3]
 metadata:
-  ID: oai-nfv-sim
-  author: $pkg_name
-  vendor: $pkg_name
+  ID: $pkg_name
+  author: $pkg_vendor
+  vendor: $pkg_vendor
   version: $pkg_version
   date: $date
 
@@ -3867,9 +3867,9 @@ imports: ${nsi_subslices[$2-1]}
 tosca_definitions_version: tosca_simple_yaml_1_0
 
 metadata:
-  ID: oai-epc
-  author: $pkg_name
-  vendor: $pkg_name
+  ID: $pkg_name
+  author: $pkg_vendor
+  vendor: $pkg_vendor
   version: $pkg_version
   date: $date
 relationships_template:

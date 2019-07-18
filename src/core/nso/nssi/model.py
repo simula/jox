@@ -217,8 +217,8 @@ class JModel(JSONEncoder):
             machine_key = allocated_machine
             new_service.to = machine_key
             
-            loop.run(self.juju_serviceModel.deploy_service(new_service))
-            self.services.append(new_service) 
+            loop.run(self.juju_serviceModel.deploy_service(new_service, self.slice_name))
+            self.services.append(new_service)
             return     
         except Exception as ex:
             raise ex
@@ -230,12 +230,13 @@ class JModel(JSONEncoder):
             for service in range(len(service_list)):
                 service_name=service_list[service]
                 source = service_name
-                target = relations_config[service_name]['relation']
-                if relations_config[source]['jcloud'] == relations_config[target]['jcloud'] and \
-                    relations_config[source]['jmodel'] == relations_config[target]['jmodel']:
-                    self.logger.info("Adding relation between {} and {}".format(source, target))
-                    
-                    self.add_relation_intramodel(source, target, relations_config[source]['jcloud'], relations_config[source]['jmodel'])
+                if len(relations_config[service_name]['relation']) > 0:
+                    for target in relations_config[service_name]['relation']:
+                        if relations_config[source]['jcloud'] == relations_config[target]['jcloud'] and \
+                            relations_config[source]['jmodel'] == relations_config[target]['jmodel']:
+                            self.logger.info("Adding relation between {} and {}".format(source, target))
+
+                            self.add_relation_intramodel(source, target, relations_config[source]['jcloud'], relations_config[source]['jmodel'])
         except Exception as ex:
             self.logger.info("No juju relation requirements for ".format(service_name))
             return

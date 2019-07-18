@@ -268,7 +268,7 @@ jox_capabilities = {
 			"/monitor/juju": "get monitoring information on the current juju model (applications,machines, and relations)",
 			"/monitor/juju/<string:juju_key_val>": {
 				"1":"get specific monitoring information juju_key_val from the current juju model",
-				"2":"The allowable values for juju_key_val are:",
+				"2":"The allowable values for juju_key_val/monitor/juju/ are:",
 				"3":"all: get all the information (equivalent to /monitor/juju)",
 				"4":"applications: get only on the applications",
 				"5":"machines: get only on the machines",
@@ -279,6 +279,17 @@ jox_capabilities = {
 				"2":"juju_key_val: the same allowable values fo /monitor/juju/<string:juju_key_val>",
 				"3":"cloud_name: the name of juju controller",
 				"4":"model_name: the name of juju model hosted at the juju controller cloud_name",
+			}
+		},
+		"log": {
+			"/log": "get all the levels of log of jox",
+			"/log/<string:log_source>": {
+				"1":"get all the levels of log either from jox or from juju. This is defined by the the value of log_source which can be either 'jox' or juju",
+			},
+			"/log/<string:log_source>/<string:log_type>":{
+				"1":"Here you can specifu not only the source of the log (jox or juju), but also the log level that is defined by log_type",
+				"2":"The allowable values for log_type are: all, error, debug, info, warning",
+				"3":"Notice the default value is 'all'",
 			}
 		}
 	},
@@ -864,6 +875,7 @@ def resource_discovery():
 	logger.debug("response: {}".format(data))
 	data = jsonify(data)
 	return data, status_code
+
 @app.route('/onboard', methods=['PUT'])
 def jox_package_onboard():
 	"""

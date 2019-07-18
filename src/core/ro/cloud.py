@@ -37,8 +37,8 @@ import logging
 
 from juju import loop
 from threading import Thread
-import src.common.config.gv as gv
-from src.core.ro import monitor
+import time, datetime
+import pika, uuid, json
 from src.core.ro.monitor import Monitor
 
 
@@ -54,6 +54,11 @@ class JCloud(JSONEncoder):
         self.logger = logging.getLogger('jox.JCloud')
         self.log_config()
         self.monitor = None
+
+        self.connection = None
+        self.channel = None
+        self.result = None
+        self.callback_queue = None
 
     def log_config(self):
         if self.gv.LOG_LEVEL == 'debug':
