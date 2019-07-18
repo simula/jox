@@ -225,7 +225,7 @@ class TemplateManager():
 					'jmodel': jmodel,
 					'charm': charm,
 					'machine_name': None,
-					'relation': None,
+					'relation': list(),
 				}
 				#  check the requirements
 				for req in NSSI_template['topology_template']['node_templates'][item]['requirements']:
@@ -236,7 +236,8 @@ class TemplateManager():
 					elif 'AttachesTo' in NSSI_template['topology_template']['node_templates'][item]['requirements'][req]['relationship']:
 						# relation
 						relation = NSSI_template['topology_template']['node_templates'][item]['requirements'][req]['node']
-						list_services[app_name]['relation'] = relation
+						list_services[app_name]['relation'].append(relation)
+
 					else:
 						raise NotImplementedError
 
@@ -338,7 +339,7 @@ class TemplateManager():
 			self.set_NSSI_monitor_index(nssi_id, self.get_NSI_ID(), list_services, list_machines) # Add monitoring template for this subslice
 		return [slice_version, list_services, list_machines, abort_deploy_subslice]
 
-	def get_inter_nssi_relations(self):
+	def get_inter_nssi_relations(self, add_inter_nssi_relation=False):
 		Inter_relations = {}
 		for relation in self.NSI_template['relationships_template']:
 			nssi_source = self.NSI_template['relationships_template'][relation]['source']['parameters']
@@ -347,12 +348,42 @@ class TemplateManager():
 			nssi_target = self.NSI_template['relationships_template'][relation]['target']['parameters']
 			nssi_node_target = self.NSI_template['relationships_template'][relation]['target']['inputs']['node']
 
-			Inter_relations[relation] = {
-				'nssi_source': nssi_source,
-				'nssi_node_source': nssi_node_source,
-				'nssi_target': nssi_target,
-				'nssi_node_target': nssi_node_target
-			}
+			if add_inter_nssi_relation:
+				get_source_nssi = self.get_NSSI_object(nssi_source)
+				charm_service = get_source_nssi['topology_template']['node_templates'][nssi_node_source]['properties']['charm']
+				if '/' in charm_service:
+					charm_service = str(charm_service).split('/')
+					charm_name = charm_service[len(charm_service)-1]
+
+				charm_name_noVersion_source = str(charm_name).split('-')
+				charm_name_noVersion_source.remove(charm_name_noVersion_source[len(charm_name_noVersion_source)-1])
+				nssi_node_source_charm_name = '-'.join([x for x in charm_name_noVersion_source])
+
+				get_target_nssi = self.get_NSSI_object(nssi_target)
+				charm_service = get_target_nssi['topology_template']['node_templates'][nssi_node_target]['properties'][
+					'charm']
+				if '/' in charm_service:
+					charm_service = str(charm_service).split('/')
+					charm_name = charm_service[len(charm_service) - 1]
+
+				charm_name_noVersion_target = str(charm_name).split('-')
+				charm_name_noVersion_target.remove(charm_name_noVersion_target[len(charm_name_noVersion_target) - 1])
+				nssi_node_target_charm_name = '-'.join([x for x in charm_name_noVersion_target])
+				Inter_relations[relation] = {
+					'nssi_source': nssi_source,
+					'nssi_node_source': nssi_node_source,
+					'nssi_node_source_charm_name': nssi_node_source_charm_name,
+					'nssi_target': nssi_target,
+					'nssi_node_target': nssi_node_target,
+					'nssi_node_target_charm_name': nssi_node_target_charm_name
+				}
+			else:
+				Inter_relations[relation] = {
+					'nssi_source': nssi_source,
+					'nssi_node_source': nssi_node_source,
+					'nssi_target': nssi_target,
+					'nssi_node_target': nssi_node_target
+				}
 		return Inter_relations
 
 	def get_NSSI_object(self, nssi_id):
@@ -508,22 +539,41 @@ class TemplateManager():
 
 		relations_list = list()
 		for item in range(len(service_list)):
-			if (list_services[service_list[item]]['relation'] is not None) and (list_services[service_list[item]]['relation'] in service_list):
-				relation_name = {"date": date,
-								 "nsi_id": nsi_id,
-								 "nssi_source": nssi_id,
-								 "nssi_node_source": service_list[item],
-								 "nssi_target": nssi_id,
-								 "nssi_node_target": list_services[service_list[item]]['relation'],
-								 "prejoining_since": date,
-								 "prejoining_time": "0",
-								 "joining_since": "0",
-								 "joining_time": "0",
-								 "joined_since": "0",
-								 "joined_time": "0",
-								 "current_state": "prejoining",
-								 }
-				relations_list.append(relation_name)
+			if len(list_services[service_list[item]]['relation']) > 0:
+				for service_target in list_services[service_list[item]]['relation']:
+					if service_target in service_list:
+						relation_name = {"date": date,
+										 "nsi_id": nsi_id,
+										 "nssi_source": nssi_id,
+										 "nssi_node_source": service_list[item],
+										 "nssi_target": nssi_id,
+										 "nssi_node_target": service_target,
+										 "prejoining_since": date,
+										 "prejoining_time": "0",
+										 "joining_since": "0",
+										 "joining_time": "0",
+										 "joined_since": "0",
+										 "joined_time": "0",
+										 "current_state": "prejoining",
+										 }
+						relations_list.append(relation_name)
+			# 			pass
+			# if (list_services[service_list[item]]['relation'] is not None) and (list_services[service_list[item]]['relation'] in service_list):
+			# 	relation_name = {"date": date,
+			# 					 "nsi_id": nsi_id,
+			# 					 "nssi_source": nssi_id,
+			# 					 "nssi_node_source": service_list[item],
+			# 					 "nssi_target": nssi_id,
+			# 					 "nssi_node_target": list_services[service_list[item]]['relation'],
+			# 					 "prejoining_since": date,
+			# 					 "prejoining_time": "0",
+			# 					 "joining_since": "0",
+			# 					 "joining_time": "0",
+			# 					 "joined_since": "0",
+			# 					 "joined_time": "0",
+			# 					 "current_state": "prejoining",
+			# 					 }
+			# 	relations_list.append(relation_name)
 		if len(relations_list) > 0:
 			self.jesearch.update_index_with_content('subslice_monitor_'+nssi_id.lower(),
 												'relation_status',

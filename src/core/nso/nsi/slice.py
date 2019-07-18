@@ -76,10 +76,10 @@ class JSlice(JSONEncoder):
 	def validate_jslice_config(self):
 		raise NotImplementedError()
 	
-	def get_inter_nssi_relations(self):
+	def get_inter_nssi_relations(self, add_inter_nssi_relation=False):
 		try:
 			self.logger.info("getting the inter relations of the slice {}".format(self.slice_name))
-			return self.template_manager.get_inter_nssi_relations()
+			return self.template_manager.get_inter_nssi_relations(add_inter_nssi_relation)
 		except Exception as ex:
 			self.logger.error(str(ex))
 			self.logger.error(traceback.format_exc())
@@ -110,10 +110,8 @@ class JSlice(JSONEncoder):
 				add_nssi_success = False
 				self.logger.info("the subslice {} is NOT added. Exit...".format(nssi_id))
 
-
-
 		self.logger.info("adding entre-nssi relations")
-		Inter_relations = self.get_inter_nssi_relations()
+		Inter_relations = self.get_inter_nssi_relations(True)
 		self.add_Inter_NSSI_relation(Inter_relations, list_config_NSSI)
 		return add_nssi_success
 	def add_Inter_NSSI_relation(self, Inter_relations, list_config_NSSI):
@@ -122,17 +120,21 @@ class JSlice(JSONEncoder):
 			Inter_relations[relation] = {
 				'nssi_source': nssi_source,
 				'nssi_node_source': nssi_node_source,
+				'nssi_node_source_charm_name': nssi_node_source_charm_name,
 				'nssi_target': nssi_target,
-				'nssi_node_target': nssi_node_target
+				'nssi_node_target': nssi_node_target,
+				'nssi_node_target_charm_name': nssi_node_target_charm_name
 
 			}
 			"""
 			nssi_source = Inter_relations[relation]['nssi_source']
 			nssi_node_source = Inter_relations[relation]['nssi_node_source']
-			
+			nssi_node_source_charm_name = Inter_relations[relation]['nssi_node_source_charm_name']
+
 			nssi_target = Inter_relations[relation]['nssi_target']
 			nssi_node_target = Inter_relations[relation]['nssi_node_target']
-			
+			nssi_node_target_charm_name = Inter_relations[relation]['nssi_node_target_charm_name']
+
 			cloud_credential = self.get_cloud_credential(list_config_NSSI, nssi_source, nssi_node_source)
 			if not cloud_credential:
 				self.logger.error("No cloud credentional found for service {} in the nssi {}".format(nssi_node_target, nssi_target))
@@ -161,8 +163,8 @@ class JSlice(JSONEncoder):
 					message = "adding relation between {} from the nssi {} hosted in {}:{} and {} from the nssi {} hosted in {}:{}".format(nssi_node_source,
 									nssi_source, source_jcloud, source_jmodel, nssi_node_target, nssi_target, target_jcloud, target_jmodel)
 					self.logger.debug(message)
-					
-					loop.run(self.add_relation_interNssi_interModel(source_jcloud, source_jmodel, target_jcloud, target_jmodel, nssi_node_source, nssi_node_target))
+					loop.run(self.add_relation_interNssi_interModel(nssi_source, source_jcloud, source_jmodel, nssi_node_source, nssi_node_source_charm_name, nssi_target, target_jcloud, target_jmodel, nssi_node_target, nssi_node_target_charm_name))
+
 	async def add_relation_interNssi_IntraModel(self, nssi_source, source_jcloud, source_jmodel, nssi_node_source,
 	                                            nssi_target, target_jcloud, target_jmodel, nssi_node_target):
 		# internal model relation
@@ -192,10 +194,86 @@ class JSlice(JSONEncoder):
 			}}
 		self.list_inter_nssi_relations.append(relation)
 		
-	def add_relation_interNssi_interModel(self, nssi_source, source_jcloud, source_jmodel, nssi_node_source,
-	                                      nssi_target, target_jcloud, target_jmodel, nssi_node_target):
-		raise NotImplementedError
-	
+	async def add_relation_interNssi_interModel(self, nssi_source, source_jcloud, source_jmodel, nssi_node_source, nssi_node_source_charm_name,
+	                                      nssi_target, target_jcloud, target_jmodel, nssi_node_target, nssi_node_target_charm_name):
+		set_relations = {
+			"mysql":{
+				"oai-hss":[":db", ":db"],
+				"wordpress":[":db", ":db"],
+			},
+			"wordpress": {
+				"mysql": [":db", ":db"],
+			},
+			"oai-enb": {
+				"oai-mme": [":mme", ":mme"],
+				"flexran-rtc": [":rtc", ":rtc"],
+			},
+			"oai-hss": {
+				"mysql": [":db", ":db"],
+				"oai-mme": [":hss", ":hss"],
+			},
+			"oai-mme": {
+				"oai-hss": [":hss", ":hss"],
+				"oai-spgw": [":spgw", ":spgw"],
+				"oai-enb": [":mme", ":mme"],
+			},
+			"flexran-rtc": {
+				"oai-enb": [":rtc", ":rtc"],
+			},
+		}
+		from src.core.ro.vim_driver.vimdriver import run_command
+
+		try:
+			#relation_endpoint_source = set_relations[nssi_node_source][nssi_node_target]
+			relation_endpoint_source = set_relations[nssi_node_source_charm_name][nssi_node_target_charm_name]
+			relation_endpoint_target = '{}{}'.format(nssi_node_target, relation_endpoint_source[1])
+			#relation_endpoint_source = relation_endpoint_source[0]
+			relation_endpoint_source = '{}{}'.format(nssi_node_source, relation_endpoint_source[0])
+			# relation_endpoint_target = set_relations[nssi_node_target][nssi_node_source]
+		except:
+			relation_endpoint_target = '{}:{}'.format(nssi_node_target, nssi_node_target)
+			relation_endpoint_source = '{}:{}'.format(nssi_node_source, nssi_node_target)
+
+		cmd_juju_offer_application_endpoint = ["juju", "offer",
+											   "-c", "{}".format(target_jcloud),
+											   relation_endpoint_target]
+		cmd_juju_add_cmr = ["juju", "add-relation",
+							"-m", "{}:{}".format(source_jcloud, source_jmodel),
+							relation_endpoint_source,
+							"{}:{}/{}.{}".format(target_jcloud, "admin", target_jmodel, nssi_node_target)]
+
+		cmd_juju_switch_to_target_model = ["juju", "switch", "{}:{}".format(target_jcloud, target_jmodel)]
+		cmd_juju_switch_to_source_model = ["juju", "switch", "{}:{}".format(source_jcloud, source_jmodel)]
+
+
+		cmd_out_juju_switch_to_target_model = await run_command(cmd_juju_switch_to_target_model)
+		cmd_out_offer_app_endpoint = await run_command(cmd_juju_offer_application_endpoint)
+
+		cmd_out_juju_switch_to_source_model = await run_command(cmd_juju_switch_to_source_model)
+		cmd_out_add_cmr = await run_command(cmd_juju_add_cmr)
+
+		relation = {
+			"service_a": {
+				"nssi": nssi_source,
+				"jcloud": source_jcloud,
+				"jmodel": source_jmodel,
+				"service": nssi_node_source,
+			},
+			"service_b": {
+				"nssi": nssi_target,
+				"jcloud": target_jcloud,
+				"jmodel": target_jmodel,
+				"service": nssi_node_target,
+			}}
+		self.list_inter_nssi_relations.append(relation)
+		"""
+        juju offer mysql:db
+        juju bootstrap localhost lxd-cmr-2
+        juju add-model cmr-model-2
+        juju deploy mediawiki
+        juju add-relation mediawiki:db lxd-cmr-1:admin/cmr-model-1.mysql
+        """
+
 	def get_cloud_credential(self, list_config_NSSI, nssi_target, nssi_node_target):
 		for service in list_config_NSSI[nssi_target]['list_services']:
 			if service == nssi_node_target:
