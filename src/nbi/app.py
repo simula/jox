@@ -165,124 +165,127 @@ def jox_homepage():
 	return message
 
 
-jox_capabilities = {
-	"jox": {
-		"/": "JoX homepge",
-		"/jox": "return jox configuration and the list of nbi capabilities",
-		"/list": {"1": "return the list of onboarded packages",
-		          "2": "example: curl  http://localhost:5000/list; return the list of onboraded packages in jox store",
-		          "3": "example: curl  http://localhost:5000/list?url=/home/ubuntu/slice_package; return list of packages in given directory",
-		          },
-		"/ls": "alias to /list",
-		"/show/<string:nsi_name>": {"1": "show the content of the template nsi_name",
-		                            "3": "example: curl  http://localhost:5000/show/nssi_1.yaml?url=/home/ubuntu/slice_package/mosaic5g/nssi; show the content of the given template in given directory",
-		                            },
-	},
-	"onboarding": {
-		"/onboard":{
-			"1":"onboard the given package to jox store",
-			"2":"example: curl  http://localhost:5000/onboard --upload-file mosaic5g.tar.gz; onboard the package mosaic5g.tar.gz to jox store",
-		},
-	},
-	"slice": {
-		"/nsi/all": "get the context of all deployed slices",
-		"/nsi": "alias to /nsi/all",
-		"/nsi/<string:nsi_name>": {
-			"GET": "get context of already deployed slice nsi_name",
-			"POST": "deploy/update the slice from the package pkg_name(the name of the package in jox store)",
-			"DELETE": "delete the slice nsi_name",
-		},
-	},
-	"sub-slice": {
-		"/nssi/all": {
-			"GET": "get the context of all subslices"
-		},
-		"/nssi": "alias to /nssi/all",
-		"/nssi/<string:nsi_name>": {
-			"GET": "get context of all subslices attached to the slice nsi_name",
-			"POST": "Not supported",
-			"DELETE": "Not supported",
-		},
-		"/nssi/<string:nsi_name>/<string:nssi_name>": {
-			"GET": "get context of the subslice nssi_name attached to the slice nsi_name",
-			"POST": "Not supported",
-			"DELETE": "Not supported",
-		},
-		"/nssi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>": {
-			"GET": "get crtain entity nssi_key of subslice nssi_name attached to the slice nsi_name",
-			"POST": "Not supported",
-			"DELETE": "Not supported",
-		},
-	},
-	"elasticsearch": {
-		"/es": {
-			"GET": "get all the index-pages in elasticsearch",
-			"POST": "Not supported",
-			"DELETE": "Delete all the index-pages in elasticsearch",
-		},
-		"/es/<string:es_index_page>": {
-			"GET": "get the content of the index-page es_index_page from  elasticsearch",
-			"POST": "save the content of the index-page es_index_page to elasticsearch",
-			"DELETE": "Delete the index-page es_index_page from elasticsearch",
-		},
-		"/es/<string:es_index_page>/<string:es_key>": {
-			"GET": "get certain index es_key from the index-page es_index_page from elasticsearch",
-			"POST": "Not supported",
-			"DELETE": "Not supported",
-		},
-	},
-	"monitoring": {
-		"slice&sub-sclice": {
-			"/monitor/nsi":
-				"get monitoring information on all the deployed slices",
-			"/monitor/nsi/<string:nsi_name>":
-				"get monitoring information on the deployed slice nsi_name",
-			"/monitor/nsi/<string:nsi_name>/<string:nssi_name>":
-				"get monitoring information on the subslice nssi_name from the deployed slice nsi_name",
-			"/monitor/nsi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>":
-				"get monitoring information on certain entity of the the subslice nssi_name from the deployed slice nsi_name",
-		},
-		"service": {
-			"/monitor/service/<string:nsi_name>":
-				"get monitoring information on all services of the slice nsi_name",
-			"/monitor/service/<string:nsi_name>/<string:nssi_name>":
-				"get monitoring information on all services of the subslice nssi_name attached to the slice nsi_name",
-			"/monitor/service/<string:nsi_name>/<string:nssi_name>/<string:service_name>":
-				"get monitoring information on the service service_name of the subslice nssi_name attached to the slice nsi_name",
-		},
-		"machine": {
-			"/monitor/machine/<string:nsi_name>":
-				"get monitoring information on all machines of the slice nsi_name",
-			"/monitor/machine/<string:nsi_name>/<string:nssi_name>":
-				"get monitoring information on all machines of the subslice nssi_name attached to the slice nsi_name",
-			"/monitor/machine/<string:nsi_name>/<string:nssi_name>/<string:machine_name>":
-				"get monitoring information on the machine service_name of the subslice nssi_name attached to the slice nsi_name",
-		},
-		"relation": {
-			"/monitor/relation/<string:nsi_name>":
-				"get monitoring information on the relations of the slice nsi_name",
-			"/monitor/relation/<string:nsi_name>/<string:nssi_name>":
-				"get monitoring information on the relations of the subslice nssi_name attached to the slice nsi_name",
-		},
-		"juju": {
-			"/monitor/juju": "get monitoring information on the current juju model (applications,machines, and relations)",
-			"/monitor/juju/<string:juju_key_val>": {
-				"1":"get specific monitoring information juju_key_val from the current juju model",
-				"2":"The allowable values for juju_key_val are:",
-				"3":"all: get all the information (equivalent to /monitor/juju)",
-				"4":"applications: get only on the applications",
-				"5":"machines: get only on the machines",
-				"6":"relations: get only on the relations",
-			},
-			"/monitor/juju/<string:juju_key_val>/<string:cloud_name>/<string:model_name>":{
-				"1":"get monitoring information from specific juju model",
-				"2":"juju_key_val: the same allowable values fo /monitor/juju/<string:juju_key_val>",
-				"3":"cloud_name: the name of juju controller",
-				"4":"model_name: the name of juju model hosted at the juju controller cloud_name",
-			}
-		}
-	},
+jox_capabilities = \
+{
+    "jox": {
+        "/": "JoX homepge",
+        "/jox": "return jox configuration and the list of nbi capabilities",
+        "/list": {
+            "1": "return the list of onboarded packages",
+            "2": "example: curl  http://localhost:5000/list; return the list of onboraded packages in jox store",
+            "3": "example: curl  http://localhost:5000/list?url=/home/ubuntu/slice_package; return list of packages in given directory"
+    },
+    "/ls": "alias to /list",
+    "/show/<string:nsi_name>": {
+        "1": "show the content of the template nsi_name",
+        "3": "example: curl  http://localhost:5000/show/nssi_1.yaml?url=/home/ubuntu/slice_package/mosaic5g/nssi; show the content of the given template in given directory"
+        }
+    },
+    "onboarding": {
+        "/onboard": {
+            "1": "onboard the given package to jox store",
+            "2": "example: curl  http://localhost:5000/onboard --upload-file mosaic5g.tar.gz; onboard the package mosaic5g.tar.gz to jox store"
+        }
+    },
+    "slice": {
+        "/nsi": "alias to /nsi/all",
+        "/nsi/<string:nsi_name>": {
+            "DELETE": "delete the slice nsi_name",
+            "GET": "get context of already deployed slice nsi_name",
+            "POST": "deploy/update the slice from the package pkg_name(the name of the package in jox store)"
+        },
+        "/nsi/all": "get the context of all deployed slices"
+    },
+    "sub-slice": {
+        "/nssi": "alias to /nssi/all",
+        "/nssi/<string:nsi_name>": {
+            "DELETE": "Not supported",
+            "GET": "get context of all subslices attached to the slice nsi_name",
+            "POST": "Not supported"
+        },
+        "/nssi/<string:nsi_name>/<string:nssi_name>": {
+            "DELETE": "Not supported",
+            "GET": "get context of the subslice nssi_name attached to the slice nsi_name",
+            "POST": "Not supported"
+        },
+        "/nssi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>": {
+            "DELETE": "Not supported",
+            "GET": "get crtain entity nssi_key of subslice nssi_name attached to the slice nsi_name",
+            "POST": "Not supported"
+        },
+        "/nssi/all": {
+            "GET": "get the context of all subslices"
+        }
+    },
+    "elasticsearch": {
+        "/es": {
+            "DELETE": "Delete all the index-pages in elasticsearch",
+            "GET": "get all the index-pages in elasticsearch",
+            "POST": "Not supported"
+        },
+        "/es/<string:es_index_page>": {
+            "DELETE": "Delete the index-page es_index_page from elasticsearch",
+            "GET": "get the content of the index-page es_index_page from  elasticsearch",
+            "POST": "save the content of the index-page es_index_page to elasticsearch"
+        },
+        "/es/<string:es_index_page>/<string:es_key>": {
+            "DELETE": "Not supported",
+            "GET": "get certain index es_key from the index-page es_index_page from elasticsearch",
+            "POST": "Not supported"
+        }
+    },
+    "monitoring": {
+        "juju": {
+                "/monitor/juju": "get monitoring information on the current juju model (applications,machines, and relations)",
+                "/monitor/juju/<string:juju_key_val>": {
+                "1": "get specific monitoring information juju_key_val from the current juju model",
+                "2": "The allowable values for juju_key_val/monitor/juju/ are:",
+                "3": "all: get all the information (equivalent to /monitor/juju)",
+                "4": "applications: get only on the applications",
+                "5": "machines: get only on the machines",
+                "6": "relations: get only on the relations"
+            },
+            "/monitor/juju/<string:juju_key_val>/<string:cloud_name>/<string:model_name>": {
+                "1": "get monitoring information from specific juju model",
+                "2": "juju_key_val: the same allowable values fo /monitor/juju/<string:juju_key_val>",
+                "3": "cloud_name: the name of juju controller",
+                "4": "model_name: the name of juju model hosted at the juju controller cloud_name"
+            }
+        },
+        "log": {
+                "/log": "get all the levels of log of jox",
+                "/log/<string:log_source>": {
+                "1": "get all the levels of log either from jox or from juju. This is defined by the the value of log_source which can be either 'jox' or juju"
+            },
+                "/log/<string:log_source>/<string:log_type>": {
+                "1": "Here you can specifu not only the source of the log (jox or juju), but also the log level that is defined by log_type",
+                "2": "The allowable values for log_type are: all, error, debug, info, warning",
+                "3": "Notice the default value is 'all'"
+            }
+        },
+        "machine": {
+            "/monitor/machine/<string:nsi_name>": "get monitoring information on all machines of the slice nsi_name",
+            "/monitor/machine/<string:nsi_name>/<string:nssi_name>": "get monitoring information on all machines of the subslice nssi_name attached to the slice nsi_name",
+            "/monitor/machine/<string:nsi_name>/<string:nssi_name>/<string:machine_name>": "get monitoring information on the machine service_name of the subslice nssi_name attached to the slice nsi_name"
+        },
+        "relation": {
+            "/monitor/relation/<string:nsi_name>": "get monitoring information on the relations of the slice nsi_name",
+            "/monitor/relation/<string:nsi_name>/<string:nssi_name>": "get monitoring information on the relations of the subslice nssi_name attached to the slice nsi_name"
+        },
+        "service": {
+            "/monitor/service/<string:nsi_name>": "get monitoring information on all services of the slice nsi_name",
+            "/monitor/service/<string:nsi_name>/<string:nssi_name>": "get monitoring information on all services of the subslice nssi_name attached to the slice nsi_name",
+            "/monitor/service/<string:nsi_name>/<string:nssi_name>/<string:service_name>": "get monitoring information on the service service_name of the subslice nssi_name attached to the slice nsi_name"
+        },
+        "slice&sub-sclice": {
+            "/monitor/nsi": "get monitoring information on all the deployed slices",
+            "/monitor/nsi/<string:nsi_name>": "get monitoring information on the deployed slice nsi_name",
+            "/monitor/nsi/<string:nsi_name>/<string:nssi_name>": "get monitoring information on the subslice nssi_name from the deployed slice nsi_name",
+            "/monitor/nsi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>": "get monitoring information on certain entity of the the subslice nssi_name from the deployed slice nsi_name"
+        }
+    }
 }
+
 
 
 @app.route('/jox')
@@ -297,122 +300,585 @@ def jox_config():
     @apiExample {curl} Example usage:
          curl -i http://localhost:5000/jox
 
-    @apiSuccessExample Success-Response:
-        HTTP/1.0 200 OK
-        {
-            "elapsed-time": "0:00:00.004795",
-            "jox-capabilities":
-                {
-                // To add jox Capabilities here
+	@apiSuccessExample Success-Response:
+    {
+        "elapsed-time": "0:00:00.053586",
+        "jox-capabilities": {
+            "jox": {
+                "/": "JoX homepge",
+                "/jox": "return jox configuration and the list of nbi capabilities",
+                "/list": {
+                    "1": "return the list of onboarded packages",
+                    "2": "example: curl  http://localhost:5000/list; return the list of onboraded packages in jox store",
+                    "3": "example: curl  http://localhost:5000/list?url=/home/ubuntu/slice_package; return list of packages in given directory"
+                },
+                "/ls": "alias to /list",
+                "/show/<string:nsi_name>": {
+                    "1": "show the content of the template nsi_name",
+                    "3": "example: curl  http://localhost:5000/show/nssi_1.yaml?url=/home/ubuntu/slice_package/mosaic5g/nssi; show the content of the given template in given directory"
                 }
-            "jox-config": {
-                "authors-list": [
-                  {
-                    "email": "contact@mosaic-5g.io",
-                    "name": "Eurecom"
-                  }
-                ],
-                "store-config": {
-                  "_Comment": "it is needed to cashe the onboarded packages to deploy slices later",
-                  "store-directrory": "/mnt/jox_store"
+            },
+            "onboarding": {
+                "/onboard": {
+                    "1": "onboard the given package to jox store",
+                    "2": "example: curl  http://localhost:5000/onboard --upload-file mosaic5g.tar.gz; onboard the package mosaic5g.tar.gz to jox store"
+                }
+            },
+            "slice": {
+                "/nsi": "alias to /nsi/all",
+                "/nsi/<string:nsi_name>": {
+                    "DELETE": "delete the slice nsi_name",
+                    "GET": "get context of already deployed slice nsi_name",
+                    "POST": "deploy/update the slice from the package pkg_name(the name of the package in jox store)"
                 },
-                "clouds-list": [
-                  {
-                    "cloud-name": "localhost",
-                    "description": "name of you juju controller"
-                  }
-                ],
-                "date": "01-03-2019",
-                "description": "Jox configuration file",
-                "elasticsearch-config": {
-                  "elasticsearch-host": "localhost",
-                  "elasticsearch-log-level": "error",
-                  "elasticsearch-port": "9200",
-                  "elasticsearch-retry-on-conflict": 3
+                "/nsi/all": "get the context of all deployed slices"
+            },
+            "sub-slice": {
+                "/nssi": "alias to /nssi/all",
+                "/nssi/<string:nsi_name>": {
+                    "DELETE": "Not supported",
+                    "GET": "get context of all subslices attached to the slice nsi_name",
+                    "POST": "Not supported"
                 },
-                "encoding-type": "utf-8",
-                "flask-config": {
-                  "flask-debug": "FALSE",
-                  "flask-port": 5000,
-                  "flask-server": "localhost"
+                "/nssi/<string:nsi_name>/<string:nssi_name>": {
+                    "DELETE": "Not supported",
+                    "GET": "get context of the subslice nssi_name attached to the slice nsi_name",
+                    "POST": "Not supported"
                 },
-                "http": {
-                  "200": {
-                    "no-content": 204,
-                    "ok": 200
-                  },
-                  "400": {
-                    "bad-request": 400,
-                    "failed-dependency": 424,
-                    "method-failure": 420,
-                    "not-found": 404
-                  }
+                "/nssi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>": {
+                    "DELETE": "Not supported",
+                    "GET": "get crtain entity nssi_key of subslice nssi_name attached to the slice nsi_name",
+                    "POST": "Not supported"
                 },
-                "jox version": 1,
-                "juju-config": {
-                  "_Comment": "connect-model-available: define the parameters to access to a newly created model is available",
-                  "_Comment_2": "connect-model-accessible: define parameters to access to already exist juju model",
-                  "connect-model-accessible-interval": 3,
-                  "connect-model-accessible-max-retry": 50,
-                  "connect-model-available-interval": 10,
-                  "connect-model-available-max-retry": 10
+                "/nssi/all": {
+                    "GET": "get the context of all subslices"
+                }
+            },
+            "elasticsearch": {
+                "/es": {
+                    "DELETE": "Delete all the index-pages in elasticsearch",
+                    "GET": "get all the index-pages in elasticsearch",
+                    "POST": "Not supported"
                 },
-                "juju_version": 2.4,
-                "log-config": {
-                  "log-file": "jox.log",
-                  "log-level": "debug",
-                  "log_colors": [
-                    {
-                      "color": "\\033[91m",
-                      "debug-level": 0,
-                      "name": "error"
+                "/es/<string:es_index_page>": {
+                    "DELETE": "Delete the index-page es_index_page from elasticsearch",
+                    "GET": "get the content of the index-page es_index_page from  elasticsearch",
+                    "POST": "save the content of the index-page es_index_page to elasticsearch"
+                },
+                "/es/<string:es_index_page>/<string:es_key>": {
+                    "DELETE": "Not supported",
+                    "GET": "get certain index es_key from the index-page es_index_page from elasticsearch",
+                    "POST": "Not supported"
+                }
+            },
+            "monitoring": {
+                "juju": {
+                        "/monitor/juju": "get monitoring information on the current juju model (applications,machines, and relations)",
+                        "/monitor/juju/<string:juju_key_val>": {
+                        "1": "get specific monitoring information juju_key_val from the current juju model",
+                        "2": "The allowable values for juju_key_val/monitor/juju/ are:",
+                        "3": "all: get all the information (equivalent to /monitor/juju)",
+                        "4": "applications: get only on the applications",
+                        "5": "machines: get only on the machines",
+                        "6": "relations: get only on the relations"
                     },
-                    {
-                      "color": "\\033[93m",
-                      "debug-level": 1,
-                      "name": "warn"
-                    },
-                    {
-                      "color": "\\033[92m",
-                      "debug-level": 2,
-                      "name": "notice"
-                    },
-                    {
-                      "color": "\\033[0m",
-                      "debug-level": 3,
-                      "name": "info"
-                    },
-                    {
-                      "color": "\\033[0m",
-                      "debug-level": 4,
-                      "name": "debug"
+                    "/monitor/juju/<string:juju_key_val>/<string:cloud_name>/<string:model_name>": {
+                        "1": "get monitoring information from specific juju model",
+                        "2": "juju_key_val: the same allowable values fo /monitor/juju/<string:juju_key_val>",
+                        "3": "cloud_name: the name of juju controller",
+                        "4": "model_name: the name of juju model hosted at the juju controller cloud_name"
                     }
-                  ]
                 },
-                "rabbit-mq-config": {
-                  "rabbit-mq-queue": "QueueJox",
-                  "rabbit-mq-server-ip": "localhost",
-                  "rabbit-mq-server-port": 5672
+                "log": {
+                        "/log": "get all the levels of log of jox",
+                        "/log/<string:log_source>": {
+                        "1": "get all the levels of log either from jox or from juju. This is defined by the the value of log_source which can be either 'jox' or juju"
+                    },
+                        "/log/<string:log_source>/<string:log_type>": {
+                        "1": "Here you can specifu not only the source of the log (jox or juju), but also the log level that is defined by log_type",
+                        "2": "The allowable values for log_type are: all, error, debug, info, warning",
+                        "3": "Notice the default value is 'all'"
+                    }
                 },
-                "ssh-config": {
-                  "_Comment": "ssh connection is needed when adding kvm machines",
-                  "ssh-key-directory": "/home/ubuntu/.ssh/",
-                  "ssh-key-name": "id_juju",
-                  "ssh-password": "linux",
-                  "ssh-user": "ubuntu"
+                "machine": {
+                    "/monitor/machine/<string:nsi_name>": "get monitoring information on all machines of the slice nsi_name",
+                    "/monitor/machine/<string:nsi_name>/<string:nssi_name>": "get monitoring information on all machines of the subslice nssi_name attached to the slice nsi_name",
+                    "/monitor/machine/<string:nsi_name>/<string:nssi_name>/<string:machine_name>": "get monitoring information on the machine service_name of the subslice nssi_name attached to the slice nsi_name"
                 },
-                "stats-timer": 100,
-                "vim-pop": {
-                  "kvm": [
-                    "local"
-                  ],
-                  "lxc": [
-                    "local"
-                  ]
+                "relation": {
+                    "/monitor/relation/<string:nsi_name>": "get monitoring information on the relations of the slice nsi_name",
+                    "/monitor/relation/<string:nsi_name>/<string:nssi_name>": "get monitoring information on the relations of the subslice nssi_name attached to the slice nsi_name"
+                },
+                "service": {
+                    "/monitor/service/<string:nsi_name>": "get monitoring information on all services of the slice nsi_name",
+                    "/monitor/service/<string:nsi_name>/<string:nssi_name>": "get monitoring information on all services of the subslice nssi_name attached to the slice nsi_name",
+                    "/monitor/service/<string:nsi_name>/<string:nssi_name>/<string:service_name>": "get monitoring information on the service service_name of the subslice nssi_name attached to the slice nsi_name"
+                },
+                "slice&sub-sclice": {
+                    "/monitor/nsi": "get monitoring information on all the deployed slices",
+                    "/monitor/nsi/<string:nsi_name>": "get monitoring information on the deployed slice nsi_name",
+                    "/monitor/nsi/<string:nsi_name>/<string:nssi_name>": "get monitoring information on the subslice nssi_name from the deployed slice nsi_name",
+                    "/monitor/nsi/<string:nsi_name>/<string:nssi_name>/<string:nssi_key>": "get monitoring information on certain entity of the the subslice nssi_name from the deployed slice nsi_name"
                 }
             }
+        },
+        "jox-config": {
+            "authors-list": [
+            {
+                "email": "contact@mosaic-5g.io",
+                "name": "Eurecom"
+            }
+            ],
+            "clouds-list": [
+            {
+                "cloud-endpoint": "192.168.1.81:17070",
+                "cloud-name": "nymphe-edu",
+                "cloud-password": "0f771f7a3dd172105efc539fd3d93406",
+                "cloud-type": "manual",
+                "cloud-username": "admin",
+                "description": "credentials of your juju controller"
+            },
+            {
+                "cloud-endpoint": "192.168.1.42:17070",
+                "cloud-name": "nympheController-edu",
+                "cloud-password": "841073c837889f34abcb15d205eeccd9",
+                "cloud-type": "manual",
+                "cloud-username": "admin",
+                "description": "credentials of your juju controller"
+            },
+            {
+                "cloud-endpoint": "192.168.1.32:17070",
+                "cloud-name": "localhost-borer",
+                "cloud-password": "8b039930a618e3cd794598d987ca32b7",
+                "cloud-type": "lxd",
+                "cloud-username": "admin",
+                "description": "credentials of your juju controller"
+            },
+            {
+                "cloud-endpoint": "10.124.51.249:17070",
+                "cloud-name": "sakura-home",
+                "cloud-password": "0ff27627bdb42216ec2c0c6296d832c9",
+                "cloud-type": "manual",
+                "cloud-username": "admin",
+                "description": "credentials of your juju controller"
+            },
+            {
+                "cloud-endpoint": "192.168.1.100:17070",
+                "cloud-name": "psoque-home",
+                "cloud-password": "c9db02159a4400f6756af2df370b42c5",
+                "cloud-type": "manual",
+                "cloud-username": "admin",
+                "description": "credentials of your juju controller"
+            },
+            {
+                "cloud-endpoint": "10.124.51.83:17070",
+                "cloud-name": "localhost",
+                "cloud-password": "2dfabf48abb9b4277c5a629645962dfb",
+                "cloud-type": "lxd",
+                "cloud-username": "admin",
+                "description": "credentials of your juju controller"
+            },
+            {
+                "cloud-endpoint": "10.146.98.21:17070",
+                "cloud-name": "adalia-home",
+                "cloud-password": "4f1d6e5586321627aed23473c7a174ef",
+                "cloud-type": "lxd",
+                "cloud-username": "admin",
+                "description": "credentials of your juju controller"
+            },
+            {
+                "cloud-endpoint": "192.168.12.162:17070",
+                "cloud-name": "adalia-edu",
+                "cloud-password": "468a141af452b0f096584e86d02d4991",
+                "cloud-type": "manual",
+                "cloud-username": "admin",
+                "description": "credentials of your juju controller"
+            }
+            ],
+            "date": "01-03-2019",
+            "description": "Jox configuration file",
+            "elasticsearch-config": {
+            "elasticsearch-host": "localhost",
+            "elasticsearch-log-level": "error",
+            "elasticsearch-port": "9200",
+            "elasticsearch-retry-on-conflict": 3
+            },
+            "encoding-type": "utf-8",
+            "flask-config": {
+            "flask-debug": "FALSE",
+            "flask-port": 5000,
+            "flask-server": "localhost"
+            },
+            "flexran-config": {
+            "host": "192.168.122.29",
+            "port": 9999
+            },
+            "flexran-plugin-config": {
+            "es-index-name": "flexran_plugin",
+            "plugin-status": "enabled",
+            "rabbit-mq-queue": "QueueFlexRAN",
+            "rabbit-mq-server-ip": "localhost",
+            "rabbit-mq-server-port": 5672,
+            "timeout-request": 300
+            },
+            "host-config": {
+            "small": {
+                "Comment": "disk_size is in GB unit",
+                "Comment_2": "mem_size is in MB unit",
+                "disk_size": 3,
+                "mem_size": 512,
+                "num_cpus": 1
+            },
+            "tiny": {
+                "Comment": "disk_size is in GB unit",
+                "Comment_2": "mem_size is in MB unit",
+                "disk_size": 1,
+                "mem_size": 256,
+                "num_cpus": 1
+            }
+            },
+            "http": {
+            "200": {
+                "no-content": 204,
+                "ok": 200
+            },
+            "400": {
+                "bad-request": 400,
+                "not-found": 404
+            }
+            },
+            "jox version": 1,
+            "jox-config": {
+            "_Comment": "JOX_TIMEOUT_REQUEST is in seconds unit",
+            "jox-timeout-request": 300
+            },
+            "juju-config": {
+            "_Comment": "connect-model-available: define the parameters to access to a newly created model is available",
+            "_Comment_2": "connect-model-accessible: define parameters to access to already exist juju model",
+            "connect-model-accessible-interval": 3,
+            "connect-model-accessible-max-retry": 50,
+            "connect-model-available-interval": 10,
+            "connect-model-available-max-retry": 10
+            },
+            "juju_version": 2.4,
+            "linux-os-series-config": {
+            "14.04": "trusty",
+            "16.04": "xenial",
+            "18.04": "bionic"
+            },
+            "llmec-config": {
+            "llmec-ip": "localhost",
+            "llmec-port": "9999",
+            "plugin-status": "disabled",
+            "rabbit-mq-queue": "QueuellMEC",
+            "rabbit-mq-server-port": 5672
+            },
+            "llmec-plugin-config": {
+            "es-index-name": "llmec_plugin",
+            "plugin-status": "enabled",
+            "rabbit-mq-queue": "QueuellMEC",
+            "rabbit-mq-server-ip": "localhost",
+            "rabbit-mq-server-port": 5672,
+            "timeout-request": 300
+            },
+            "log-config": {
+            "log-file": "jox.log",
+            "log-level": "debug",
+            "log_colors": [
+                {
+                "color": "\\033[91m",
+                "debug-level": 0,
+                "name": "error"
+                },
+                {
+                "color": "\\033[93m",
+                "debug-level": 1,
+                "name": "warn"
+                },
+                {
+                "color": "\\033[92m",
+                "debug-level": 2,
+                "name": "notice"
+                },
+                {
+                "color": "\\033[0m",
+                "debug-level": 3,
+                "name": "info"
+                },
+                {
+                "color": "\\033[0m",
+                "debug-level": 4,
+                "name": "debug"
+                }
+            ]
+            },
+            "os-config": {
+            "ubuntu_14_64": {
+                "architecture": "x86_64",
+                "distribution": "Ubuntu",
+                "type": "Linux",
+                "version": "14.04"
+            },
+            "ubuntu_16_64": {
+                "architecture": "x86_64",
+                "distribution": "Ubuntu",
+                "type": "Linux",
+                "version": "16.04"
+            },
+            "ubuntu_18_64": {
+                "architecture": "x86_64",
+                "distribution": "Ubuntu",
+                "type": "Linux",
+                "version": "18.04"
+            }
+            },
+            "rabbit-mq-config": {
+            "rabbit-mq-queue": "QueueJox",
+            "rabbit-mq-server-ip": "localhost",
+            "rabbit-mq-server-port": 5672
+            },
+            "ssh-config": {
+            "_Comment": "ssh connection is needed when adding kvm machines",
+            "ssh-key-directory": "/home/borer/.ssh/",
+            "ssh-key-name": "id_rsa",
+            "ssh-password": "linux",
+            "ssh-user": "ubuntu"
+            },
+            "stats-timer": 100,
+            "store-config": {
+            "_Comment": "it is needed to store the onboarded packages to deploy slices later",
+            "store-directrory": "/tmp/jox_store/"
+            },
+            "vim-pop": {
+            "kvm": [
+                {
+                "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+                "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+                "_Comment_3": "ssh config",
+                "domain": "192.168.122.0/24",
+                "managed-by": "kvm",
+                "pop-name": "default",
+                "scope": "private",
+                "ssh-password": "",
+                "ssh-private-key": "",
+                "ssh-user": "",
+                "zone": "1"
+                }
+            ],
+            "lxc": [
+                {
+                "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+                "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+                "_Comment_3": "lxc-anchor is the name of the remote lxc endpoint. To get this name, just type in the terminal (lxc remote list), The default local lxc endpoint is 'default'",
+                "_Comment_4": "ssh config",
+                "domain": "192.168.1.0/24",
+                "lxc-anchor": "pou_remote_home",
+                "managed-by": "lxd",
+                "pop-name": "default-lxc-bridge",
+                "prebuilt-image": {
+                    "bionic": "juju/bionic/amd64",
+                    "trusty": "juju/trusty/amd64",
+                    "xenial": "juju/xenial/amd64"
+                },
+                "scope": "private",
+                "ssh-password": "",
+                "ssh-private-key": "",
+                "ssh-user": "",
+                "zone": "1"
+                },
+                {
+                "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+                "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+                "_Comment_3": "lxc-anchor is the name of the remote lxc endpoint. To get this name, just type in the terminal (lxc remote list), The default local lxc endpoint is 'default'",
+                "_Comment_4": "ssh config",
+                "domain": "192.168.1.0/24",
+                "lxc-anchor": "local",
+                "managed-by": "lxd",
+                "pop-name": "default-lxc",
+                "prebuilt-image": {
+                    "bionic": "juju/bionic/amd64",
+                    "trusty": "juju/trusty/amd64",
+                    "xenial": "juju/xenial/amd64"
+                },
+                "scope": "private",
+                "ssh-password": "",
+                "ssh-private-key": "",
+                "ssh-user": "",
+                "zone": "1"
+                },
+                {
+                "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+                "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+                "_Comment_3": "lxc-anchor is the name of the remote lxc endpoint. To get this name, just type in the terminal (lxc remote list), The default local lxc endpoint is 'default'",
+                "_Comment_4": "ssh config",
+                "domain": "10.206.29.0/24",
+                "lxc-anchor": "local",
+                "managed-by": "lxd",
+                "pop-name": "default",
+                "prebuilt-image": {
+                    "bionic": "juju/bionic/amd64",
+                    "trusty": "juju/trusty/amd64",
+                    "xenial": "juju/xenial/amd64"
+                },
+                "scope": "private",
+                "ssh-password": "",
+                "ssh-private-key": "",
+                "ssh-user": "",
+                "zone": "1"
+                },
+                {
+                "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+                "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+                "_Comment_3": "lxc-anchor is the name of the remote lxc endpoint. To get this name, just type in the terminal (lxc remote list), The default local lxc endpoint is 'default'",
+                "_Comment_4": "ssh config",
+                "domain": "10.180.125.0/24",
+                "lxc-anchor": "local",
+                "managed-by": "lxd",
+                "pop-name": "default-2",
+                "scope": "private",
+                "ssh-password": "",
+                "ssh-private-key": "",
+                "ssh-user": "",
+                "zone": "1"
+                },
+                {
+                "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+                "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+                "_Comment_3": "lxc-anchor is the name of the remote lxc endpoint. To get this name, just type in the terminal (lxc remote list), The default local lxc endpoint is 'default'",
+                "_Comment_4": "ssh config",
+                "domain": "10.39.202.0/24",
+                "lxc-anchor": "local",
+                "managed-by": "lxd",
+                "pop-name": "default-3",
+                "scope": "private",
+                "ssh-password": "",
+                "ssh-private-key": "",
+                "ssh-user": "",
+                "zone": "1"
+                },
+                {
+                "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+                "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+                "_Comment_3": "lxc-anchor is the name of the remote lxc endpoint. To get this name, just type in the terminal (lxc remote list), The default local lxc endpoint is 'default'",
+                "_Comment_4": "ssh config",
+                "domain": "10.124.51.0/24",
+                "lxc-anchor": "local",
+                "managed-by": "lxd",
+                "pop-name": "default-4",
+                "scope": "private",
+                "ssh-password": "",
+                "ssh-private-key": "",
+                "ssh-user": "",
+                "zone": "1"
+                },
+                {
+                "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+                "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+                "_Comment_3": "lxc-anchor is the name of the remote lxc endpoint. To get this name, just type in the terminal (lxc remote list), The default local lxc endpoint is 'default'",
+                "_Comment_4": "ssh config",
+                "domain": "10.184.36.0/24",
+                "lxc-anchor": "local",
+                "managed-by": "lxd",
+                "pop-name": "default-borer",
+                "scope": "private",
+                "ssh-password": "",
+                "ssh-private-key": "",
+                "ssh-user": "",
+                "zone": "1"
+                }
+            ],
+            "phy": [
+                {
+                "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+                "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+                "_Comment_3": "ssh config",
+                "domain": "192.168.1.0/24",
+                "managed-by": "none",
+                "pop-name": "zone-1-phy-home",
+                "scope": "private",
+                "ssh-password": "",
+                "ssh-private-key": "",
+                "ssh-user": "",
+                "zone": "1"
+                },
+                {
+                "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+                "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+                "_Comment_3": "ssh config",
+                "domain": "172.16.170.0/24",
+                "managed-by": "none",
+                "pop-name": "zone-1-phy-router",
+                "scope": "private",
+                "ssh-password": "",
+                "ssh-private-key": "",
+                "ssh-user": "",
+                "zone": "1"
+                },
+                {
+                "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+                "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+                "_Comment_3": "ssh config",
+                "domain": "192.168.12.0/24",
+                "managed-by": "none",
+                "pop-name": "zone-1-phy",
+                "scope": "private",
+                "ssh-password": "",
+                "ssh-private-key": "",
+                "ssh-user": "",
+                "zone": "1"
+                },
+                {
+                "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+                "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+                "_Comment_3": "ssh config",
+                "domain": "172.24.0.0/16",
+                "managed-by": "none",
+                "pop-name": "zone-2-phy",
+                "scope": "private",
+                "ssh-password": "",
+                "ssh-private-key": "",
+                "ssh-user": "",
+                "zone": "1"
+                },
+                {
+                "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+                "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+                "_Comment_3": "ssh config",
+                "domain": "172.24.10.0/24",
+                "managed-by": "none",
+                "pop-name": "zone-3-phy",
+                "scope": "private",
+                "ssh-password": "",
+                "ssh-private-key": "",
+                "ssh-user": "",
+                "zone": "1"
+                },
+                {
+                "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+                "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+                "_Comment_3": "ssh config",
+                "domain": "172.24.11.0/24",
+                "managed-by": "none",
+                "pop-name": "zone-4-phy",
+                "scope": "private",
+                "ssh-password": "",
+                "ssh-private-key": "",
+                "ssh-user": "",
+                "zone": "1"
+                }
+            ]
+            },
+            "zones": {
+            "1": {
+                "domain-1": "192.168.1.0/24",
+                "domain-2": "1000.99.104.54/24",
+                "domain-3": "192.168.12.0/24",
+                "domain-4": "10.104.8.0/24"
+            }
+            }
         }
-    """
+    }
+	"""
 	enquiry = standard_reqst
 	current_time = datetime.datetime.now()
 	enquiry["datetime"] = str(current_time)
