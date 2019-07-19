@@ -295,7 +295,6 @@ jox_capabilities = {
 	},
 }
 
-
 @app.route('/jox')
 def jox_config():
 	"""
