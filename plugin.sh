@@ -21,16 +21,9 @@
 # colorful echos
 ###################################
 
-black='\E[30m'
-red='\E[31m'
-green='\E[32m'
-yellow='\E[33m'
-blue='\E[1;34m'
-magenta='\E[35m'
-cyan='\E[36m'
-white='\E[37m'
-reset_color='\E[00m'
-COLORIZE=1
+red=`tput setaf 1`
+green=`tput setaf 2`
+reset_color=`tput sgr0`
 
 cecho()  {
     # Color-echo
@@ -50,6 +43,8 @@ This program invokes the plugin microservice framework
 -h                                  print help
 -flexran | --run flexrAN plugin
 -llmec   | --run llMEC plugin    
+-es      | --run es plugin (Microservice framework not yet supported for es)   
+
 
 '
   exit $1
@@ -63,6 +58,10 @@ run_llmec_plugin(){
 python3 src/core/ro/plugins/llmec.py  
 }
 
+run_es_plugin(){
+echo "${red} Microservice framework not yet supported for es ${reset_color}"
+#python3 src/core/ro/plugins/es.py  
+}
 function main() {
     until [ -z "$1" ]; do
         case "$1" in
@@ -77,6 +76,10 @@ function main() {
             INSTALL_PKG=2
             echo_info "Running llMEC plugin"
             shift;;
+            -es  | --run-es-plugin)
+            INSTALL_PKG=3
+            echo_info "Running es plugin"
+            shift;;
             *)
             echo_error "Unknown option $1"
             print_help -1
@@ -89,6 +92,9 @@ function main() {
     fi
     if [ "$INSTALL_PKG" = "2" ] ; then
 	    run_llmec_plugin
+    fi
+    if [ "$INSTALL_PKG" = "3" ] ; then
+	    run_es_plugin
     fi
 }
 
