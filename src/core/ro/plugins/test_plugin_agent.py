@@ -169,6 +169,7 @@ if __name__ == '__main__':
     enquiry = standard_reqst
     current_time = datetime.datetime.now()
 
+################### Sample RPC message encoding ##############
 
     # Test get ran_stats
     # enquiry["datetime"] = str(current_time)
@@ -179,18 +180,19 @@ if __name__ == '__main__':
     # print(response)
 
 
+
+
     # # Test remove slice
-    # param={'nsi_id': '124', 'enb_id': '-1'}
-    # response=fs.remove_slice(param)
+    # enquiry["datetime"] = str(current_time)
+    # enquiry["plugin_message"] = "remove_slice"
+    # enquiry["param"]["enb_id"] = '-1' # Last added eNB
+    # enquiry["param"]["nsi_id"] = 0 # mpped nsi_id
+    # enquiry = json.dumps(enquiry)
+    # enquiry.encode("utf-8")
+    # response = fs.send_to_plugin(enquiry, queue_name_flexran)
     # print(response)
-    enquiry["datetime"] = str(current_time)
-    enquiry["plugin_message"] = "remove_slice"
-    enquiry["param"]["enb_id"] = '-1' # Last added eNB
-    enquiry["param"]["nsi_id"] = 0 # mpped nsi_id
-    enquiry = json.dumps(enquiry)
-    enquiry.encode("utf-8")
-    response = fs.send_to_plugin(enquiry, queue_name_flexran)
-    print(response)
+
+
 
     # Test update slice
     # response=fs.set_slice_config('-1',slice_config)
@@ -205,25 +207,34 @@ if __name__ == '__main__':
     # response = fs.send_to_plugin(enquiry, queue_name_flexran)
     # print(response)
 
-    # Test add UE
-    # response=fs.set_slice_config('-1',slice_config)
-    # print(response)
-    # slice_config = {"ul": [{"id": 0, "percentage": 63}], "dl": [{"id": 0, "percentage": 63}]}
+
+
+    # # Get slice resource block
     # enquiry["datetime"] = str(current_time)
-    # enquiry["plugin_message"] = "get_slice_config"
-    # enquiry["param"]["enb_id"] = '-1' # Last added eNB
-    # enquiry["param"]["slice_config"] = slice_config # mpped nsi_id
+    # enquiry["plugin_message"] = "get_slice_FirstRB"
+    # enquiry["param"]["nsi_id"] = 0 # mpped nsi_id
     # enquiry = json.dumps(enquiry)
     # enquiry.encode("utf-8")
     # response = fs.send_to_plugin(enquiry, queue_name_flexran)
     # print(response)
 
-    # Get slice resource block
-    enquiry["datetime"] = str(current_time)
-    enquiry["plugin_message"] = "get_slice_FirstRB"
-    #enquiry["param"]["enb_id"] = '-1' # Last added eNB
-    enquiry["param"]["nsi_id"] = 0 # mpped nsi_id
-    enquiry = json.dumps(enquiry)
-    enquiry.encode("utf-8")
-    response = fs.send_to_plugin(enquiry, queue_name_flexran)
-    print(response)
+
+    
+    # # Get number of slice
+    # enquiry["datetime"] = str(current_time)
+    # enquiry["plugin_message"] = "get_num_slices"
+    # enquiry = json.dumps(enquiry)
+    # enquiry.encode("utf-8")
+    # response = fs.send_to_plugin(enquiry, queue_name_flexran)
+    # print(response)
+
+
+
+    # # Get available resources
+    # enquiry["datetime"] = str(current_time)
+    # enquiry["plugin_message"] = "get_available_resources"
+    # enquiry = json.dumps(enquiry)
+    # enquiry.encode("utf-8")
+    # response = fs.send_to_plugin(enquiry, queue_name_flexran)
+    # print(response)
+    
