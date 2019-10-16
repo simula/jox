@@ -67,51 +67,11 @@
     "lxc": [
       {
         "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "default-lxc-bridge",
-        "zone": "1",
-        "scope": "private",
-        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "domain": "192.168.1.0/24",
-        "_Comment_3": "lxc-anchor is the name of the remote lxc endpoint. To get this name, just type in the terminal (lxc remote list), The default local lxc endpoint is 'default'",
-        "lxc-anchor": "pou_remote_home",
-        "_Comment_4": "ssh config",
-        "ssh-private-key": "",
-        "ssh-user": "",
-        "ssh-password": "",
-        "managed-by": "lxd",
-        "prebuilt-image": {
-          "trusty": "juju/trusty/amd64",
-          "xenial": "juju/xenial/amd64",
-          "bionic": "juju/bionic/amd64"
-        }
-      },
-      {
-        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "default-lxc",
-        "zone": "1",
-        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "scope": "private",
-        "domain": "192.168.1.0/24",
-        "_Comment_3": "lxc-anchor is the name of the remote lxc endpoint. To get this name, just type in the terminal (lxc remote list), The default local lxc endpoint is 'default'",
-        "lxc-anchor": "local",
-        "_Comment_4": "ssh config",
-        "ssh-private-key": "",
-        "ssh-user": "",
-        "ssh-password": "",
-        "managed-by": "lxd",
-        "prebuilt-image": {
-          "trusty": "juju/trusty/amd64",
-          "xenial": "juju/xenial/amd64",
-          "bionic": "juju/bionic/amd64"
-        }
-      },
-      {
-        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
         "pop-name": "default",
         "zone": "1",
-        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
         "scope": "private",
-        "domain": "10.206.29.0/24",
+        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+        "domain": "192.168.122.0/24",
         "_Comment_3": "lxc-anchor is the name of the remote lxc endpoint. To get this name, just type in the terminal (lxc remote list), The default local lxc endpoint is 'default'",
         "lxc-anchor": "local",
         "_Comment_4": "ssh config",
@@ -124,66 +84,6 @@
           "xenial": "juju/xenial/amd64",
           "bionic": "juju/bionic/amd64"
         }
-      },
-      {
-        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "default-2",
-        "zone": "1",
-        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "scope": "private",
-        "domain": "10.180.125.0/24",
-        "_Comment_3": "lxc-anchor is the name of the remote lxc endpoint. To get this name, just type in the terminal (lxc remote list), The default local lxc endpoint is 'default'",
-        "lxc-anchor": "local",
-        "_Comment_4": "ssh config",
-        "ssh-private-key": "",
-        "ssh-user": "",
-        "ssh-password": "",
-        "managed-by": "lxd"
-      },
-      {
-        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "default-3",
-        "zone": "1",
-        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "scope": "private",
-        "domain": "10.39.202.0/24",
-        "_Comment_3": "lxc-anchor is the name of the remote lxc endpoint. To get this name, just type in the terminal (lxc remote list), The default local lxc endpoint is 'default'",
-        "lxc-anchor": "local",
-        "_Comment_4": "ssh config",
-        "ssh-private-key": "",
-        "ssh-user": "",
-        "ssh-password": "",
-        "managed-by": "lxd"
-      },
-      {
-        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "default-4",
-        "zone": "1",
-        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "scope": "private",
-        "domain": "10.124.51.0/24",
-        "_Comment_3": "lxc-anchor is the name of the remote lxc endpoint. To get this name, just type in the terminal (lxc remote list), The default local lxc endpoint is 'default'",
-        "lxc-anchor": "local",
-        "_Comment_4": "ssh config",
-        "ssh-private-key": "",
-        "ssh-user": "",
-        "ssh-password": "",
-        "managed-by": "lxd"
-      },
-      {
-        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "default-borer",
-        "zone": "1",
-        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "scope": "private",
-        "domain": "10.184.36.0/24",
-        "_Comment_3": "lxc-anchor is the name of the remote lxc endpoint. To get this name, just type in the terminal (lxc remote list), The default local lxc endpoint is 'default'",
-        "lxc-anchor": "local",
-        "_Comment_4": "ssh config",
-        "ssh-private-key": "",
-        "ssh-user": "",
-        "ssh-password": "",
-        "managed-by": "lxd"
       }
     ],
     "kvm": [
@@ -204,76 +104,11 @@
     "phy": [
       {
         "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "zone-1-phy-home",
+        "pop-name": "default",
         "zone": "1",
         "scope": "private",
         "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "domain": "192.168.1.0/24",
-        "_Comment_3": "ssh config",
-        "ssh-private-key": "",
-        "ssh-user": "",
-        "ssh-password": "",
-        "managed-by": "none"
-      },
-      {
-        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "zone-1-phy-router",
-        "zone": "1",
-        "scope": "private",
-        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "domain": "172.16.170.0/24",
-        "_Comment_3": "ssh config",
-        "ssh-private-key": "",
-        "ssh-user": "",
-        "ssh-password": "",
-        "managed-by": "none"
-      },
-      {
-        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "zone-1-phy",
-        "zone": "1",
-        "scope": "private",
-        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "domain": "192.168.12.0/24",
-        "_Comment_3": "ssh config",
-        "ssh-private-key": "",
-        "ssh-user": "",
-        "ssh-password": "",
-        "managed-by": "none"
-      },
-      {
-        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "zone-2-phy",
-        "zone": "1",
-        "scope": "private",
-        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "domain": "172.24.0.0/16",
-        "_Comment_3": "ssh config",
-        "ssh-private-key": "",
-        "ssh-user": "",
-        "ssh-password": "",
-        "managed-by": "none"
-      },
-      {
-        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "zone-3-phy",
-        "zone": "1",
-        "scope": "private",
-        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "domain": "172.24.10.0/24",
-        "_Comment_3": "ssh config",
-        "ssh-private-key": "",
-        "ssh-user": "",
-        "ssh-password": "",
-        "managed-by": "none"
-      },
-      {
-        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
-        "pop-name": "zone-4-phy",
-        "zone": "1",
-        "scope": "private",
-        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
-        "domain": "172.24.11.0/24",
+        "domain": "192.168.125.0/24",
         "_Comment_3": "ssh config",
         "ssh-private-key": "",
         "ssh-user": "",
@@ -285,7 +120,7 @@
   "zones": {
     "1": {
       "domain-1": "192.168.1.0/24",
-      "domain-2": "1000.99.104.54/24",
+      "domain-2": "100.99.104.54/24",
       "domain-3": "192.168.12.0/24",
       "domain-4": "10.104.8.0/24"
     }
@@ -293,67 +128,19 @@
   "clouds-list": [
     {
       "description": "credentials of your juju controller",
-      "cloud-name": "nymphe-edu",
-      "cloud-type": "manual",
-      "cloud-endpoint": "192.168.1.81:17070",
-      "cloud-username": "admin",
-      "cloud-password": "0f771f7a3dd172105efc539fd3d93406"
-    },
-    {
-      "description": "credentials of your juju controller",
-      "cloud-name": "nympheController-edu",
-      "cloud-type": "manual",
-      "cloud-endpoint": "192.168.1.42:17070",
-      "cloud-username": "admin",
-      "cloud-password": "841073c837889f34abcb15d205eeccd9"
-    },
-    {
-      "description": "credentials of your juju controller",
-      "cloud-name": "localhost-borer",
-      "cloud-type": "lxd",
-      "cloud-endpoint": "192.168.1.32:17070",
-      "cloud-username": "admin",
-      "cloud-password": "8b039930a618e3cd794598d987ca32b7"
-    },
-    {
-      "description": "credentials of your juju controller",
-      "cloud-name": "sakura-home",
-      "cloud-type": "manual",
-      "cloud-endpoint": "10.124.51.249:17070",
-      "cloud-username": "admin",
-      "cloud-password": "0ff27627bdb42216ec2c0c6296d832c9"
-    },
-    {
-      "description": "credentials of your juju controller",
-      "cloud-name": "psoque-home",
-      "cloud-type": "manual",
-      "cloud-endpoint": "192.168.1.100:17070",
-      "cloud-username": "admin",
-      "cloud-password": "c9db02159a4400f6756af2df370b42c5"
-    },
-    {
-      "description": "credentials of your juju controller",
       "cloud-name": "localhost",
       "cloud-type": "lxd",
-      "cloud-endpoint": "10.124.51.83:17070",
+      "cloud-endpoint": "10.222.97.223:17070",
       "cloud-username": "admin",
-      "cloud-password": "2dfabf48abb9b4277c5a629645962dfb"
+      "cloud-password": "5cad70448c0a9a959c8359b7f4b6c7c2"
     },
     {
       "description": "credentials of your juju controller",
-      "cloud-name": "adalia-home",
-      "cloud-type": "lxd",
-      "cloud-endpoint": "10.146.98.21:17070",
-      "cloud-username": "admin",
-      "cloud-password": "4f1d6e5586321627aed23473c7a174ef"
-    },
-    {
-      "description": "credentials of your juju controller",
-      "cloud-name": "adalia-edu",
+      "cloud-name": "nymphe-edu",
       "cloud-type": "manual",
-      "cloud-endpoint": "192.168.12.162:17070",
+      "cloud-endpoint": "192.168.125.85:17070",
       "cloud-username": "admin",
-      "cloud-password": "468a141af452b0f096584e86d02d4991"
+      "cloud-password": "33dc5d142583d8364c037fb2f9834927"
     }
 
   ],
@@ -412,8 +199,8 @@
   },
   "ssh-config": {
     "_Comment": "ssh connection is needed when adding kvm machines",
-    "ssh-key-directory": "/home/borer/.ssh/",
-    "ssh-key-name": "id_rsa",
+    "ssh-key-directory": "/home/adalia/.ssh/",
+    "ssh-key-name": "id_juju2",
     "ssh-user": "ubuntu",
     "ssh-password": "linux"
   },

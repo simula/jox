@@ -317,6 +317,7 @@ class Monitor(object):
             return None
     def check_nssid_info_with_service(self, app_name, container_type, current_state_machine, slice_id):
         service_key = self.jesearch.get_json_from_es("slice_keys_" + slice_id.lower(), container_type)
+
         if service_key[0]:
             service_key = service_key[1]
             self.keys_local.update({slice_id: service_key})

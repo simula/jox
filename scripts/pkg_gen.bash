@@ -4202,7 +4202,7 @@ function main() {
 		else
 		    echo_info "Set the package template=$pkg_template"
 		fi
-		pkg_name="mosaic5g-$pkg_template"
+		#pkg_name="mosaic5g-$pkg_template"
 		shift 2;;
 
 		-jc | --juju-controller)

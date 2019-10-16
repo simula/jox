@@ -224,7 +224,7 @@ install_python_packages(){
     echo_success "netaddr is successfully installed"
 
     echo_info "Installing elasticsearch"
-    pip3 install elasticsearch --user
+    pip3 install --force-reinstall elasticsearch==7.0.2 --user
     echo_success "elasticsearch is successfully installed"
 
     echo_info "Installing jsonschema"
@@ -312,6 +312,7 @@ function main() {
 
     if [ "$INSTALL_PKG" = "1" ] ; then
 	    install_required_packages
+	    echo_success "###### JoX built successfully !!! ######"
 	    sudo adduser $USER docker
 	    newgrp lxd
 	    groups
@@ -319,7 +320,7 @@ function main() {
 	    sudo adduser $USER lxd
 	    newgrp lxd
 	    groups
-	    echo_success "###### JoX built successfully !!! ######"
+
     fi
     if [ "$INSTALL_PKG" = "2" ] ; then
 	    install_ubuntu_image $ubuntu_image_version
