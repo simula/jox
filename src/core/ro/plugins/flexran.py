@@ -56,8 +56,8 @@ dir_parent_path = os.path.dirname(os.path.abspath(__file__ + "../../../../../"))
 dir_JOX_path = os.path.dirname(os.path.abspath(__file__ + "/../../../"))
 sys.path.append(dir_parent_path)
 sys.path.append(dir_path)
-from src.common.config import gv
-from src.core.ro.plugins import es
+import gv
+import es
 
 class FlexRAN_plugin(object):
     def __init__(self, flex_log_level=None,):

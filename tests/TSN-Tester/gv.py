@@ -42,6 +42,7 @@ global console
 # config file param
 CONFIG_FILE= "jox_config.json"
 FLEXRAN_PLUGIN_SLICE_CONFIG_FILE= "flexran_plugin_default_slice_config.json"   # This file is for plugin
+TSN_PLUGIN_SLICE_CONFIG_FILE="tsn_plugin_default_slice_config.json" 
 JOX_SLICE_CONFIG_FILE= "jox_default_slice_config.json"
 JOX_SLICE_CONFIG=''
 
@@ -55,6 +56,19 @@ RBMQ_QUEUE=""
 # General
 ENABLED ='enabled'
 DISABLED = 'disabled'
+
+# TSN param
+TSN_CTRL_HOST=""
+TSN_CTRL_PORT=""
+TSN_CTRL_USERNAME=""
+TSN_CTRL_PASSWORD=""
+TSN_CTRL_PREFIX=""
+TSN_RBMQ_QUEUE_NAME=""
+TSN_PLUGIN_STATUS=""
+TSN_TIMEOUT_REQUEST=""
+TSN_ES_INDEX_STATUS=""
+TSN_ES_INDEX_NAME=""
+
 # FlexRAN param
 FLEXRAN_HOST=""
 FLEXRAN_PORT=""
@@ -70,6 +84,9 @@ FLEXRAN_SLICE_CONFIG=""
 NSI_ID_LIST = []  # FlexRAN plugin
 NSI_ID = ''
 DEFAULT_NSI_ID = '0'
+
+
+
 
 # LL_MEC param
 LL_MEC_HOST=""
