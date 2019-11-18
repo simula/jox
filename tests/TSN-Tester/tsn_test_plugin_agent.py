@@ -19,31 +19,17 @@ dir_parent_path = os.path.dirname(os.path.abspath(__file__ + "../../../../../"))
 dir_JOX_path = os.path.dirname(os.path.abspath(__file__ + "/../../../"))
 sys.path.append(dir_parent_path)
 sys.path.append(dir_path)
-from src.common.config import gv
-from src.core.ro.plugins import es
 
 
 import logging
-from juju.controller import Controller
-import asyncio
-from juju.model import Model
 import time, datetime
 import pika, uuid, json
 import random
+import gv,es
 
 class test_plugin(object):
     def __init__(self, ):
-        self.standard_reqst = {
-            "datetime": None,
-            "plugin_message": None,
-            "param": {
-                "host": None,
-                "port": None,
-                "slice_config": None
-            }
-        }
-        ## Loading global variables ##
-        self.dir_config = dir_JOX_path + '/common/config/'
+
         self.jox_config = ""
         self.gv = gv
 
@@ -53,39 +39,26 @@ class test_plugin(object):
                 data_file.close()
             self.jox_config = data
         except IOError as ex:
-            print(ex)
-        self.host_name = self.gv.RBMQ_SERVER_IP
-        self.port = self.gv.RBMQ_SERVER_PORT
-        #### Elasticsearch configuration
-        self.gv.ELASTICSEARCH_HOST = self.jox_config['elasticsearch-config']["elasticsearch-host"]
-        self.gv.ELASTICSEARCH_PORT = self.jox_config['elasticsearch-config']["elasticsearch-port"]
-        self.gv.ELASTICSEARCH_LOG_LEVEL = self.jox_config['elasticsearch-config']["elasticsearch-log-level"]
+            message = "Could not load Plugin Configuration file.I/O error({0}): {1}".format(ex.errno, ex.strerror)
+            self.logger.error(message)
+        except ValueError as error:
+            message = "invalid json"
+            self.logger.error(message)
+        except Exception as ex:
+            message = "Error while trying to load plugin configuration"
+            self.logger.error(message)
+        else:
+            message = " Plugin Configuration file Loaded"
+            self.logger.info(message)
+        ## Loading global variables ##
         #### FlexRAN and RBMQ configuration
-        self.gv.FLEXRAN_HOST = self.jox_config["flexran-config"]["host"]
-        self.gv.FLEXRAN_PORT = self.jox_config["flexran-config"]["port"]
-        self.gv.RBMQ_QUEUE_FlexRAN = self.jox_config["flexran-plugin-config"]["rabbit-mq-queue"]
-        self.gv.FLEXRAN_PLUGIN_STATUS = self.jox_config["flexran-plugin-config"]["plugin-status"]
-        self.gv.FLEXRAN_TIMEOUT_REQUEST = self.jox_config["flexran-plugin-config"]['timeout-request']
-        self.gv.FLEXRAN_ES_INDEX_NAME = self.jox_config["flexran-plugin-config"]['es-index-name']
+        self.gv.RBMQ_QUEUE_TSN = self.jox_config["tsn-plugin-config"]["rabbit-mq-queue"]
         self.gv.RBMQ_SERVER_IP = self.jox_config['rabbit-mq-config']["rabbit-mq-server-ip"]
         self.gv.RBMQ_SERVER_PORT = self.jox_config['rabbit-mq-config']["rabbit-mq-server-port"]
-        #### FlexRAN plugin local variables
-        self.jesearch = None
-        self.credentials = None
-        self.parameters = None
-        self.connection = None
-        self.channel = None
-        self.flexran_default_slice_config = None
-        self.slice_config = None
-        self.es_flexran_index = self.gv.FLEXRAN_ES_INDEX_NAME
         self.rbmq_server_ip = self.gv.RBMQ_SERVER_IP
         self.rbmq_server_port = self.gv.RBMQ_SERVER_PORT
         self.rbmq_queue_name = self.gv.RBMQ_QUEUE_FlexRAN
-        self.flexran_host = self.gv.FLEXRAN_HOST
-        self.flexran_port = self.gv.FLEXRAN_PORT
-        self.flexran_plugin_status = self.gv.FLEXRAN_PLUGIN_STATUS
-        self.flexran_endpoint = ''.join(['http://', str(self.flexran_host), ':', str(self.flexran_port), '/'])
-    
+       
     def run(self, retry=False):
         if retry:
             self.connection.close()
@@ -117,7 +90,7 @@ class test_plugin(object):
                     time.sleep(0.5)
                     self.run()
             while self.response is None:
-                if self.gv.FLEXRAN_PLUGIN_STATUS == self.gv.ENABLED:
+                if self.gv.TSN_PLUGIN_STATUS == self.gv.ENABLED:
                     self.connection.process_data_events()
                 else:
                     self.response = 'Not received'
@@ -150,36 +123,27 @@ class test_plugin(object):
         # self.gv.FLEXRAN_PLUGIN_STATUS =self.gv.DISABLED
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Process commandline arguments and override configurations in jox_config.json')
-    parser.add_argument('--log', metavar='[level]', action='store', type=str,
-                        required=False, default='debug',
-                        help='set the log level: debug, info (default), warning, error, critical')
-    enb_data = {"enb_stats": []}
-    args = parser.parse_args()
+#     parser = argparse.ArgumentParser(description='Process commandline arguments and override configurations in jox_config.json')
+#     parser.add_argument('--log', metavar='[level]', action='store', type=str,
+#                         required=False, default='debug',
+#                         help='set the log level: debug, info (default), warning, error, critical')
+#     enb_data = {"enb_stats": []}
+#     args = parser.parse_args()
     fs = test_plugin()
     fs.run()
-    queue_name_flexran = "QueueFlexRAN"
-    standard_reqst = {
-            "datetime": None,
-            "plugin_message": None,
-            "param": {
-                "host": None,
-                "port": None,
-                "slice_config": None
-            }
-        }
-    enquiry = standard_reqst
-    current_time = datetime.datetime.now()
+    queue_name_tsn = "QueueTSN"
 
 ################### Sample RPC message encoding ##############
 
     # Test get ran_stats
-    # enquiry["datetime"] = str(current_time)
-    # enquiry["plugin_message"] = "get_ran_stats"
-    # enquiry = json.dumps(enquiry)
-    # enquiry.encode("utf-8")
-    # response = fs.send_to_plugin(enquiry, queue_name_flexran)
-    # print(response)
+    enquiry={}
+    enquiry["plugin_message"] = "get_ptp_interface"
+    enquiry["node"]="new-tsn-device"
+    enquiry["iface"]="0"
+    enquiry = json.dumps(enquiry)
+    enquiry.encode("utf-8")
+    response = fs.send_to_plugin(enquiry, queue_name_tsn)
+    print(response)
 
 
 

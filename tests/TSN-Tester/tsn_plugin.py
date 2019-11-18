@@ -160,7 +160,7 @@ class TSN_plugin(object):
             try:
                 if self.gv.TSN_PLUGIN_STATUS == self.gv.ENABLED:
                     self.channel.basic_consume(self.on_request, queue=self.rbmq_queue_name, no_ack=False)
-                    print(colored('[*] TSn plugin message thread -- > Waiting for messages. To exit press CTRL+C', 'yellow'))
+                    print(colored('[*] TSN plugin message thread -- > Waiting for messages. To exit press CTRL+C', 'yellow'))
                     self.channel.start_consuming()
                 else:
                     message = "TSN plugin not enabled"
@@ -172,31 +172,782 @@ class TSN_plugin(object):
                    pika_exceptions.ChannelError:
                 self.connection.close()
     
-    def start_notifications(self):
-        print(colored('[*] TSN plugin notifications thread -- > Waiting for messages. To exit press CTRL+C', 'blue'))
-        while True:
-            try:
-                if self.gv.TSN_PLUGIN_STATUS == self.gv.ENABLED:
-                    if self.get_status_tsn_ctrl_endpoint():
-                        tsn_stats = self.get_tsn_stats()
-                        #enb_agent_id, enb_data = self.get_eNB_list()
-                        if self.gv.TSN_ES_INDEX_STATUS == "disabled":
-                            message = " Elasticsearch is disabled !! No more notifications are maintained"
-                            self.logger.info(message)
-                    else:
-                        message = "Notify >> TSN endpoint not enabled"
-                        self.logger.debug(message)
-                    time.sleep(10) # Periodic Notification
-                else:
-                    message = "Notify >> TSN plugin not enabled"
-                    self.logger.error(message)
-                    self.goodbye()
+#     def start_notifications(self):
+#         print(colored('[*] TSN plugin notifications thread -- > Waiting for messages. To exit press CTRL+C', 'blue'))
+#         while True:
+#             try:
+#                 if self.gv.TSN_PLUGIN_STATUS == self.gv.ENABLED:
+#                     if self.get_status_tsn_ctrl_endpoint():
+#                         tsn_stats = self.get_tsn_stats()
+#                         #enb_agent_id, enb_data = self.get_eNB_list()
+#                         if self.gv.TSN_ES_INDEX_STATUS == "disabled":
+#                             message = " Elasticsearch is disabled !! No more notifications are maintained"
+#                             self.logger.info(message)
+#                     else:
+#                         message = "Notify >> TSN endpoint not enabled"
+#                         self.logger.debug(message)
+#                     time.sleep(10) # Periodic Notification
+#                 else:
+#                     message = "Notify >> TSN plugin not enabled"
+#                     self.logger.error(message)
+#                     self.goodbye()
+# 
+#             except pika_exceptions.ConnectionClosed or \
+#                    pika_exceptions.ChannelClosed or \
+#                    pika_exceptions.ChannelError:
+#                 self.connection.close()
 
-            except pika_exceptions.ConnectionClosed or \
-                   pika_exceptions.ChannelClosed or \
-                   pika_exceptions.ChannelError:
-                self.connection.close()
+
+    def on_request(self, ch, method, props, body):
+        enquiry = body.decode(self.gv.ENCODING_TYPE)
+        enquiry = json.loads(enquiry)
+        message = " Message received -> {} ".format(enquiry["plugin_message"])
+        self.logger.info(message)
+        elapsed_time_on_request = datetime.datetime.now() - datetime.datetime.strptime(enquiry["datetime"],'%Y-%m-%d %H:%M:%S.%f')
+
+        if elapsed_time_on_request.total_seconds() < self.gv.FLEXRAN_TIMEOUT_REQUEST:
+            send_reply = True
+            ################################################################ 
+            if enquiry["plugin_message"] == "get_status_tsn_ctrl_endpoint":
+                if self.get_status_tsn_ctrl_endpoint():
+                    body = " TSN Controller endpoint is active"
+                    status = "OK"
+                else:
+                    body = " TSN Controller endpoint is not active"
+                    status = "NOT OK"
+                response= {
+                    "ACK": True,
+                    "data": body,
+                    "status_code": status
+                }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)
+            ##############################################################    
+            if enquiry["plugin_message"] == "get_ptp_interface":
+                result = self.get_ptp_interface(enquiry["node"],enquiry["iface"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_log_level":
+                result = self.get_ptp_log_level(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_logSyncInterval":
+                result = self.get_ptp_logSyncInterval(enquiry["node"],enquiry["iface"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_LogMinDelayReqInterval":
+                result = self.get_ptp_LogMinDelayReqInterval(enquiry["node"],enquiry["iface"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_LogMinDelayReqInterval":
+                result = self.get_ptp_LogMinDelayReqInterval(enquiry["node"],enquiry["iface"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_DelayAssymetry":
+                result = self.get_ptp_DelayAssymetry(enquiry["node"],enquiry["iface"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_minNeighborPropDelayThreshold":
+                result = self.get_ptp_minNeighborPropDelayThreshold(enquiry["node"],enquiry["iface"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_maxNeighborPropDelayThreshold":
+                result = self.get_ptp_maxNeighborPropDelayThreshold(enquiry["node"],enquiry["iface"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_clockParent":
+                result = self.get_ptp_clockParent(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_clock":
+                result = self.get_ptp_clock(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_clock_domain":
+                result = self.get_ptp_clock_domain(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_clock_priority1":
+                result = self.get_ptp_clock_priority1(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_clock_priority2":
+                result = self.get_ptp_clock_priority2(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_clock_class":
+                result = self.get_ptp_clock_class(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_clock_profile":
+                result = self.get_ptp_clock_profile(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_clock_gmCapable":
+                result = self.get_ptp_clock_gmCapable(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_clock_slaveOnly":
+                result = self.get_ptp_clock_slaveOnly(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_program":
+                result = self.get_ptp_program(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_program_timestamping":
+                result = self.get_ptp_program_timestamping(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_program_delayMechanism":
+                result = self.get_ptp_program_delayMechanism(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)  
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_program_transport":
+                result = self.get_ptp_program_transport(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_program_timeaware_bridge":
+                result = self.get_ptp_program_timeaware_bridge(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_program_phydelay_compensate_in":
+                result = self.get_ptp_program_phydelay_compensate_in(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_program_phydelay_compensate_out":
+                result = self.get_ptp_program_phydelay_compensate_out(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_ptp_program_servo_locked_threshold":
+                result = self.get_ptp_program_servo_locked_threshold(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "tsn_ptp_display_time_properties":
+                result = self.tsn_ptp_display_time_properties(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_tas_cycle_time":
+                result = self.get_tas_cycle_time(enquiry["node"],enquiry["iface"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_tas_entry":
+                result = self.get_tas_entry(enquiry["node"],enquiry["iface"],enquiry["entry"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_tas_enable":
+                result = self.get_tas_enable(enquiry["node"],enquiry["iface"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_tas_ptp_mode":
+                result = self.get_tas_ptp_mode(enquiry["node"],enquiry["iface"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_tas_gate_ctrl_period":
+                result = self.get_tas_gate_ctrl_period(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_tas_display_profile":
+                result = self.get_tas_display_profile(enquiry["node"],enquiry["iface"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "get_tas_display_interface_status":
+                result = self.get_tas_display_interface_status(enquiry["node"],enquiry["iface"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_ptp_interface":
+                result = self.set_ptp_interface(enquiry["node"],enquiry["iface"],enquiry["status"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "set_ptp_LogSyncInterval":
+                result = self.set_ptp_LogSyncInterval(enquiry["node"],enquiry["iface"],enquiry["LogSyncInterval"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_ptp_LogAnnounceInterval":
+                result = self.set_ptp_LogAnnounceInterval(enquiry["node"],enquiry["iface"],enquiry["LogAnnounceInterval"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_ptp_LogMinDelayReqInterval":
+                result = self.set_ptp_LogMinDelayReqInterval(enquiry["node"],enquiry["iface"],enquiry["LogMinDelayReqInterval"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_ptp_SyncReceiptTimeout":
+                result = self.set_ptp_SyncReceiptTimeout(enquiry["node"],enquiry["iface"],enquiry["set_ptp_SyncReceiptTimeout"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_ptp_SyncdelayAsymmetry":
+                result = self.set_ptp_SyncdelayAsymmetry(enquiry["node"],enquiry["iface"],enquiry["delayAsymmetry"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_ptp_minNeighborPropDelayThreshold":
+                result = self.set_ptp_minNeighborPropDelayThreshold(enquiry["node"],enquiry["iface"],enquiry["minNeighborPropDelayThreshold"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_ptp_maxNeighborPropDelayThreshold":
+                result = self.set_ptp_maxNeighborPropDelayThreshold(enquiry["node"],enquiry["iface"],enquiry["maxNeighborPropDelayThreshold"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_ptp_clockDomain":
+                result = self.set_ptp_clockDomain(enquiry["node"],enquiry["clockDomain"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_ptp_clockPriority1":
+                result = self.set_ptp_clockPriority1(enquiry["node"],enquiry["clockPriority"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_ptp_clockPriority2":
+                result = self.set_ptp_clockPriority2(enquiry["node"],enquiry["clockPriority"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_ptp_clockClass":
+                result = self.set_ptp_clockClass(enquiry["node"],enquiry["clockClass"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "set_ptp_clockProfile":
+                result = self.set_ptp_clockProfile(enquiry["node"],enquiry["clockProfile"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message)  
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_ptp_gmCapable":
+                result = self.set_ptp_gmCapable(enquiry["node"],enquiry["gmCapable"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_ptp_slaveOnly":
+                result = self.set_ptp_slaveOnly(enquiry["node"],enquiry["slaveOnly"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "set_ptp_timestamping":
+                result = self.set_ptp_timestamping(enquiry["node"],enquiry["timestamping"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_ptp_delayMechanism":
+                result = self.set_ptp_delayMechanism(enquiry["node"],enquiry["delayMechanism"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "set_ptp_timeaware_bridge":
+                result = self.set_ptp_timeaware_bridge(enquiry["node"],enquiry["timeaware_bridge"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_ptp_phydelay_compensate_in":
+                result = self.set_ptp_phydelay_compensate_in(enquiry["node"],enquiry["phydelay_compensate_in"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_ptp_phydelay_compensate_out":
+                result = self.set_ptp_phydelay_compensate_out(enquiry["node"],enquiry["phydelay_compensate_out"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_ptp_servo_locked_threshold":
+                result = self.set_ptp_servo_locked_threshold(enquiry["node"],enquiry["servo_locked_threshold"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_ptp_logging_level":
+                result = self.set_ptp_logging_level(enquiry["node"],enquiry["logging_level"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_ptp_save_config":
+                result = self.set_ptp_save_config(enquiry["node"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_tas_cycle_time":
+                result = self.set_tas_cycle_time(enquiry["node"],enquiry["iface"],enquiry["bts"],enquiry["btn"],enquiry["ct"],enquiry["en"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_tas_entry":
+                result = self.set_tas_entry(enquiry["node"],enquiry["iface"],enquiry["entry"],enquiry["hp"],enquiry["ti"],enquiry["gs"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_tas_enable":
+                result = self.set_tas_enable(enquiry["node"],enquiry["iface"],enquiry["status"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_tas_ptp_mode":
+                result = self.set_tas_ptp_mode(enquiry["node"],enquiry["iface"],enquiry["mode"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "set_tas_gate_ctrl_period":
+                result = self.set_tas_gate_ctrl_period(enquiry["node"],enquiry["period"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "vlan_create":
+                result = self.vlan_create(enquiry["node"],enquiry["vid"],enquiry["pbm_list"],enquiry["ubm_list"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "vlan_destroy":
+                result = self.vlan_destroy(enquiry["node"],enquiry["vid"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ##############################################################
+            if enquiry["plugin_message"] == "vlan_add":
+                result = self.vlan_add(enquiry["node"],enquiry["vid"],enquiry["pbm_list"],enquiry["ubm_list"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            ############################################################## 
+            if enquiry["plugin_message"] == "vlan_remove":
+                result = self.vlan_remove(enquiry["node"],enquiry["vid"],enquiry["ports"])
+                response = {
+                    "ACK": True,
+                    "data": result,
+                    "status_code": "OK"
+                    }
+                self.send_ack(ch, method, props, response, send_reply)
+                message=" RPC acknowledged - {}".format(response)
+                self.logger.info(message) 
+            
+            
+
                 
+
+
+# ################################################################
+#                  GET method calls 
+# ################################################################
+
     def get_status_tsn_ctrl_endpoint(self):
         """Get default or latest TSN CTRL endpoint.
         *@return: The host and port for controller in standard URI format
@@ -208,10 +959,8 @@ class TSN_plugin(object):
             message="TSN CTRL endpoint {} is not active".format(self.tsn_ctrl_endpoint, ex)
             self.logger.debug(message)
             return False
-
-# -------- ptp method calls ------------ #
-    
-    def get_ptp_display_interface(self,node,iface):
+            
+    def get_ptp_interface(self,node,iface):
         """Get ptp status per interface .
         *@return: The result.
         """
@@ -230,7 +979,7 @@ class TSN_plugin(object):
         except Exception as ex:
             print(ex)
     
-    def get_ptp_display_log_level(self,node):
+    def get_ptp_log_level(self,node):
         """Get ptp status per interface .
         *@return: The result.
         """
@@ -248,7 +997,7 @@ class TSN_plugin(object):
         except Exception as ex:
             print(ex)        
         
-    def get_ptp_display_logSyncInterval(self,node,iface):
+    def get_ptp_logSyncInterval(self,node,iface):
         """Get ptp status per interface .
         *@return: The result.
         """
@@ -267,7 +1016,7 @@ class TSN_plugin(object):
         except Exception as ex:
             print(ex)
 
-    def get_ptp_display_logAnnounceInterval(self,node,iface):
+    def get_ptp_logAnnounceInterval(self,node,iface):
         """Get ptp status per interface .
         *@return: The result.
         """
@@ -286,7 +1035,7 @@ class TSN_plugin(object):
         except Exception as ex:
             print(ex)
         
-    def get_ptp_display_LogMinDelayReqInterval(self,node,iface):
+    def get_ptp_LogMinDelayReqInterval(self,node,iface):
         """Get ptp status per interface .
         *@return: The result.
         """
@@ -305,7 +1054,7 @@ class TSN_plugin(object):
         except Exception as ex:
             print(ex)    
         
-    def get_ptp_display_SyncReceiptTimeout(self,node,iface):
+    def get_ptp_SyncReceiptTimeout(self,node,iface):
         """Get ptp status per interface .
         *@return: The result.
         """
@@ -325,7 +1074,7 @@ class TSN_plugin(object):
             print(ex)        
         
         
-    def get_ptp_display_DelayAssymetry(self,node,iface):
+    def get_ptp_DelayAssymetry(self,node,iface):
         """Get ptp status per interface .
         *@return: The result.
         """
@@ -344,7 +1093,7 @@ class TSN_plugin(object):
         except Exception as ex:
             print(ex)        
         
-    def get_ptp_display_minNeighborPropDelayThreshold(self,node,iface):
+    def get_ptp_minNeighborPropDelayThreshold(self,node,iface):
         """Get ptp status per interface .
         *@return: The result.
         """
@@ -363,7 +1112,7 @@ class TSN_plugin(object):
         except Exception as ex:
             print(ex)       
          
-    def get_ptp_display_maxNeighborPropDelayThreshold(self,node,iface):
+    def get_ptp_maxNeighborPropDelayThreshold(self,node,iface):
         """Get ptp status per interface .
         *@return: The result.
         """
@@ -383,7 +1132,7 @@ class TSN_plugin(object):
             print(ex)       
     
     
-    def get_ptp_display_clockParent(self,node):
+    def get_ptp_clockParent(self,node):
         """Get ptp status per interface .
         *@return: The result.
         """
@@ -401,7 +1150,7 @@ class TSN_plugin(object):
         except Exception as ex:
             print(ex)  
         
-    def get_ptp_display_clock(self,node):
+    def get_ptp_clock(self,node):
         """Get ptp status per interface .
         *@return: The result.
         """
@@ -419,7 +1168,7 @@ class TSN_plugin(object):
         except Exception as ex:
             print(ex)          
             
-    def get_ptp_display_clock_domain(self,node):
+    def get_ptp_clock_domain(self,node):
         """Get ptp status per interface .
         *@return: The result.
         """
@@ -437,98 +1186,7 @@ class TSN_plugin(object):
         except Exception as ex:
             print(ex)   
 
-    def get_ptp_display_clock_priority1(self,node):
-        """Get ptp status per interface .
-        *@return: The result.
-        """
-        
-        try:
-            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-info"]
-            
-            url =''.join([
-                str(self.tsn_ctrl_endpoint),
-                str(node),
-                str(suffix)])
-            response = requests.get(url,auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
-            response=json.loads(response.text)
-            return response
-        except Exception as ex:
-            print(ex)   
-
-    
-    def get_ptp_display_clock_priority12(self,node):
-        """Get ptp status per interface .
-        *@return: The result.
-        """
-        
-        try:
-            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-info"]
-            
-            url =''.join([
-                str(self.tsn_ctrl_endpoint),
-                str(node),
-                str(suffix)])
-            response = requests.get(url,auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
-            response=json.loads(response.text)
-            return response
-        except Exception as ex:
-            print(ex)   
-
-    def get_ptp_display_clock_class(self,node):
-        """Get ptp status per interface .
-        *@return: The result.
-        """
-        
-        try:
-            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-info"]
-            
-            url =''.join([
-                str(self.tsn_ctrl_endpoint),
-                str(node),
-                str(suffix)])
-            response = requests.get(url,auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
-            response=json.loads(response.text)
-            return response
-        except Exception as ex:
-            print(ex)   
-
-    def get_ptp_display_clock_profile(self,node):
-        """Get ptp status per interface .
-        *@return: The result.
-        """
-        
-        try:
-            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-info"]
-            
-            url =''.join([
-                str(self.tsn_ctrl_endpoint),
-                str(node),
-                str(suffix)])
-            response = requests.get(url,auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
-            response=json.loads(response.text)
-            return response
-        except Exception as ex:
-            print(ex)   
-
-    def get_ptp_display_clock_gmCapable(self,node):
-        """Get ptp status per interface .
-        *@return: The result.
-        """
-        
-        try:
-            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-info"]
-            
-            url =''.join([
-                str(self.tsn_ctrl_endpoint),
-                str(node),
-                str(suffix)])
-            response = requests.get(url,auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
-            response=json.loads(response.text)
-            return response
-        except Exception as ex:
-            print(ex)   
-
-    def get_ptp_display_clock_slaveOnly(self,node):
+    def get_ptp_clock_priority1(self,node):
         """Get ptp status per interface .
         *@return: The result.
         """
@@ -547,7 +1205,98 @@ class TSN_plugin(object):
             print(ex)   
 
     
-    def get_ptp_display_program(self,node):
+    def get_ptp_clock_priority2(self,node):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-info"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            response = requests.get(url,auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            response=json.loads(response.text)
+            return response
+        except Exception as ex:
+            print(ex)   
+
+    def get_ptp_clock_class(self,node):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-info"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            response = requests.get(url,auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            response=json.loads(response.text)
+            return response
+        except Exception as ex:
+            print(ex)   
+
+    def get_ptp_clock_profile(self,node):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-info"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            response = requests.get(url,auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            response=json.loads(response.text)
+            return response
+        except Exception as ex:
+            print(ex)   
+
+    def get_ptp_clock_gmCapable(self,node):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-info"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            response = requests.get(url,auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            response=json.loads(response.text)
+            return response
+        except Exception as ex:
+            print(ex)   
+
+    def get_ptp_clock_slaveOnly(self,node):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-info"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            response = requests.get(url,auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            response=json.loads(response.text)
+            return response
+        except Exception as ex:
+            print(ex)   
+
+    
+    def get_ptp_program(self,node):
         """Get ptp status per interface .
         *@return: The result.
         """
@@ -843,14 +1592,978 @@ class TSN_plugin(object):
         except Exception as ex:
             print(ex)
 
+# ################################################################
+#                  SET method calls 
+# ################################################################
 
-
-
-
-
-
-
+    def set_ptp_interface(self,node,iface,status):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-inter"]
             
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix),
+                str(iface)])
+            
+            body={
+                "tsnptp-interface":{               
+                    "interface": iface ,    
+                    "ptp": status
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)
+
+    def set_ptp_LogSyncInterval (self,node,iface,LogSyncInterval):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-inter"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix),
+                str(iface)])
+            
+            body={
+                "tsnptp-interface":{               
+                    "interface": iface ,    
+                    "log-sync-interval": LogSyncInterval
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)
+
+    def set_ptp_LogAnnounceInterval(self,node,iface,LogAnnounceInterval):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-inter"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix),
+                str(iface)])
+            
+            body={
+                "tsnptp-interface":{               
+                    "interface": iface ,    
+                    "log-announce-interval": LogAnnounceInterval
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)
+
+    def set_ptp_LogMinDelayReqInterval(self,node,iface,LogMinDelayReqInterval):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-inter"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix),
+                str(iface)])
+            
+            body={
+                "tsnptp-interface":{               
+                    "interface": iface ,    
+                    "log-min-delay-req-interval": LogMinDelayReqInterval
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)
+ 
+    def set_ptp_SyncReceiptTimeout(self,node,iface,SyncReceiptTimeout):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-inter"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix),
+                str(iface)])
+            
+            body={
+                "tsnptp-interface":{               
+                    "interface": iface ,    
+                    "sync-receipt-timeout": SyncReceiptTimeout
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex) 
+
+
+    def set_ptp_SyncdelayAsymmetry(self,node,iface,delayAsymmetry):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-inter"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix),
+                str(iface)])
+            
+            body={
+                "tsnptp-interface":{               
+                    "interface": iface ,    
+                    "delay-asymmetry": delayAsymmetry  
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex) 
+ 
+    def set_ptp_minNeighborPropDelayThreshold(self,node,iface,minNeighborPropDelayThreshold):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-inter"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix),
+                str(iface)])
+            
+            body={
+                "tsnptp-interface":{               
+                    "interface": iface ,    
+                    "min-neighbor-propdelay-threshold": minNeighborPropDelayThreshold  
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex) 
+ 
+ 
+    def set_ptp_maxNeighborPropDelayThreshold(self,node,iface,maxNeighborPropDelayThreshold):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-inter"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix),
+                str(iface)])
+            
+            body={
+                "tsnptp-interface":{               
+                    "interface": iface ,    
+                    "max-neighbor-propdelay-threshold": maxNeighborPropDelayThreshold  
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex) 
+  
+    def set_ptp_clockDomain(self,node,clockDomain):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-info"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            
+            body={
+                "tsnptp-clock-info":{               
+                    "domain-number": clockDomain
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex) 
+            
+    def set_ptp_clockPriority1(self,node,clockPriority):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-info"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            
+            body={
+                "tsnptp-clock-info":{               
+                    "priority1": clockPriority
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)             
+            
+    def set_ptp_clockPriority2(self,node,clockPriority):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-info"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            
+            body={
+                "tsnptp-clock-info":{               
+                    "priority2": clockPriority
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)
+            
+            
+    def set_ptp_clockClass(self,node,clockClass):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-info"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            
+            body={
+                "tsnptp-clock-info":{               
+                    "clock-class": clockClass
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex) 
+
+
+    def set_ptp_clockProfile(self,node,clockProfile):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-info"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            
+            body={
+                "tsnptp-clock-info":{               
+                    "profile": clockProfile
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex) 
+
+    def set_ptp_gmCapable(self,node,gmCapable):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-info"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            
+            body={
+                "tsnptp-clock-info":{               
+                    "gmcapable": gmCapable
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex) 
+ 
+    def set_ptp_slaveOnly(self,node,slaveOnly):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-info"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            
+            body={
+                "tsnptp-clock-info":{               
+                    "slave-only": slaveOnly
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex) 
+                        
+                        
+    def set_ptp_timestamping(self,node,timestamping):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-program"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            
+            body={
+                "tsnptp-program":{               
+                    "ptp-timestamping": timestamping
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)                         
+                        
+                        
+    def set_ptp_delayMechanism(self,node,delayMechanism):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-program"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            
+            body={
+                "tsnptp-program":{               
+                    "ptp-delay-mechanism": delayMechanism
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)                         
+
+    def set_ptp_timeaware_bridge(self,node,timeaware_bridge ):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-program"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            
+            body={
+                "tsnptp-program":{               
+                    "ptp-time-aware-bridge-mode": timeaware_bridge
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)                                                 
+                         
+    def set_ptp_phydelay_compensate_in(self,node,phydelay_compensate_in):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-program"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            
+            body={
+                "tsnptp-program":{               
+                    "igress-hardware-path-delay-compensation": phydelay_compensate_in
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)                             
+                        
+    def set_ptp_phydelay_compensate_out(self,node,phydelay_compensate_out):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-program"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            
+            body={
+                "tsnptp-program":{               
+                    "egress-hardware-path-delay-compensation": phydelay_compensate_out
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)                        
+                        
+                        
+                        
+    def set_ptp_servo_locked_threshold(self,node,servo_locked_threshold):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-program"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            
+            body={
+                "tsnptp-program":{               
+                    "ptp-servo-locked-threshold": servo_locked_threshold
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)                      
+                        
+    def set_ptp_logging_level(self,node,logging_level):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-program"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            
+            body={
+                "tsnptp-program":{               
+                    "logging-level": logging_level
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)                       
+                        
+    def set_ptp_save_config(self,node):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-program"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            
+            body={
+                "tsnptp-program":{               
+                    "config-type-without-parameters": "save-cfg"
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)                         
+                        
+    def set_tas_cycle_time(self,node,iface,bts,btn,ct,en):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-tas-cycle-time"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix),
+                str(iface)])
+            
+            body={
+                "tsntas-cycle-time":{
+                    "interface": iface,
+                    "base-time-sec": bts,
+                    "base-time-ns": btn,
+                    "cycle-time": ct,
+                    "extension-ns": en
+
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)           
+
+    def set_tas_entry(self,node,iface,entry,hp,ti,gs):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-tas-entry"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix),
+                str(iface),
+                str(entry)])
+            
+            body={
+                "tsntas-schedule-entry":{
+                    "interface": iface,         
+                    "entry": entry,          
+                    "hold-preempt": hp,
+                    "time-interval": ti,
+                    "gate-state": gs
+
+
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)                   
+                        
+                        
+    def set_tas_enable(self,node,iface,status):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-tas-enable"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix),
+                str(iface)])
+            
+            body={
+                "tsntas-enable-schedule":{
+                    "interface": iface,         
+                    "enable": status          
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)                        
+                        
+                        
+    def set_tas_ptp_mode(self,node,iface,mode):                   
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-tas-ptp-mode"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix),
+                str(iface)])
+            
+            body={
+                "tsntas-ptp-mode":{
+                    "interface": iface,         
+                    "ptp-mode": mode          
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)                             
+
+    def set_tas_gate_ctrl_period(self,node,period):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-tas-gate-ctrl-period"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix)])
+            
+            body={
+                "tsntas-gate-ctrl-period":{
+                    "period": period          
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)                   
+                        
+                        
+
+    def vlan_create(self,node,vid,pbm_list,ubm_list):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        pbm=', '.join(pbm_list)
+        ubm=', '.join(ubm_list)
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-vlan"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix),
+                str(vid)])
+            
+            body={
+                "vlan":{
+                    "id": vid, 
+                    "ports": str(pbm),
+                    "untagged-ports": str(ubm),
+                    "operation": "create"
+         
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)  
+
+    def vlan_destroy(self,node,vid):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-vlan"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix),
+                str(vid)])
+            
+            body={
+                "vlan":{
+                    "id": vid, 
+                    "operation": "destroy"
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)  
+
+    def vlan_add(self,node,vid,pbm_list,ubm_list):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        pbm=', '.join(pbm_list)
+        ubm=', '.join(ubm_list)
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-vlan"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix),
+                str(vid)])
+            
+            body={
+                "vlan":{
+                    "id": vid, 
+                    "ports": str(pbm),
+                    "untagged-ports": str(ubm),
+                    "operation": "add"
+         
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)  
+
+
+    def vlan_remove(self,node,vid,ports):
+        """Get ptp status per interface .
+        *@return: The result.
+        """
+        
+        ports=', '.join(ports)
+
+        try:
+            suffix=self.jox_config["tsn-ctrl-config"]["suffix-vlan"]
+            
+            url =''.join([
+                str(self.tsn_ctrl_endpoint),
+                str(node),
+                str(suffix),
+                str(vid)])
+            
+            body={
+                "vlan":{
+                    "id": vid, 
+                    "ports": str(ports),
+                    "operation": "remove"
+         
+                    }
+                }
+            
+            response = requests.put(url,
+                                    headers={'Content-Type':'application/json'},
+                                    json=body,
+                                    auth=HTTPBasicAuth(self.gv.TSN_CTRL_USERNAME, self.gv.TSN_CTRL_PASSWORD))
+            
+            return response.status_code
+        except Exception as ex:
+            print(ex)  
+
+
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process commandline arguments and override configurations in jox_config.json')
     parser.add_argument('--log', metavar='[level]', action='store', type=str,
@@ -864,22 +2577,43 @@ if __name__ == '__main__':
 #     for line in sys.path:
 #         print (line)
      
-#     result=ts.get_ptp_display_interface("new-netconf-device",0)
-#     result=ts.get_ptp_display_log_level("new-netconf-device")
-#     result=ts.get_ptp_display_logSyncInterval("new-netconf-device",0)
-#     result=ts.get_ptp_display_logAnnounceInterval("new-netconf-device",0)
-#     result=ts.get_ptp_display_LogMinDelayReqInterval("new-netconf-device",0)
-#     result=ts.get_ptp_display_SyncReceiptTimeout("new-netconf-device",0)
-#     result=ts.get_ptp_display_DelayAssymetry("new-netconf-device",0)
-#     result=ts.get_ptp_display_minNeighborPropDelayThreshold("new-netconf-device",0)
-#     result=ts.get_ptp_display_maxNeighborPropDelayThreshold("new-netconf-device",0)
-#     result=ts.get_ptp_display_clockParent("new-netconf-device")
-#     result=ts.get_ptp_display_clock("new-netconf-device")
-#     result=ts.get_ptp_display_clock_slaveOnly("new-netconf-device")
+#     result=ts.get_ptp_interface("new-netconf-device",0)
+#     result=ts.get_ptp_log_level("new-netconf-device")
+#     result=ts.get_ptp_logSyncInterval("new-netconf-device",0)
+#     result=ts.get_ptp_logAnnounceInterval("new-netconf-device",0)
+#     result=ts.get_ptp_LogMinDelayReqInterval("new-netconf-device",0)
+#     result=ts.get_ptp_SyncReceiptTimeout("new-netconf-device",0)
+#     result=ts.get_ptp_DelayAssymetry("new-netconf-device",0)
+#     result=ts.get_ptp_minNeighborPropDelayThreshold("new-netconf-device",0)
+#     result=ts.get_ptp_maxNeighborPropDelayThreshold("new-netconf-device",0)
+#     result=ts.get_ptp_clockParent("new-netconf-device")
+#     result=ts.get_ptp_clock("new-netconf-device")
+#     result=ts.get_ptp_clock_slaveOnly("new-netconf-device")
 #     result=ts.tsn_ptp_display_time_properties("new-netconf-device")
 #     result=ts.get_tas_cycle_time("new-netconf-device",0)
 #     result=ts.get_tas_entry("new-netconf-device", 0, 2)
-    result=ts.get_tas_display_profile("new-netconf-device",0)
+#     result=ts.get_tas_display_profile("new-netconf-device",0)
+#     result=ts.set_ptp_interface("new-netconf-device",0,"enable")
+#     result=ts.set_ptp_LogAnnounceInterval("new-netconf-device",0,0)
+#     result=ts.set_ptp_LogMinDelayReqInterval("new-netconf-device",0,1)
+#     result=ts.set_ptp_SyncReceiptTimeout("new-netconf-device",0,2)
+#     result=ts.set_ptp_SyncdelayAsymmetry("new-netconf-device",0,100)
+#     result=ts.set_ptp_minNeighborPropDelayThreshold("new-netconf-device",0,-500000)
+#     result=ts.set_ptp_maxNeighborPropDelayThreshold("new-netconf-device",0,2000)
+#     result=ts.set_ptp_clockDomain("new-netconf-device",10)
+    result=ts.set_ptp_clockPriority1("new-netconf-device",100)
+#     result=ts.set_ptp_clockPriority2("new-netconf-device",10)
+#     result=ts.set_ptp_clockClass("new-netconf-device",20)
+#     result=ts.set_ptp_clockProfile("new-netconf-device","802dot1AS")
+#     result=ts.set_ptp_gmCapable("new-netconf-device","false")
+#     result=ts.set_ptp_slaveOnly("new-netconf-device","true") ---- @@200 but not working
+#     result=ts.set_ptp_timestamping("new-netconf-device","hardware")
+#     result=ts.set_ptp_delayMechanism("new-netconf-device",'e2e') ---- @@200 but not working
+
+#     result=ts.set_ptp_SyncReceiptTimeout("new-netconf-device",0,2)
+#     result=ts.set_ptp_SyncReceiptTimeout("new-netconf-device",0,2)
+#     result=ts.set_ptp_SyncReceiptTimeout("new-netconf-device",0,2)
+
     
     print(result)
 #     t1 = Thread(target=ts.start_consuming).start()
