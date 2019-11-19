@@ -82,7 +82,9 @@ standard_reqst = {
 		"package_onboard_data": "",
 		"package_name": None,
 		# related to logs
-		"log": None
+		"log": None,
+		# Parameters to define the disaggregation type; monolithic (mon), functional-split (fs)
+		"disaggregation": None
 	}
 }
 
@@ -3480,6 +3482,43 @@ def logging(log_source=None, log_type=None):
 	logger.debug("response: {}".format(data))
 	data = jsonify(data)
 	return data, status_code
+
+@app.route('/dis-aggregation')
+@app.route('/dis-aggregation/<string:type>')
+@app.route('/dis-aggregation/<string:cloud_name>/<string:model_name>/<string:type>')
+def Disaggregation(cloud_name=None, model_name=None, type="mon"):
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["parameters"]["template_directory"] = request.args.get('url')
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	enquiry["parameters"]["cloud_name"] = cloud_name
+	enquiry["parameters"]["model_name"] = model_name
+	#enquiry["parameters"]["disaggregation"] = type
+	enquiry["parameters"]["disaggregation"] = {}
+	enquiry["parameters"]["disaggregation"]["type"] = type
+	#########################
+	enquiry = json.dumps(enquiry)
+	logger.info("enquiry: {}".format(enquiry))
+	logger.debug("enquiry: {}".format(enquiry))
+	# waiting for the response
+	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+	data = json.loads(data)
+
+	status_code = data["status_code"]
+	data = data["data"]
+	data = {
+		"data": data,
+		"elapsed-time": str(datetime.datetime.now() - current_time),
+	}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
+
+
 
 
 @app.errorhandler(Exception)

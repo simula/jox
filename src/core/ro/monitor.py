@@ -40,6 +40,8 @@ from juju.model import Model
 from juju import utils
 import src.common.config.gv as gv
 import time
+from src.core.ro.vim_driver.vimdriver import run_command
+
 # keys_local = {}   # locally maintaining keys for slice component's context matching
 
 class Monitor(object):
@@ -470,8 +472,141 @@ def get_all_relations(juju_status):
     for item in juju_status_relations:
         container['interface'] = item.interface
         container['Provider:Requirer'] = item.key
-        node = ("relation-" + str(node))
-        relations.update({node: [container.copy()]})
-        node = +1
+        relation = ("relation-" + str(node))
+        relations.update({relation: [container.copy()]})
+        node += 1
     return relations
 
+
+async def disaggregation(cloud_name=None, model_name=None, user_name="admin", dis_type="mon"):
+    model = Model()
+    if (cloud_name is None) and (model_name is None):
+        try:
+           await model.connect_current()
+        except:
+            message = "Error while trying to connect to the current juju model"
+            logger.error(message)
+            return [False, message]
+    else:
+        try:
+            model_name = cloud_name + ":" + user_name + '/' + model_name
+            await model.connect(model_name)
+        except:
+            message = "Error while trying to connect to the juju model {}:{}/{}".format(cloud_name, user_name, model_name)
+            logger.error(message)
+            return [False, message]
+    juju_status=(await utils.run_with_interrupt(model.get_status(), model._watch_stopping, loop=model.loop))
+    relations = dict()
+    for item in juju_status.relations:
+        relation = item.key
+        try:
+            relation = str(relation).split(" ")
+            relations[relation[0]] = relation[1]
+        except:
+            relations[str(relation)] = "" 
+    print("relations={}".format(relations))
+    if dis_type == "mon":
+        #
+        cmd_mon = ["sh", "/home/adalia/mosaic5g/jox/mon.bash"]
+        cmd_mon_out = await run_command(cmd_mon)
+        """ 
+        #juju model-config update-status-hook-interval=1s
+        cmd_hook_interval = ["juju", "model-config", "update-status-hook-interval=1s"]
+        cmd_hook_interval_out = await run_command(cmd_hook_interval)
+        #juju config oai-du node_function="enb"
+        cmd_config_mon = ["juju", "config", "oai-du", "node_function=enb"]
+        cmd_config_mon_out = await run_command(cmd_config_mon)
+        #juju remove-relation oai-mme oai-cu
+        cmd_remove_relation_mme_cu = ["juju", "remove-relation", "oai-mme", "oai-cu"]
+        cmd_remove_relation_mme_cu_out = await run_command(cmd_remove_relation_mme_cu)
+        #juju remove-relation flexran oai-cu
+        cmd_remove_relation_flexran_cu = ["juju", "remove-relation", "flexran", "oai-cu"]
+        cmd_remove_relation_flexran_cu_out = await run_command(cmd_remove_relation_flexran_cu)
+        #juju remove-relation oai-cu:cu oai-du:du
+        cmd_remove_relation_cu_du = ["juju", "remove-relation", "oai-cu:cu", "oai-du:du"]
+        cmd_remove_relation_cu_du_out = await run_command(cmd_remove_relation_cu_du)
+        #juju remove-relation oai-mme oai-hss
+        cmd_remove_relation_mme_hss = ["juju", "remove-relation", "oai-mme", "oai-hss"]
+        cmd_remove_relation_mme_hss_out = await run_command(cmd_remove_relation_mme_hss)
+        #sleep 30
+        cmd_sleep_30 = ["sleep", "30"]
+        cmd_sleep_30_out = await run_command(cmd_sleep_30)
+
+        #juju add-relation oai-mme oai-hss
+        cmd_add_relation_mme_hss = ["juju", "add-relation", "oai-mme", "oai-hss"]
+        cmd_add_relation_mme_hss_out = await run_command(cmd_add_relation_mme_hss)
+        #sleep 50
+        cmd_sleep_50 = ["sleep", "50"]
+        cmd_sleep_50_out = await run_command(cmd_sleep_50)
+        #juju add-relation oai-mme oai-du
+        cmd_add_relation_mme_du = ["juju", "add-relation", "oai-mme", "oai-du"]
+        cmd_add_relation_mme_du_out = await run_command(cmd_add_relation_mme_du)
+        #juju model-config update-status-hook-interval=45s
+        cmd_hook_interval_45s = ["juju", "model-config", "update-status-hook-interval=45s"]
+        cmd_hook_interval_45s_out = await run_command(cmd_hook_interval_45s)
+        """
+        return [True, "Switching to Monolithic RAN is done"]
+    elif dis_type == "fs":
+        cmd_fs = ["sh", "/home/adalia/mosaic5g/jox/fs.bash"]
+        cmd_fs_out = await run_command(cmd_fs)
+        """
+        #juju model-config update-status-hook-interval=1s
+        cmd_hook_interval = ["juju", "model-config", "update-status-hook-interval=1s"]
+        cmd_hook_interval_out = await run_command(cmd_hook_interval)
+        #juju config oai-du node_function="enb"
+        cmd_config_fs = ["juju", "config", "oai-du", "node_function=du"]
+        cmd_config_fs_out = await run_command(cmd_config_fs)
+        
+        #juju remove-relation oai-mme oai-du
+        cmd_remove_relation_mme_du = ["juju", "remove-relation", "oai-mme", "oai-du"]
+        cmd_remove_relation_mme_du_out = await run_command(cmd_remove_relation_mme_du)
+        #juju remove-relation flexran oai-du
+        cmd_remove_relation_flexran_du = ["juju", "remove-relation", "flexran", "oai-du"]
+        cmd_remove_relation_flexran_du_out = await run_command(cmd_remove_relation_flexran_du)
+        #juju remove-relation oai-mme oai-hss
+        cmd_remove_relation_mme_hss = ["juju", "remove-relation", "oai-mme", "oai-hss"]
+        cmd_remove_relation_mme_hss_out = await run_command(cmd_remove_relation_mme_hss)
+
+        #sleep 35
+        cmd_sleep_35 = ["sleep", "35"]
+        cmd_sleep_35_out = await run_command(cmd_sleep_35)
+        #juju add-relation oai-du:du oai-cu:cu
+        cmd_add_relation_cu_du = ["juju", "add-relation", "oai-cu:cu", "oai-du:du"]
+        cmd_add_relation_cu_du_out = await run_command(cmd_add_relation_cu_du)
+
+        #sleep 25
+        cmd_sleep_25 = ["sleep", "25"]
+        cmd_sleep_25_out = await run_command(cmd_sleep_25)
+        #juju add-relation flexran oai-cu
+        cmd_add_relation_flexran_cu = ["juju", "add-relation", "flexran", "oai-cu"]
+        cmd_add_relation_flexran_cu_out = await run_command(cmd_add_relation_flexran_cu)
+
+        #sleep 15
+        cmd_sleep_15 = ["sleep", "15"]
+        cmd_sleep_15_out = await run_command(cmd_sleep_15)
+        #juju add-relation oai-mme oai-hss
+        cmd_add_relation_mme_hss = ["juju", "add-relation", "oai-mme", "oai-hss"]
+        cmd_add_relation_mme_hss_out = await run_command(cmd_add_relation_mme_hss)
+
+        cmd_sleep_35 = ["sleep", "60"]
+        cmd_sleep_35_out = await run_command(cmd_sleep_35)
+        #juju add-relation oai-mme oai-cu
+        cmd_add_relation_mme_cu = ["juju", "add-relation", "oai-mme", "oai-cu"]
+        cmd_add_relation_mme_cu_out = await run_command(cmd_add_relation_mme_cu)
+
+        cmd_sleep_35 = ["sleep", "35"]
+        cmd_sleep_35_out = await run_command(cmd_sleep_35)
+        #juju add-relation flexran oai-du
+        cmd_add_relation_flexran_du = ["juju", "add-relation", "flexran", "oai-du"]
+        cmd_add_relation_flexran_du_out = await run_command(cmd_add_relation_flexran_du)
+
+        cmd_sleep_15 = ["sleep", "20"]
+        cmd_sleep_15_out = await run_command(cmd_sleep_15)
+        
+        #juju model-config update-status-hook-interval=45s
+        cmd_hook_interval_45s = ["juju", "model-config", "update-status-hook-interval=45s"]
+        cmd_hook_interval_45s_out = await run_command(cmd_hook_interval_45s)
+        """
+        return [True, "Switching to CU-DU RAN is done"]
+    else:    
+        return [True, "The current type {} is not supporyed".format(dis_type)]

@@ -1278,7 +1278,7 @@ topology_template:
     oai-ran:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-enb-43'
+        charm: 'cs:~navid-nikaein/xenial/oai-enb-44'
         endpoint: $juju_controller
         model: $juju_model
         vendor: $pkg_vendor
@@ -1771,7 +1771,7 @@ topology_template:
     oai-enb:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-enb-43'
+        charm: 'cs:~navid-nikaein/xenial/oai-enb-44'
         endpoint: $juju_controller
         model: $juju_model
         vendor: $pkg_vendor
@@ -2289,7 +2289,7 @@ topology_template:
     flexran:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm:  'cs:~navid-nikaein/xenial/flexran-rtc-17'
+        charm:  'cs:~navid-nikaein/xenial/flexran-rtc-18'
         endpoint: $juju_controller
         model: $juju_model
         vendor: $pkg_vendor
@@ -2304,7 +2304,7 @@ topology_template:
     oai-enb:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-enb-43'
+        charm: 'cs:~navid-nikaein/xenial/oai-enb-44'
         endpoint: $juju_controller
         model: $juju_model
         vendor: $pkg_vendor
@@ -2861,7 +2861,7 @@ topology_template:
     flexran:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm:  'cs:~navid-nikaein/xenial/flexran-rtc-17'
+        charm:  'cs:~navid-nikaein/xenial/flexran-rtc-18'
         endpoint: $juju_controller
         model: $juju_model
         vendor: $pkg_vendor
@@ -2870,16 +2870,16 @@ topology_template:
         req1:
           node: VDU_flexran
           relationship: tosca.relationships.HostedOn
-        req2:
-          node: oai-cu
-          relationship: tosca.relationships.AttachesTo
+        #req2:
+        #  node: oai-cu
+        #  relationship: tosca.relationships.AttachesTo
         req3:
           node: oai-du
           relationship: tosca.relationships.AttachesTo
     oai-cu:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-enb-43'
+        charm: 'cs:~navid-nikaein/xenial/oai-enb-44'
         endpoint: $juju_controller
         model: $juju_model
         vendor: $pkg_vendor
@@ -2895,7 +2895,7 @@ topology_template:
     oai-du:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm:  'cs:~navid-nikaein/xenial/oai-enb-43'
+        charm:  'cs:~navid-nikaein/xenial/oai-enb-44'
         endpoint: $juju_controller
         model: $juju_model
         vendor: $pkg_vendor
@@ -3348,7 +3348,7 @@ topology_template:
     oai-enb:
       type: tosca.nodes.SoftwareComponent.JOX
       properties:
-        charm: 'cs:~navid-nikaein/xenial/oai-enb-43'
+        charm: 'cs:~navid-nikaein/xenial/oai-enb-44'
         endpoint: $juju_controller
         model: $juju_model
         vendor: $pkg_vendor

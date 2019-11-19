@@ -65,6 +65,7 @@ import pika
 import pika.exceptions as pika_exceptions
 from juju import loop
 from src.core.ro.monitor import get_juju_status as jmonitor_get_juju_status
+from src.core.ro.monitor import disaggregation as jmonitor_disaggregation
 import tarfile, io
 import ipaddress
 import asyncio
@@ -1607,6 +1608,32 @@ class server_RBMQ(object):
 					res = data[1]
 					response = {
 						"ACK": False,
+						"data": res,
+						"status_code": self.nfvo_jox.gv.HTTP_200_OK
+					}
+				else:
+					res = data[1]
+					response = {
+						"ACK": False,
+						"data": res,
+						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+					}
+				self.send_ack(ch, method, props, response, send_reply)
+			elif (enquiry["request-uri"] == '/dis-aggregation/<string:cloud_name>/<string:model_name>/<string:type>') or \
+					(enquiry["request-uri"] == '/dis-aggregation/<string:type>') or \
+					(enquiry["request-uri"] == '/dis-aggregation'):
+				parameters = enquiry["parameters"]
+				disaggregation_type = parameters["disaggregation"]["type"]
+				cloud_name = parameters["cloud_name"]
+				model_name = parameters["model_name"]
+				user_name="admin"
+
+				data = loop.run(jmonitor_disaggregation(cloud_name, model_name, user_name, disaggregation_type))
+
+				if data[0]:
+					res = data[1]
+					response = {
+						"ACK": True,
 						"data": res,
 						"status_code": self.nfvo_jox.gv.HTTP_200_OK
 					}
