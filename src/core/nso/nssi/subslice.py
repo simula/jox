@@ -234,9 +234,10 @@ class JSubSlice(JSONEncoder):
                     self.add_model(subslice_config, resourceController, juju_cloud, juju_model, list_all_jujuModel_attachedWatcher)
                 else:
                     self.logger.debug("The model {} under the juju controller {} is already added".format(juju_model, juju_cloud))
+            """
             if len(list_crossModelRelation) > 0:
                 self.add_cross_model_relations(list_crossModelRelation)
-
+            """
         except Exception as ex:
             raise ex
                      
@@ -263,6 +264,15 @@ class JSubSlice(JSONEncoder):
             self.subslice_models.append(new_model)
         except Exception as ex:
             raise ex
+    def add_intra_mode_relation(self, service_a, service_b, jcloud, jmodel):
+
+        for current_model in self.subslice_models:
+            #print("Current model: cloud={} and model={}".format(current_model.cloud_name, current_model.model_name))
+            if jcloud == current_model.cloud_name and jmodel == current_model.model_name:
+                #print("Adding relation between {} and {} in juju cloud {} and juju model {}".format(service_a, service_b, jcloud, jmodel))
+                self.logger.info("Adding relation between {} and {} in juju cloud {} and juju model {}".format(service_a, service_b, jcloud, jmodel))
+                current_model.add_relation_intramodel(service_a, service_b, jcloud, jmodel)
+                #print("Relation is added between {} and {} in juju cloud {} and juju model {}".format(service_a, service_b, jcloud, jmodel))
     def add_cross_model_relations(self, list_crossModelRelation):
         for crm in list_crossModelRelation:
             loop.run(self.add_RCM_relation(crm))

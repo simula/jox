@@ -152,3 +152,23 @@ class SubSlicesController(object):
 					return [False, "The subslice {} can not be removed".format(subslice_name)]
 		else:
 			return [False, subslice_data[1]]
+	def add_relation_intra_model(self, subslice_name, service_a, service_b, jcloud, jmodel):
+		try:
+			my_subslice = self.get_subslice_object(subslice_name)
+			relations = my_subslice.subslice_relations
+			for rel in relations:
+				if (rel["source"]["service"] == service_a or rel["target"]["service"] == service_a) and \
+					(rel["source"]["service"] == service_b or rel["target"]["service"] == service_b):
+					message = "Relation already exist between {} and {}".format(service_a, service_b)
+					self.logger.info(message)
+					return[False, message]
+			my_subslice.add_intra_mode_relation(service_a, service_b, jcloud, jmodel)
+			message = "The relation between {} and {} is successfully added".format(service_a, service_b)
+			self.logger.info(message)
+			return[True, message]
+		except Exception as ex:
+			message = "The following rrror while trying to add relation between {} and {}".format(service_a, service_b)
+			message_2 = "Error: {}".format(ex)
+			self.logger.info(message)
+			self.logger.info(message_2)
+			return[False, message]
