@@ -163,12 +163,73 @@ class SubSlicesController(object):
 					self.logger.info(message)
 					return[False, message]
 			my_subslice.add_intra_mode_relation(service_a, service_b, jcloud, jmodel)
+			model_relation = {
+							"source": {
+								"service": service_a,
+								"juju_cloud": jcloud,
+								"juju_model": jmodel
+							},
+							"target": {
+								"service": service_b,
+								"juju_cloud": jcloud,
+								"juju_model": jmodel
+							}
+						}
+			my_subslice.subslice_relations.append(model_relation)
 			message = "The relation between {} and {} is successfully added".format(service_a, service_b)
 			self.logger.info(message)
 			return[True, message]
 		except Exception as ex:
-			message = "The following rrror while trying to add relation between {} and {}".format(service_a, service_b)
+			message = "The following error while trying to add relation between {} and {}: {}".format(service_a, service_b, ex)
 			message_2 = "Error: {}".format(ex)
 			self.logger.info(message)
 			self.logger.info(message_2)
 			return[False, message]
+	def remove_relation_intra_model(self, subslice_name, service_a, service_b, jcloud, jmodel):
+		try:
+			my_subslice = self.get_subslice_object(subslice_name)
+			relations = my_subslice.subslice_relations
+			for rel in relations:
+				local_app = rel["source"]["service"]
+				remote_app = rel["target"]["service"]
+				if ":" in local_app:
+					local_app = str(local_app).split(":")
+					local_app = local_app[0]
+				if ":" in remote_app:
+					remote_app = str(remote_app).split(":")
+					remote_app = remote_app[0]
+				if (local_app in service_a or remote_app in service_a) and \
+					(local_app in service_b or remote_app in service_b):
+					message = "Removing the relation between {} and {}".format(service_a, service_b)
+					self.logger.info(message)
+					results = my_subslice.remove_intra_mode_relation(service_a, service_b, jcloud, jmodel)
+					if results[0]: #success
+						my_subslice.subslice_relations.remove(rel)
+					return results
+			message = "No relation found  between {} and {}".format(service_a, service_b)
+			return [False, message]
+			"""			
+			model_relation = {
+							"source": {
+								"service": service_a,
+								"juju_cloud": jcloud,
+								"juju_model": jmodel
+							},
+							"target": {
+								"service": service_b,
+								"juju_cloud": jcloud,
+								"juju_model": jmodel
+							}
+						}
+			my_subslice.subslice_relations.append(model_relation)
+			message = "The relation between {} and {} is successfully added".format(service_a, service_b)
+			self.logger.info(message)
+			return[True, message]
+			"""
+		except Exception as ex:
+			message = "The following error while trying to add relation between {} and {}: {}".format(service_a, service_b, ex)
+			message_2 = "Error: {}".format(ex)
+			self.logger.info(message)
+			self.logger.info(message_2)
+			return[False, message]
+

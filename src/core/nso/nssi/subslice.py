@@ -273,6 +273,13 @@ class JSubSlice(JSONEncoder):
                 self.logger.info("Adding relation between {} and {} in juju cloud {} and juju model {}".format(service_a, service_b, jcloud, jmodel))
                 current_model.add_relation_intramodel(service_a, service_b, jcloud, jmodel)
                 #print("Relation is added between {} and {} in juju cloud {} and juju model {}".format(service_a, service_b, jcloud, jmodel))
+    def remove_intra_mode_relation(self, service_a, service_b, jcloud, jmodel):
+        
+        for current_model in self.subslice_models:
+            if jcloud == current_model.cloud_name and jmodel == current_model.model_name:
+                self.logger.info("Removing relation between {} and {} in juju cloud {} and juju model {}".format(service_a, service_b, jcloud, jmodel))
+                results = current_model.remove_relation_intramodel(service_a, service_b, jcloud, jmodel)
+                return results
     def add_cross_model_relations(self, list_crossModelRelation):
         for crm in list_crossModelRelation:
             loop.run(self.add_RCM_relation(crm))

@@ -3522,9 +3522,6 @@ def Disaggregation(cloud_name=None, model_name=None, type="mon"):
 
 
 #slice_name=None, subslice_name=None, service_a=None, service_b=None, jcloud=None, jmodel=None
-@app.route('/relation/<string:action>')
-@app.route('/relation/<string:action>/<string:service_a>/<string:service_b>')
-@app.route('/relation/<string:action>/<string:cloud_name>/<string:model_name>/<string:service_a>/<string:service_b>')
 @app.route('/relation/<string:action>/<string:slice_name>/<string:subslice_name>/<string:cloud_name>/<string:model_name>/<string:service_a>/<string:service_b>')
 def Relations(action="add", slice_name=None, subslice_name=None, cloud_name=None, model_name=None, service_a=None, service_b=None):
 #def Relations(cloud_name=None, model_name=None, action="add"):	
@@ -3562,7 +3559,46 @@ def Relations(action="add", slice_name=None, subslice_name=None, cloud_name=None
 	data = jsonify(data)
 	return data, status_code
 
+@app.route('/relation/<string:action>/<string:slice_name>/<string:nssi_source>/<string:nssi_node_source>/<string:source_jcloud>/<string:source_jmodel>/<string:nssi_target>/<string:nssi_node_target>/<string:target_jcloud>/<string:target_jmodel>')
+def Relations_inter_nssi(action="add", slice_name=None, nssi_source=None, nssi_node_source=None, source_jcloud=None, source_jmodel=None, \
+		nssi_target=None, nssi_node_target=None, target_jcloud=None, target_jmodel=None):
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["parameters"]["template_directory"] = request.args.get('url')
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	enquiry["parameters"]["relations"] = {}
+	enquiry["parameters"]["relations"]["action"] = action
+	enquiry["parameters"]["relations"]["slice_name"] = slice_name
+	enquiry["parameters"]["relations"]["nssi_source"] = nssi_source
+	enquiry["parameters"]["relations"]["nssi_node_source"] = nssi_node_source
+	enquiry["parameters"]["relations"]["source_jcloud"] = source_jcloud
+	enquiry["parameters"]["relations"]["source_jmodel"] = source_jmodel
+	enquiry["parameters"]["relations"]["nssi_target"] = nssi_target
+	enquiry["parameters"]["relations"]["nssi_node_target"] = nssi_node_target
+	enquiry["parameters"]["relations"]["target_jcloud"] = target_jcloud
+	enquiry["parameters"]["relations"]["target_jmodel"] = target_jmodel
+	
+	#########################
+	enquiry = json.dumps(enquiry)
+	logger.info("enquiry: {}".format(enquiry))
+	logger.debug("enquiry: {}".format(enquiry))
+	# waiting for the response
+	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+	data = json.loads(data)
 
+	status_code = data["status_code"]
+	data = data["data"]
+	data = {
+		"data": data,
+		"elapsed-time": str(datetime.datetime.now() - current_time),
+	}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
 
 @app.errorhandler(Exception)
 def page_not_found(error):

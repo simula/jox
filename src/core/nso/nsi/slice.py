@@ -157,17 +157,38 @@ class JSlice(JSONEncoder):
 					message = "adding relation between {} from the nssi {} and {} from the nssi {}".format(nssi_node_source, nssi_source, nssi_node_target, nssi_target)
 					self.logger.debug(message)
 					time.sleep(10)
-					loop.run(self.add_relation_interNssi_IntraModel(nssi_source, source_jcloud, source_jmodel, nssi_node_source,
-																nssi_target, target_jcloud, target_jmodel, nssi_node_target))
+					#loop.run(self.add_relation_interNssi_IntraModel(nssi_source, source_jcloud, source_jmodel, nssi_node_source,
+					#											nssi_target, target_jcloud, target_jmodel, nssi_node_target))
+					loop.run(self.add_relation_interNssi_IntraModel(source_jcloud, source_jmodel, nssi_source, nssi_node_source,
+																nssi_target, nssi_node_target))
 				else:
 					message = "adding relation between {} from the nssi {} hosted in {}:{} and {} from the nssi {} hosted in {}:{}".format(nssi_node_source,
 									nssi_source, source_jcloud, source_jmodel, nssi_node_target, nssi_target, target_jcloud, target_jmodel)
 					self.logger.debug(message)
 					loop.run(self.add_relation_interNssi_interModel(nssi_source, source_jcloud, source_jmodel, nssi_node_source, nssi_node_source_charm_name, nssi_target, target_jcloud, target_jmodel, nssi_node_target, nssi_node_target_charm_name))
 
-	async def add_relation_interNssi_IntraModel(self, nssi_source, source_jcloud, source_jmodel, nssi_node_source,
-	                                            nssi_target, target_jcloud, target_jmodel, nssi_node_target):
-		# internal model relation
+	async def add_relation_interNssi_IntraModel(self, source_jcloud, source_jmodel, nssi_source, nssi_node_source,
+																nssi_target, nssi_node_target):
+		if ":" in nssi_node_source:
+			local_app = str(nssi_node_source).split(":")
+			local_app = local_app[0]
+		else:
+			local_app = nssi_node_source
+		if ":" in nssi_node_target:
+			remote_app = str(nssi_node_target).split(":")
+			remote_app = remote_app[0]
+		else:
+			remote_app = nssi_node_target
+		for rel in self.list_inter_nssi_relations:
+			if ((rel["service_a"]["nssi"] == nssi_source and local_app in rel["service_a"]["service"]) or \
+				(rel["service_b"]["nssi"] == nssi_source and local_app in rel["service_b"]["service"])) \
+				and \
+				((rel["service_a"]["nssi"] == nssi_target and remote_app in rel["service_a"]["service"]) or \
+				(rel["service_b"]["nssi"] == nssi_target and remote_app in rel["service_b"]["service"]))  \
+				and \
+				(rel["service_a"]["jcloud"] == source_jcloud and rel["service_a"]["jmodel"] == source_jmodel):
+				message = "The relation between {}:{} and {}:{} already exist".format(nssi_source, nssi_node_source, nssi_target, nssi_node_target)
+				return[False, message]
 		try:
 			model = Model()
 			c_name = source_jcloud
@@ -175,11 +196,7 @@ class JSlice(JSONEncoder):
 			model_name = c_name + ":" + m_name
 			await model.connect(model_name)
 			await model.add_relation(nssi_node_source, nssi_node_target)
-			await model.disconnect()
-		except:
-			pass
-		
-		relation = {
+			relation = {
 			"service_a": {
 				"nssi": nssi_source,
 				"jcloud": source_jcloud,
@@ -188,12 +205,20 @@ class JSlice(JSONEncoder):
 			},
 			"service_b": {
 				"nssi": nssi_target,
-				"jcloud": target_jcloud,
-				"jmodel": target_jmodel,
+				"jcloud": source_jcloud,
+				"jmodel": source_jmodel,
 				"service": nssi_node_target,
 			}}
-		self.list_inter_nssi_relations.append(relation)
-		
+			self.list_inter_nssi_relations.append(relation)
+			message = "Successful add the relation between {}:{} and {}:{} already exist".format(nssi_source, nssi_node_source, nssi_target, nssi_node_target)
+			return[True, message]
+		except Exception as ex:
+			message = "Error while trying to add relation between {}:{} and {}:{}. Error: {}".format(nssi_source, nssi_node_source, nssi_target, nssi_node_target, ex)
+			self.logger.error(message)
+			self.logger.debug(message)
+			return[False, message]
+		finally:
+			await model.disconnect()
 	async def add_relation_interNssi_interModel(self, nssi_source, source_jcloud, source_jmodel, nssi_node_source, nssi_node_source_charm_name,
 	                                      nssi_target, target_jcloud, target_jmodel, nssi_node_target, nssi_node_target_charm_name):
 		set_relations = {

@@ -251,13 +251,71 @@ class JujuModelServiceController(object):
             model_name = self.controller_name + ":" + self.user_name + '/' + self.model_name
             await model.connect(model_name)
             await model.add_relation(service_a, service_b)
+            
         except Exception as ex:
             raise ex
         finally:
             await model.disconnect()
     
-    async def destroy_relation_intra_model(self, service_a, service_b, jcloud, jmodel):
-       raise NotImplementedError
+    async def destroy_relation_intra_model(self, service_a, service_b):
+        try:
+            model = Model()
+            model_name = self.controller_name + ":" + self.user_name + '/' + self.model_name
+            await model.connect(model_name)
+            """
+            local_app = 'mysql'
+            remote_app = 'oai-hss'
+            remote_relation_name = "db"
+            local_relation_name = "db"
+            """
+            local_app = service_a
+            if ":" in local_app:
+                local_app = str(local_app).split(":")
+                local_app = local_app[0]
+            remote_app = service_b
+            if ":" in remote_app:
+                remote_app = str(remote_app).split(":")
+                remote_app = remote_app[0]
+            if local_app not in model.applications.keys():
+                message = "The application {} does not exist".format(local_app)
+                self.logger.debug(message)
+                self.logger.info(message)
+                return[False, message]
+            elif remote_app not in model.applications.keys():
+                message = "The application {} does not exist".format(remote_app)
+                self.logger.debug(message)
+                self.logger.info(message)
+                return[False, message]
+            else:
+                message = "The applications {} and {} exist".format(local_app, remote_app)
+                self.logger.debug(message)
+                self.logger.info(message)
+                try:
+                    message = "Removing the relation betwenn {} and {}".format(service_a, service_b)
+                    self.logger.debug(message)
+                    self.logger.info(message)
+                    await model.applications[local_app].remove_relation(
+                        '{}'.format(service_a),
+                        '{}'.format(service_b),
+                    )   
+                    message = "The relation betwenn {} and {} is successfuly removed".format(service_a, service_b)
+                    self.logger.debug(message)
+                    self.logger.info(message)
+                    return[True, message]
+                except Exception as ex:
+                    message = "Error while removing the relation betwenn {}:{} and {}:{}. The error: {}".format(service_a, service_b, ex)
+                    self.logger.debug(message)
+                    self.logger.error(message)
+                    self.logger.error(ex)
+                    return[False, message]
+        except Exception as ex:
+            message = "Error while trying to connect to juju model and remove the relation betwenn {}:{} and {}:{}. The error: {}".format(service_a, service_b, ex)
+            self.logger.debug(message)
+            self.logger.error(message)
+            self.logger.error(ex)
+            return[False, message]
+        finally:
+            await model.disconnect()
 
     def run(self, retry=False):
         if retry:

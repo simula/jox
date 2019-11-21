@@ -465,8 +465,20 @@ class NFVO_JOX(object):
 	def get_subslice_context(self, sub_slice=None):
 		nssi_data = self.subslices_controller.get_subslice_runtime_data(sub_slice)
 		return nssi_data[1]
-	def add_intra_mode_relation(self, slice_name=None, subslice_name=None, service_a=None, service_b=None, jcloud=None, jmodel=None):
+	def add_inter_nssi_relation(self, slice_name, nssi_source, nssi_node_source, source_jcloud, source_jmodel,
+												nssi_target, nssi_node_target, target_jcloud, target_jmodel):
+		meesage = "Adding relation between {}:{} and {}:{}".format(nssi_source, nssi_node_source, nssi_target, nssi_node_target)
+		print(meesage)
+		cross_nssi_data = self.slices_controller.add_inter_nssi_relation(slice_name, nssi_source, nssi_node_source, source_jcloud, source_jmodel,
+												nssi_target, nssi_node_target, target_jcloud, target_jmodel)
+		meesage = "Adding relation between {}:{} and {}:{}".format(nssi_source, nssi_node_source, nssi_target, nssi_node_target)
+		print(meesage)
+		return cross_nssi_data
+	def add_intra_nssi_relation(self, slice_name=None, subslice_name=None, service_a=None, service_b=None, jcloud=None, jmodel=None):
 		nssi_data = self.subslices_controller.add_relation_intra_model(subslice_name, service_a, service_b, jcloud, jmodel)
+		return nssi_data
+	def remove_intra_nssi_relation(self, slice_name=None, subslice_name=None, service_a=None, service_b=None, jcloud=None, jmodel=None):
+		nssi_data = self.subslices_controller.remove_relation_intra_model(subslice_name, service_a, service_b, jcloud, jmodel)
 		return nssi_data
 	
 	def get_machines_status(self, pop_name, pop_type):
@@ -1648,10 +1660,49 @@ class server_RBMQ(object):
 						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 					}
 				self.send_ack(ch, method, props, response, send_reply)
-			elif (enquiry["request-uri"] == '/relation/<string:action>') or \
-				(enquiry["request-uri"] == '/relation/<string:action>/<string:service_a>/<string:service_b>') or \
-					(enquiry["request-uri"] == '/relation/<string:action>/<string:cloud_name>/<string:model_name>/<string:service_a>/<string:service_b>') or \
-						(enquiry["request-uri"] == '/relation/<string:action>/<string:slice_name>/<string:subslice_name>/<string:cloud_name>/<string:model_name>/<string:service_a>/<string:service_b>'):
+			elif (enquiry["request-uri"] == '/relation/<string:action>/<string:slice_name>/<string:nssi_source>/<string:nssi_node_source>/<string:source_jcloud>/<string:source_jmodel>/<string:nssi_target>/<string:nssi_node_target>/<string:target_jcloud>/<string:target_jmodel>'):
+				parameters = enquiry["parameters"]
+				rel_action_type = parameters["relations"]["action"]
+				rel_slice_name = parameters["relations"]["slice_name"]
+				#
+				rel_nssi_source = parameters["relations"]["nssi_source"]
+				rel_nssi_node_source = parameters["relations"]["nssi_node_source"]
+				rel_source_jcloud = parameters["relations"]["source_jcloud"]
+				rel_source_jmodel = parameters["relations"]["source_jmodel"]
+				#
+				rel_nssi_target = parameters["relations"]["nssi_target"]
+				rel_nssi_node_target = parameters["relations"]["nssi_node_target"]
+				rel_target_jcloud = parameters["relations"]["target_jcloud"]
+				rel_target_jmodel = parameters["relations"]["target_jmodel"]
+				user_name="admin"
+				if rel_action_type == "add":
+					if rel_nssi_source == rel_nssi_node_target:
+						data = self.nfvo_jox.add_intra_nssi_relation(rel_slice_name, rel_nssi_source, rel_nssi_node_source, rel_nssi_node_target, rel_source_jcloud, rel_source_jmodel)
+					else:
+						meesage = "Adding relation between {}:{} and {}:{}".format(rel_nssi_source, rel_nssi_node_source, rel_nssi_target, rel_nssi_node_target)
+						print(meesage)
+						data = self.nfvo_jox.add_inter_nssi_relation(rel_slice_name, rel_nssi_source, rel_nssi_node_source, rel_source_jcloud, rel_source_jmodel, rel_nssi_target, rel_nssi_node_target, rel_target_jcloud, rel_target_jmodel)
+				elif rel_action_type == "remove":
+					pass
+				else:
+					message = "The current action {} for relations is not supported".format(rel_action_type)
+					data = [False, message]
+				if data[0]:
+					res = data[1]
+					response = {
+						"ACK": True,
+						"data": res,
+						"status_code": self.nfvo_jox.gv.HTTP_200_OK
+					}
+				else:
+					res = data[1]
+					response = {
+						"ACK": False,
+						"data": res,
+						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+					}
+				self.send_ack(ch, method, props, response, send_reply)
+			elif (enquiry["request-uri"] == '/relation/<string:action>/<string:slice_name>/<string:subslice_name>/<string:cloud_name>/<string:model_name>/<string:service_a>/<string:service_b>'):
 				parameters = enquiry["parameters"]
 				rel_action_type = parameters["relations"]["action"]
 				rel_slice_name = parameters["relations"]["slice_name"]
@@ -1662,13 +1713,13 @@ class server_RBMQ(object):
 				rel_service_b = parameters["relations"]["service_b"]
 				user_name="admin"
 
-				if rel_service_a == None and rel_service_b == None:
-					rel_subslice_name = "nssi_3"
-					rel_service_a = "oai-cu:cu"
-					rel_service_b = "oai-du:du"
-					rel_cloud_name = "nymphe-edu"
-					rel_model_name = "default-juju-model-1"
-				data = self.nfvo_jox.add_intra_mode_relation(rel_slice_name, rel_subslice_name, rel_service_a, rel_service_b, rel_cloud_name, rel_model_name)
+				if rel_action_type == "add":
+					data = self.nfvo_jox.add_intra_nssi_relation(rel_slice_name, rel_subslice_name, rel_service_a, rel_service_b, rel_cloud_name, rel_model_name)
+				elif rel_action_type == "remove":
+					data = self.nfvo_jox.remove_intra_nssi_relation(rel_slice_name, rel_subslice_name, rel_service_a, rel_service_b, rel_cloud_name, rel_model_name)
+				else:
+					message = "The current action {} for relations is not supported".format(rel_action_type)
+					data = [False, message]
 				if data[0]:
 					res = data[1]
 					response = {

@@ -241,16 +241,16 @@ class JModel(JSONEncoder):
             self.logger.info("No juju relation requirements for ".format(service_name))
             return
     
+    """
     def remove_relation_intramodel(self, service_a, service_b, jcloud, jmodel):
         try:
             loop.run(self.juju_serviceModel.deploy_relation_intra_model(service_a, service_b))
         except Exception as ex:
             self.logger.critical("There is no relation between {} and {} ".format(service_a, service_b))
-            
+    """
             
     def add_relation_intramodel(self, service_a, service_b, jcloud, jmodel):
         try:
-            # loop.run(self.deploy_relation_intra_model(service_a, service_b, jcloud, jmodel))
             loop.run(self.juju_serviceModel.deploy_relation_intra_model(service_a, service_b))
             relation = {"service_a": service_a, "service_b": service_b}
             self.relations.append(relation)
@@ -260,7 +260,29 @@ class JModel(JSONEncoder):
             if ex.error_code == 'already exists':
                 relation = {"service_a": service_a, "service_b": service_b}
                 self.relations.append(relation)
-        
+    ##
+    def remove_relation_intramodel(self, service_a, service_b, jcloud, jmodel):
+        try:
+            result = loop.run(self.juju_serviceModel.destroy_relation_intra_model(service_a, service_b))
+            print("result={}".format(result))
+            if result[0]:# success
+                for rel in self.relations:
+                    print("rel={}".format(rel))
+                    local_app = rel["service_b"]
+                    remote_app = rel["service_a"]
+                    if ":" in local_app:
+                        local_app = str(local_app).split(":")
+                        local_app = local_app[0]
+                    if ":" in remote_app:
+                        remote_app = str(remote_app).split(":")
+                        remote_app = remote_app[0]
+                if (local_app in service_a or remote_app in service_a) and \
+					(local_app in service_b or remote_app in service_b):
+                    self.relations.remove(rel)
+            return result
+        except Exception as ex:
+            message = "Error while trying to remove the relation between {} and {}. The error: {}".format(service_a, service_b, ex)
+            return[False, message]
     def destroy_services(self, services_config):   
         for service_config in services_config:
             if service_config != None:

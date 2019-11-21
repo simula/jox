@@ -174,3 +174,47 @@ class NetworkSliceController(object):
 	
 	def detach_network_slice(self):
 		raise NotImplementedError()
+	def add_inter_nssi_relation(self, slice_name, nssi_source, nssi_node_source, source_jcloud, source_jmodel,
+												nssi_target, nssi_node_target, target_jcloud, target_jmodel):
+		for item in self.slices:
+			if item.slice_name == slice_name:
+				if (nssi_source not in item.list_NSSI):
+					message = "The subslice {} is not part of the slice {}".format(nssi_source, slice_name)
+					self.logger.error(message)
+					self.logger.debug(message)
+					return[False, message]
+				elif (nssi_target not in item.list_NSSI):
+					message = "The subslice {} is not part of the slice {}".format(nssi_target, slice_name)
+					self.logger.error(message)
+					self.logger.debug(message)
+					return[False, message]
+				else:
+					message = "The subslices {} and {} are found as part of the slice {}".format(nssi_source, nssi_target, slice_name)
+					self.logger.info(message)
+					if (source_jcloud == target_jcloud) and (source_jmodel == target_jmodel):
+						try:
+							results = loop.run(item.add_relation_interNssi_IntraModel(source_jcloud, source_jmodel, nssi_source, nssi_node_source,
+																nssi_target, nssi_node_target))
+							message = "Successful add relation between {} of subslice {} and {} of subslice {}".format(nssi_node_source, nssi_source, nssi_node_target, nssi_target)
+							self.logger.info(message)
+							return results
+						except Exception as ex:
+							message = "Error while trying to add relation: {}".format(ex)
+							self.logger.error(message)
+							self.logger.debug(message)
+							return[False, message]
+					else:
+						try:
+							loop.run(item.add_relation_interNssi_interModel(nssi_source, source_jcloud, source_jmodel, nssi_node_source, nssi_node_source, nssi_target, target_jcloud, target_jmodel, nssi_node_target, nssi_node_target))
+							message = "Successful add relation between {} of subslice {} and {} of subslice {}".format(nssi_node_source, nssi_source, nssi_node_target, nssi_target)
+							self.logger.info(message)
+							return[True, message]
+						except Exception as ex:
+							message = "Error while trying to add relation: {}".format(ex)
+							self.logger.error(message)
+							self.logger.debug(message)
+							return[False, message]
+		message = "The slice {} can not be found".format(slice_name)
+		self.logger.error(message)
+		self.logger.debug(message)
+		return[False, message]
