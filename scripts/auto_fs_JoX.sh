@@ -42,10 +42,6 @@ while true; do
                 counter=$((counter+1))
                 echo 'Current mode: Monolithic' $'\t' 'current cpu usage='$cpu_usage  $'\t' "Waiting for $((threshold-counter)) seconds to switch to functional split"
             else
-                current_DIR=$(pwd)
-                relations_DIR='/home/adalia/mosaic5g/jox/jox/scripts'
-                cd $relations_DIR
-                cd $current_DIR
                 echo "switching to functional split mode"
                 
                 juju model-config update-status-hook-interval=1s
