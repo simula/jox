@@ -156,10 +156,20 @@ class SubSlicesController(object):
 		try:
 			my_subslice = self.get_subslice_object(subslice_name)
 			relations = my_subslice.subslice_relations
+			if ":" in service_a:
+				local_app = str(service_a).split(":")
+				local_app = local_app[0]
+			else:
+				local_app = service_a
+			if ":" in service_b:
+				remote_app = str(service_b).split(":")
+				remote_app = remote_app[0]
+			else:
+				remote_app = service_b
 			for rel in relations:
-				if (rel["source"]["service"] == service_a or rel["target"]["service"] == service_a) and \
-					(rel["source"]["service"] == service_b or rel["target"]["service"] == service_b):
-					message = "Relation already exist between {} and {}".format(service_a, service_b)
+				if (local_app in rel["source"]["service"] or local_app in rel["target"]["service"]) and \
+					(remote_app in rel["source"]["service"] or remote_app in rel["target"]["service"]):
+					message = "The relation between {}:{} and {}:{} already exist".format(subslice_name, service_a, subslice_name, service_b)
 					self.logger.info(message)
 					return[False, message]
 			my_subslice.add_intra_mode_relation(service_a, service_b, jcloud, jmodel)

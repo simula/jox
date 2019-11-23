@@ -331,25 +331,26 @@ class Monitor(object):
                     slice_mon_data= self.jesearch.get_json_from_es("subslice_monitor_" + nssid.lower(), "service_status")
                     if slice_mon_data[0]:
                         slice_mon_data=slice_mon_data[1]
-                    for num in range(len(slice_mon_data)):
-                        application_name = list((slice_mon_data[num]).keys())[0]
-                        if application_name == service_name:
-                            if current_state_machine == slice_mon_data[num][service_name][0]['current_state']:
-                                # there is not change in the state of the machine
-                                return [None, None, None, None, None]
-                            else:
-                                state_old = slice_mon_data[num][service_name][0]['current_state']
-                                state_new = current_state_machine
-
-                                if (state_new == 'active') and (state_old == 'maintenance'):
-                                    val = "{}_{}".format('waiting', 'time')
-                                    waiting_time = slice_mon_data[num][service_name][0][val]
+                        self.logger.info("slice_mon_data={}".format(slice_mon_data))
+                        for num in range(len(slice_mon_data)):
+                            application_name = list((slice_mon_data[num]).keys())[0]
+                            if application_name == service_name:
+                                if current_state_machine == slice_mon_data[num][service_name][0]['current_state']:
+                                    # there is not change in the state of the machine
+                                    return [None, None, None, None, None]
                                 else:
-                                    waiting_time = None
+                                    state_old = slice_mon_data[num][service_name][0]['current_state']
+                                    state_new = current_state_machine
 
-                                val = "{}_{}".format(state_old, 'since')
-                                start_time = slice_mon_data[num][service_name][0][val]
-                                return [nssid, container_name, start_time, state_old, state_new, waiting_time]
+                                    if (state_new == 'active') and (state_old == 'maintenance'):
+                                        val = "{}_{}".format('waiting', 'time')
+                                        waiting_time = slice_mon_data[num][service_name][0][val]
+                                    else:
+                                        waiting_time = None
+
+                                    val = "{}_{}".format(state_old, 'since')
+                                    start_time = slice_mon_data[num][service_name][0][val]
+                                    return [nssid, container_name, start_time, state_old, state_new, waiting_time]
             return [None, None, None, None, None,None]
         else:
             message = "The key {} does not exist in the page {}".format(container_type,

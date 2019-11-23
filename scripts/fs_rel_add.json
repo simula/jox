@@ -1,0 +1,58 @@
+
+{
+  "relation-1": {
+    "slice_name": "mosaic5g-slice",
+    "nssi_source": "nssi_3",
+    "nssi_node_source": "oai-du:du",
+    "source_jcloud": "nymphe-edu",
+    "source_jmodel": "default-juju-model-1",
+    "nssi_target": "nssi_3",
+    "nssi_node_target": "oai-cu:cu",
+    "target_jcloud": "nymphe-edu",
+    "target_jmodel": "default-juju-model-1"
+  },
+  "relation-2": {
+    "slice_name": "mosaic5g-slice",
+    "nssi_source": "nssi_2",
+    "nssi_node_source": "oai-mme:hss",
+    "source_jcloud": "nymphe-edu",
+    "source_jmodel": "default-juju-model-1",
+    "nssi_target": "nssi_1",
+    "nssi_node_target": "oai-hss:hss",
+    "target_jcloud": "nymphe-edu",
+    "target_jmodel": "default-juju-model-1"
+  },
+  "relation-3": {
+    "slice_name": "mosaic5g-slice",
+    "nssi_source": "nssi_2",
+    "nssi_node_source": "oai-mme:mme",
+    "source_jcloud": "nymphe-edu",
+    "source_jmodel": "default-juju-model-1",
+    "nssi_target": "nssi_3",
+    "nssi_node_target": "oai-cu:mme",
+    "target_jcloud": "nymphe-edu",
+    "target_jmodel": "default-juju-model-1"
+  },
+  "relation-4": {
+    "slice_name": "mosaic5g-slice",
+    "nssi_source": "nssi_3",
+    "nssi_node_source": "flexran:rtc",
+    "source_jcloud": "nymphe-edu",
+    "source_jmodel": "default-juju-model-1",
+    "nssi_target": "nssi_3",
+    "nssi_node_target": "oai-cu:rtc",
+    "target_jcloud": "nymphe-edu",
+    "target_jmodel": "default-juju-model-1"
+  },
+  "relation-5": {
+    "slice_name": "mosaic5g-slice",
+    "nssi_source": "nssi_3",
+    "nssi_node_source": "flexran:rtc",
+    "source_jcloud": "nymphe-edu",
+    "source_jmodel": "default-juju-model-1",
+    "nssi_target": "nssi_3",
+    "nssi_node_target": "oai-du:rtc",
+    "target_jcloud": "nymphe-edu",
+    "target_jmodel": "default-juju-model-1"
+  } 
+}

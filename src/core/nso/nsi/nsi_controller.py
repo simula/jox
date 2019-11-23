@@ -178,6 +178,7 @@ class NetworkSliceController(object):
 												nssi_target, nssi_node_target, target_jcloud, target_jmodel):
 		for item in self.slices:
 			if item.slice_name == slice_name:
+				"""
 				if (nssi_source not in item.list_NSSI):
 					message = "The subslice {} is not part of the slice {}".format(nssi_source, slice_name)
 					self.logger.error(message)
@@ -189,6 +190,9 @@ class NetworkSliceController(object):
 					self.logger.debug(message)
 					return[False, message]
 				else:
+					pass
+				"""
+				if (nssi_source in item.list_NSSI) and (nssi_target in item.list_NSSI):
 					message = "The subslices {} and {} are found as part of the slice {}".format(nssi_source, nssi_target, slice_name)
 					self.logger.info(message)
 					if (source_jcloud == target_jcloud) and (source_jmodel == target_jmodel):
@@ -209,6 +213,42 @@ class NetworkSliceController(object):
 							message = "Successful add relation between {} of subslice {} and {} of subslice {}".format(nssi_node_source, nssi_source, nssi_node_target, nssi_target)
 							self.logger.info(message)
 							return[True, message]
+						except Exception as ex:
+							message = "Error while trying to add relation: {}".format(ex)
+							self.logger.error(message)
+							self.logger.debug(message)
+							return[False, message]
+		message = "The slice {} can not be found".format(slice_name)
+		self.logger.error(message)
+		self.logger.debug(message)
+		return[False, message]
+	def remove_inter_nssi_relation(self, slice_name, nssi_source, nssi_node_source, source_jcloud, source_jmodel,
+												nssi_target, nssi_node_target, target_jcloud, target_jmodel):
+		for item in self.slices:
+			if item.slice_name == slice_name:
+				if (nssi_source in item.list_NSSI) and (nssi_target in item.list_NSSI):
+					message = "The subslices {} and {} are found as part of the slice {}".format(nssi_source, nssi_target, slice_name)
+					self.logger.info(message)
+					if (source_jcloud == target_jcloud) and (source_jmodel == target_jmodel):
+						try:
+							results = loop.run(item.remove_relation_interNssi_IntraModel(source_jcloud, source_jmodel, nssi_source, nssi_node_source,
+																nssi_target, nssi_node_target))
+							message = "Successful add relation between {} of subslice {} and {} of subslice {}".format(nssi_node_source, nssi_source, nssi_node_target, nssi_target)
+							self.logger.info(message)
+							return results
+						except Exception as ex:
+							message = "Error while trying to add relation: {}".format(ex)
+							self.logger.error(message)
+							self.logger.debug(message)
+							return[False, message]
+					else:
+						try:
+							#TODO Implement removing Cross Model Relations (CMR)
+							message = "Removing Cross Model Relations (CMR) is not implemented yet"
+							self.logger.info(message)
+							raise NotImplementedError
+							#message = "Successful add relation between {} of subslice {} and {} of subslice {}".format(nssi_node_source, nssi_source, nssi_node_target, nssi_target)
+							return[False, message]
 						except Exception as ex:
 							message = "Error while trying to add relation: {}".format(ex)
 							self.logger.error(message)

@@ -35,8 +35,8 @@ dir_parent_path = os.path.dirname(os.path.abspath(__file__ + "/mnt"))
 
 import logging
 from src.nbi import tasks
-import json
-from flask import Flask, request, jsonify
+#import json
+from flask import Flask, request, jsonify, json
 import datetime
 import tarfile, io
 from termcolor import colored
@@ -137,6 +137,12 @@ like get the page-indexes in elasticsearch, save and delete page-indexe to(from)
 @apiDefine GroupMonitoring Monitoring
 This section contains the main functionalities for monitoring
 slices, sub-slices, services, machines, and relations. Further, this monitoring information can be obtained either from JoX (more specifically from elasticsearch where the monitoring information is saved automatically) or from juju. Another endpoint to get the log from JoX/juju with different log levels is also introduced here.
+"""
+
+"""
+@apiDefine Relations Relations
+This section contains the main functionalities for adding and removing relations
+It is particularly helpful when e.g. switching between monolithic and functional split mode of RAN
 """
 
 
@@ -3497,90 +3503,10 @@ def Disaggregation(cloud_name=None, model_name=None, type="mon"):
 	enquiry["request-type"] = (request.method).lower()
 	enquiry["parameters"]["cloud_name"] = cloud_name
 	enquiry["parameters"]["model_name"] = model_name
-	#enquiry["parameters"]["disaggregation"] = type
+	
 	enquiry["parameters"]["disaggregation"] = {}
 	enquiry["parameters"]["disaggregation"]["type"] = type
-	#########################
-	enquiry = json.dumps(enquiry)
-	logger.info("enquiry: {}".format(enquiry))
-	logger.debug("enquiry: {}".format(enquiry))
-	# waiting for the response
-	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
-	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
-	data = json.loads(data)
-
-	status_code = data["status_code"]
-	data = data["data"]
-	data = {
-		"data": data,
-		"elapsed-time": str(datetime.datetime.now() - current_time),
-	}
-	logger.info("response: {}".format(data))
-	logger.debug("response: {}".format(data))
-	data = jsonify(data)
-	return data, status_code
-
-
-#slice_name=None, subslice_name=None, service_a=None, service_b=None, jcloud=None, jmodel=None
-@app.route('/relation/<string:action>/<string:slice_name>/<string:subslice_name>/<string:cloud_name>/<string:model_name>/<string:service_a>/<string:service_b>')
-def Relations(action="add", slice_name=None, subslice_name=None, cloud_name=None, model_name=None, service_a=None, service_b=None):
-#def Relations(cloud_name=None, model_name=None, action="add"):	
-	enquiry = standard_reqst
-	current_time = datetime.datetime.now()
-	enquiry["datetime"] = str(current_time)
-	enquiry["parameters"]["template_directory"] = request.args.get('url')
-	enquiry["request-uri"] = str(request.url_rule)
-	enquiry["request-type"] = (request.method).lower()
-	enquiry["parameters"]["relations"] = {}
-	enquiry["parameters"]["relations"]["action"] = action
-	enquiry["parameters"]["relations"]["slice_name"] = slice_name
-	enquiry["parameters"]["relations"]["subslice_name"] = subslice_name
-	enquiry["parameters"]["relations"]["cloud_name"] = cloud_name
-	enquiry["parameters"]["relations"]["model_name"] = model_name
-	enquiry["parameters"]["relations"]["service_a"] = service_a
-	enquiry["parameters"]["relations"]["service_b"] = service_b
-	#########################
-	enquiry = json.dumps(enquiry)
-	logger.info("enquiry: {}".format(enquiry))
-	logger.debug("enquiry: {}".format(enquiry))
-	# waiting for the response
-	response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
-	data = response.decode(listOfTasks.gv.ENCODING_TYPE)
-	data = json.loads(data)
-
-	status_code = data["status_code"]
-	data = data["data"]
-	data = {
-		"data": data,
-		"elapsed-time": str(datetime.datetime.now() - current_time),
-	}
-	logger.info("response: {}".format(data))
-	logger.debug("response: {}".format(data))
-	data = jsonify(data)
-	return data, status_code
-
-@app.route('/relation/<string:action>/<string:slice_name>/<string:nssi_source>/<string:nssi_node_source>/<string:source_jcloud>/<string:source_jmodel>/<string:nssi_target>/<string:nssi_node_target>/<string:target_jcloud>/<string:target_jmodel>')
-def Relations_inter_nssi(action="add", slice_name=None, nssi_source=None, nssi_node_source=None, source_jcloud=None, source_jmodel=None, \
-		nssi_target=None, nssi_node_target=None, target_jcloud=None, target_jmodel=None):
-	enquiry = standard_reqst
-	current_time = datetime.datetime.now()
-	enquiry["datetime"] = str(current_time)
-	enquiry["parameters"]["template_directory"] = request.args.get('url')
-	enquiry["request-uri"] = str(request.url_rule)
-	enquiry["request-type"] = (request.method).lower()
-	enquiry["parameters"]["relations"] = {}
-	enquiry["parameters"]["relations"]["action"] = action
-	enquiry["parameters"]["relations"]["slice_name"] = slice_name
-	enquiry["parameters"]["relations"]["nssi_source"] = nssi_source
-	enquiry["parameters"]["relations"]["nssi_node_source"] = nssi_node_source
-	enquiry["parameters"]["relations"]["source_jcloud"] = source_jcloud
-	enquiry["parameters"]["relations"]["source_jmodel"] = source_jmodel
-	enquiry["parameters"]["relations"]["nssi_target"] = nssi_target
-	enquiry["parameters"]["relations"]["nssi_node_target"] = nssi_node_target
-	enquiry["parameters"]["relations"]["target_jcloud"] = target_jcloud
-	enquiry["parameters"]["relations"]["target_jmodel"] = target_jmodel
 	
-	#########################
 	enquiry = json.dumps(enquiry)
 	logger.info("enquiry: {}".format(enquiry))
 	logger.debug("enquiry: {}".format(enquiry))
@@ -3600,6 +3526,168 @@ def Relations_inter_nssi(action="add", slice_name=None, nssi_source=None, nssi_n
 	data = jsonify(data)
 	return data, status_code
 
+@app.route('/relation', methods=['POST', 'DELETE'])
+def Relations_new(action="add", slice_name=None, nssi_source=None, nssi_node_source=None, source_jcloud=None, source_jmodel=None, \
+		nssi_target=None, nssi_node_target=None, target_jcloud=None, target_jmodel=None):
+	"""
+	@apiGroup Relations
+	@apiName add-relation
+	
+	@api {post} /relation Add Relation(s)
+	@apiDescription This endpoint adds relation(s), as defined by the attached json file. Through this endpoint, we can add multiple relations at the same time.
+	@apiParam {json}    file the json file that contains all the relations to be added
+	@apiParam {String} slice_name slice name
+	@apiParam {String} nssi_source source sub-slice name, where the source application exist
+	@apiParam {String} nssi_node_source the source application
+	@apiParam {String} source_jcloud juju controller name where the source juju model exists
+	@apiParam {String} source_jmodel juju model name where the source application is deployed
+	@apiParam {String} nssi_target target sub-slice name, where the target application exist
+	@apiParam {String} nssi_node_target the target application
+	@apiParam {String} target_jcloud juju controller name where the target juju model exists
+	@apiParam {String} target_jmodel juju model name where the target application is deployed
+	
+	@apiSuccessExample Example of the json file to add relation(s):
+	{
+		"relation-1": {
+			"slice_name": "mosaic5g-slice",
+			"nssi_source": "nssi_3",
+			"nssi_node_source": "flexran:rtc",
+			"source_jcloud": "nymphe-edu",
+			"source_jmodel": "default-juju-model-1",
+			"nssi_target": "nssi_3",
+			"nssi_node_target": "oai-du:rtc",
+			"target_jcloud": "nymphe-edu",
+			"target_jmodel": "default-juju-model-1"
+		},
+		"relation-2": {
+			"slice_name": "mosaic5g-slice",
+			"nssi_source": "nssi_1",
+			"nssi_node_source": "oai-hss:hss",
+			"source_jcloud": "nymphe-edu",
+			"source_jmodel": "default-juju-model-1",
+			"nssi_target": "nssi_2",
+			"nssi_node_target": "oai-mme:hss",
+			"target_jcloud": "nymphe-edu",
+			"target_jmodel": "default-juju-model-1"
+		},
+		"relation-3": {
+			"slice_name": "mosaic5g-slice",
+			"nssi_source": "nssi_3",
+			"nssi_node_source": "flexran:rtc",
+			"source_jcloud": "nymphe-edu",
+			"source_jmodel": "default-juju-model-1",
+			"nssi_target": "nssi_3",
+			"nssi_node_target": "oai-cu:rtc",
+			"target_jcloud": "nymphe-edu",
+			"target_jmodel": "default-juju-model-1"
+		}
+	}
+	@apiExample {curl} Example-Usage:
+		     curl -i http://localhost:5000/relation  -X POST  --data-binary "@relations.json"  
+	
+	@apiSuccessExample Example-Response:
+		HTTP/1.0 200 OK
+	"""
+	"""
+	@apiGroup Relations
+	@apiName remove-relation
+	
+	@api {delete} /relation Remove Relation(s)
+	@apiDescription This endpoint removes relation(s), as defined by the attached json file. Through this endpoint, we can remove multiple relations at the same time.
+	@apiParam {json} file the json file that contains all the relations to be removed
+	@apiParam {String} slice_name slice name
+	@apiParam {String} nssi_source source sub-slice name, where the source application exist
+	@apiParam {String} nssi_node_source the source application
+	@apiParam {String} source_jcloud juju controller name where the source juju model exists
+	@apiParam {String} source_jmodel juju model name where the source application is deployed
+	@apiParam {String} nssi_target target sub-slice name, where the target application exist
+	@apiParam {String} nssi_node_target the target application
+	@apiParam {String} target_jcloud juju controller name where the target juju model exists
+	@apiParam {String} target_jmodel juju model name where the target application is deployed
+	
+	
+	@apiSuccessExample Example of the json file to add relation(s):
+	{
+		"relation-1": {
+			"slice_name": "mosaic5g-slice",
+			"nssi_source": "nssi_3",
+			"nssi_node_source": "flexran:rtc",
+			"source_jcloud": "nymphe-edu",
+			"source_jmodel": "default-juju-model-1",
+			"nssi_target": "nssi_3",
+			"nssi_node_target": "oai-du:rtc",
+			"target_jcloud": "nymphe-edu",
+			"target_jmodel": "default-juju-model-1"
+		},
+		"relation-2": {
+			"slice_name": "mosaic5g-slice",
+			"nssi_source": "nssi_1",
+			"nssi_node_source": "oai-hss:hss",
+			"source_jcloud": "nymphe-edu",
+			"source_jmodel": "default-juju-model-1",
+			"nssi_target": "nssi_2",
+			"nssi_node_target": "oai-mme:hss",
+			"target_jcloud": "nymphe-edu",
+			"target_jmodel": "default-juju-model-1"
+		},
+		"relation-3": {
+			"slice_name": "mosaic5g-slice",
+			"nssi_source": "nssi_3",
+			"nssi_node_source": "flexran:rtc",
+			"source_jcloud": "nymphe-edu",
+			"source_jmodel": "default-juju-model-1",
+			"nssi_target": "nssi_3",
+			"nssi_node_target": "oai-cu:rtc",
+			"target_jcloud": "nymphe-edu",
+			"target_jmodel": "default-juju-model-1"
+		}
+	}
+	@apiExample {curl} Example-Usage:
+		     curl -i http://localhost:5000/relation  -X DELETE  --data-binary "@relations.json"  
+	
+	@apiSuccessExample Example-Response:
+		HTTP/1.0 200 OK
+	"""
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["parameters"]["template_directory"] = request.args.get('url')
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	if str(request.content_type) != "None":
+		if (request.headers['Content-Type'] == "application/x-www-form-urlencoded") or (request.headers['Content-Type'] == "application/json"):
+			relations = request.get_json(force=True)
+			enquiry["parameters"]["relations"] = relations
+			enquiry = json.dumps(enquiry)
+			logger.info("enquiry: {}".format(enquiry))
+			logger.debug("enquiry: {}".format(enquiry))
+			# waiting for the response
+			response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+			data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+			data = json.loads(data)
+
+			status_code = data["status_code"]
+			data = data["data"]
+			data = {
+				"data": data,
+				"elapsed-time": str(datetime.datetime.now() - current_time),
+			}
+		else:
+			status_code = 400
+			data = {
+				"data": "No json file found",
+				"elapsed-time": str(datetime.datetime.now() - current_time),
+			}
+	else:
+		status_code = 400
+		data = {
+			"data": "No json file found",
+			"elapsed-time": str(datetime.datetime.now() - current_time),
+		}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
 @app.errorhandler(Exception)
 def page_not_found(error):
 	message = \
