@@ -33,6 +33,8 @@ cpu_percent_to_switch_to_mon=50.0 # CPU usage above which, the RAN mode will be 
 cpu_percent_to_switch_to_fs=40.0 # CPU usage below which, the RAN mode will be switched to Functional Split if the current mode is Monolithic 
 threshold=10 # waiting time before switching from Monolithic to functional split, and vice versa
 counter=0
+flask_ip="10.42.0.4"
+flask_port="5000"
 while true; do
     #sleep 1
     cpu_usage=`awk '{u=$2+$4; t=$2+$4+$5; if (NR==1){u1=u; t1=t;} else print ($2+$4-u1) * 100 / (t-t1); }' <(grep 'cpu ' /proc/stat) <(sleep 1;grep 'cpu ' /proc/stat)`
@@ -48,39 +50,15 @@ while true; do
                 
                 juju config oai-du node_function="du" 
 
-                curl http://10.42.0.4:5000/relation -X DELETE --data-binary "@fs_rel_remove.json"
+                curl http://$flask_ip:$flask_port/relation -X DELETE --data-binary "@fs_rel_remove.json"
                 sleep 30
-                curl http://10.42.0.4:5000/relation -X POST --data-binary "@fs_rel_add.json"
+                curl http://$flask_ip:$flask_port/relation -X POST --data-binary "@fs_rel_add.json"
                 sleep 10
                 juju model-config update-status-hook-interval=45s
                 
                 diss_aggregation="fs"
                 echo "Current disaggregation is Monolithic"
                 counter=0
-                __='
-                juju config oai-du node_function="du" 
-
-                juju remove-relation oai-mme oai-du
-                juju remove-relation flexran oai-du
-                juju remove-relation oai-mme oai-hss
-                sleep 25
-
-                juju add-relation oai-du:du oai-cu:cu
-                sleep 10
-
-                juju add-relation oai-mme oai-hss
-                sleep 13
-
-                juju add-relation oai-mme oai-cu
-                sleep 20
-
-                juju add-relation flexran oai-cu
-                sleep 15
-
-                juju add-relation flexran oai-du
-                sleep 10
-                juju model-config update-status-hook-interval=45s
-                '
             fi
         else
             counter=0
@@ -96,31 +74,15 @@ while true; do
                 
                 juju model-config update-status-hook-interval=1s
                 juju config oai-du node_function="enb"
-                curl http://10.42.0.4:5000/relation -X DELETE --data-binary "@mon_rel_remove.json"
+                curl http://$flask_ip:$flask_port/relation -X DELETE --data-binary "@mon_rel_remove.json"
                 sleep 30
-                curl http://10.42.0.4:5000/relation -X POST --data-binary "@mon_rel_add.json"
+                curl http://$flask_ip:$flask_port/relation -X POST --data-binary "@mon_rel_add.json"
                 sleep 10
                 juju model-config update-status-hook-interval=90s
                 
                 diss_aggregation="mon"
                 echo "Current disaggregation is Monolithic"
                 counter=0
-                __='
-                juju model-config update-status-hook-interval=1s
-
-                juju config oai-du node_function="enb"
-
-                juju remove-relation oai-mme oai-cu
-                juju remove-relation flexran oai-cu
-                juju remove-relation oai-cu:cu oai-du:du
-
-                sleep 30
-
-                juju add-relation oai-mme oai-du
-                sleep 10
-
-                juju model-config update-status-hook-interval=90s
-                '
             fi
         else
             counter=0
