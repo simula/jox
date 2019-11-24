@@ -46,15 +46,17 @@ while true; do
             else
                 echo "switching to functional split mode"
                 
-                juju model-config update-status-hook-interval=1s
+                #juju model-config update-status-hook-interval=1s
                 
-                juju config oai-du node_function="du" 
+                #juju config oai-du node_function="du" 
+                curl http://$flask_ip:$flask_port/config --data-binary "@fs_config_start.json"
 
                 curl http://$flask_ip:$flask_port/relation -X DELETE --data-binary "@fs_rel_remove.json"
                 sleep 30
                 curl http://$flask_ip:$flask_port/relation -X POST --data-binary "@fs_rel_add.json"
                 sleep 10
-                juju model-config update-status-hook-interval=45s
+                curl http://$flask_ip:$flask_port/config --data-binary "@fs_config_end.json"
+                #juju model-config update-status-hook-interval=45s
                 
                 diss_aggregation="fs"
                 echo "Current disaggregation is Monolithic"
@@ -72,8 +74,9 @@ while true; do
             else
                 echo "switching to monolithic mode"
                 
-                juju model-config update-status-hook-interval=1s
-                juju config oai-du node_function="enb"
+                #juju model-config update-status-hook-interval=1s
+                #juju config oai-du node_function="enb"
+                curl http://$flask_ip:$flask_port/config --data-binary "@mon_config_start.json"
                 curl http://$flask_ip:$flask_port/relation -X DELETE --data-binary "@mon_rel_remove.json"
                 sleep 30
                 curl http://$flask_ip:$flask_port/relation -X POST --data-binary "@mon_rel_add.json"

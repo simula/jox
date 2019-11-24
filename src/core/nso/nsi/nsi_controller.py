@@ -29,6 +29,7 @@
 import logging
 from src.core.nso.nsi.slice import JSlice
 from juju import loop
+from juju.model import Model
 class NetworkSliceController(object):
 	def __init__(self, global_variables):
 		self.gv = global_variables
@@ -258,3 +259,81 @@ class NetworkSliceController(object):
 		self.logger.error(message)
 		self.logger.debug(message)
 		return[False, message]
+	def get_set_config_app_model(self, juju_controler, juju_model, config, config_type):
+		results = loop.run(self.config_app_model(juju_controler, juju_model, config, config_type))
+		return results[1]
+	async def config_app_model(self, juju_controler, juju_model, configurations, config_type):
+		
+		print("juju_controler={}".format(juju_controler))
+		print("juju_model={}".format(juju_model))
+		print("config_type={}".format(config_type))
+		
+		#if True:
+		try:
+			model = Model()
+			c_name = juju_controler
+			m_name = juju_model
+			model_name = c_name + ":" + m_name
+			await model.connect(model_name)
+			results = dict()
+			if config_type == "model-config":
+				model_config_current = await model.get_config()
+				if len(configurations) == 0:
+					return[True, model_config_current]
+				else:
+					for param in configurations.keys():
+						results[param] = dict()
+						if param not in model_config_current.keys():
+							results[param] = "The parameter {} can not be found in the configuration juju model {}:{}".format(param, juju_controler, juju_model)
+						else:
+							if configurations[param] == "":
+								# get config parameter of juju model
+								results[param] = model_config_current[param]
+							else:
+								# set config parameter of juju model
+								try:
+									await model.set_config({param: configurations[param]})
+									results[param] = "The parameter {} is set to the value {}".format(param, configurations[param])
+								except Exception as ex:
+									ex_str = str(ex)
+									ex_str = ex_str.replace(":", ";")
+									results[param] = ex_str
+			else: #config_type = "application-config"
+				for app in configurations.keys():
+					results[app] = dict()
+					if app not in model.applications.keys():
+						results[app] = "The application {} can not be found in the juju model {}:{}".format(app, juju_controler, juju_model)
+					else:
+						config_current_app = await model.applications[app].get_config()
+						if len(configurations[app]) == 0:
+							# return all the configuration file of the application
+							results[app] = config_current_app
+						else:
+							for param in configurations[app].keys():
+								results[app][param] = ""
+								if configurations[app][param] != "":
+									# set parameter value
+									try:
+										await model.applications[app].set_config({param: configurations[app][param]})
+										results[app][param] = "Set the value of the parameter {} to {}".format(param, configurations[app][param])
+									except Exception as ex:
+										ex_str = str(ex)
+										ex_str = ex_str.replace(":", ";")
+										results[app][param] = ex_str
+								else:
+									if param in config_current_app.keys():
+										# get parameter value
+										results[app][param] = config_current_app[param]
+			await model.disconnect()
+			return[True, results]
+		#"""
+		except Exception as ex:
+			ex_str = str(ex)
+			ex_str = ex_str.replace(":", ";")
+			message = "Error while trying to connect to the juju model {}:{} Error: {}".format(juju_controler, juju_model, ex_str)
+			self.logger.error(message)
+			self.logger.debug(message)
+			return[False, message]
+		finally:
+			await model.disconnect()
+		#"""

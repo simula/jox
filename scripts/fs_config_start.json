@@ -1,0 +1,13 @@
+
+{
+    "juju_controler": "nymphe-edu",
+    "juju_model": "default-juju-model-1",
+    "app-config": {
+        "oai-du": {
+            "node_function": "du"
+        }
+    },
+    "model-config": {
+        "update-status-hook-interval": "1s"
+    }
+}

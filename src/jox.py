@@ -485,7 +485,11 @@ class NFVO_JOX(object):
 	def remove_intra_nssi_relation(self, slice_name=None, subslice_name=None, service_a=None, service_b=None, jcloud=None, jmodel=None):
 		nssi_data = self.subslices_controller.remove_relation_intra_model(subslice_name, service_a, service_b, jcloud, jmodel)
 		return nssi_data
-	
+	##############
+	def get_set_configuration_application_model(self, juju_controler, juju_model, config, config_type):
+		results = self.slices_controller.get_set_config_app_model(juju_controler, juju_model, config, config_type)
+		return results
+	##############
 	def get_machines_status(self, pop_name, pop_type):
 		if pop_type == self.gv.LXC:
 			for pop_lxc in self.resourceController.pop_lxc_list:
@@ -1666,6 +1670,7 @@ class server_RBMQ(object):
 					}
 				self.send_ack(ch, method, props, response, send_reply)
 			elif (enquiry["request-uri"] == '/relation'):
+				##################################
 				request_type = enquiry["request-type"]
 				parameters = enquiry["parameters"]
 				relations = parameters["relations"]
@@ -1714,6 +1719,66 @@ class server_RBMQ(object):
 						"status_code": self.nfvo_jox.gv.HTTP_200_OK
 					}
 				else:
+					response = {
+						"ACK": False,
+						"data": res,
+						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+					}
+				self.send_ack(ch, method, props, response, send_reply)
+			elif (enquiry["request-uri"] == '/config'):
+				request_type = enquiry["request-type"]
+				parameters = enquiry["parameters"]
+				configuration = parameters["configuration"]
+				if ("juju_controler" not in configuration.keys()) or ("juju_model" not in configuration.keys()):
+					if ("juju_model" in configuration.keys()):
+						message = "The parameter juju_controler can not be found"
+						data = [False, message]
+					else:
+						message = "The parameters juju_controler and juju_model can not be found"
+						data = [False, message]
+				else:
+					if (len(configuration["juju_controler"]) == 0) or len(configuration["juju_model"]) == 0:
+						if len(configuration["juju_model"]) > 0:
+							message = "Please set the juju controler in the parameter juju_controler"
+							data = [False, message]
+						else:
+							message = "Please set the juju controler in the parameter juju_controler, and the juju model in juju_model"
+							data = [False, message]
+					else:
+						# juju controller and juju model found
+						juju_controler = configuration["juju_controler"]
+						juju_model = configuration["juju_model"]
+						##########################
+						result_model_config = None
+						result_app_config = None
+						if "model-config" in configuration.keys():
+							config_type = "model-config"
+							model_config = configuration["model-config"]
+							result_model_config = self.nfvo_jox.get_set_configuration_application_model(juju_controler, juju_model, model_config, config_type)
+						else:
+							model_config = None
+						if "app-config" in configuration.keys():
+							app_config = configuration["app-config"]
+							config_type = "application-config"
+							result_app_config = self.nfvo_jox.get_set_configuration_application_model(juju_controler, juju_model, app_config, config_type)
+						else:
+							app_config = None
+						data_final = dict()
+						data_final["juju_controler"] = juju_controler
+						data_final["juju_model"] = juju_model
+						data_final["app-config"] = result_app_config
+						data_final["model-config"] = result_model_config
+						data = [True, data_final]
+				####################################################
+				if data[0]:
+					res = data[1]
+					response = {
+						"ACK": True,
+						"data": res,
+						"status_code": self.nfvo_jox.gv.HTTP_200_OK
+					}
+				else:
+					res = data[1]
 					response = {
 						"ACK": False,
 						"data": res,

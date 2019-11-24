@@ -1,0 +1,10 @@
+
+{
+    "juju_controler": "nymphe-edu",
+    "juju_model": "default-juju-model-1",
+    "app-config": {
+    },
+    "model-config": {
+        "update-status-hook-interval": "45s"
+    }
+}

@@ -86,7 +86,9 @@ standard_reqst = {
 		# Parameters to define the disaggregation type; monolithic (mon), functional-split (fs)
 		"disaggregation": None,
 		# Relations
-		"relations": None
+		"relations": None,
+		# Relations
+		"configuration": None
 	}
 }
 
@@ -145,6 +147,10 @@ This section contains the main functionalities for adding and removing relations
 It is particularly helpful when e.g. switching between monolithic and functional split mode of RAN
 """
 
+"""
+@apiDefine Configuration Configuration
+This section contains the main functionalities to get and set the configuration of applications, as well as the configurations of juju model
+"""
 
 @app.route('/')
 def jox_homepage():
@@ -3527,8 +3533,7 @@ def Disaggregation(cloud_name=None, model_name=None, type="mon"):
 	return data, status_code
 
 @app.route('/relation', methods=['POST', 'DELETE'])
-def Relations_new(action="add", slice_name=None, nssi_source=None, nssi_node_source=None, source_jcloud=None, source_jmodel=None, \
-		nssi_target=None, nssi_node_target=None, target_jcloud=None, target_jmodel=None):
+def Relations():
 	"""
 	@apiGroup Relations
 	@apiName add-relation
@@ -3688,6 +3693,55 @@ def Relations_new(action="add", slice_name=None, nssi_source=None, nssi_node_sou
 	logger.debug("response: {}".format(data))
 	data = jsonify(data)
 	return data, status_code
+###########################################################
+
+#@app.route('/app-config/<string:application_name>', methods=['GET'])
+#@app.route('/app-config/<string:application_name>/<string:config_param>', methods=['GET'])
+#@app.route('/app-config/<string:application_name>/<string:config_param>/<string:config_val>', methods=['POST'])
+@app.route('/config', methods=['POST'])
+def Configurations():
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["parameters"]["template_directory"] = request.args.get('url')
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	if str(request.content_type) != "None":
+		if (request.headers['Content-Type'] == "application/x-www-form-urlencoded") or (request.headers['Content-Type'] == "application/json"):
+			configuration = request.get_json(force=True)
+			enquiry["parameters"]["configuration"] = configuration
+			enquiry = json.dumps(enquiry)
+			logger.info("enquiry: {}".format(enquiry))
+			logger.debug("enquiry: {}".format(enquiry))
+			# waiting for the response
+			response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+			data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+			data = json.loads(data)
+
+			status_code = data["status_code"]
+			data = data["data"]
+			data = {
+				"data": data,
+				"elapsed-time": str(datetime.datetime.now() - current_time),
+			}
+		else:
+			status_code = 400
+			data = {
+				"data": "No json file found",
+				"elapsed-time": str(datetime.datetime.now() - current_time),
+			}
+	else:
+		status_code = 400
+		data = {
+			"data": "No json file found",
+			"elapsed-time": str(datetime.datetime.now() - current_time),
+		}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
+###########################################################
+
 @app.errorhandler(Exception)
 def page_not_found(error):
 	message = \
