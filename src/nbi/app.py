@@ -3693,13 +3693,123 @@ def Relations():
 	logger.debug("response: {}".format(data))
 	data = jsonify(data)
 	return data, status_code
-###########################################################
 
-#@app.route('/app-config/<string:application_name>', methods=['GET'])
-#@app.route('/app-config/<string:application_name>/<string:config_param>', methods=['GET'])
-#@app.route('/app-config/<string:application_name>/<string:config_param>/<string:config_val>', methods=['POST'])
 @app.route('/config', methods=['POST'])
 def Configurations():
+	"""
+	@apiGroup Configuration
+	@apiName Configuration
+	
+	@api {get} /config Get and set configuration for applicaton and juju model
+	@apiDescription This endpoint allosw to get and/or set values of the parameters of applications, as well as the juju model.
+	@apiParam {json}    file The json file. It contains the hereunder fields
+	@apiParam {String} juju_controler Name of juju controller
+	@apiParam {String} juju_model  Name of juju model
+	@apiParam {String} app-config Dictionary where its keys are the applications that we need to get/set their parameters,
+							while their values are are another dictionary that contains a pair of the parameters, along with 
+							their values (if we need to set the value of a parameter) or empty string (if we need to get the value of a parameter)
+	@apiParam {String} model-config Dictionary where its keys are the parameters of the configuration of juju model (you can get them through juju CLI using juju model-config),
+						and the values of the dictionary are either empty string (if we need to get the value of the parameter) or string value
+						(if we need to set the value of the parameter)
+	
+	@apiExample {curl} Example-1-Usage:
+		     curl http://10.42.0.4:5000/config --data-binary "@config_example.json"  
+	@apiSuccessExample Example 1 - config_example.json:
+	{
+		"juju_controler": "nymphe-edu",
+		"juju_model": "default-juju-model-1",
+		"app-config": {
+			"oai-spgw": {
+				"pgw-eth": "",
+				"sgw-eth": ""
+			},
+			"oai-du": {
+				"node_function": "enb"
+			}
+		},
+		"model-config": {
+			"update-status-hook-interval": "45s"
+		}
+	}
+	@apiSuccessExample Example-1-Usage:
+	{
+		"data": {
+			"app-config": {
+			"oai-du": {
+				"node_function": "Set the value of the parameter node_function to enb"
+			}, 
+			"oai-spgw": {
+				"pgw-eth": {
+				"default": "ens3", 
+				"description": "This is usefull especially when you are in manual environment so you have your own machines. The default value is eth0. NO empty value.\n", 
+				"source": "user", 
+				"type": "string", 
+				"value": "enp7s0"
+				}, 
+				"sgw-eth": {
+				"default": "ens3", 
+				"description": "This is usefull especially when you are in manual environment so you have your own machines. The default value is eth0. NO empty value.\n", 
+				"source": "user", 
+				"type": "string", 
+				"value": "enp7s0"
+				}
+			}
+			}, 
+			"juju_controler": "nymphe-edu", 
+			"juju_model": "default-juju-model-1", 
+			"model-config": {
+			"update-status-hook-interval": "The parameter update-status-hook-interval is set to the value 45s"
+			}
+		}, 
+		"elapsed-time": "0:00:00.368201"
+	}
+
+
+	@apiExample {curl} Example-2-Usage:
+		     curl http://10.42.0.4:5000/config --data-binary "@config_example_2.json"  
+	@apiSuccessExample Example 2 - config_example_2.json:
+	{
+		"juju_controler": "nymphe-edu",
+		"juju_model": "default-juju-model-1",
+		"app-config": {
+			"oai-spgw": {
+				"pgw-iface": "",
+				"sgw-iface": ""
+			},
+			"oai-du": {
+				"node_type": "enb"
+			},
+			"oai-enb": {
+			}
+		},
+		"model-config": {
+			"update-status-hook-interval": "45 seconds"
+		}
+	}
+	@apiErrorExample Example-2-Response:
+	{
+		"data": {
+			"app-config": {
+			"oai-du": {
+				"node_type": "unknown option \"node_type\""
+			}, 
+			"oai-enb": "The application oai-enb can not be found in the juju model nymphe-edu:default-juju-model-1", 
+			"oai-spgw": {
+				"pgw-iface": "the parameter pgw-iface can not be found in the list of parameters of oai-spgw", 
+				"sgw-iface": "the parameter sgw-iface can not be found in the list of parameters of oai-spgw"
+			}
+			}, 
+			"juju_controler": "nymphe-edu", 
+			"juju_model": "default-juju-model-1", 
+			"model-config": {
+			"update-status-hook-interval": "invalid update status hook interval in model configuration; time; unknown unit  seconds in duration 45 seconds"
+			}
+		}, 
+		"elapsed-time": "0:00:00.456093"
+	}
+
+	"""
+	#@apiSuccessExample Example of the json file to add relation(s):
 	enquiry = standard_reqst
 	current_time = datetime.datetime.now()
 	enquiry["datetime"] = str(current_time)

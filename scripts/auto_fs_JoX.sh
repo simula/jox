@@ -28,13 +28,28 @@
 # Command line to increase the cpu usage: stress --cpu $NumberCpu --timeout $TimeInSeconds
 #               For example: stress --cpu 6 --timeout 600
 #               To install stress: sudo apt install stress
+set -e
+
 diss_aggregation="fs" # It is to tell what is the current mode of RAN. It can be either "mon", i.e. Monolithic, or "fs", i.e. Functional Split 
 cpu_percent_to_switch_to_mon=50.0 # CPU usage above which, the RAN mode will be switched to Monolithic if the current mode is Functional Split
 cpu_percent_to_switch_to_fs=40.0 # CPU usage below which, the RAN mode will be switched to Functional Split if the current mode is Monolithic 
 threshold=10 # waiting time before switching from Monolithic to functional split, and vice versa
+
+# change DIR_jox_config where the json file jox_config.json exists
+DIR_jox_config=$HOME/mosaic5g/jox/jox/src/common/config
+
+jox_ip=`jq -r '."flask-config"."flask-server"' $DIR_jox_config/jox_config.json`
+jox_port=`jq -r '."flask-config"."flask-port"' $DIR_jox_config/jox_config.json`
+
+if [ "$diss_aggregation" == "mon" ] ; then
+    curl --silent --output /dev/null http://$jox_ip:$jox_port/config --data-binary "@mon_slice_initial_config.json"
+elif [ "$diss_aggregation" == "fs" ] ; then
+    curl --silent --output /dev/null http://$jox_ip:$jox_port/config --data-binary "@fs_slice_initial_config.json"
+else
+    echo $diss_aggregation 'is NOT supported, only "mon" and "fs" are supported '
+    exit 0
+fi
 counter=0
-flask_ip="10.42.0.4"
-flask_port="5000"
 while true; do
     #sleep 1
     cpu_usage=`awk '{u=$2+$4; t=$2+$4+$5; if (NR==1){u1=u; t1=t;} else print ($2+$4-u1) * 100 / (t-t1); }' <(grep 'cpu ' /proc/stat) <(sleep 1;grep 'cpu ' /proc/stat)`
@@ -42,21 +57,23 @@ while true; do
         if [ ${cpu_usage%.*} -le ${cpu_percent_to_switch_to_fs%.*} ] ; then
             if [ $counter -lt $threshold ] ; then
                 counter=$((counter+1))
-                echo 'Current mode: Monolithic' $'\t' 'current cpu usage='$cpu_usage  $'\t' "Waiting for $((threshold-counter)) seconds to switch to functional split"
+                echo 'Current RAN mode: Monolithic' $'\t' 'current cpu usage='$cpu_usage  $'\t' "Waiting for $((threshold-counter)) seconds to switch to functional split"
             else
                 echo "switching to functional split mode"
-                
-                #juju model-config update-status-hook-interval=1s
-                
-                #juju config oai-du node_function="du" 
-                curl http://$flask_ip:$flask_port/config --data-binary "@fs_config_start.json"
 
-                curl http://$flask_ip:$flask_port/relation -X DELETE --data-binary "@fs_rel_remove.json"
-                sleep 30
-                curl http://$flask_ip:$flask_port/relation -X POST --data-binary "@fs_rel_add.json"
+                curl http://$jox_ip:$jox_port/config --data-binary "@fs_config_start.json"
+
+                curl http://$jox_ip:$jox_port/relation -X DELETE --data-binary "@fs_rel_remove.json"
+                sleep 25
+                curl http://$jox_ip:$jox_port/relation -X POST --data-binary "@fs_rel_add_1.json"
+                sleep 13
+                curl http://$jox_ip:$jox_port/relation -X POST --data-binary "@fs_rel_add_2.json"
+                sleep 20
+                curl http://$jox_ip:$jox_port/relation -X POST --data-binary "@fs_rel_add_3.json"
+                sleep 15
+                curl http://$jox_ip:$jox_port/relation -X POST --data-binary "@fs_rel_add_4.json"
                 sleep 10
-                curl http://$flask_ip:$flask_port/config --data-binary "@fs_config_end.json"
-                #juju model-config update-status-hook-interval=45s
+                curl http://$jox_ip:$jox_port/config --data-binary "@fs_config_end.json"
                 
                 diss_aggregation="fs"
                 echo "Current disaggregation is Monolithic"
@@ -64,32 +81,29 @@ while true; do
             fi
         else
             counter=0
-            echo 'Current mode: Monolithic' $'\t' 'current cpu usage='$cpu_usage
+            echo 'Current RAN mode: Monolithic' $'\t' 'current cpu usage='$cpu_usage
         fi
     else
         if [ ${cpu_usage%.*} -ge  ${cpu_percent_to_switch_to_mon%.*} ] ; then
             if [ $counter -lt $threshold ] ; then
                 counter=$((counter+1))
-                echo 'Current mode: Functiona Split' $'\t' 'current cpu usage='$cpu_usage  $'\t' "Waiting for $((threshold-counter)) seconds to switch to Monolithic"
+                echo 'Current RAN mode: Functiona Split' $'\t' 'current cpu usage='$cpu_usage  $'\t' "Waiting for $((threshold-counter)) seconds to switch to Monolithic"
             else
                 echo "switching to monolithic mode"
                 
-                #juju model-config update-status-hook-interval=1s
-                #juju config oai-du node_function="enb"
-                curl http://$flask_ip:$flask_port/config --data-binary "@mon_config_start.json"
-                curl http://$flask_ip:$flask_port/relation -X DELETE --data-binary "@mon_rel_remove.json"
+                curl http://$jox_ip:$jox_port/config --data-binary "@mon_config_start.json"
+                curl http://$jox_ip:$jox_port/relation -X DELETE --data-binary "@mon_rel_remove.json"
                 sleep 30
-                curl http://$flask_ip:$flask_port/relation -X POST --data-binary "@mon_rel_add.json"
+                curl http://$jox_ip:$jox_port/relation -X POST --data-binary "@mon_rel_add.json"
                 sleep 10
-                juju model-config update-status-hook-interval=90s
-                
+
                 diss_aggregation="mon"
                 echo "Current disaggregation is Monolithic"
                 counter=0
             fi
         else
             counter=0
-            echo 'Current mode: Functiona Split' $'\t' 'current cpu usage='$cpu_usage
+            echo 'Current RAN mode: Functiona Split' $'\t' 'current cpu usage='$cpu_usage
         fi
     fi
     

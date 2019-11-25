@@ -593,7 +593,6 @@ class server_RBMQ(object):
 	def on_response(self, ch, method, props, body):
 		if self.corr_id == props.correlation_id:
 			self.response = body
-			print(self.response)
 			message = "Response from plgin -> {}".format(self.response)
 			self.logger.info(message)
 

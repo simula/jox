@@ -1,0 +1,22 @@
+
+{
+    "juju_controler": "nymphe-edu",
+    "juju_model": "default-juju-model-1",
+    "app-config": {
+        "oai-du": {
+            "node_function": "du",
+            "eutra_band": "7",
+            "downlink_frequency": "2685000000L",
+            "uplink_frequency_offset": "-120000000"
+        },
+        "oai-cu": {
+            "node_function": "cu",
+            "eutra_band": "7",
+            "downlink_frequency": "2685000000L",
+            "uplink_frequency_offset": "-120000000"
+        }
+    },
+    "model-config": {
+        "update-status-hook-interval": "25s"
+    }
+}

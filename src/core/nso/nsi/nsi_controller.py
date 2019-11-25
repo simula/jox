@@ -263,12 +263,6 @@ class NetworkSliceController(object):
 		results = loop.run(self.config_app_model(juju_controler, juju_model, config, config_type))
 		return results[1]
 	async def config_app_model(self, juju_controler, juju_model, configurations, config_type):
-		
-		print("juju_controler={}".format(juju_controler))
-		print("juju_model={}".format(juju_model))
-		print("config_type={}".format(config_type))
-		
-		#if True:
 		try:
 			model = Model()
 			c_name = juju_controler
@@ -310,7 +304,7 @@ class NetworkSliceController(object):
 							results[app] = config_current_app
 						else:
 							for param in configurations[app].keys():
-								results[app][param] = ""
+								results[app][param] = ""								
 								if configurations[app][param] != "":
 									# set parameter value
 									try:
@@ -324,6 +318,11 @@ class NetworkSliceController(object):
 									if param in config_current_app.keys():
 										# get parameter value
 										results[app][param] = config_current_app[param]
+										self.logger.info("The value of the parametr {} is {}".format(param, config_current_app[param]))
+									else:
+										# Error, parametr not found
+										self.logger.error("the parameter {} can not be found in the list of parameters of {}".format(param, app))
+										results[app][param] = "the parameter {} can not be found in the list of parameters of {}".format(param, app)
 			await model.disconnect()
 			return[True, results]
 		#"""

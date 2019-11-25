@@ -42,7 +42,6 @@ class extract_info(object):
 			get_memory = [0, 0, 0, 0]
 		domain_all = dict()
 		domain = self._phy_get_iface_info(ip_address)
-		print("========================================ip_address:{} net_domain =: {}".format(ip_address, domain))
 		domain_all[ip_address] = domain[1]
 		
 		machine_hw = [x for x in str(self.juju_machine['hardware']).split(' ') if x]

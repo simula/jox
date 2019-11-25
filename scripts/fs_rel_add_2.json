@@ -1,0 +1,14 @@
+
+{
+  "relation-3": {
+    "slice_name": "mosaic5g-slice",
+    "nssi_source": "nssi_2",
+    "nssi_node_source": "oai-mme:mme",
+    "source_jcloud": "nymphe-edu",
+    "source_jmodel": "default-juju-model-1",
+    "nssi_target": "nssi_3",
+    "nssi_node_target": "oai-cu:mme",
+    "target_jcloud": "nymphe-edu",
+    "target_jmodel": "default-juju-model-1"
+  }
+}

@@ -264,10 +264,8 @@ class JModel(JSONEncoder):
     def remove_relation_intramodel(self, service_a, service_b, jcloud, jmodel):
         try:
             result = loop.run(self.juju_serviceModel.destroy_relation_intra_model(service_a, service_b))
-            print("result={}".format(result))
             if result[0]:# success
                 for rel in self.relations:
-                    print("rel={}".format(rel))
                     local_app = rel["service_b"]
                     remote_app = rel["service_a"]
                     if ":" in local_app:

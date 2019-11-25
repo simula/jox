@@ -505,7 +505,6 @@ async def disaggregation(cloud_name=None, model_name=None, user_name="admin", di
             relations[relation[0]] = relation[1]
         except:
             relations[str(relation)] = "" 
-    print("relations={}".format(relations))
     if dis_type == "mon":
         #
         cmd_mon = ["sh", "/home/adalia/mosaic5g/jox/mon.bash"]
