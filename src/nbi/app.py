@@ -3591,7 +3591,14 @@ def Relations():
 		     curl -i http://localhost:5000/relation  -X POST  --data-binary "@relations.json"  
 	
 	@apiSuccessExample Example-Response:
-		HTTP/1.0 200 OK
+	{
+		"data": {
+			"relation-1": "The relation between nssi_3:flexran:rtc and nssi_3:oai-du:rtc already exist", 
+			"relation-2": "The relation between nssi_1:oai-hss:hss and nssi_2:oai-mme:hss already exist", 
+			"relation-3": "The relation between flexran:rtc and oai-cu:rtc is successfully added"
+		}, 
+		"elapsed-time": "0:00:05.121335"
+	}
 	"""
 	"""
 	@apiGroup Relations
@@ -3620,7 +3627,7 @@ def Relations():
 			"source_jcloud": "nymphe-edu",
 			"source_jmodel": "default-juju-model-1",
 			"nssi_target": "nssi_3",
-			"nssi_node_target": "oai-du:rtc",
+			"nssi_node_target": "oai-enb:rtc",
 			"target_jcloud": "nymphe-edu",
 			"target_jmodel": "default-juju-model-1"
 		},
@@ -3631,7 +3638,7 @@ def Relations():
 			"source_jcloud": "nymphe-edu",
 			"source_jmodel": "default-juju-model-1",
 			"nssi_target": "nssi_2",
-			"nssi_node_target": "oai-mme:hss",
+			"nssi_node_target": "oai-spgw:hss",
 			"target_jcloud": "nymphe-edu",
 			"target_jmodel": "default-juju-model-1"
 		},
@@ -3651,7 +3658,14 @@ def Relations():
 		     curl -i http://localhost:5000/relation  -X DELETE  --data-binary "@relations.json"  
 	
 	@apiSuccessExample Example-Response:
-		HTTP/1.0 200 OK
+	{
+		"data": {
+			"relation-1": "No relation found  between flexran:rtc and oai-enb:rtc", 
+			"relation-2": "No relation between nssi_1:oai-hss:hss and nssi_2:oai-spgw:hss", 
+			"relation-3": "The relation betwenn flexran:rtc and oai-cu:rtc is successfuly removed"
+		}, 
+		"elapsed-time": "0:00:00.314112"
+	}
 	"""
 	enquiry = standard_reqst
 	current_time = datetime.datetime.now()
@@ -3698,7 +3712,7 @@ def Relations():
 def Configurations():
 	"""
 	@apiGroup Configuration
-	@apiName Configuration
+	@apiName configAppJujuModel
 	
 	@api {get} /config Get and set configuration for applicaton and juju model
 	@apiDescription This endpoint allosw to get and/or set values of the parameters of applications, as well as the juju model.
@@ -3731,7 +3745,7 @@ def Configurations():
 			"update-status-hook-interval": "45s"
 		}
 	}
-	@apiSuccessExample Example-1-Usage:
+	@apiSuccessExample Example-1-Response:
 	{
 		"data": {
 			"app-config": {

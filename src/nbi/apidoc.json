@@ -38,6 +38,7 @@
     "GetEsIndexPgae",
     "DeleteEsIndexPgae",
     "GetEsIndexPgaeKeyVal",
+    
     "GroupMonitoring",
     "GetNsiMonitorAll",
     "GetNsiMonitorServices",
@@ -49,7 +50,14 @@
     "GetNssiMonitorRequirements",
     "GetJujuMonitorJujuEntityCurrentModel",
     "GetJujuMonitorJujuEntityCertainModel",
-    "GetJoxlogs"
+    "GetJoxlogs",
+
+    "Configuration",
+    "configAppJujuModel",
+    
+    "Relations",
+    "add-relation",
+    "remove-relation"
   ],
   "template": {
   	"withCompare": true,
