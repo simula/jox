@@ -1,0 +1,19 @@
+
+{
+    "juju_controler": "nymphe-edu",
+    "juju_model": "default-juju-model-1",
+    "app-config": {
+        "oai-mme": {
+        },
+        "oai-spgw": {
+            "pgw-eth": "",
+            "sgw-eth": ""
+        },
+        "oai-du": {
+            "node_function": "enb"
+        }
+    },
+    "model-config": {
+        "update-status-hook-interval": "45s"
+    }
+}

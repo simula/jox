@@ -1,0 +1,181 @@
+description: template for deploying package <oai-5g-cran-flexran-functionalsplit> with 3 subslices (nssi_1)
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+imports: []
+metadata:
+  ID: nssi_1
+  author: Eurecom
+  vendor: Eurecom
+  version: 1.0
+  date: 2019-11-04
+
+dsl_definitions:
+  host_tiny: &host_tiny
+    disk_size: 5
+    mem_size: 512
+    num_cpus: 1
+  host_small: &host_small
+    disk_size: 5
+    mem_size: 1024
+    num_cpus: 1
+  os_linux_u_14_x64: &os_u14
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 14.04
+  os_linux_u_16_x64: &os_u16
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 16.04
+  os_linux_u_18_x64: &os_u18
+    architecture: x86_64
+    distribution: Ubuntu
+    type: Linux
+    version: 18.04
+  data_network: &data_network_1
+    properties:
+      network_name: "net1"
+      ip_version: 4
+      cidr: "10.42.0.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "0.0.0.0"
+  data_network_2: &data_network_2
+    properties:
+      network_name: "net2"
+      ip_version: 4
+      cidr: "192.168.1.122"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "0.0.0.0"
+  data_network_3: &data_network_3
+    properties:
+      network_name: "net3"
+      ip_version: 4
+      cidr: "10.42.0.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "192.168.12.254"
+  data_network_4: &data_network_4
+    properties:
+      network_name: "net4"
+      ip_version: 4
+      cidr: "192.168.1.0/24"
+      start_ip: ""
+      end_ip: ""
+      gateway_ip: "192.168.1.254"
+  containers:
+    region1:
+      - network: *data_network_1
+      - network2: *data_network_2
+      - network3: *data_network_3
+topology_template:
+  node_templates:
+    VDU_mysql:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: lxc
+
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "small"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "ubuntu_16_64"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: mysql_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "10.180.125.225"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    VDU_oai_hss:
+      type: tosca.nodes.nfv.VDU.Compute
+      artifacts:
+        sw_image:
+          type: tosca.artifacts.nfv.SwImage
+          properties:
+            supported_virtualisation_environments:
+              entry_schema: default
+              type: lxc
+      capabilities:
+        host:
+          type: tosca.capabilities.Compute
+          properties: "small"
+        os:
+          type: tosca.capabilities.OperatingSystem
+          properties: "ubuntu_16_64"
+      properties:
+        port_def:
+          type: tosca.capabilities.Endpoint
+          port_name: hss_port
+#      attributes:
+#        endpoint:
+#          type: tosca.capabilities.Endpoint
+#          ip_address: "192.168.1.2"
+      policies:
+        policy1:
+          type: tosca.policy.placement  # New
+          container_type: region
+          container_number: 1
+
+    mysql:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:mysql-58'
+        endpoint: nymphe-edu
+        model: default-juju-model-1
+        vendor: Eurecom
+        version: 1.0
+      requirements:
+        req1:
+          node: VDU_mysql
+          relationship: tosca.relationships.HostedOn
+        req2:
+          node: oai-hss
+          relationship: tosca.relationships.AttachesTo
+
+    oai-hss:
+      type: tosca.nodes.SoftwareComponent.JOX
+      properties:
+        charm: 'cs:~navid-nikaein/xenial/oai-hss-17'
+        endpoint: nymphe-edu
+        model: default-juju-model-1
+        vendor: Eurecom
+        version: 1.0
+      requirements:
+        req1:
+          node: VDU_oai_hss
+          relationship: tosca.relationships.HostedOn
+
+    mysql_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_mysql
+        link:
+          node: *data_network_1
+          type: tosca.nodes.network.Network
+
+    hss_port:
+      type: tosca.nodes.network.Port
+      requirements:
+        binding:
+          node: VDU_oai_hss
+        link:
+          node: *data_network_1
+          type: tosca.nodes.network.Network

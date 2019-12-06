@@ -7,7 +7,9 @@
             "node_function": "enb",
             "eutra_band": "7",
             "downlink_frequency": "2685000000L",
-            "uplink_frequency_offset": "-120000000"
+            "uplink_frequency_offset": "-120000000",
+            "parallel_config": "PARALLEL_RU_L1_SPLIT",
+            "max_rxgain": "110"
         },
         "oai-cu": {
             "node_function": "cu",
