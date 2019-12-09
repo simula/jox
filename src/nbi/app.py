@@ -88,7 +88,10 @@ standard_reqst = {
 		# Relations
 		"relations": None,
 		# Relations
-		"configuration": None
+		"configuration": None,
+		# vlan
+		"vlan": None,# vlan config
+		"vlan_id": None
 	}
 }
 
@@ -3864,7 +3867,100 @@ def Configurations():
 	logger.debug("response: {}".format(data))
 	data = jsonify(data)
 	return data, status_code
+
 ###########################################################
+@app.route('/vlan', methods=['POST'])
+@app.route('/vlan/<string:switch_type>/<string:switch_name>/<string:vlan_id>', methods=['GET'])
+def vlan(switch_type=None, switch_name=None, vlan_id=None):
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["parameters"]["template_directory"] = request.args.get('url')
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	
+	vlan_id_found = False if vlan_id == None else True
+	json_file_found = False
+	vlan_json_file = None
+	if str(request.content_type) != "None":
+		if (request.headers['Content-Type'] == "application/x-www-form-urlencoded") or (request.headers['Content-Type'] == "application/json"):
+			vlan_json_file = request.get_json(force=True)
+			json_file_found = True
+	if json_file_found and vlan_id_found:
+		status_code = 400
+		data = {
+			"data": "Both json file and vlan_id are found, please specify just one of them. For more information, check the apidoc of JoX",
+			"elapsed-time": str(datetime.datetime.now() - current_time),
+		}
+	elif json_file_found or vlan_id_found:
+		########################################
+		if vlan_json_file == None:
+			vlan_json_file = {
+				"switch_type": switch_type,
+				"switch_name": switch_name,
+				"vlan_id": vlan_id,
+			}
+		enquiry["parameters"]["vlan"] = vlan_json_file
+
+		enquiry = json.dumps(enquiry)
+		logger.info("enquiry: {}".format(enquiry))
+		logger.debug("enquiry: {}".format(enquiry))
+		# waiting for the response
+		response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+		data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+		data = json.loads(data)
+
+		status_code = data["status_code"]
+		data = data["data"]
+		data = {
+			"data": data,
+			"elapsed-time": str(datetime.datetime.now() - current_time),
+		}
+		########################################
+	else:
+		status_code = 400
+		data = {
+			"data": "Neither json file not vlan_if found, please specify just one of them. For more information, check the apidoc of JoX",
+			"elapsed-time": str(datetime.datetime.now() - current_time),
+		}
+	"""
+			########################################
+			vlan = request.get_json(force=True)
+			enquiry["parameters"]["vlan"] = vlan
+			enquiry["parameters"]["vlan_id"] = vlan_id
+
+			enquiry = json.dumps(enquiry)
+			logger.info("enquiry: {}".format(enquiry))
+			logger.debug("enquiry: {}".format(enquiry))
+			# waiting for the response
+			response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+			data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+			data = json.loads(data)
+
+			status_code = data["status_code"]
+			data = data["data"]
+			data = {
+				"data": data,
+				"elapsed-time": str(datetime.datetime.now() - current_time),
+			}
+			########################################
+		else:
+			status_code = 400
+			data = {
+				"data": "No json file found",
+				"elapsed-time": str(datetime.datetime.now() - current_time),
+			}
+	else:
+		status_code = 400
+		data = {
+			"data": "No json file found",
+			"elapsed-time": str(datetime.datetime.now() - current_time),
+		}
+	"""
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
 
 @app.errorhandler(Exception)
 def page_not_found(error):

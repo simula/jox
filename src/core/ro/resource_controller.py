@@ -50,7 +50,7 @@ class ResourcesController(object):
 		self.pop_lxc_list = list()
 		self.pop_kvm_list = list()
 		self.pop_phy_list = list()
-									#full name  short name
+		self.switch_driver_list = list()
 		self.pop_type_supported = {self.gv.LXC, self.gv.KVM, self.gv.PHY}
 		self.machine_id = 0
 		self.logger = logging.getLogger('jox.RO.rsourceController')
@@ -124,6 +124,117 @@ class ResourcesController(object):
 			message = "The VIM driver {0} is not supported, please choose one of the following supported ones: {1}".format(
 				pop_type, self.pop_type_supported)
 			self.logger.error(message)
+	def add_switches(self, list_sw_conf):
+		results = dict()
+		for sw_type in list_sw_conf:
+			results[sw_type] = dict()
+			if sw_type in self.gv.SUPPORTED_SWITCHES:
+				self.logger.info("The switch type {} is supported, trying to add it".format(sw_type))
+				object_check_switchDriver = list(filter(lambda x:
+			                                    (x.switch_type == sw_type),
+			                                    self.switch_driver_list))
+				if len(object_check_switchDriver) > 0:
+					message = "The switch driver of type {} is already exist".format(sw_type)
+					self.logger.info(message)
+					self.logger.debug(message)
+				else:
+					object_check_switchDriver = vimdriver.SwitchDriver(sw_type, self.gv, self.jesearch)
+					self.switch_driver_list.append(object_check_switchDriver)
+					pass
+				for switch_conf in list_sw_conf[sw_type]:
+					#adding the swith
+					message = object_check_switchDriver.add_switch(switch_conf)
+					results[sw_type][switch_conf["tsn-switch-name"]] = message
+			else:
+				message = "The switch type {} is NOT supported, it will be ignored".format(sw_type)
+				self.logger.info(message)
+				results[sw_type] = message
+		return results
+	def add_switch(self, sw_type, switch_conf):
+		object_check_switchDriver = list(filter(lambda x:
+												(x.switch_type == sw_type),
+												self.switch_driver_list))
+		if len(object_check_switchDriver) > 0:
+			message = "The switch driver of type {} is already exist".format(sw_type)
+			self.logger.info(message)
+			self.logger.debug(message)
+		else:
+			object_check_switchDriver = vimdriver.SwitchDriver(sw_type, self.gv, self.jesearch)
+			self.switch_driver_list.append(object_check_switchDriver)
+		result = object_check_switchDriver.add_switch(switch_conf)
+		return result
+	def get_list_all_switches(self, sw_type=None):
+		resut = dict()
+		try:
+			if sw_type is not None:
+				for sw_drv in self.switch_driver_list:
+					if sw_type == sw_drv.switch_type:
+						resut[sw_drv.switch_type] = dict()
+						for sw_tmp in sw_drv.switch_list:
+							resut[sw_drv.switch_type][sw_tmp.tsn_switch_name] = dict()
+							resut[sw_drv.switch_type][sw_tmp.tsn_switch_name]["tsnptp_interface"] = sw_tmp.tsnptp_interface
+							resut[sw_drv.switch_type][sw_tmp.tsn_switch_name]["tsntas_cycle_time"] = sw_tmp.tsntas_cycle_time
+							resut[sw_drv.switch_type][sw_tmp.tsn_switch_name]["tsntas_schedule_entry"] = sw_tmp.tsntas_schedule_entry	
+						return resut
+			else:
+				for sw_drv in self.switch_driver_list:
+					resut[sw_drv.switch_type] = dict()
+					for sw_tmp in sw_drv.switch_list:
+						resut[sw_drv.switch_type][sw_tmp.tsn_switch_name] = dict()
+						resut[sw_drv.switch_type][sw_tmp.tsn_switch_name]["tsnptp_interface"] = sw_tmp.tsnptp_interface
+						resut[sw_drv.switch_type][sw_tmp.tsn_switch_name]["tsntas_cycle_time"] = sw_tmp.tsntas_cycle_time
+						resut[sw_drv.switch_type][sw_tmp.tsn_switch_name]["tsntas_schedule_entry"] = sw_tmp.tsntas_schedule_entry	
+				return resut
+		except Exception as ex:
+			resut["error"] = ex
+			return resut
+	def Create_add_destoy_vlan(self, sw_type, switch_name, request, slice_name):
+		
+		print("request={}".format(request))
+		switch_object = self.get_switch_object(sw_type, switch_name)
+		if switch_object[0]:
+			switch_object = switch_object[1]
+			##################################################################
+			if (request["vlan"]["operation"] == "create") or (request["vlan"]["operation"] == "add"):
+				# create/add vlan
+				result = switch_object.create_add_vlan(request, slice_name)
+				return result
+			elif (request["vlan"]["operation"] == "destroy"):
+				# destroy vlan
+				vlan_id = request["vlan"]["id"]
+				result = switch_object.destroy_vlan(vlan_id, slice_name)
+				return result 
+			else:
+				# error request
+				message = "The request {} is not supported".format(request["vlan"]["operation"])
+				return [False, message]
+			##################################################################
+		else:
+			return switch_object
+	def get_vlan_config(self, sw_type, switch_name, vlan_id):
+		switch_object = self.get_switch_object(sw_type, switch_name)
+		if switch_object[0]:
+			switch_object = switch_object[1]
+			result = switch_object.get_vlan(vlan_id)
+			return result
+		else:
+			return switch_object
+	def get_switch_object(self, sw_type, switch_name):
+		try:
+			for sw_drv in self.switch_driver_list:
+				if sw_drv.switch_type == sw_type:
+					for sw_tmp in sw_drv.switch_list:
+						if sw_tmp.tsn_switch_name == switch_name:
+							switch_object = sw_tmp
+							return [True, switch_object]
+					message = "The switch {} can not be found".format(switch_name)
+					return [False, message]
+			message = "The switch type {} can not be found".format(sw_type)
+			return [False, message]
+		except Exception as ex:
+			message = "Error while trying to get switch object {} of type {}".format(switch_name, sw_type)
+			self.logger.error(message)
+			return [False, message]
 	def get_list_all_pop(self):
 		list_all_pop = {"lxc": list(),
 		                "kvm": list(),
@@ -133,8 +244,6 @@ class ResourcesController(object):
 		for pop in self.pop_kvm_list:
 			list_all_pop["kvm"].append(pop.driver_name)
 		return list_all_pop
-		
-	
 	def get_pop_object_zoneDomain(self, machine_zone, machine_domain, virt_type):
 		
 		if virt_type == self.gv.LXC:

@@ -9,5 +9,8 @@
     },
     "model-config": {
         "update-status-hook-interval": "1s"
+    },
+    "tsn-config": {
+        "common config": "d"
     }
 }

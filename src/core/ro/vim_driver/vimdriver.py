@@ -1240,6 +1240,210 @@ class PhyDriver(object):
 		raise NotImplementedError()
 
 
+class SwitchDriver(object):
+	def __init__(self, switch_type, global_variable, jesearch):
+		self.switch_type = switch_type
+		self.jesearch = jesearch
+		self.gv = global_variable
+		self.switch_list = list()
+		self.logger = logging.getLogger('jox.SwitchDriver.{}'.format(self.switch_type))
+		self.template_manager = template_manager.TemplateManager(global_variable, jesearch)
+	def add_switch(self, switch_config):
+		object_check_switchDriver = list(filter(lambda x:
+			                                    (x.tsn_switch_name == switch_config["tsn-switch-name"]),
+			                                    self.switch_list))
+		if len(object_check_switchDriver) > 0:
+			message = "The switch {} is already exist".format(switch_config["tsn-switch-name"])
+			self.logger.info(message)
+			self.logger.debug(message)
+			return [message]
+		else:
+			new_switch = _TsnSwitch()
+			message = new_switch.register(switch_config)
+			if message[0]:
+				self.switch_list.append(new_switch)
+			return [message[1]]
+class _TsnSwitch():
+	def __init__(self):
+		self.logger = logging.getLogger('jox.SwitchDriver._TsnSwitch')
+		self.tsn_switch_name = ""
+		self.tsnptp_interface = list()
+		self.tsntas_cycle_time = list()
+		self.tsntas_schedule_entry = list()
+		"""
+		Example on self.list_vlan
+		list_vlan = {
+			"vlan-id":{
+				"attached-slices": list() # NSI names
+				"vlan":{
+					"id": 600,
+					"ports": "ge2,ge3",
+					"untagged-ports": "ge2"
+				},
+				"pvlan": {               
+					"port": "ge<0-7>",
+					"id": 200
+				}
+			}
+		}
+		"""
+		self.list_vlan = dict()
+		self.alive = False
+		self.list_phy_machines = list()
+
+	def register(self, switch_config):
+		try:
+			self.tsn_switch_name = switch_config["tsn-switch-name"]
+			self.tsnptp_interface = switch_config["tsnptp-interface"]
+			self.tsntas_cycle_time = switch_config["tsntas-cycle-time"]
+			self.tsntas_schedule_entry = switch_config["tsntas-schedule-entry"]
+			message = "The switch {} is successfully added".format(switch_config["tsn-switch-name"])
+			return [True, message]
+		except Exception as ex:
+			message = "The following error raised while addich the switch {}".format(switch_config["tsn-switch-name"], ex)
+			return [False, message]
+	def create_add_vlan(self, request, slice_name):
+		vlan_id = request["vlan"]["id"]
+		if str(vlan_id) in self.list_vlan.keys():
+			try:
+				self.logger.info("The vlan {} is already exist. Adding the vlan with ports{} ".format(vlan_id, request["vlan"]["ports"]))
+				# vlan-add
+				id_vlan = str(request["vlan"]["id"])
+				# check whether the ports are already used 
+				ports_to_add = str(request["vlan"]["ports"]).split(",")
+				print("ports_to_add={}".format(ports_to_add))
+				used_port = dict()
+				for slice in self.list_vlan[id_vlan]["vlan"]["ports"]:
+					for port in ports_to_add:
+						print("ports of slice {} are {}".format(slice, self.list_vlan[id_vlan]["vlan"]["ports"][slice]))
+						if port in self.list_vlan[id_vlan]["vlan"]["ports"][slice]:
+							if slice not in used_port.keys():
+								used_port[slice] = list()
+							used_port[slice].append(port)
+				print("used_port={}".format(used_port))
+				if len(used_port.keys()) == 0:
+					if slice_name not in self.list_vlan[id_vlan]["attached-slices"]:
+						self.list_vlan[id_vlan]["attached-slices"].append(slice_name)
+						#self.list_vlan[id_vlan]["vlan"]["id"] = id_vlan
+						self.list_vlan[id_vlan]["vlan"]["ports"][slice_name] = request["vlan"]["ports"]
+						self.list_vlan[id_vlan]["vlan"]["untagged-ports"][slice_name] = request["vlan"]["untagged-ports"]
+						#pvlan
+						self.list_vlan[id_vlan]["pvlan"]["port"][slice_name] = request["pvlan"]["port"]
+						self.list_vlan[id_vlan]["pvlan"]["id"][slice_name] = request["pvlan"]["id"]
+						message = "The vlan {} with ports {} is successfully added".format(vlan_id, request["vlan"]["ports"])
+						return [True, message]
+					else:
+						#self.list_vlan[id_vlan]["attached-slices"].append(slice_name)
+						current_ports = self.list_vlan[id_vlan]["vlan"]["ports"][slice_name]
+						current_ports = '{},{}'.format(current_ports, request["vlan"]["ports"])
+						self.list_vlan[id_vlan]["vlan"]["ports"][slice_name] = current_ports
+						curren_untagged_ports = self.list_vlan[id_vlan]["vlan"]["untagged-ports"][slice_name]
+						curren_untagged_ports = '{},{}'.format(curren_untagged_ports, request["vlan"]["untagged-ports"])
+
+						self.list_vlan[id_vlan]["vlan"]["untagged-ports"][slice_name] = curren_untagged_ports
+						#pvlan
+						self.list_vlan[id_vlan]["pvlan"]["port"][slice_name] = request["pvlan"]["port"]
+						self.list_vlan[id_vlan]["pvlan"]["id"][slice_name] = request["pvlan"]["id"]
+						message = "The vlan {} with ports {} is successfully added".format(vlan_id, request["vlan"]["ports"])
+						return [True, message]
+				else:
+					message = "The following ports are used by the following slices :{}".format(used_port)
+					return [False, message]
+			except Exception as ex:
+				#raise ex	
+				message = "The following error raised while adding the vlan {} with ports {}".format(vlan_id, request["vlan"]["ports"])
+				return [True, message]
+		else:
+			try:
+				self.logger.info("creating the vlan {} , and dding the ports".format(vlan_id, request["vlan"]["ports"]))
+				# vlan-create
+				new_vlan = {
+					"attached-slices": [slice_name], # NSI names
+					"vlan":{
+						"id": request["vlan"]["id"],
+						"ports": {
+							slice_name: request["vlan"]["ports"]
+							},
+						"untagged-ports": {
+							slice_name: request["vlan"]["untagged-ports"]
+							}
+					},
+					"pvlan": {               
+						"port": {
+							slice_name: request["pvlan"]["port"]
+							},
+						"id": {
+							slice_name: request["pvlan"]["id"]
+							}
+					}
+				}
+				self.list_vlan[str(request["vlan"]["id"])] = new_vlan
+
+				message = "The vlan {} with ports {} is successfully created".format(vlan_id, request["vlan"]["ports"])
+				return [True, message]
+			except Exception as ex:
+				#raise ex
+				message = "The following error raised while creating the vlan {} with ports {}".format(vlan_id, request["vlan"]["ports"])
+				return [True, message]
+	
+	def get_vlan(self, vlan_id, slice_name=None):
+		if vlan_id == "0":
+			# get all vlans
+			return [False, self.list_vlan]
+		else:
+			# get specific vlan
+			if str(vlan_id) in self.list_vlan.keys():
+				message = "Getting the config of vlan {}".format(vlan_id)
+				return [True, self.list_vlan[str(vlan_id)]]
+			else:
+				message = "The vlan {} can not be found".format(vlan_id)
+				self.logger.error(message)
+				return [False, message]
+	def destroy_vlan(self, vlan_id, slice_name):
+		if str(vlan_id) in self.list_vlan:
+			attached_slices = self.list_vlan[str(vlan_id)]["attached-slices"]
+			print("attached_slices={}".format(attached_slices))
+			if slice_name in attached_slices:
+				self.logger.info("The slice {} is attached to the vlan {}".format(slice_name, vlan_id))
+				if len(attached_slices) == 1:
+					try:
+						# destroy vlan
+						self.logger.info("Trying to destrying the vlan {}".format(vlan_id))
+						message = "The vlan {} is successfully destroyed".format(vlan_id)
+						del self.list_vlan[str(vlan_id)]	
+						return [True, message]
+					except Exception as ex:
+						message = "The following error raised while trying to detroy the vlan {}".format(ex, vlan_id)
+						return [False, message]
+						#raise ex
+				else:
+					try:
+						# rmove ports of concerned slice from  vlan
+						vlan_id = str(vlan_id)
+						self.logger.info("There are more than one slice is attached to the vlan {}".format(vlan_id))
+						ports = self.list_vlan[str(vlan_id)]["vlan"]["ports"][slice_name]
+						self.logger.info("Trying to deactivate the ports related to the slice {}".format(ports, slice_name))
+						self.list_vlan[str(vlan_id)]["attached-slices"].remove(slice_name)
+						del self.list_vlan[vlan_id]["vlan"]["ports"][slice_name]
+						del self.list_vlan[vlan_id]["vlan"]["untagged-ports"][slice_name]
+						#pvlan
+						del self.list_vlan[vlan_id]["pvlan"]["port"][slice_name]
+						del self.list_vlan[vlan_id]["pvlan"]["id"][slice_name]
+						message = "The conf of vlan {} related to slice {} is successfully removed".format(vlan_id, slice_name)
+						return [True, message]
+					except Exception as ex:
+						message = "The following error raised while trying to remove ports of the the vlan {}: {}".format(vlan_id, ex)
+						return [False, message]
+						#raise ex
+			else:
+				message = "The slice {} is NOT attached to the vlan {}".format(slice_name, vlan_id)
+				self.logger.error(message) 
+				return [False, message]
+		else:
+			message = "The vlan {} can not be found, thus not destroyed".format(vlan_id)
+			self.logger.error(message) 
+			return [False, message]
+			
 class _VmKvm():
 	def __init__(self):
 		self.logger = logging.getLogger('jox.VimDriver.VmKvm')
@@ -1272,6 +1476,13 @@ class _VmKvm():
 
 		self.tmp_service_name = None
 		self.tmp_mid_ro = None
+		# parameters related to TSN switch
+		self.switch = {
+			"tsn":{
+				"switch_name": "",
+				"switch_port": ""
+			}
+		}
 	
 	def build(self,
 	          subslice_name,

@@ -33,6 +33,11 @@ global JOX_CONFIG_KEY
 global KVM
 global LXC
 global PHY
+global TSN
+global SUPPORTED_SWITCHES
+global SWITCHES
+
+
 
 global LOGFILE
 global LOG_LEVEL

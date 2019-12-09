@@ -52,7 +52,7 @@
   },
 
   "flask-config":{
-    "flask-server": "10.42.0.4",
+    "flask-server": "localhost",
     "flask-port": 5000,
     "flask-debug": "FALSE"
   },
@@ -74,6 +74,26 @@
         "domain": "10.42.0.0/24",
         "_Comment_3": "lxc-anchor is the name of the remote lxc endpoint. To get this name, just type in the terminal (lxc remote list), The default local lxc endpoint is 'default'",
         "lxc-anchor": "pou_remote_home",
+        "_Comment_4": "ssh config",
+        "ssh-private-key": "",
+        "ssh-user": "",
+        "ssh-password": "",
+        "managed-by": "lxd",
+        "prebuilt-image": {
+          "trusty": "juju/trusty/amd64",
+          "xenial": "juju/xenial/amd64",
+          "bionic": "juju/bionic/amd64"
+        }
+      },
+      {
+        "_Comment_1": "pop-name is a user-defined name for the name of the pop. It will be generated randomly if it is empty",
+        "pop-name": "default-kvm-bridged",
+        "zone": "1",
+        "scope": "private",
+        "_Comment_2": "domain is the subnet, it is optional if the endpoint and subnet-mask are provided",
+        "domain": "192.168.122.0/24",
+        "_Comment_3": "lxc-anchor is the name of the remote lxc endpoint. To get this name, just type in the terminal (lxc remote list), The default local lxc endpoint is 'default'",
+        "lxc-anchor": "local",
         "_Comment_4": "ssh config",
         "ssh-private-key": "",
         "ssh-user": "",
@@ -117,6 +137,56 @@
       }
     ]
   },
+  "supported-switches":[
+    "tsn"
+  ],
+  "_Comment_1": "The following configuration of TSN switches are common config for all flows/slices",
+  "switches": {   
+    "tsn": [
+      {
+        "tsn-switch-name":"switch-odl-name",
+        "tsnptp-interface": [
+          {               
+            "_Comment_1": "key",
+            "interface":  0,
+            "_Comment_2": "The allowed values of pkt are: enable, disable",
+            "pkt": "enable",
+            "_Comment_3": "The allowed values of sync-receipt-timeout are: <0-5>",
+            "sync-receipt-timeout": 0,
+            "_Comment_4": "The allowed values of delay-asymmetry are: <-128-127>",
+            "delay-asymmetry": -128
+          }
+        ],
+        "tsntas-cycle-time":[
+          {
+            "_Comment_1": "key",
+            "interface": 0,
+            "_Comment_2": "The allowed values of base-time-sec are: <0-63>",
+            "base-time-sec": 0,
+            "base-time-ns": 0,
+            "cycle-time": 60,
+            "extension-ns": 60
+          }
+        ],
+        "tsntas-schedule-entry":[
+          {
+            "_Comment_1": "key",
+            "interface": 0,
+            "entries":[
+              {
+                "_Comment_1": "The allowed values of entry are: <0-127>",
+                "entry": 0,
+                "_Comment_2": "The allowed values of hold-preempt: <0-1>",
+                "hold-preempt": 0,
+                "time-interval": 5000,
+                "gate-state": 80
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
   "zones": {
     "1": {
       "domain-1": "10.0.0.0/8",
@@ -130,9 +200,9 @@
       "description": "credentials of your juju controller",
       "cloud-name": "localhost",
       "cloud-type": "lxd",
-      "cloud-endpoint": "10.222.97.223:17070",
+      "cloud-endpoint": "192.168.122.164:17070",
       "cloud-username": "admin",
-      "cloud-password": "5cad70448c0a9a959c8359b7f4b6c7c2"
+      "cloud-password": "fb408ffaa36624c1450417d5c6b5d11b"
     },
     {
       "description": "credentials of your juju controller",
@@ -199,7 +269,7 @@
   },
   "ssh-config": {
     "_Comment": "ssh connection is needed when adding kvm machines",
-    "ssh-key-directory": "/home/adalia/.ssh/",
+    "ssh-key-directory": "/home/perle/.ssh/",
     "ssh-key-name": "id_rsa",
     "ssh-user": "ubuntu",
     "ssh-password": "linux"

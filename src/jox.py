@@ -163,9 +163,6 @@ class NFVO_JOX(object):
 			self.gv.HOST_OS_CONFIG["host"] = self.jox_config["host-config"]
 			self.gv.HOST_OS_CONFIG["os"] = self.jox_config["os-config"]
 			
-			
-			
-			
 			self.gv.HTTP_200_OK = self.jox_config["http"]["200"]["ok"]
 			self.gv.HTTP_204_NO_CONTENT = self.jox_config["http"]["200"]["no-content"]
 			self.gv.HTTP_400_BAD_REQUEST = self.jox_config["http"]["400"]["bad-request"]
@@ -174,6 +171,11 @@ class NFVO_JOX(object):
 			self.gv.ZONES = self.jox_config['zones']
 
 			self.gv.JOX_TIMEOUT_REQUEST = self.jox_config["jox-config"]['jox-timeout-request']
+			# Configuraions related to common config of switches
+			self.gv.SUPPORTED_SWITCHES = self.jox_config["supported-switches"]
+			self.gv.SWITCHES = self.jox_config["switches"]
+			#
+   			
 			
 			
 		except jsonschema.ValidationError as ex:
@@ -297,7 +299,10 @@ class NFVO_JOX(object):
 		else:
 			self.logger.info("Slices Controller was successfully loaded!")
 		
-		########## STEP 9: Start WebAPI (Flask)##########
+		########## STEP 9: Add switches if any ##########
+		self.logger.info("Adding switches if any!")
+		self.add_switches(self.gv.SWITCHES)
+		########## STEP 10: Start WebAPI (Flask)##########
 		try:
 			self.end_time = time.time()
 			self.logger.info("JOX loading time: %s ", self.end_time - self.start_time)
@@ -309,8 +314,83 @@ class NFVO_JOX(object):
 			self.logger.error(ex)
 			self.cleanup_and_exit(str(ex))
 		else:
-			message = "JOX Web API loaded!"
+			message = "JOX Core loaded!"
 			self.logger.info(message)
+		#####################################################
+		reslt = self.resourceController.get_list_all_switches()
+		print("get_list_all_switches={}".format(reslt))
+		"""
+		slice_name = "mosaci5g-slice"
+		tsn_switch_name = "switch-odl-name"
+		vlan_request_1 = {
+			"vlan": {               
+				"id": 600,
+				"ports": "ge2,ge3",
+				"untagged-ports": "ge2",
+				"operation": "create"
+			},
+			"pvlan": {               
+				"port": "ge0",
+				"id": 200
+			}
+		}
+		vlan_request_2 = {
+			"vlan": {               
+				"id": 600,
+				"ports": "ge5,ge6",
+				"untagged-ports": "ge6",
+				"operation": "add"
+			},
+			"pvlan": {               
+				"port": "ge5",
+				"id": 200
+			}
+		}
+		vlan_request_3 = {
+			"vlan": {               
+				"id": 600,
+				"operation": "destroy"
+			}
+		}
+		if (vlan_request_1["vlan"]["operation"] == "create") or (vlan_request_1["vlan"]["operation"] == "add"):
+			# create/add vlan
+			pass
+		elif (vlan_request_1["vlan"]["operation"] == "destroy"):
+			# destroy vlan
+			pass
+		else:
+			# error request
+			pass
+		"""
+		#####################################################
+			
+	def add_switches(self, list_sw_conf):
+		try:
+			self.logger.info("Adding switches")
+			results = self.resourceController.add_switches(list_sw_conf)
+		except Exception as ex:
+			self.logger.error(str(ex))
+			self.logger.error(traceback.format_exc())
+		else:
+			self.logger.info(results)
+	def add_switch(self, sw_type, switch_conf):
+		try:
+			self.logger.info("Adding the switch {} of type {}".format(switch_conf["tsn-switch-name"], sw_type))
+			results = self.resourceController.add_switch(sw_type, switch_conf)
+		except Exception as ex:
+			self.logger.error(str(ex))
+			self.logger.error(traceback.format_exc())
+		else:
+			self.logger.info(results)
+	def gel_switches(self, sw_type=None):
+		result = self.resourceController.get_list_all_switches(sw_type)
+		return result
+	def add_destroy_vlan(self, sw_type, switch_name, request, slice_name):
+		result = self.resourceController.Create_add_destoy_vlan(sw_type, switch_name, request, slice_name)
+		return result
+	def get_vlan_config(self, sw_type, switch_name, vlan_id):
+		result = self.resourceController.get_vlan_config(sw_type, switch_name, vlan_id)
+		return result
 	def resource_discovery(self, juju_cloud_name=None, juju_model_name=None, user="admin"):
 		"""
 		This methods discover the available resources that are already provisioned to certain juju model and register them at RO, to be later used
@@ -1781,6 +1861,53 @@ class server_RBMQ(object):
 					response = {
 						"ACK": False,
 						"data": res,
+						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+					}
+				self.send_ack(ch, method, props, response, send_reply)
+			elif (enquiry["request-uri"] == '/vlan') or \
+				(enquiry["request-uri"] == '/vlan/<string:switch_type>/<string:switch_name>/<string:vlan_id>'):
+				request_type = enquiry["request-type"]
+				parameters = enquiry["parameters"]
+				vlan_conf = parameters["vlan"]
+				if request_type == "get":
+					# get vlan config
+					switch_type = vlan_conf["switch_type"]
+					switch_name = vlan_conf["switch_name"]
+					vlan_id = vlan_conf["vlan_id"]
+					result = self.nfvo_jox.get_vlan_config(switch_type, switch_name, vlan_id)
+					success = result[0]
+					data = result[1]
+				else:
+					# create/add/destroy vlan
+					juju_controler = vlan_conf["juju_controler"]
+					juju_model = vlan_conf["juju_model"]
+					slice_name = vlan_conf["slice_name"]
+					switch_type = vlan_conf["switch_type"]
+					switch_name = vlan_conf["switch_name"]
+					
+					vlan_config = vlan_conf["vlan_config"] 
+					print("vlan_config={}".format(vlan_config))
+					data = dict()
+					success = False
+					for curren_conf in vlan_config:
+						print("conf={}".format(curren_conf))
+						result = self.nfvo_jox.add_destroy_vlan(switch_type, switch_name, curren_conf, slice_name)
+						conf = "{}:{}".format(curren_conf["vlan"]["id"], curren_conf["vlan"]["operation"])
+						print("result={}".format(result))
+						data[conf] = result[1]
+						if result[0]:
+							success = True
+				############################################
+				if success:
+					response = {
+						"ACK": True,
+						"data": data,
+						"status_code": self.nfvo_jox.gv.HTTP_200_OK
+					}
+				else:
+					response = {
+						"ACK": False,
+						"data": data,
 						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 					}
 				self.send_ack(ch, method, props, response, send_reply)

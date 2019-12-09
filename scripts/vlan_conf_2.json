@@ -1,0 +1,29 @@
+
+{
+    "juju_controler": "nymphe-edu",
+    "juju_model": "default-juju-model-1",
+    "slice_name": "mosaic5g_slice_2",
+    "switch_type": "tsn",
+    "switch_name": "switch-odl-name",
+    "vlan_config": [
+        {
+            "vlan": {               
+                "id": 600,
+                "ports": "ge3,ge7",
+                "untagged-ports": "ge6",
+                "operation": "add"
+            },
+            "pvlan": {               
+                "port": "ge1",
+                "id": 200
+            }
+        },
+        {
+            "vlan": {               
+                "id": 760,
+                "operation": "destroy"
+            }
+        }
+    ]
+}
+
