@@ -102,6 +102,11 @@ class JSubSlice(JSONEncoder):
                         if 'cidr' in machine['additional_requirements']['properties']['network'].keys():
                             cidr = machine['additional_requirements']['properties']['network']['cidr']
                 pass
+                switch_name = ""
+                port_id = ""
+                if "switch" in machine['additional_requirements']["properties"].keys():    
+                    switch_name = machine['additional_requirements']["properties"]["switch"]["switch_name"] 
+                    port_id = machine['additional_requirements']["properties"]["switch"]["port_id"]
                 new_machine = {
 					'machine_name_userdefined': machine["machine_name"],
 					'machine_name_vnfm': None,
@@ -111,7 +116,8 @@ class JSubSlice(JSONEncoder):
                     'zone':machine['additional_requirements']['policies']['region_placement'],
                     'domain':domain,
                     'cidr':cidr,
-                    'host_machine':host_machine,
+                    'switch_name': switch_name,
+                    'port_id': port_id,
 				    }
                 self.subslice_machines.append(new_machine)
             # add the models on which the services of the current NSSI will be deployed

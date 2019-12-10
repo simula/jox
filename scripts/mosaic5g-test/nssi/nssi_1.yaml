@@ -76,7 +76,7 @@ topology_template:
       type: tosca.nodes.Switch
       properties:
         #driver: ofdpa3
-        name: switch-odl-name
+        name: new-netconf-device
         #ipv4Loopback: 192.168.0.201
         #ipv4NodeSid: 17
         #isEdgeRouter: True
@@ -180,7 +180,14 @@ topology_template:
         link:
           node: *data_network_1
           type: tosca.nodes.network.Network
-
+        switch:
+          node: switch_tsn
+          relationship: tosca.relationships.BelongsToOne
+        port:
+          type: tosca.nodes.SwitchPort
+          properties:
+            portId: 31
+          
     hss_port:
       type: tosca.nodes.network.Port
       requirements:
@@ -192,8 +199,8 @@ topology_template:
         switch:
           node: switch_tsn
           relationship: tosca.relationships.BelongsToOne
-        binding_port:
+        port:
           type: tosca.nodes.SwitchPort
           properties:
-            portId: 31
+            portId: 32
           

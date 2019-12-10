@@ -91,7 +91,9 @@ standard_reqst = {
 		"configuration": None,
 		# vlan
 		"vlan": None,# vlan config
-		"vlan_id": None
+		"vlan_id": None,
+		# vlan
+		"switch": None
 	}
 }
 
@@ -3868,6 +3870,72 @@ def Configurations():
 	data = jsonify(data)
 	return data, status_code
 
+###########################################################
+@app.route('/switch', methods=['GET', 'POST'])
+@app.route('/switch/<string:switch_type>', methods=['GET'])
+@app.route('/switch/<string:switch_type>/<string:switch_name>', methods=['GET'])
+def switch(switch_type=None, switch_name=None):
+	enquiry = standard_reqst
+	current_time = datetime.datetime.now()
+	enquiry["datetime"] = str(current_time)
+	enquiry["parameters"]["template_directory"] = request.args.get('url')
+	enquiry["request-uri"] = str(request.url_rule)
+	enquiry["request-type"] = (request.method).lower()
+	
+	switch_type_found = False if switch_type == None else True
+	switch_name_found = False if switch_name == None else True
+	switch_conf_found = False
+	switch_conf_json_file = None
+	if str(request.content_type) != "None":
+		if (request.headers['Content-Type'] == "application/x-www-form-urlencoded") or (request.headers['Content-Type'] == "application/json"):
+			switch_conf_json_file = request.get_json(force=True)
+			switch_conf_found = True
+	status_equest = False
+	if switch_conf_found:
+		if (switch_type != None) or (switch_name != None):
+			# error
+			if (switch_name != None):
+				message = "json file and switch_type={}, and switch_name={} are found. Here is example if you push conf, curl http://localhost:5000/switch --data-binary '@switch_conf.json' ".format(switch_type, switch_name)
+			else:
+				# switch_type is not None
+				message = "json file and switch_type={} are found. Here is example if you push conf, curl http://localhost:5000/switch --data-binary '@switch_conf.json' ".format(switch_type, switch_name)
+			status_code = 400
+			data = {
+				"data": message,
+				"elapsed-time": str(datetime.datetime.now() - current_time),
+			}
+		else:
+			# post the configuration of the switch
+			status_equest = True
+	else:
+		# get configurations
+		status_equest = True
+	if status_equest:
+		switch_config = {
+			"json_file": switch_conf_json_file,
+			"switch_type": switch_type,
+			"switch_name": switch_name,
+		}
+		enquiry["parameters"]["switch"] = switch_config
+
+		enquiry = json.dumps(enquiry)
+		logger.info("enquiry: {}".format(enquiry))
+		logger.debug("enquiry: {}".format(enquiry))
+		# waiting for the response
+		response = listOfTasks.call(enquiry.encode(listOfTasks.gv.ENCODING_TYPE))
+		data = response.decode(listOfTasks.gv.ENCODING_TYPE)
+		data = json.loads(data)
+
+		status_code = data["status_code"]
+		data = data["data"]
+		data = {
+			"data": data,
+			"elapsed-time": str(datetime.datetime.now() - current_time),
+		}
+	logger.info("response: {}".format(data))
+	logger.debug("response: {}".format(data))
+	data = jsonify(data)
+	return data, status_code
 ###########################################################
 @app.route('/vlan', methods=['POST'])
 @app.route('/vlan/<string:switch_type>/<string:switch_name>/<string:vlan_id>', methods=['GET'])

@@ -58,7 +58,12 @@ list_tags_protocols = {
 }
 vdu_properties = {
 	"network": None,
+	"switch": None,
 	"tags": None,
+	}
+switch_description  = {
+	"switch_name": None,
+	"port_id": None,
 	}
 vdu_attributes = {
 	"host": None,
@@ -294,6 +299,20 @@ class TemplateManager():
 												vdu_requirement_additional["properties"]["network"] = net_properties
 											else:
 												abort_deploy_subslice = True
+											# retreive switch properties if any
+											if ('switch' in port_requirements.keys()):
+												switch_node = port_requirements['switch']['node']
+												if switch_node in NSSI_template['topology_template']['node_templates'].keys():
+													vdu_requirement_additional["properties"]["switch"] = switch_description
+													vdu_requirement_additional["properties"]["switch"]["switch_name"] = \
+														NSSI_template['topology_template']['node_templates'][switch_node]["properties"]["name"]
+													if ('port' in port_requirements.keys()):
+														vdu_requirement_additional["properties"]["switch"]["port_id"] = \
+																		port_requirements["port"]["properties"]["portId"]
+												else:
+													message = 'The definition of the switch node {} can not be found in the list of node_templates, while it is used in the definition of the port of {}'.format(switch_node, port_name)
+													self.logger.error(message)
+													abort_deploy_subslice = True
 										else:
 											message = "For the port type, the binding and link should be defined. Deploying the slice will be aborted"
 											self.logger.error(message)
@@ -321,7 +340,6 @@ class TemplateManager():
 						if ("tosca.capabilities.Endpoint" in
 								NSSI_template['topology_template']['node_templates'][item]["attributes"][attribute]["type"]):
 							vdu_requirement_additional["attributes"]['host'] = NSSI_template['topology_template']['node_templates'][item]["attributes"][attribute]["ip_address"]
-							pass
 
 				if "policies" in NSSI_template['topology_template']['node_templates'][item].keys():
 					vdu_requirement_additional["policies"] = vdu_policies

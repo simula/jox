@@ -1,4 +1,4 @@
 082a5c03824267afeb39adda5409eb3c  nsi/mosaic5g-slice.yaml
-bb2913884b51a0db9a5541b0ce04d92f  nssi/nssi_1.yaml
-0a7397bd1001dfe816ebc227afbda86f  nssi/nssi_2.yaml
-59329bb000b52b85b43b31e930fd88e3  nssi/nssi_3.yaml
+075d24dfe29e4f2aabc4f5993b2e68fb  nssi/nssi_1.yaml
+ccdb1cd1f0c01b8444a234301b8d0d0f  nssi/nssi_2.yaml
+c7cba9185e1ef9f8ab99bef74c6bc51a  nssi/nssi_3.yaml

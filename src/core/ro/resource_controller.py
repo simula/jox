@@ -137,10 +137,10 @@ class ResourcesController(object):
 					message = "The switch driver of type {} is already exist".format(sw_type)
 					self.logger.info(message)
 					self.logger.debug(message)
+					object_check_switchDriver = object_check_switchDriver[0]
 				else:
 					object_check_switchDriver = vimdriver.SwitchDriver(sw_type, self.gv, self.jesearch)
 					self.switch_driver_list.append(object_check_switchDriver)
-					pass
 				for switch_conf in list_sw_conf[sw_type]:
 					#adding the swith
 					message = object_check_switchDriver.add_switch(switch_conf)
@@ -163,31 +163,40 @@ class ResourcesController(object):
 			self.switch_driver_list.append(object_check_switchDriver)
 		result = object_check_switchDriver.add_switch(switch_conf)
 		return result
-	def get_list_all_switches(self, sw_type=None):
+	def get_list_all_switches(self, sw_type=None, switch_name=None):
 		resut = dict()
 		try:
 			if sw_type is not None:
 				for sw_drv in self.switch_driver_list:
 					if sw_type == sw_drv.switch_type:
 						resut[sw_drv.switch_type] = dict()
-						for sw_tmp in sw_drv.switch_list:
-							resut[sw_drv.switch_type][sw_tmp.tsn_switch_name] = dict()
-							resut[sw_drv.switch_type][sw_tmp.tsn_switch_name]["tsnptp_interface"] = sw_tmp.tsnptp_interface
-							resut[sw_drv.switch_type][sw_tmp.tsn_switch_name]["tsntas_cycle_time"] = sw_tmp.tsntas_cycle_time
-							resut[sw_drv.switch_type][sw_tmp.tsn_switch_name]["tsntas_schedule_entry"] = sw_tmp.tsntas_schedule_entry	
-						return resut
+						if switch_name == None:
+							for sw_tmp in sw_drv.switch_list:
+								resut[sw_drv.switch_type][sw_tmp.tsn_switch_name] = dict()
+								resut[sw_drv.switch_type][sw_tmp.tsn_switch_name]["tsnptp_interface"] = sw_tmp.tsnptp_interface
+								#resut[sw_drv.switch_type][sw_tmp.tsn_switch_name]["tsntas_cycle_time"] = sw_tmp.tsntas_cycle_time
+								#resut[sw_drv.switch_type][sw_tmp.tsn_switch_name]["tsntas_schedule_entry"] = sw_tmp.tsntas_schedule_entry	
+							return [True, resut]
+						else:
+							for sw_tmp in sw_drv.switch_list:
+								if switch_name == sw_tmp.tsn_switch_name:
+									resut[sw_drv.switch_type][sw_tmp.tsn_switch_name] = dict()
+									resut[sw_drv.switch_type][sw_tmp.tsn_switch_name]["tsnptp_interface"] = sw_tmp.tsnptp_interface
+									#resut[sw_drv.switch_type][sw_tmp.tsn_switch_name]["tsntas_cycle_time"] = sw_tmp.tsntas_cycle_time
+									#resut[sw_drv.switch_type][sw_tmp.tsn_switch_name]["tsntas_schedule_entry"] = sw_tmp.tsntas_schedule_entry	
+									return [True, resut]
 			else:
 				for sw_drv in self.switch_driver_list:
 					resut[sw_drv.switch_type] = dict()
 					for sw_tmp in sw_drv.switch_list:
 						resut[sw_drv.switch_type][sw_tmp.tsn_switch_name] = dict()
 						resut[sw_drv.switch_type][sw_tmp.tsn_switch_name]["tsnptp_interface"] = sw_tmp.tsnptp_interface
-						resut[sw_drv.switch_type][sw_tmp.tsn_switch_name]["tsntas_cycle_time"] = sw_tmp.tsntas_cycle_time
-						resut[sw_drv.switch_type][sw_tmp.tsn_switch_name]["tsntas_schedule_entry"] = sw_tmp.tsntas_schedule_entry	
-				return resut
+						#resut[sw_drv.switch_type][sw_tmp.tsn_switch_name]["tsntas_cycle_time"] = sw_tmp.tsntas_cycle_time
+						#resut[sw_drv.switch_type][sw_tmp.tsn_switch_name]["tsntas_schedule_entry"] = sw_tmp.tsntas_schedule_entry	
+				return [True, resut]
 		except Exception as ex:
 			resut["error"] = ex
-			return resut
+			return [False, resut]
 	def Create_add_destoy_vlan(self, sw_type, switch_name, request, slice_name):
 		
 		print("request={}".format(request))

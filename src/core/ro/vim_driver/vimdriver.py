@@ -1253,10 +1253,13 @@ class SwitchDriver(object):
 			                                    (x.tsn_switch_name == switch_config["tsn-switch-name"]),
 			                                    self.switch_list))
 		if len(object_check_switchDriver) > 0:
-			message = "The switch {} is already exist".format(switch_config["tsn-switch-name"])
+			message = "The switch {} is already exist, updating the switch".format(switch_config["tsn-switch-name"])
 			self.logger.info(message)
 			self.logger.debug(message)
-			return [message]
+			#update
+			object_check_switchDriver = object_check_switchDriver[0]
+			message = object_check_switchDriver.update(switch_config)
+			return [message[1]]
 		else:
 			new_switch = _TsnSwitch()
 			message = new_switch.register(switch_config)
@@ -1268,8 +1271,8 @@ class _TsnSwitch():
 		self.logger = logging.getLogger('jox.SwitchDriver._TsnSwitch')
 		self.tsn_switch_name = ""
 		self.tsnptp_interface = list()
-		self.tsntas_cycle_time = list()
-		self.tsntas_schedule_entry = list()
+		#self.tsntas_cycle_time = list()
+		#self.tsntas_schedule_entry = list()
 		"""
 		Example on self.list_vlan
 		list_vlan = {
@@ -1294,13 +1297,26 @@ class _TsnSwitch():
 	def register(self, switch_config):
 		try:
 			self.tsn_switch_name = switch_config["tsn-switch-name"]
-			self.tsnptp_interface = switch_config["tsnptp-interface"]
-			self.tsntas_cycle_time = switch_config["tsntas-cycle-time"]
-			self.tsntas_schedule_entry = switch_config["tsntas-schedule-entry"]
+			self.tsnptp_interface = switch_config["interface"]
+			#self.tsnptp_interface = switch_config["tsnptp-interface"]
+			#self.tsntas_cycle_time = switch_config["tsntas-cycle-time"]
+			#self.tsntas_schedule_entry = switch_config["tsntas-schedule-entry"]
 			message = "The switch {} is successfully added".format(switch_config["tsn-switch-name"])
 			return [True, message]
 		except Exception as ex:
-			message = "The following error raised while addich the switch {}".format(switch_config["tsn-switch-name"], ex)
+			message = "The following error raised while adding the switch {}".format(switch_config["tsn-switch-name"], ex)
+			return [False, message]
+	def update(self, switch_config):
+		try:
+			self.tsn_switch_name = switch_config["tsn-switch-name"]
+			self.tsnptp_interface = switch_config["interface"]
+			#self.tsnptp_interface = switch_config["tsnptp-interface"]
+			#self.tsntas_cycle_time = switch_config["tsntas-cycle-time"]
+			#self.tsntas_schedule_entry = switch_config["tsntas-schedule-entry"]
+			message = "The configuration of switch {} is successfully updated".format(switch_config["tsn-switch-name"])
+			return [True, message]
+		except Exception as ex:
+			message = "The following error raised while updating the switch {}".format(switch_config["tsn-switch-name"], ex)
 			return [False, message]
 	def create_add_vlan(self, request, slice_name):
 		vlan_id = request["vlan"]["id"]
@@ -1344,7 +1360,8 @@ class _TsnSwitch():
 						#pvlan
 						self.list_vlan[id_vlan]["pvlan"]["port"][slice_name] = request["pvlan"]["port"]
 						self.list_vlan[id_vlan]["pvlan"]["id"][slice_name] = request["pvlan"]["id"]
-						message = "The vlan {} with ports {} is successfully added".format(vlan_id, request["vlan"]["ports"])
+						message = "The slice {} is successfully registered to the vlan {}".format(slice_name, vlan_id)
+						#message = "The vlan {} with ports {} is successfully added".format(vlan_id, request["vlan"]["ports"])
 						return [True, message]
 				else:
 					message = "The following ports are used by the following slices :{}".format(used_port)
@@ -1379,7 +1396,8 @@ class _TsnSwitch():
 				}
 				self.list_vlan[str(request["vlan"]["id"])] = new_vlan
 
-				message = "The vlan {} with ports {} is successfully created".format(vlan_id, request["vlan"]["ports"])
+				message = "The vlan {} is successfully created, and the slice {} is registered to this vlan {}".format(vlan_id, slice_name, vlan_id)
+
 				return [True, message]
 			except Exception as ex:
 				#raise ex
@@ -1418,7 +1436,7 @@ class _TsnSwitch():
 						#raise ex
 				else:
 					try:
-						# rmove ports of concerned slice from  vlan
+						# unregister the concerned slice from  vlan
 						vlan_id = str(vlan_id)
 						self.logger.info("There are more than one slice is attached to the vlan {}".format(vlan_id))
 						ports = self.list_vlan[str(vlan_id)]["vlan"]["ports"][slice_name]
@@ -1429,9 +1447,11 @@ class _TsnSwitch():
 						#pvlan
 						del self.list_vlan[vlan_id]["pvlan"]["port"][slice_name]
 						del self.list_vlan[vlan_id]["pvlan"]["id"][slice_name]
-						message = "The conf of vlan {} related to slice {} is successfully removed".format(vlan_id, slice_name)
+						message = "The slice {} is successfully unregistered from the vlan {}, while vlan {} can not be destroyed since the following slices are registered {}".format(slice_name, vlan_id, vlan_id, self.list_vlan[str(vlan_id)]["attached-slices"])
+						self.logger.info(message) 
 						return [True, message]
 					except Exception as ex:
+						self.logger.error(message) 
 						message = "The following error raised while trying to remove ports of the the vlan {}: {}".format(vlan_id, ex)
 						return [False, message]
 						#raise ex
@@ -1702,7 +1722,7 @@ class _PhysicalMachine():
 		self.os_type = "" # e.g. linux
 		self.os_dist = "" # e.g. Ubuntu
 		self.os_version = "" # e.g. 16.04
-		self.os_series = ""
+		self.os_series = "" # e.g. xenial
 		
 		"""virtualization support"""
 		self.virt_lxd = False
@@ -1725,6 +1745,10 @@ class _PhysicalMachine():
 		self.mid_vnfm = ""  # juju id of the machine in case of juju
 		self.mid_vim = ""  # value assigned by LXD hypervisor
 		self.mid_ro = ""  # name given by the resource controller
+		
+		#parameters related to TSN switch
+		self.tsn_switch_name = None
+		self.tsn_port_id = None
 
 	def build(self,
 			  subslice_name,
@@ -1757,6 +1781,9 @@ class _PhysicalMachine():
 					self.logger.debug(message)
 					self.logger.critical(message)
 					self.logger.info(message)
+			if "switch" in machine_config['additional_requirements']["properties"].keys():
+				self.tsn_switch_name = machine_config['additional_requirements']["properties"]["switch"]["switch_name"]
+				self.tsn_port_id = machine_config['additional_requirements']["properties"]["switch"]["port_id"]
 		except Exception as ex:
 			raise ex
 	def register(self,

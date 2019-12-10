@@ -144,40 +144,32 @@
   "switches": {   
     "tsn": [
       {
-        "tsn-switch-name":"switch-odl-name",
-        "tsnptp-interface": [
-          {               
-            "_Comment_1": "key",
-            "interface":  0,
-            "_Comment_2": "The allowed values of pkt are: enable, disable",
-            "pkt": "enable",
-            "_Comment_3": "The allowed values of sync-receipt-timeout are: <0-5>",
-            "sync-receipt-timeout": 0,
-            "_Comment_4": "The allowed values of delay-asymmetry are: <-128-127>",
-            "delay-asymmetry": -128
-          }
-        ],
-        "tsntas-cycle-time":[
+        "tsn-switch-name":"new-netconf-device",
+        "interface":[
           {
-            "_Comment_1": "key",
-            "interface": 0,
-            "_Comment_2": "The allowed values of base-time-sec are: <0-63>",
-            "base-time-sec": 0,
-            "base-time-ns": 0,
-            "cycle-time": 60,
-            "extension-ns": 60
-          }
-        ],
-        "tsntas-schedule-entry":[
-          {
-            "_Comment_1": "key",
-            "interface": 0,
-            "entries":[
+            "iface":  0,
+            "tsnptp-interface":{               
+              "enable": "enable", 
+              "_Comment_1": "The allowed values of sync-receipt-timeout are: <0-5>",
+              "sync-receipt-timeout": 0,
+              "_Comment_2": "The allowed values of delay-asymmetry are: <-128-127>",
+              "delay-asymmetry": 0,
+              "priority1": 100
+            },
+            "tsntas-interface-enable":"enable",
+            "tsntas-cycle-time":{
+              "_Comment_1": "The allowed values of base-time-sec are: <0-63>",
+              "base-time-sec": 3,
+              "base-time-ns": 0,
+              "cycle-time": 800,
+              "extension-ns": 60
+            },
+            "tsntas-schedule-entries":[
               {
                 "_Comment_1": "The allowed values of entry are: <0-127>",
-                "entry": 0,
+                "entry": 0,          
                 "_Comment_2": "The allowed values of hold-preempt: <0-1>",
-                "hold-preempt": 0,
+                "hold-preempt":0, 
                 "time-interval": 5000,
                 "gate-state": 80
               }

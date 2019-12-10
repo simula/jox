@@ -371,8 +371,13 @@ class NFVO_JOX(object):
 		except Exception as ex:
 			self.logger.error(str(ex))
 			self.logger.error(traceback.format_exc())
+			results = "Error while trying to set the configuraions of switch(s): {}".format(ex)
+			return [False, results]
 		else:
 			self.logger.info(results)
+			return [True, results]
+
+		
 	def add_switch(self, sw_type, switch_conf):
 		try:
 			self.logger.info("Adding the switch {} of type {}".format(switch_conf["tsn-switch-name"], sw_type))
@@ -382,8 +387,8 @@ class NFVO_JOX(object):
 			self.logger.error(traceback.format_exc())
 		else:
 			self.logger.info(results)
-	def gel_switches(self, sw_type=None):
-		result = self.resourceController.get_list_all_switches(sw_type)
+	def get_switches(self, sw_type=None, switch_name=None):
+		result = self.resourceController.get_list_all_switches(sw_type, switch_name)
 		return result
 	def add_destroy_vlan(self, sw_type, switch_name, request, slice_name):
 		result = self.resourceController.Create_add_destoy_vlan(sw_type, switch_name, request, slice_name)
@@ -1910,6 +1915,35 @@ class server_RBMQ(object):
 						"data": data,
 						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
 					}
+				self.send_ack(ch, method, props, response, send_reply)
+			elif (enquiry["request-uri"] == '/switch') or \
+				(enquiry["request-uri"] == '/switch/<string:switch_type>')  or \
+				(enquiry["request-uri"] == '/switch/<string:switch_type>/<string:switch_name>'):
+				request_type = enquiry["request-type"]
+				parameters = enquiry["parameters"]
+				switch_config = parameters["switch"]		
+				switch_conf_json_file = switch_config["json_file"]
+				switch_type = switch_config["switch_type"]
+				switch_name = switch_config["switch_name"]
+				if request_type == "post":
+					# set the configuraiton of switch(es)
+					data = self.nfvo_jox.add_switches(switch_conf_json_file)
+				else:
+					data = self.nfvo_jox.get_switches(switch_type, switch_name)
+				####################################
+				if data[0]:
+					response = {
+						"ACK": True,
+						"data": data[1],
+						"status_code": self.nfvo_jox.gv.HTTP_200_OK
+					}
+				else:
+					response = {
+						"ACK": False,
+						"data": data[1],
+						"status_code": self.nfvo_jox.gv.HTTP_404_NOT_FOUND
+					}
+				print("response={}".format(response))
 				self.send_ack(ch, method, props, response, send_reply)
 			else:
 				response = "Reqquest not supported"

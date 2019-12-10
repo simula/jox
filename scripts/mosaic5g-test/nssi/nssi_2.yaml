@@ -72,6 +72,16 @@ dsl_definitions:
       - network3: *data_network_3
 topology_template:
   node_templates:
+    switch_tsn:
+      type: tosca.nodes.Switch
+      properties:
+        #driver: ofdpa3
+        name: new-netconf-device
+        #ipv4Loopback: 192.168.0.201
+        #ipv4NodeSid: 17
+        #isEdgeRouter: True
+        #ofId: of:0000000000000001
+        #routerMac: 00:00:02:01:06:01
     VDU_oai-mme:
       type: tosca.nodes.nfv.VDU.Compute
       artifacts:
@@ -173,7 +183,13 @@ topology_template:
         link:
           node: *data_network_1
           type: tosca.nodes.network.Network
-
+        switch:
+          node: switch_tsn
+          relationship: tosca.relationships.BelongsToOne
+        port:
+          type: tosca.nodes.SwitchPort
+          properties:
+            portId: 33
     spgw_port:
       type: tosca.nodes.network.Port
       requirements:
@@ -182,3 +198,11 @@ topology_template:
         link:
           node: *data_network_2
           type: tosca.nodes.network.Network
+        #######
+        switch:
+          node: switch_tsn
+          relationship: tosca.relationships.BelongsToOne
+        port:
+          type: tosca.nodes.SwitchPort
+          properties:
+            portId: 34
