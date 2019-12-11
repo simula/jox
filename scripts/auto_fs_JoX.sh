@@ -30,7 +30,7 @@
 #               To install stress: sudo apt install stress
 set -e
 
-diss_aggregation="fs" # It is to tell what is the current mode of RAN. It can be either "mon", i.e. Monolithic, or "fs", i.e. Functional Split 
+diss_aggregation="mon" # It is to tell what is the current mode of RAN. It can be either "mon", i.e. Monolithic, or "fs", i.e. Functional Split 
 cpu_percent_to_switch_to_mon=50.0 # CPU usage above which, the RAN mode will be switched to Monolithic if the current mode is Functional Split
 cpu_percent_to_switch_to_fs=40.0 # CPU usage below which, the RAN mode will be switched to Functional Split if the current mode is Monolithic 
 threshold=10 # waiting time before switching from Monolithic to functional split, and vice versa

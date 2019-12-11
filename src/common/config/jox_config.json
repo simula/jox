@@ -52,7 +52,7 @@
   },
 
   "flask-config":{
-    "flask-server": "localhost",
+    "flask-server": "10.42.0.4",
     "flask-port": 5000,
     "flask-debug": "FALSE"
   },
