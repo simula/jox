@@ -25,16 +25,18 @@ import logging
 import time, datetime
 import pika, uuid, json
 import random
-import gv,es
+import gv
+# import es
 
 class test_plugin(object):
     def __init__(self, ):
+        self.logger = logging.getLogger("jox-agent.tsn")
 
         self.jox_config = ""
         self.gv = gv
 
         try:
-            with open(''.join([self.dir_config, gv.CONFIG_FILE])) as data_file:
+            with open(gv.CONFIG_FILE) as data_file:
                 data = json.load(data_file)
                 data_file.close()
             self.jox_config = data
@@ -51,13 +53,15 @@ class test_plugin(object):
             message = " Plugin Configuration file Loaded"
             self.logger.info(message)
         ## Loading global variables ##
-        #### FlexRAN and RBMQ configuration
-        self.gv.RBMQ_QUEUE_TSN = self.jox_config["tsn-plugin-config"]["rabbit-mq-queue"]
+        #### TSN and RBMQ configuration
         self.gv.RBMQ_SERVER_IP = self.jox_config['rabbit-mq-config']["rabbit-mq-server-ip"]
         self.gv.RBMQ_SERVER_PORT = self.jox_config['rabbit-mq-config']["rabbit-mq-server-port"]
+        self.gv.RBMQ_QUEUE_TSN = self.jox_config["tsn-plugin-config"]["rabbit-mq-queue"]
         self.rbmq_server_ip = self.gv.RBMQ_SERVER_IP
         self.rbmq_server_port = self.gv.RBMQ_SERVER_PORT
-        self.rbmq_queue_name = self.gv.RBMQ_QUEUE_FlexRAN
+        self.rbmq_queue_name = self.gv.RBMQ_QUEUE_TSN
+        self.gv.TSN_PLUGIN_STATUS = self.jox_config["tsn-plugin-config"]["plugin-status"]
+        self.tsn_plugin_status=self.gv.TSN_PLUGIN_STATUS
        
     def run(self, retry=False):
         if retry:
@@ -65,11 +69,10 @@ class test_plugin(object):
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', port='5672'))
         #self.connection.add_timeout(self.timeout, self.on_timeout)
         self.channel = self.connection.channel()
-        self.result = self.channel.queue_declare(exclusive=True)
+        self.result = self.channel.queue_declare(self.gv.RBMQ_QUEUE_TSN,exclusive=False)
         self.callback_queue = self.result.method.queue
 
-        self.channel.basic_consume(self.on_response, no_ack=True,
-                                   queue=self.callback_queue)
+        self.channel.basic_consume(self.callback_queue,self.on_response)
         
     def send_to_plugin(self, msg, rbmq_queue_name, reply=True):
         if reply:
@@ -135,17 +138,29 @@ if __name__ == '__main__':
 
 ################### Sample RPC message encoding ##############
 
+    current_time = datetime.datetime.now()
     # Test get ran_stats
+#     enquiry={}
+#     enquiry["plugin_message"] = "get_ptp_interface"
+#     enquiry["node"]="new-netconf-device"
+#     enquiry["iface"]="0"
+#     enquiry["datetime"] = str(current_time)
+#     enquiry = json.dumps(enquiry)
+#     enquiry.encode("utf-8")
+#     response = fs.send_to_plugin(enquiry, queue_name_tsn)
+#     print(response)
+
     enquiry={}
-    enquiry["plugin_message"] = "get_ptp_interface"
-    enquiry["node"]="new-tsn-device"
-    enquiry["iface"]="0"
+    enquiry["plugin_message"] = "vlan_create"
+    enquiry["node"]="new-netconf-device"
+    enquiry["vid"]="500"
+    enquiry["pbm_list"] = "ge4,ge5"
+    enquiry["ubm_list"] = "ge5"
+    enquiry["datetime"] = str(current_time)
     enquiry = json.dumps(enquiry)
     enquiry.encode("utf-8")
     response = fs.send_to_plugin(enquiry, queue_name_tsn)
     print(response)
-
-
 
 
     # # Test remove slice

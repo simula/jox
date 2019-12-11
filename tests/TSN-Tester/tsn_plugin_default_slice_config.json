@@ -1,18 +1,32 @@
-{
-    "dl": [
-        {
-            "id": 0,
-            "percentage": 100,
-            "maxmcs": 10
-        }
-    ],
-    "ul": [
-        {
-            "id": 0,
-            "percentage": 100,
-            "maxmcs": 20
-        }
-    ],
-    "intrasliceShareActive": true,
-    "intersliceShareActive": true
-}
+[
+  {
+	"tsn-switch-name":"new-netconf-device2",
+	"interface":[
+		{
+			"iface":  0,
+			"tsnptp-interface": {               
+				"enable": "enable", 
+				"sync-receipt-timeout": 0,
+				"delay-asymmetry": 0,
+				"priority1": 100
+			},
+			"tsntas-interface-enable":"enable",
+			"tsntas-cycle-time":{
+				"base-time-sec": 3,
+				"base-time-ns": 0,
+				"cycle-time": 800,
+				"extension-ns": 60
+			},
+			"tsntas-schedule-entries":[
+			  {
+				  "entry": 0,          
+				  "hold-preempt":0, 
+				  "time-interval": 5000,
+				  "gate-state": 80
+			  }
+			]
+		}    
+	]
+  }	
+]
+	

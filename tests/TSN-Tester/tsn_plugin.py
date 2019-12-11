@@ -29,6 +29,7 @@ sys.path.append(dir_JOX_path)
 
 # import es
 import gv
+TESTING=False
 
 class TSN_plugin(object):
     def __init__(self, tsn_log_level=None,):
@@ -64,8 +65,8 @@ class TSN_plugin(object):
 #         self.gv.ELASTICSEARCH_PORT = self.jox_config['elasticsearch-config']["elasticsearch-port"]
 #         self.gv.ELASTICSEARCH_LOG_LEVEL = self.jox_config['elasticsearch-config']["elasticsearch-log-level"]
 #         #### TSN and RBMQ configuration
-        self.gv.TSN_CTRL_HOST = self.jox_config["tsn-ctrl-config"]["host"]
-        self.gv.TSN_CTRL_PORT = self.jox_config["tsn-ctrl-config"]["port"]
+        self.gv.TSN_CTRL_HOST = self.jox_config["tsn-ctrl-config"]["odl-host"]
+        self.gv.TSN_CTRL_PORT = self.jox_config["tsn-ctrl-config"]["odl-port"]
         self.gv.TSN_CTRL_USERNAME=self.jox_config["tsn-ctrl-config"]["username"]
         self.gv.TSN_CTRL_PASSWORD=self.jox_config["tsn-ctrl-config"]["password"]
         self.gv.TSN_CTRL_PREFIX=self.jox_config["tsn-ctrl-config"]["prefix"]
@@ -82,8 +83,6 @@ class TSN_plugin(object):
         self.parameters=None
         self.connection=None
         self.channel=None
-        self.tsn_default_slice_config=None
-        self.slice_config=None
         self.es_tsn_index = self.gv.TSN_ES_INDEX_NAME
         self.rbmq_server_ip = self.gv.RBMQ_SERVER_IP
         self.rbmq_server_port = self.gv.RBMQ_SERVER_PORT
@@ -116,21 +115,18 @@ class TSN_plugin(object):
     
     
     def build(self):
-        try:
-            with open(''.join([self.dir_config, gv.TSN_PLUGIN_SLICE_CONFIG_FILE])) as data_file:
-                data = json.load(data_file)
-                data_file.close()
-            self.tsn_default_slice_config = data  # This config is to be used if DL % excceed 100
-            self.logger.info(" TSN default endpoint is {}".format(self.tsn_ctrl_endpoint))
+        
+        self.logger.info(" TSN default endpoint is {}".format(self.tsn_ctrl_endpoint))
+        
 #             if self.gv.ELASTICSEARCH_ENABLE:
 #                 self.jesearch = es.JESearch(self.gv.ELASTICSEARCH_HOST, self.gv.ELASTICSEARCH_PORT,
 #                                             self.gv.ELASTICSEARCH_LOG_LEVEL)
 #             self.parameters = pika.ConnectionParameters(self.rbmq_server_ip, self.rbmq_server_port)
+        try:
             self.connection = pika.BlockingConnection(self.parameters)
             self.channel = self.connection.channel()
             self.channel.queue_declare(self.rbmq_queue_name)
             self.channel.basic_qos(prefetch_count=1)
-
             #### Create es index to maintain statistics for TSN plugin 
 #             if self.jesearch.ping():
 #                 message = " Deleting the index <{}> from elasticsearch if already exist".format((self.es_tsn_index))
@@ -153,13 +149,113 @@ class TSN_plugin(object):
                pika_exceptions.ChannelError:
             self.connection.close()
 
+    
+    def build_tsn_slice(self):
         
+        try:
+            with open(''.join([self.dir_config, gv.TSN_PLUGIN_SLICE_CONFIG_FILE])) as data_file:
+                data = json.load(data_file)
+                
+                for switch_config in data:
+                    switch_name=""    
+#                     print (switch_config)
+                    for key in switch_config:
+                        if (key=="tsn-switch-name"):
+                            switch_name=switch_config[key]
+                            
+                    for key in switch_config:
+                        if (key=="interface"):
+                            iface=switch_config[key]
+                            for iface_config in iface:
+                                self.config_tsn_interface(switch_name,iface_config)             
+                
+            data_file.close()
         
+        except IOError as ex:
+            message = "Could not load TSN Slice Configuration file.I/O error({0}): {1}".format(ex.errno, ex.strerror)
+    
+    def config_tsn_interface(self,switch_name, if_config):
+        try:
+            iface=""
+            for key in if_config: #call indepentently to be sure interface is parsed
+                if (key=="iface"):
+                    iface= if_config[key]
+                    print(iface)
+                    
+            for key in if_config:
+                # PTP configuration part
+                if (key=="tsnptp-interface"):
+                    ptp_config=if_config[key]
+                    print(ptp_config)   
+                    for ptp_key in ptp_config:  
+#                         if (ptp_key=="enable"):
+#                             self.set_ptp_interface_enable(switch_name,iface,ptp_config[ptp_key])
+#                         if (ptp_key=="sync-receipt-timeout"):
+#                             self.set_ptp_SyncReceiptTimeout(switch_name,iface,ptp_config[ptp_key])
+#                         if (ptp_key=="delay-asymmetry"):
+#                             self.set_ptp_SyncdelayAsymmetry(switch_name,iface,ptp_config[ptp_key])
+                        if (ptp_key=="priority1"):
+                            self.set_ptp_clockPriority1(switch_name,ptp_config[ptp_key])
+                    
+#                     self.set_ptp_save_config(switch_name)
+            
+            for key in if_config:
+                if (key=="tsntas-interface-enable"):
+                    status=if_config[key]
+                    self.set_tas_enable(switch_name, iface, status)
+                    
+            for key in if_config:
+                # TSN cycle configuration part
+                if (key=="tsntas-cycle-time"):
+                    cycle_config=if_config[key]
+#                     print(cycle_config)
+                    for cycle_key in cycle_config:  
+                        if (cycle_key=="base-time-sec"):
+                            bts=cycle_config[cycle_key]
+                        if (cycle_key=="base-time-ns"):
+                            btn=cycle_config[cycle_key]
+                        if (cycle_key=="cycle-time"):
+                            ct=cycle_config[cycle_key]
+                        if (cycle_key=="extension-ns"):
+                            en=cycle_config[cycle_key]
+                            
+                    self.set_tas_cycle_time(switch_name,iface,bts,btn,ct,en)         
+            for key in if_config:
+                # TSN TAS entries configuration part
+                if (key=="tsntas-schedule-entries"):
+                    entries_list=if_config[key]
+                    for tas_entry in entries_list:
+                        print (tas_entry)
+                        for entry_key in tas_entry:  
+                            if (entry_key=="entry"):  
+                                entry=tas_entry[entry_key]
+                            if (entry_key=="hold-preempt"):  
+                                hp=tas_entry[entry_key]
+                            if (entry_key=="time-interval"):  
+                                ti=tas_entry[entry_key]
+                            if (entry_key=="gate-state"):  
+                                gs=tas_entry[entry_key]     
+                        
+                        self.set_tas_entry(switch_name,iface,entry,hp,ti,gs)
+            
+                    
+                    
+                            
+        except Exception as ex:
+            message = "Error while trying to load interface configuration"
+            self.logger.error(message)
+            self.logger.error(ex)
+        else:
+            message = " Interface Configuration file Loaded"
+            self.logger.info(message)
+
+            
+            
     def start_consuming(self):
         while True:
             try:
                 if self.gv.TSN_PLUGIN_STATUS == self.gv.ENABLED:
-                    self.channel.basic_consume(self.on_request, queue=self.rbmq_queue_name, no_ack=False)
+                    self.channel.basic_consume(str(self.rbmq_queue_name),self.on_request)
                     print(colored('[*] TSN plugin message thread -- > Waiting for messages. To exit press CTRL+C', 'yellow'))
                     self.channel.start_consuming()
                 else:
@@ -205,740 +301,819 @@ class TSN_plugin(object):
         self.logger.info(message)
         elapsed_time_on_request = datetime.datetime.now() - datetime.datetime.strptime(enquiry["datetime"],'%Y-%m-%d %H:%M:%S.%f')
 
-        if elapsed_time_on_request.total_seconds() < self.gv.FLEXRAN_TIMEOUT_REQUEST:
-            send_reply = True
-            ################################################################ 
-            if enquiry["plugin_message"] == "get_status_tsn_ctrl_endpoint":
-                if self.get_status_tsn_ctrl_endpoint():
-                    body = " TSN Controller endpoint is active"
-                    status = "OK"
-                else:
-                    body = " TSN Controller endpoint is not active"
-                    status = "NOT OK"
-                response= {
-                    "ACK": True,
-                    "data": body,
-                    "status_code": status
-                }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message)
-            ##############################################################    
-            if enquiry["plugin_message"] == "get_ptp_interface":
-                result = self.get_ptp_interface(enquiry["node"],enquiry["iface"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message)
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_log_level":
-                result = self.get_ptp_log_level(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_logSyncInterval":
-                result = self.get_ptp_logSyncInterval(enquiry["node"],enquiry["iface"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_LogMinDelayReqInterval":
-                result = self.get_ptp_LogMinDelayReqInterval(enquiry["node"],enquiry["iface"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_LogMinDelayReqInterval":
-                result = self.get_ptp_LogMinDelayReqInterval(enquiry["node"],enquiry["iface"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_DelayAssymetry":
-                result = self.get_ptp_DelayAssymetry(enquiry["node"],enquiry["iface"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_minNeighborPropDelayThreshold":
-                result = self.get_ptp_minNeighborPropDelayThreshold(enquiry["node"],enquiry["iface"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_maxNeighborPropDelayThreshold":
-                result = self.get_ptp_maxNeighborPropDelayThreshold(enquiry["node"],enquiry["iface"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_clockParent":
-                result = self.get_ptp_clockParent(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_clock":
-                result = self.get_ptp_clock(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_clock_domain":
-                result = self.get_ptp_clock_domain(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_clock_priority1":
-                result = self.get_ptp_clock_priority1(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_clock_priority2":
-                result = self.get_ptp_clock_priority2(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_clock_class":
-                result = self.get_ptp_clock_class(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_clock_profile":
-                result = self.get_ptp_clock_profile(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_clock_gmCapable":
-                result = self.get_ptp_clock_gmCapable(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_clock_slaveOnly":
-                result = self.get_ptp_clock_slaveOnly(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_program":
-                result = self.get_ptp_program(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_program_timestamping":
-                result = self.get_ptp_program_timestamping(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_program_delayMechanism":
-                result = self.get_ptp_program_delayMechanism(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message)  
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_program_transport":
-                result = self.get_ptp_program_transport(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_program_timeaware_bridge":
-                result = self.get_ptp_program_timeaware_bridge(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_program_phydelay_compensate_in":
-                result = self.get_ptp_program_phydelay_compensate_in(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_program_phydelay_compensate_out":
-                result = self.get_ptp_program_phydelay_compensate_out(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_ptp_program_servo_locked_threshold":
-                result = self.get_ptp_program_servo_locked_threshold(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "tsn_ptp_display_time_properties":
-                result = self.tsn_ptp_display_time_properties(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_tas_cycle_time":
-                result = self.get_tas_cycle_time(enquiry["node"],enquiry["iface"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_tas_entry":
-                result = self.get_tas_entry(enquiry["node"],enquiry["iface"],enquiry["entry"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_tas_enable":
-                result = self.get_tas_enable(enquiry["node"],enquiry["iface"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_tas_ptp_mode":
-                result = self.get_tas_ptp_mode(enquiry["node"],enquiry["iface"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_tas_gate_ctrl_period":
-                result = self.get_tas_gate_ctrl_period(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_tas_display_profile":
-                result = self.get_tas_display_profile(enquiry["node"],enquiry["iface"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "get_tas_display_interface_status":
-                result = self.get_tas_display_interface_status(enquiry["node"],enquiry["iface"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_ptp_interface":
-                result = self.set_ptp_interface(enquiry["node"],enquiry["iface"],enquiry["status"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "set_ptp_LogSyncInterval":
-                result = self.set_ptp_LogSyncInterval(enquiry["node"],enquiry["iface"],enquiry["LogSyncInterval"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_ptp_LogAnnounceInterval":
-                result = self.set_ptp_LogAnnounceInterval(enquiry["node"],enquiry["iface"],enquiry["LogAnnounceInterval"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_ptp_LogMinDelayReqInterval":
-                result = self.set_ptp_LogMinDelayReqInterval(enquiry["node"],enquiry["iface"],enquiry["LogMinDelayReqInterval"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_ptp_SyncReceiptTimeout":
-                result = self.set_ptp_SyncReceiptTimeout(enquiry["node"],enquiry["iface"],enquiry["set_ptp_SyncReceiptTimeout"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_ptp_SyncdelayAsymmetry":
-                result = self.set_ptp_SyncdelayAsymmetry(enquiry["node"],enquiry["iface"],enquiry["delayAsymmetry"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_ptp_minNeighborPropDelayThreshold":
-                result = self.set_ptp_minNeighborPropDelayThreshold(enquiry["node"],enquiry["iface"],enquiry["minNeighborPropDelayThreshold"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_ptp_maxNeighborPropDelayThreshold":
-                result = self.set_ptp_maxNeighborPropDelayThreshold(enquiry["node"],enquiry["iface"],enquiry["maxNeighborPropDelayThreshold"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_ptp_clockDomain":
-                result = self.set_ptp_clockDomain(enquiry["node"],enquiry["clockDomain"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_ptp_clockPriority1":
-                result = self.set_ptp_clockPriority1(enquiry["node"],enquiry["clockPriority"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_ptp_clockPriority2":
-                result = self.set_ptp_clockPriority2(enquiry["node"],enquiry["clockPriority"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_ptp_clockClass":
-                result = self.set_ptp_clockClass(enquiry["node"],enquiry["clockClass"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "set_ptp_clockProfile":
-                result = self.set_ptp_clockProfile(enquiry["node"],enquiry["clockProfile"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message)  
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_ptp_gmCapable":
-                result = self.set_ptp_gmCapable(enquiry["node"],enquiry["gmCapable"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_ptp_slaveOnly":
-                result = self.set_ptp_slaveOnly(enquiry["node"],enquiry["slaveOnly"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "set_ptp_timestamping":
-                result = self.set_ptp_timestamping(enquiry["node"],enquiry["timestamping"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_ptp_delayMechanism":
-                result = self.set_ptp_delayMechanism(enquiry["node"],enquiry["delayMechanism"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "set_ptp_timeaware_bridge":
-                result = self.set_ptp_timeaware_bridge(enquiry["node"],enquiry["timeaware_bridge"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_ptp_phydelay_compensate_in":
-                result = self.set_ptp_phydelay_compensate_in(enquiry["node"],enquiry["phydelay_compensate_in"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_ptp_phydelay_compensate_out":
-                result = self.set_ptp_phydelay_compensate_out(enquiry["node"],enquiry["phydelay_compensate_out"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_ptp_servo_locked_threshold":
-                result = self.set_ptp_servo_locked_threshold(enquiry["node"],enquiry["servo_locked_threshold"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_ptp_logging_level":
-                result = self.set_ptp_logging_level(enquiry["node"],enquiry["logging_level"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_ptp_save_config":
-                result = self.set_ptp_save_config(enquiry["node"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_tas_cycle_time":
-                result = self.set_tas_cycle_time(enquiry["node"],enquiry["iface"],enquiry["bts"],enquiry["btn"],enquiry["ct"],enquiry["en"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_tas_entry":
-                result = self.set_tas_entry(enquiry["node"],enquiry["iface"],enquiry["entry"],enquiry["hp"],enquiry["ti"],enquiry["gs"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_tas_enable":
-                result = self.set_tas_enable(enquiry["node"],enquiry["iface"],enquiry["status"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_tas_ptp_mode":
-                result = self.set_tas_ptp_mode(enquiry["node"],enquiry["iface"],enquiry["mode"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "set_tas_gate_ctrl_period":
-                result = self.set_tas_gate_ctrl_period(enquiry["node"],enquiry["period"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "vlan_create":
-                result = self.vlan_create(enquiry["node"],enquiry["vid"],enquiry["pbm_list"],enquiry["ubm_list"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "vlan_destroy":
-                result = self.vlan_destroy(enquiry["node"],enquiry["vid"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ##############################################################
-            if enquiry["plugin_message"] == "vlan_add":
-                result = self.vlan_add(enquiry["node"],enquiry["vid"],enquiry["pbm_list"],enquiry["ubm_list"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
-            ############################################################## 
-            if enquiry["plugin_message"] == "vlan_remove":
-                result = self.vlan_remove(enquiry["node"],enquiry["vid"],enquiry["ports"])
-                response = {
-                    "ACK": True,
-                    "data": result,
-                    "status_code": "OK"
-                    }
-                self.send_ack(ch, method, props, response, send_reply)
-                message=" RPC acknowledged - {}".format(response)
-                self.logger.info(message) 
+        try:
             
+            if elapsed_time_on_request.total_seconds() < self.gv.TSN_TIMEOUT_REQUEST:
+                send_reply = True
+                ################################################################ 
+                if enquiry["plugin_message"] == "get_status_tsn_ctrl_endpoint":
+                    if self.get_status_tsn_ctrl_endpoint():
+                        body = " TSN Controller endpoint is active"
+                        status = "OK"
+                    else:
+                        body = " TSN Controller endpoint is not active"
+                        status = "NOT OK"
+                    response= {
+                        "ACK": True,
+                        "data": body,
+                        "status_code": status
+                    }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message)
+                ##############################################################    
+                if enquiry["plugin_message"] == "get_ptp_interface":
+                    result="kostas"
+    #                 result = self.get_ptp_interface(enquiry["node"],enquiry["iface"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                    }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message)
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_log_level":
+                    result = self.get_ptp_log_level(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                    }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_logSyncInterval":
+                    result = self.get_ptp_logSyncInterval(enquiry["node"],enquiry["iface"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_LogMinDelayReqInterval":
+                    result = self.get_ptp_LogMinDelayReqInterval(enquiry["node"],enquiry["iface"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_LogMinDelayReqInterval":
+                    result = self.get_ptp_LogMinDelayReqInterval(enquiry["node"],enquiry["iface"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_DelayAssymetry":
+                    result = self.get_ptp_DelayAssymetry(enquiry["node"],enquiry["iface"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_minNeighborPropDelayThreshold":
+                    result = self.get_ptp_minNeighborPropDelayThreshold(enquiry["node"],enquiry["iface"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_maxNeighborPropDelayThreshold":
+                    result = self.get_ptp_maxNeighborPropDelayThreshold(enquiry["node"],enquiry["iface"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_clockParent":
+                    result = self.get_ptp_clockParent(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_clock":
+                    result = self.get_ptp_clock(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_clock_domain":
+                    result = self.get_ptp_clock_domain(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_clock_priority1":
+                    result = self.get_ptp_clock_priority1(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_clock_priority2":
+                    result = self.get_ptp_clock_priority2(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_clock_class":
+                    result = self.get_ptp_clock_class(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_clock_profile":
+                    result = self.get_ptp_clock_profile(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_clock_gmCapable":
+                    result = self.get_ptp_clock_gmCapable(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_clock_slaveOnly":
+                    result = self.get_ptp_clock_slaveOnly(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_program":
+                    result = self.get_ptp_program(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_program_timestamping":
+                    result = self.get_ptp_program_timestamping(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_program_delayMechanism":
+                    result = self.get_ptp_program_delayMechanism(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message)  
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_program_transport":
+                    result = self.get_ptp_program_transport(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_program_timeaware_bridge":
+                    result = self.get_ptp_program_timeaware_bridge(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_program_phydelay_compensate_in":
+                    result = self.get_ptp_program_phydelay_compensate_in(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_program_phydelay_compensate_out":
+                    result = self.get_ptp_program_phydelay_compensate_out(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_ptp_program_servo_locked_threshold":
+                    result = self.get_ptp_program_servo_locked_threshold(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "tsn_ptp_display_time_properties":
+                    result = self.tsn_ptp_display_time_properties(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_tas_cycle_time":
+                    result = self.get_tas_cycle_time(enquiry["node"],enquiry["iface"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_tas_entry":
+                    result = self.get_tas_entry(enquiry["node"],enquiry["iface"],enquiry["entry"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_tas_enable":
+                    result = self.get_tas_enable(enquiry["node"],enquiry["iface"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_tas_ptp_mode":
+                    result = self.get_tas_ptp_mode(enquiry["node"],enquiry["iface"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_tas_gate_ctrl_period":
+                    result = self.get_tas_gate_ctrl_period(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_tas_display_profile":
+                    result = self.get_tas_display_profile(enquiry["node"],enquiry["iface"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "get_tas_display_interface_status":
+                    result = self.get_tas_display_interface_status(enquiry["node"],enquiry["iface"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_ptp_interface_enable":
+                    result = self.set_ptp_interface_enable(enquiry["node"],enquiry["iface"],enquiry["status"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "set_ptp_LogSyncInterval":
+                    result = self.set_ptp_LogSyncInterval(enquiry["node"],enquiry["iface"],enquiry["LogSyncInterval"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_ptp_LogAnnounceInterval":
+                    result = self.set_ptp_LogAnnounceInterval(enquiry["node"],enquiry["iface"],enquiry["LogAnnounceInterval"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_ptp_LogMinDelayReqInterval":
+                    result = self.set_ptp_LogMinDelayReqInterval(enquiry["node"],enquiry["iface"],enquiry["LogMinDelayReqInterval"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_ptp_SyncReceiptTimeout":
+                    result = self.set_ptp_SyncReceiptTimeout(enquiry["node"],enquiry["iface"],enquiry["set_ptp_SyncReceiptTimeout"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_ptp_SyncdelayAsymmetry":
+                    result = self.set_ptp_SyncdelayAsymmetry(enquiry["node"],enquiry["iface"],enquiry["delayAsymmetry"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_ptp_minNeighborPropDelayThreshold":
+                    result = self.set_ptp_minNeighborPropDelayThreshold(enquiry["node"],enquiry["iface"],enquiry["minNeighborPropDelayThreshold"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_ptp_maxNeighborPropDelayThreshold":
+                    result = self.set_ptp_maxNeighborPropDelayThreshold(enquiry["node"],enquiry["iface"],enquiry["maxNeighborPropDelayThreshold"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_ptp_clockDomain":
+                    result = self.set_ptp_clockDomain(enquiry["node"],enquiry["clockDomain"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_ptp_clockPriority1":
+                    result = self.set_ptp_clockPriority1(enquiry["node"],enquiry["clockPriority"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_ptp_clockPriority2":
+                    result = self.set_ptp_clockPriority2(enquiry["node"],enquiry["clockPriority"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_ptp_clockClass":
+                    result = self.set_ptp_clockClass(enquiry["node"],enquiry["clockClass"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "set_ptp_clockProfile":
+                    result = self.set_ptp_clockProfile(enquiry["node"],enquiry["clockProfile"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message)  
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_ptp_gmCapable":
+                    result = self.set_ptp_gmCapable(enquiry["node"],enquiry["gmCapable"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_ptp_slaveOnly":
+                    result = self.set_ptp_slaveOnly(enquiry["node"],enquiry["slaveOnly"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "set_ptp_timestamping":
+                    result = self.set_ptp_timestamping(enquiry["node"],enquiry["timestamping"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_ptp_delayMechanism":
+                    result = self.set_ptp_delayMechanism(enquiry["node"],enquiry["delayMechanism"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "set_ptp_timeaware_bridge":
+                    result = self.set_ptp_timeaware_bridge(enquiry["node"],enquiry["timeaware_bridge"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_ptp_phydelay_compensate_in":
+                    result = self.set_ptp_phydelay_compensate_in(enquiry["node"],enquiry["phydelay_compensate_in"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_ptp_phydelay_compensate_out":
+                    result = self.set_ptp_phydelay_compensate_out(enquiry["node"],enquiry["phydelay_compensate_out"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_ptp_servo_locked_threshold":
+                    result = self.set_ptp_servo_locked_threshold(enquiry["node"],enquiry["servo_locked_threshold"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_ptp_logging_level":
+                    result = self.set_ptp_logging_level(enquiry["node"],enquiry["logging_level"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_ptp_save_config":
+                    result = self.set_ptp_save_config(enquiry["node"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_tas_cycle_time":
+                    result = self.set_tas_cycle_time(enquiry["node"],enquiry["iface"],enquiry["bts"],enquiry["btn"],enquiry["ct"],enquiry["en"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_tas_entry":
+                    result = self.set_tas_entry(enquiry["node"],enquiry["iface"],enquiry["entry"],enquiry["hp"],enquiry["ti"],enquiry["gs"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_tas_enable":
+                    result = self.set_tas_enable(enquiry["node"],enquiry["iface"],enquiry["status"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_tas_ptp_mode":
+                    result = self.set_tas_ptp_mode(enquiry["node"],enquiry["iface"],enquiry["mode"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "set_tas_gate_ctrl_period":
+                    result = self.set_tas_gate_ctrl_period(enquiry["node"],enquiry["period"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "vlan_create":
+                    
+                    node=enquiry["node"]
+                    vid=enquiry["vid"]
+                    pbm_list=enquiry["pbm_list"]
+                    ubm_list=enquiry["ubm_list"]
+                    result = self.vlan_create(node,vid,pbm_list,ubm_list)
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "vlan_destroy":
+                    result = self.vlan_destroy(enquiry["node"],enquiry["vid"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ##############################################################
+                if enquiry["plugin_message"] == "vlan_add":
+                    result = self.vlan_add(enquiry["node"],enquiry["vid"],enquiry["pbm_list"],enquiry["ubm_list"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+                ############################################################## 
+                if enquiry["plugin_message"] == "vlan_remove":
+                    result = self.vlan_remove(enquiry["node"],enquiry["vid"],enquiry["ports"])
+                    response = {
+                        "ACK": True,
+                        "data": result,
+                        "status_code": "OK"
+                        }
+                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+#                     self.send_ack(ch, method, props, response, send_reply)
+                    message=" RPC acknowledged - {}".format(response)
+                    self.logger.info(message) 
+            
+        except Exception as ex:
+                message = "Error while trying to interpret message"
+                self.logger.error(message)
+                self.logger.error(ex)
             
 
                 
@@ -1596,10 +1771,13 @@ class TSN_plugin(object):
 #                  SET method calls 
 # ################################################################
 
-    def set_ptp_interface(self,node,iface,status):
+    def set_ptp_interface_enable(self,node,iface,status):
         """Get ptp status per interface .
         *@return: The result.
         """
+        if(TESTING):
+            self.logger.info("ptp-enable-called")
+            return
         
         try:
             suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-inter"]
@@ -1720,6 +1898,9 @@ class TSN_plugin(object):
         """Get ptp status per interface .
         *@return: The result.
         """
+        if(TESTING):
+            self.logger.info("set_ptp_SyncReceiptTimeout-called")
+            return
         
         try:
             suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-inter"]
@@ -1751,6 +1932,10 @@ class TSN_plugin(object):
         """Get ptp status per interface .
         *@return: The result.
         """
+        
+        if(TESTING):
+            self.logger.info("set_ptp_SyncdelayAsymmetry-called")
+            return
         
         try:
             suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-inter"]
@@ -1871,6 +2056,10 @@ class TSN_plugin(object):
         *@return: The result.
         """
         
+        if(TESTING):
+            self.logger.info("ptp-priority-called")
+            return
+        
         try:
             suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-info"]
             
@@ -1884,7 +2073,6 @@ class TSN_plugin(object):
                     "priority1": clockPriority
                     }
                 }
-            
             response = requests.put(url,
                                     headers={'Content-Type':'application/json'},
                                     json=body,
@@ -2240,6 +2428,9 @@ class TSN_plugin(object):
         """Get ptp status per interface .
         *@return: The result.
         """
+        if(TESTING):
+            self.logger.info("ptp-save-called")
+            return
         
         try:
             suffix=self.jox_config["tsn-ctrl-config"]["suffix-ptp-clock-program"]
@@ -2289,6 +2480,11 @@ class TSN_plugin(object):
                     }
                 }
             
+            if(TESTING):
+                print(body)
+                self.logger.info("tas-set-cycle-called")
+                return
+            
             response = requests.put(url,
                                     headers={'Content-Type':'application/json'},
                                     json=body,
@@ -2325,6 +2521,10 @@ class TSN_plugin(object):
                     }
                 }
             
+            if(TESTING):
+                print(body)
+                self.logger.info("tas-set-entry-called")
+                return
             response = requests.put(url,
                                     headers={'Content-Type':'application/json'},
                                     json=body,
@@ -2430,9 +2630,8 @@ class TSN_plugin(object):
         """Get ptp status per interface .
         *@return: The result.
         """
-        
-        pbm=', '.join(pbm_list)
-        ubm=', '.join(ubm_list)
+      
+
         try:
             suffix=self.jox_config["tsn-ctrl-config"]["suffix-vlan"]
             
@@ -2445,8 +2644,8 @@ class TSN_plugin(object):
             body={
                 "vlan":{
                     "id": vid, 
-                    "ports": str(pbm),
-                    "untagged-ports": str(ubm),
+                    "ports": pbm_list,
+                    "untagged-ports": ubm_list,
                     "operation": "create"
          
                     }
@@ -2495,9 +2694,7 @@ class TSN_plugin(object):
         """Get ptp status per interface .
         *@return: The result.
         """
-        
-        pbm=', '.join(pbm_list)
-        ubm=', '.join(ubm_list)
+
         try:
             suffix=self.jox_config["tsn-ctrl-config"]["suffix-vlan"]
             
@@ -2510,8 +2707,8 @@ class TSN_plugin(object):
             body={
                 "vlan":{
                     "id": vid, 
-                    "ports": str(pbm),
-                    "untagged-ports": str(ubm),
+                    "ports": pbm_list,
+                    "untagged-ports": ubm_list,
                     "operation": "add"
          
                     }
@@ -2531,8 +2728,6 @@ class TSN_plugin(object):
         """Get ptp status per interface .
         *@return: The result.
         """
-        
-        ports=', '.join(ports)
 
         try:
             suffix=self.jox_config["tsn-ctrl-config"]["suffix-vlan"]
@@ -2565,15 +2760,15 @@ class TSN_plugin(object):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Process commandline arguments and override configurations in jox_config.json')
-    parser.add_argument('--log', metavar='[level]', action='store', type=str,
-                        required=False, default='debug',
-                        help='set the log level: debug, info (default), warning, error, critical')
-    
-    args = parser.parse_args()
-    ts = TSN_plugin(args.log)
+#     parser = argparse.ArgumentParser(description='Process commandline arguments and override configurations in jox_config.json')
+#     parser.add_argument('--log', metavar='[level]', action='store', type=str,
+#                         required=False, default='debug',
+#                         help='set the log level: debug, info (default), warning, error, critical')
+#     
+#     args = parser.parse_args()
+    ts = TSN_plugin("debug")
     ts.build()
-        
+    ts.build_tsn_slice()
 #     for line in sys.path:
 #         print (line)
      
@@ -2593,7 +2788,7 @@ if __name__ == '__main__':
 #     result=ts.get_tas_cycle_time("new-netconf-device",0)
 #     result=ts.get_tas_entry("new-netconf-device", 0, 2)
 #     result=ts.get_tas_display_profile("new-netconf-device",0)
-#     result=ts.set_ptp_interface("new-netconf-device",0,"enable")
+#     result=ts.set_ptp_interface_enable("new-netconf-device",0,"enable")
 #     result=ts.set_ptp_LogAnnounceInterval("new-netconf-device",0,0)
 #     result=ts.set_ptp_LogMinDelayReqInterval("new-netconf-device",0,1)
 #     result=ts.set_ptp_SyncReceiptTimeout("new-netconf-device",0,2)
@@ -2601,7 +2796,7 @@ if __name__ == '__main__':
 #     result=ts.set_ptp_minNeighborPropDelayThreshold("new-netconf-device",0,-500000)
 #     result=ts.set_ptp_maxNeighborPropDelayThreshold("new-netconf-device",0,2000)
 #     result=ts.set_ptp_clockDomain("new-netconf-device",10)
-    result=ts.set_ptp_clockPriority1("new-netconf-device",100)
+#     result=ts.set_ptp_clockPriority1("new-netconf-device",200)
 #     result=ts.set_ptp_clockPriority2("new-netconf-device",10)
 #     result=ts.set_ptp_clockClass("new-netconf-device",20)
 #     result=ts.set_ptp_clockProfile("new-netconf-device","802dot1AS")
@@ -2613,8 +2808,11 @@ if __name__ == '__main__':
 #     result=ts.set_ptp_SyncReceiptTimeout("new-netconf-device",0,2)
 #     result=ts.set_ptp_SyncReceiptTimeout("new-netconf-device",0,2)
 #     result=ts.set_ptp_SyncReceiptTimeout("new-netconf-device",0,2)
-
-    
-    print(result)
-#     t1 = Thread(target=ts.start_consuming).start()
+#     result=ts.vlan_create("new-netconf-device",200,'ge2','ge5')
+#     result=ts.vlan_add("new-netconf-device",200,'ge3,ge4','ge6')
+#     result=ts.vlan_remove("new-netconf-device",200,'ge2')
+#     result=ts.vlan_destroy("new-netconf-device",200)
+#     
+#     print(result)
+    t1 = Thread(target=ts.start_consuming).start()
 #     t2 = Thread(target=ts.start_notifications).start()        

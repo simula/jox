@@ -49,11 +49,11 @@
     "rabbit-mq-queue":"QueueTSN",
     "es-index-name":"tsn_plugin",
     "plugin-status":"enabled",
-    "timeout-request":300
+    "timeout-request":30000
   },
   "tsn-ctrl-config":{
-    "host":"localhost",
-    "port": 8181,
+    "odl-host":"localhost",
+    "odl-port": 8181,
     "username":"admin",
     "password":"admin",
 	"prefix":"restconf/config/network-topology:network-topology/topology/topology-netconf/node/",
@@ -68,7 +68,8 @@
 	"suffix-tas-ptp-mode":"/yang-ext:mount/huawei-tsn:tsn-configuration/qbv/qbv-ptp-mode/tsntas-ptp-mode/",
 	"suffix-tas-gate-ctrl-period":"/yang-ext:mount/huawei-tsn:tsn-configuration/qbv/qbv-ctrl/tsntas-gate-ctrl-period",
 	"suffix-tas-profile":"/yang-ext:mount/huawei-tsn:tsn-configuration/qbv/qbv-profile/tsntas-profile/",
-	"suffix-tas-interface-status":"/yang-ext:mount/huawei-tsn:tsn-configuration/qbv/qbv-status/tsntas-status/"
+	"suffix-tas-interface-status":"/yang-ext:mount/huawei-tsn:tsn-configuration/qbv/qbv-status/tsntas-status/",
+	"suffix-vlan":"/yang-ext:mount/huawei-vlan:vlans/vlan/"
   },
 
   "llmec-config":{
