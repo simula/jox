@@ -35,7 +35,7 @@
         ]
       },
       {
-        "tsn-switch-name":"switch-odl-name",
+        "tsn-switch-name":"new-netconf-device2",
         "interface":[
           {
             "iface":  0,

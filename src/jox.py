@@ -175,6 +175,11 @@ class NFVO_JOX(object):
 			self.gv.SUPPORTED_SWITCHES = self.jox_config["supported-switches"]
 			self.gv.SWITCHES = self.jox_config["switches"]
 			#
+			self.gv.TSN_PLUGIN_STATUS = self.jox_config["tsn-plugin-config"]["plugin-status"]
+			
+			self.gv.RBMQ_SERVER_IP = self.jox_config['rabbit-mq-config']["rabbit-mq-server-ip"]
+			self.gv.RBMQ_SERVER_PORT = self.jox_config['rabbit-mq-config']["rabbit-mq-server-port"]
+			self.gv.RBMQ_QUEUE_TSN = self.jox_config["tsn-plugin-config"]["rabbit-mq-queue"]
    			
 			
 			
@@ -614,16 +619,22 @@ class server_RBMQ(object):
 	def run(self):
 		while True:
 			try:
+				####
+				"""
+				credentials=pika.PlainCredentials(username="adalia", password="linux")
+				parameters = pika.ConnectionParameters(self.host, self.port, '/', credentials)
+				connection = pika.BlockingConnection(parameters)
+				"""
+				#"""
 				self.connection = pika.BlockingConnection(pika.ConnectionParameters(
 					host=self.host, port=self.port))
+				#"""
 				self.channel = self.connection.channel()
 				self.channel.queue_declare(queue=self.queue_name)
 				
 				self.channel.basic_qos(prefetch_count=1)
 
 				self.channel.basic_consume(self.on_request, queue=self.queue_name)
-
-
 				
 				print(colored(' [*] Waiting for messages. To exit press CTRL+C', 'green'))
 				self.channel.start_consuming()

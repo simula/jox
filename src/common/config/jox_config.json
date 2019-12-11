@@ -50,7 +50,34 @@
     "rabbit-mq-queue":"QueuellMEC",
     "plugin-status":"disabled"
   },
-
+  "tsn-plugin-config":{
+    "rabbit-mq-server-ip":"localhost",
+    "rabbit-mq-server-port":5672,
+    "rabbit-mq-queue":"QueueTSN",
+    "es-index-name":"tsn_plugin",
+    "plugin-status":"enabled",
+    "timeout-request":30000
+  },
+  "tsn-ctrl-config":{
+    "odl-host":"localhost",
+    "odl-port": 8181,
+    "username":"admin",
+    "password":"admin",
+  "prefix":"restconf/config/network-topology:network-topology/topology/topology-netconf/node/",
+  "suffix-ptp-inter":"/yang-ext:mount/huawei-tsn:tsn-configuration/as/as-interface/tsnptp-interface/",
+  "suffix-ptp-clock-program":"/yang-ext:mount/huawei-tsn:tsn-configuration/as/as-program/tsnptp-program/",  
+  "suffix-ptp-clock-parent":"/yang-ext:mount/huawei-tsn:tsn-configuration/as/as-clock/tsnptp-clock-parent/",
+  "suffix-ptp-clock-info":"/yang-ext:mount/huawei-tsn:tsn-configuration/as/as-clock/tsnptp-clock/tsnptp-clock-info",
+  "suffix-ptp-time-properties":"/yang-ext:mount/huawei-tsn:tsn-configuration/as/as-time-properties/tsnptp-time-properties/",
+  "suffix-tas-cycle-time":"/yang-ext:mount/huawei-tsn:tsn-configuration/qbv/qbv-cycle/tsntas-cycle-time/",
+  "suffix-tas-entry":"/yang-ext:mount/huawei-tsn:tsn-configuration/qbv/qbv-entry/tsntas-schedule-entry/",
+  "suffix-tas-enable":"/yang-ext:mount/huawei-tsn:tsn-configuration/qbv/qbv-enable/tsntas-enable-schedule/",
+  "suffix-tas-ptp-mode":"/yang-ext:mount/huawei-tsn:tsn-configuration/qbv/qbv-ptp-mode/tsntas-ptp-mode/",
+  "suffix-tas-gate-ctrl-period":"/yang-ext:mount/huawei-tsn:tsn-configuration/qbv/qbv-ctrl/tsntas-gate-ctrl-period",
+  "suffix-tas-profile":"/yang-ext:mount/huawei-tsn:tsn-configuration/qbv/qbv-profile/tsntas-profile/",
+  "suffix-tas-interface-status":"/yang-ext:mount/huawei-tsn:tsn-configuration/qbv/qbv-status/tsntas-status/",
+  "suffix-vlan":"/yang-ext:mount/huawei-vlan:vlans/vlan/"
+  },
   "flask-config":{
     "flask-server": "10.42.0.4",
     "flask-port": 5000,

@@ -34,6 +34,7 @@ global KVM
 global LXC
 global PHY
 global TSN
+global console
 global SUPPORTED_SWITCHES
 global SWITCHES
 
@@ -52,7 +53,22 @@ JOX_CONFIG_KEY=(CONFIG_FILE.split('.'))[0]
 # BMQ param
 RBMQ_SERVER_IP=""
 RBMQ_SERVER_PORT=""
-RBMQ_QUEUE=""
+RBMQ_QUEUE_TSN=""
+
+# TSN status
+TSN_ENABLED ='enabled'
+TSN_DISABLED = 'disabled'
+# TSN param
+TSN_CTRL_HOST=""
+TSN_CTRL_PORT=""
+TSN_CTRL_USERNAME=""
+TSN_CTRL_PASSWORD=""
+TSN_CTRL_PREFIX=""
+TSN_RBMQ_QUEUE_NAME=""
+TSN_PLUGIN_STATUS=""
+TSN_TIMEOUT_REQUEST=""
+TSN_ES_INDEX_STATUS=""
+TSN_ES_INDEX_NAME=""
 
 
 """ FLASK param """
