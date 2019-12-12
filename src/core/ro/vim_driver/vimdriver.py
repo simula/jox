@@ -1335,24 +1335,10 @@ class _TsnSwitch():
 				for port in ports_to_add:
 					if port in self.list_vlan[vln_id]["vlan"]["ports"][slice]:
 						used_ports.append(port)
-						"""
-						if vln_id not in used_ports.keys():
-							used_ports[vln_id] = dict()
-						if slice not in used_ports[vln_id].keys():
-							used_ports[vln_id][slice] = list()
-						used_ports[vln_id][slice].append(port)
-						"""
 			for slice in self.list_vlan[vln_id]["vlan"]["untagged-ports"]:
 				for port in untagged_ports_to_add:
 					if port in self.list_vlan[vln_id]["vlan"]["untagged-ports"][slice]:
 						used_untagged_ports.append(port)
-						"""
-						if vln_id not in used_untagged_ports.keys():
-							used_untagged_ports[vln_id] = dict()
-						if slice not in used_untagged_ports[vln_id].keys():
-							used_untagged_ports[vln_id][slice] = list()
-						used_untagged_ports[vln_id][slice].append(port)
-						"""
 		ports_to_add_final = ""
 		untagged_ports_to_add_final = ""
 		if len(used_ports) == 0:
@@ -1360,30 +1346,21 @@ class _TsnSwitch():
 		else:					
 			for port in ports_to_add:
 				if port not in used_ports:
-					if ports_to_add_final == "":
-						ports_to_add_final = port
-					else:
-						ports_to_add_final = '{},{}'.format(ports_to_add_final, port)
+					ports_to_add_final = ','.join(ports_to_add_final, port)
 		if len(used_untagged_ports) == 0:
 			untagged_ports_to_add_final = request["vlan"]["untagged-ports"]
 		else:
 			for port in untagged_ports_to_add:
 				if port not in used_untagged_ports:
-					if untagged_ports_to_add_final == "":
-						untagged_ports_to_add_final = port
-					else:
-						untagged_ports_to_add_final = '{},{}'.format(untagged_ports_to_add_final, port)
+					untagged_ports_to_add_final = ','.join(untagged_ports_to_add_final, port)
 		###########################################
 		if str(vlan_id) in self.list_vlan.keys():
 			if request["vlan"]["operation"] == "add":
-				pass
 				response = None
 				try:
 					self.logger.info("The vlan {} is already exist. Adding the vlan with ports{} ".format(vlan_id, request["vlan"]["ports"]))
 					# vlan-add
-					if (ports_to_add_final == "") and (untagged_ports_to_add_final == ""):
-						pass
-					else:
+					if (ports_to_add_final != "") or (untagged_ports_to_add_final != ""):
 						queue_name_tsn = "QueueTSN"
 						current_time = datetime.datetime.now()
 						enquiry={}
@@ -1398,6 +1375,9 @@ class _TsnSwitch():
 						enquiry = json.dumps(enquiry)
 						enquiry.encode("utf-8")
 						response = self.tsn_agent.send_to_plugin(enquiry, queue_name_tsn)
+						data = response.decode(self.gv.ENCODING_TYPE)
+						data = json.loads(data)
+						print("data_vlan_add={}".format(data))
 					########################################################
 					if slice_name not in self.list_vlan[vlan_id]["attached-slices"]:
 						self.list_vlan[vlan_id]["attached-slices"].append(slice_name)
@@ -1422,7 +1402,6 @@ class _TsnSwitch():
 						self.list_vlan[vlan_id]["pvlan"]["port"][slice_name] = request["pvlan"]["port"]
 						self.list_vlan[vlan_id]["pvlan"]["id"][slice_name] = request["pvlan"]["id"]
 						message = "The slice {} registered to the vlan {} is successfully updated with ports {}. TSN_PLUGIN={}".format(slice_name, vlan_id, request["vlan"]["ports"], response)
-
 						#message = "The slice {} is successfully registered to the vlan {}. TSN_PLUGIN={}".format(slice_name, vlan_id, response)
 						#message = "The vlan {} with ports {} is successfully added".format(vlan_id, request["vlan"]["ports"])
 						return [True, message]
@@ -1431,7 +1410,7 @@ class _TsnSwitch():
 					message = "The following error raised while adding the vlan {} with ports {}. TSN_PLUGIN={}".format(vlan_id, request["vlan"]["ports"], response)
 					return [True, message]
 			else:
-				message = "Error, the vlan {} does exist, and thus can not add the ports to the vlan ".format(vlan_id, request["vlan"]["ports"])
+				message = "Error creating the vlan {}, it is already exist, and thus the ports {} are no added to the vlan ".format(vlan_id, request["vlan"]["ports"])
 				return [False, message]
 		else:
 			if request["vlan"]["operation"] == "create":
@@ -1506,54 +1485,10 @@ class _TsnSwitch():
 		response = None
 		if str(vlan_id) in self.list_vlan:
 			attached_slices = self.list_vlan[str(vlan_id)]["attached-slices"]
-			print("attached_slices={}".format(attached_slices))
 			if slice_name in attached_slices:
 				self.logger.info("The slice {} is registered to the vlan {}".format(slice_name, vlan_id))
-				###########################################
-				"""
-				ports_to_add = self.list_vlan[vlan_id]["vlan"]["ports"][slice_name]
-				untagged_ports_to_add = self.list_vlan[vlan_id]["vlan"]["untagged-ports"][slice_name]
-				ports_to_add = str(ports_to_add).split(",")
-				untagged_ports_to_add = str(untagged_ports_to_add).split(",")
-				used_ports = list()
-				used_untagged_ports = list()
-				for vln_id in self.list_vlan:
-					for slice in self.list_vlan[vln_id]["vlan"]["ports"]:
-						if slice != slice_name:
-							for port in ports_to_add:
-								if port in self.list_vlan[vln_id]["vlan"]["ports"][slice]:
-									used_ports.append(port)
-					for slice in self.list_vlan[vln_id]["vlan"]["untagged-ports"]:
-						if slice != slice_name:
-							for port in untagged_ports_to_add:
-								if port in self.list_vlan[vln_id]["vlan"]["untagged-ports"][slice]:
-									used_untagged_ports.append(port)
-				ports_to_remove_final = ""
-				untagged_ports_to_remove_final = ""
-				if len(used_ports) == 0:
-					ports_to_remove_final = self.list_vlan[vlan_id]["vlan"]["ports"][slice_name]
-				else:					
-					for port in ports_to_add:
-						if port not in used_ports:
-							if ports_to_remove_final == "":
-								ports_to_remove_final = port
-							else:
-								ports_to_remove_final = '{},{}'.format(ports_to_remove_final, port)
-				if len(used_untagged_ports) == 0:
-					untagged_ports_to_remove_final = self.list_vlan[vlan_id]["vlan"]["untagged-ports"][slice_name]
-				else:
-					for port in untagged_ports_to_add:
-						if port not in used_untagged_ports:
-							if untagged_ports_to_remove_final == "":
-								untagged_ports_to_remove_final = port
-							else:
-								untagged_ports_to_remove_final = '{},{}'.format(untagged_ports_to_remove_final, port)
-				"""
-				###########################################
-				
-				if len(attached_slices) == 1:
+				if len(attached_slices) == 1: # there is only one slice registered to this vlan
 					# destroy vlan
-					response = None
 					try:
 						############################
 						queue_name_tsn = "QueueTSN"
@@ -1567,7 +1502,6 @@ class _TsnSwitch():
 						enquiry.encode("utf-8")
 						response = self.send_to_plugin(enquiry, queue_name_tsn)
 						########################################################
-						
 						self.logger.info("Trying to destrying the vlan {}".format(vlan_id))
 						message = "The vlan {} is successfully destroyed. TSN_PLUGIN={}".format(vlan_id, response)
 						del self.list_vlan[str(vlan_id)]	
@@ -1577,43 +1511,8 @@ class _TsnSwitch():
 						return [False, message]
 						#raise ex
 				else:
-					message = "The vlan {} can not be destriyed, the following slices are registered: {}".format(vlan_id, attached_slices)
+					message = "The vlan {} can not be destroyed, since the following slices are registered: {}".format(vlan_id, attached_slices)
 					return [False, message]
-					"""
-					# unregister the concerned slice from  vlan
-					try:
-						############################
-						queue_name_tsn = "QueueTSN"
-						current_time = datetime.datetime.now()
-						enquiry={}
-						enquiry["plugin_message"] = "vlan_destroy"
-						enquiry["node"] = self.tsn_switch_name
-						enquiry["vid"] = str(vlan_id)
-						enquiry["datetime"] = str(current_time)
-						enquiry = json.dumps(enquiry)
-						enquiry.encode("utf-8")
-						response = self.send_to_plugin(enquiry, queue_name_tsn)
-						########################################################
-						
-						vlan_id = str(vlan_id)
-						self.logger.info("There are more than one slice is attached to the vlan {}".format(vlan_id))
-						ports = self.list_vlan[str(vlan_id)]["vlan"]["ports"][slice_name]
-						self.logger.info("Trying to deactivate the ports related to the slice {}".format(ports, slice_name))
-						self.list_vlan[str(vlan_id)]["attached-slices"].remove(slice_name)
-						del self.list_vlan[vlan_id]["vlan"]["ports"][slice_name]
-						del self.list_vlan[vlan_id]["vlan"]["untagged-ports"][slice_name]
-						#pvlan
-						del self.list_vlan[vlan_id]["pvlan"]["port"][slice_name]
-						del self.list_vlan[vlan_id]["pvlan"]["id"][slice_name]
-						message = "The slice {} is successfully unregistered from the vlan {}, while vlan {} can not be destroyed since the following slices are registered {}. TSN_PLUGIN={}".format(slice_name, vlan_id, vlan_id, self.list_vlan[str(vlan_id)]["attached-slices"], response)
-						self.logger.info(message) 
-						return [True, message]
-					except Exception as ex:
-						self.logger.error(message) 
-						message = "The following error raised while trying to remove ports of the the vlan {}: {}. TSN_PLUGIN={}".format(vlan_id, ex, response)
-						return [False, message]
-						#raise ex
-					"""
 			else:
 				message = "The slice {} is NOT registered to the vlan {}. TSN_PLUGIN={}".format(slice_name, vlan_id, response)
 				self.logger.error(message) 
@@ -1622,61 +1521,89 @@ class _TsnSwitch():
 			message = "The vlan {} can not be found, thus not destroyed. TSN_PLUGIN={}".format(vlan_id, response)
 			self.logger.error(message) 
 			return [False, message]
-
-
 	###################
 	def remove_vlan(self, request, slice_name):
 		vlan_id = str(request["vlan"]["id"])
+		response = None
 		if str(vlan_id) in self.list_vlan:
 			attached_slices = self.list_vlan[str(vlan_id)]["attached-slices"]
 			if slice_name in attached_slices:
 				self.logger.info("The slice {} is registered to the vlan {}".format(slice_name, vlan_id))				
+				ports_to_remove = str(request["vlan"]["ports"]).split(",")
+				ports_untagged_to_remove = str(request["vlan"]["untagged-ports"]).split(",")
 				if len(attached_slices) == 1:
-					try:
-						############################
-						queue_name_tsn = "QueueTSN"
-						current_time = datetime.datetime.now()
-						enquiry={}
-						enquiry["plugin_message"] = "vlan_remove"
-						enquiry["node"] = self.tsn_switch_name
-						enquiry["vid"] = str(vlan_id)
-						enquiry["ports"] = request["vlan"]["port"]
-						enquiry["datetime"] = str(current_time)
-						enquiry = json.dumps(enquiry)
-						enquiry.encode("utf-8")
-						response = self.send_to_plugin(enquiry, queue_name_tsn)
-						########################################################
-						
-						vlan_id = str(vlan_id)
-						self.logger.info("There are more than one slice is attached to the vlan {}".format(vlan_id))
-						ports = self.list_vlan[str(vlan_id)]["vlan"]["ports"][slice_name]
-						self.logger.info("Trying to deactivate the ports related to the slice {}".format(ports, slice_name))
-						self.list_vlan[str(vlan_id)]["attached-slices"].remove(slice_name)
-						del self.list_vlan[vlan_id]["vlan"]["ports"][slice_name]
-						del self.list_vlan[vlan_id]["vlan"]["untagged-ports"][slice_name]
-						#pvlan
-						del self.list_vlan[vlan_id]["pvlan"]["port"][slice_name]
-						del self.list_vlan[vlan_id]["pvlan"]["id"][slice_name]
-						message = "The slice {} is successfully unregistered from the vlan {}, while vlan {} can not be destroyed since the following slices are registered {}. TSN_PLUGIN={}".format(slice_name, vlan_id, vlan_id, self.list_vlan[str(vlan_id)]["attached-slices"], response)
-						self.logger.info(message) 
-						return [True, message]
-					except Exception as ex:
+					######### ports
+					current_ports = str(self.list_vlan[str(vlan_id)]["vlan"]["ports"][slice_name]).split(',')
+					ports_to_keep = ""
+					ports_not_exist = ""
+					for port in current_ports:
+						if port not in request["vlan"]["ports"]:
+							ports_to_keep = ','.join(ports_to_keep, port)
+					for port in ports_to_remove:
+						if port not in self.list_vlan[str(vlan_id)]["vlan"]["ports"][slice_name]:
+							ports_not_exist = ','.join(ports_not_exist, port)
+					######### untagged-ports
+					current_untagged_ports = str(self.list_vlan[str(vlan_id)]["vlan"]["untagged-ports"][slice_name]).split(',')
+					ports_untagged_to_keep = ""
+					ports_untagged_not_exist = ""
+					for port in current_untagged_ports:
+						if port not in request["vlan"]["untagged-ports"]:
+							ports_untagged_to_keep = ','.join(ports_untagged_to_keep, port)
+					for port in ports_untagged_to_remove:
+						if port not in self.list_vlan[str(vlan_id)]["vlan"]["untagged-ports"][slice_name]:
+							ports_untagged_not_exist = ','.join(ports_untagged_not_exist, port)
+					#########
+					if (ports_not_exist != "") or (ports_untagged_not_exist != ""):
+						message = "Error, the following ports do not exist for the vlan {}: port={}, untagged-ports={}. TSN_PLUGIN={}".format(vlan_id, ports_not_exist, ports_untagged_not_exist, response)
 						self.logger.error(message) 
-						message = "The following error raised while trying to remove ports of the the vlan {}: {}. TSN_PLUGIN={}".format(vlan_id, ex, response)
 						return [False, message]
-						#raise ex
+					else:
+						try:
+							############################
+							queue_name_tsn = "QueueTSN"
+							current_time = datetime.datetime.now()
+							enquiry={}
+							enquiry["plugin_message"] = "vlan_remove"
+							enquiry["node"] = self.tsn_switch_name
+							enquiry["vid"] = str(vlan_id)
+							enquiry["pbm_list"] = request["vlan"]["port"]
+							enquiry["ubm_list"] = request["vlan"]["untagged-ports"]
+							enquiry["datetime"] = str(current_time)
+							enquiry = json.dumps(enquiry)
+							enquiry.encode("utf-8")
+							response = self.send_to_plugin(enquiry, queue_name_tsn)
+							########################################################
+							self.logger.info("There are more than one slice is attached to the vlan {}".format(vlan_id))
+							self.list_vlan[str(vlan_id)]["vlan"]["ports"][slice_name] = ports_to_keep
+							self.list_vlan[str(vlan_id)]["vlan"]["untagged-ports"][slice_name] = ports_untagged_to_keep
+							message = "The the following ports of the slice {} are successfully removed from the vlan {}; ports={}, untagged-ports={}. TSN_PLUGIN={}".format(slice_name, vlan_id, request["vlan"]["ports"], request["vlan"]["untagged-ports"], response)
+							self.logger.info(message) 
+							return [True, message]
+						except Exception as ex:
+							message = "The following error raised while trying to remove ports of the the vlan {}: {}. TSN_PLUGIN={}".format(vlan_id, ex, response)
+							self.logger.error(message) 
+							return [False, message]
+							#raise ex
 				else:
 					# untegister only the non-shared ports	
-					ports_to_remove = str(request["vlan"]["ports"]).split(",")
-					ports_to_can_be_removed = ""
-					attached_slices = self.list_vlan[str(vlan_id)]["attached-slices"]
-					for slice in attached_slices:
+					# ports
+					ports_can_be_removed = ""
+					for slice in self.list_vlan[str(vlan_id)]["attached-slices"]:
 						for ports in self.list_vlan[vlan_id]["vlan"]["ports"][slice]:
 							if slice != slice_name:
 								for port in ports_to_remove:
 									if port not in ports:
-										ports_to_can_be_removed = ','.join(ports_to_can_be_removed, port)
-					if ports_to_can_be_removed != "":
+										ports_can_be_removed = ','.join(ports_can_be_removed, port)
+					# untagged_ports
+					ports_untagged_can_be_removed = ""
+					for slice in self.list_vlan[str(vlan_id)]["attached-slices"]:
+						for ports in self.list_vlan[vlan_id]["vlan"]["untagged-ports"][slice]:
+							if slice != slice_name:
+								for port in ports_untagged_to_remove:
+									if port not in ports:
+										ports_untagged_can_be_removed = ','.join(ports_untagged_can_be_removed, port)
+					##########
+					if ports_can_be_removed != "":
 						# ports to be removed
 						############################
 						queue_name_tsn = "QueueTSN"
@@ -1685,23 +1612,23 @@ class _TsnSwitch():
 						enquiry["plugin_message"] = "vlan_remove"
 						enquiry["node"] = self.tsn_switch_name
 						enquiry["vid"] = str(vlan_id)
-						enquiry["ports"] = ports_to_can_be_removed
+						enquiry["ports"] = ports_can_be_removed
 						enquiry["datetime"] = str(current_time)
 						enquiry = json.dumps(enquiry)
 						enquiry.encode("utf-8")
 						response = self.send_to_plugin(enquiry, queue_name_tsn)
 						########################################################
-						message = "The ports {} are successfully unregistered from the slice {} on the vlan {}. The following ports are removed from the switch: {}".format(request["vlan"]["ports"], slice_name, vlan_id, ports_to_can_be_removed)
+						message = "The ports {} are successfully unregistered from the slice {} on the vlan {}. The following ports are removed from the switch: {}".format(request["vlan"]["ports"], slice_name, vlan_id, ports_can_be_removed)
 					else:
 						# no ports to be removed
 						message = "The ports {} are successfully unregistered from the slice {} on the vlan {}".format(request["vlan"]["ports"], slice_name, vlan_id)
 					return [True, message]
 			else:
-				message = "The slice {} is NOT registered to the vlan {}. TSN_PLUGIN={}".format(slice_name, vlan_id, response)
+				message = "Error, the slice {} is NOT registered to the vlan {}. TSN_PLUGIN={}".format(slice_name, vlan_id, response)
 				self.logger.error(message) 
 				return [False, message]
 		else:
-			message = "The vlan {} can not be found, thus not destroyed. TSN_PLUGIN={}".format(vlan_id, response)
+			message = "Error, the vlan {} can not be found. TSN_PLUGIN={}".format(vlan_id, response)
 			self.logger.error(message) 
 			return [False, message]
 class _VmKvm():

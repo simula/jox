@@ -171,7 +171,7 @@
   "switches": {   
     "tsn": [
       {
-        "tsn-switch-name":"new-netconf-device",
+        "tsn-switch-name":"new-netconf-device2",
         "interface":[
           {
             "iface":  0,
