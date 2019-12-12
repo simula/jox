@@ -34,7 +34,7 @@ TESTING=False
 class TSN_plugin(object):
     def __init__(self, tsn_log_level=None,):
         self.logger = logging.getLogger("jox-plugin.tsn")
-        atexit.register(self.goodbye)  # register a message to print out when exit
+        atexit.register(self.goodbye)  # register a message to self.logger.info out when exit
         
        
         ## Loading global variables ##
@@ -110,7 +110,7 @@ class TSN_plugin(object):
                 self.logger.setLevel(logging.CRITICAL)
         
     def goodbye(self):
-        print(colored('[*] You are now leaving TSN plugin', 'red'))
+        self.logger.info(colored('[*] You are now leaving TSN plugin', 'red'))
         sys.exit(0)    
     
     
@@ -158,7 +158,7 @@ class TSN_plugin(object):
                 
                 for switch_config in data:
                     switch_name=""    
-#                     print (switch_config)
+#                     self.logger.info (switch_config)
                     for key in switch_config:
                         if (key=="tsn-switch-name"):
                             switch_name=switch_config[key]
@@ -180,13 +180,13 @@ class TSN_plugin(object):
             for key in if_config: #call indepentently to be sure interface is parsed
                 if (key=="iface"):
                     iface= if_config[key]
-                    print(iface)
+                    self.logger.info(iface)
                     
             for key in if_config:
                 # PTP configuration part
                 if (key=="tsnptp-interface"):
                     ptp_config=if_config[key]
-                    print(ptp_config)   
+                    self.logger.info(ptp_config)   
                     for ptp_key in ptp_config:  
 #                         if (ptp_key=="enable"):
 #                             self.set_ptp_interface_enable(switch_name,iface,ptp_config[ptp_key])
@@ -208,7 +208,7 @@ class TSN_plugin(object):
                 # TSN cycle configuration part
                 if (key=="tsntas-cycle-time"):
                     cycle_config=if_config[key]
-#                     print(cycle_config)
+#                     self.logger.info(cycle_config)
                     for cycle_key in cycle_config:  
                         if (cycle_key=="base-time-sec"):
                             bts=cycle_config[cycle_key]
@@ -225,7 +225,7 @@ class TSN_plugin(object):
                 if (key=="tsntas-schedule-entries"):
                     entries_list=if_config[key]
                     for tas_entry in entries_list:
-                        print (tas_entry)
+                        self.logger.info (tas_entry)
                         for entry_key in tas_entry:  
                             if (entry_key=="entry"):  
                                 entry=tas_entry[entry_key]
@@ -256,7 +256,7 @@ class TSN_plugin(object):
             try:
                 if self.gv.TSN_PLUGIN_STATUS == self.gv.ENABLED:
                     self.channel.basic_consume(str(self.rbmq_queue_name),self.on_request)
-                    print(colored('[*] TSN plugin message thread -- > Waiting for messages. To exit press CTRL+C', 'yellow'))
+                    self.logger.info(colored('[*] TSN plugin message thread -- > Waiting for messages. To exit press CTRL+C', 'yellow'))
                     self.channel.start_consuming()
                 else:
                     message = "TSN plugin not enabled"
@@ -265,11 +265,14 @@ class TSN_plugin(object):
                     self.goodbye()
             except pika_exceptions.ConnectionClosed or \
                    pika_exceptions.ChannelClosed or \
-                   pika_exceptions.ChannelError:
+                   pika_exceptions.ChannelError as ex:
+                    print (ex)
+            except Exception as ex:    
+                print (ex)
                 self.connection.close()
     
 #     def start_notifications(self):
-#         print(colored('[*] TSN plugin notifications thread -- > Waiting for messages. To exit press CTRL+C', 'blue'))
+#         self.logger.info(colored('[*] TSN plugin notifications thread -- > Waiting for messages. To exit press CTRL+C', 'blue'))
 #         while True:
 #             try:
 #                 if self.gv.TSN_PLUGIN_STATUS == self.gv.ENABLED:
@@ -299,6 +302,7 @@ class TSN_plugin(object):
         enquiry = json.loads(enquiry)
         message = " Message received -> {} ".format(enquiry["plugin_message"])
         self.logger.info(message)
+#         print (enquiry)
         elapsed_time_on_request = datetime.datetime.now() - datetime.datetime.strptime(enquiry["datetime"],'%Y-%m-%d %H:%M:%S.%f')
 
         try:
@@ -318,8 +322,8 @@ class TSN_plugin(object):
                         "data": body,
                         "status_code": status
                     }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message)
                 ##############################################################    
@@ -331,8 +335,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                     }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message)
                 ##############################################################
@@ -343,8 +347,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                     }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -355,8 +359,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -367,8 +371,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -391,8 +395,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -403,8 +407,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -415,8 +419,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -427,8 +431,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -439,8 +443,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -451,8 +455,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -463,8 +467,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -475,8 +479,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -487,8 +491,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -499,8 +503,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -511,8 +515,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -523,8 +527,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -535,8 +539,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -547,8 +551,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -559,8 +563,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message)  
                 ##############################################################
@@ -571,8 +575,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -583,8 +587,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -595,8 +599,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -607,8 +611,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -619,8 +623,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -631,8 +635,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -643,8 +647,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -655,8 +659,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -667,8 +671,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -679,8 +683,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -691,8 +695,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -703,8 +707,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -715,8 +719,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -727,8 +731,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -739,8 +743,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -751,8 +755,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -763,8 +767,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -775,8 +779,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -787,8 +791,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -799,8 +803,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -811,8 +815,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -823,8 +827,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -835,8 +839,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -847,8 +851,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -859,8 +863,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -871,8 +875,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message)  
                 ############################################################## 
@@ -883,8 +887,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -895,8 +899,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -907,8 +911,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -919,8 +923,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
@@ -931,8 +935,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -943,8 +947,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -955,8 +959,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -967,8 +971,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -979,8 +983,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -991,8 +995,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -1003,8 +1007,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -1015,8 +1019,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -1027,8 +1031,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -1039,8 +1043,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -1051,8 +1055,8 @@ class TSN_plugin(object):
                         "data": result,
                         "status_code": "OK"
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
@@ -1063,61 +1067,76 @@ class TSN_plugin(object):
                     pbm_list=enquiry["pbm_list"]
                     ubm_list=enquiry["ubm_list"]
                     result = self.vlan_create(node,vid,pbm_list,ubm_list)
+                    current_time = datetime.datetime.now()
                     response = {
                         "ACK": True,
                         "data": result,
-                        "status_code": "OK"
+                        "status_code": "OK",
+                        "plugin_message": "test",
+                        "datetime": str(current_time)
                         }
                     
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
                 if enquiry["plugin_message"] == "vlan_destroy":
                     result = self.vlan_destroy(enquiry["node"],enquiry["vid"])
+                    current_time = datetime.datetime.now()
                     response = {
                         "ACK": True,
                         "data": result,
-                        "status_code": "OK"
+                        "status_code": "OK",
+                        "plugin_message": "test",
+                        "datetime": str(current_time)
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ##############################################################
                 if enquiry["plugin_message"] == "vlan_add":
                     result = self.vlan_add(enquiry["node"],enquiry["vid"],enquiry["pbm_list"],enquiry["ubm_list"])
+                    current_time = datetime.datetime.now()
                     response = {
                         "ACK": True,
                         "data": result,
-                        "status_code": "OK"
+                        "status_code": "OK",
+                        "plugin_message": "test",
+                        "datetime": str(current_time)
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
                     self.logger.info(message) 
                 ############################################################## 
                 if enquiry["plugin_message"] == "vlan_remove":
                     result = self.vlan_remove(enquiry["node"],enquiry["vid"],enquiry["ports"])
+                    current_time = datetime.datetime.now()
                     response = {
                         "ACK": True,
                         "data": result,
-                        "status_code": "OK"
+                        "status_code": "OK",
+                        "plugin_message": "test",
+                        "datetime": str(current_time)
                         }
-                    self.channel.basic_ack(delivery_tag=method.delivery_tag)
-#                     self.send_ack(ch, method, props, response, send_reply)
+
+#                     self.channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self.send_ack(ch, method, props, response, send_reply)
                     message=" RPC acknowledged - {}".format(response)
-                    self.logger.info(message) 
+                    self.logger.info(message)
+                    
+                if enquiry["plugin_message"] == "test":
+                    self.logger.info("have to fix the ack problem-decouple the response queue")
             
         except Exception as ex:
                 message = "Error while trying to interpret message"
                 self.logger.error(message)
                 self.logger.error(ex)
             
-
-                
-
 
 # ################################################################
 #                  GET method calls 
@@ -1152,7 +1171,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)
+            self.logger.info(ex)
     
     def get_ptp_log_level(self,node):
         """Get ptp status per interface .
@@ -1170,7 +1189,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)        
+            self.logger.info(ex)        
         
     def get_ptp_logSyncInterval(self,node,iface):
         """Get ptp status per interface .
@@ -1189,7 +1208,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)
+            self.logger.info(ex)
 
     def get_ptp_logAnnounceInterval(self,node,iface):
         """Get ptp status per interface .
@@ -1208,7 +1227,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)
+            self.logger.info(ex)
         
     def get_ptp_LogMinDelayReqInterval(self,node,iface):
         """Get ptp status per interface .
@@ -1227,7 +1246,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)    
+            self.logger.info(ex)    
         
     def get_ptp_SyncReceiptTimeout(self,node,iface):
         """Get ptp status per interface .
@@ -1246,7 +1265,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)        
+            self.logger.info(ex)        
         
         
     def get_ptp_DelayAssymetry(self,node,iface):
@@ -1266,7 +1285,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)        
+            self.logger.info(ex)        
         
     def get_ptp_minNeighborPropDelayThreshold(self,node,iface):
         """Get ptp status per interface .
@@ -1285,7 +1304,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)       
+            self.logger.info(ex)       
          
     def get_ptp_maxNeighborPropDelayThreshold(self,node,iface):
         """Get ptp status per interface .
@@ -1304,7 +1323,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)       
+            self.logger.info(ex)       
     
     
     def get_ptp_clockParent(self,node):
@@ -1323,7 +1342,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)  
+            self.logger.info(ex)  
         
     def get_ptp_clock(self,node):
         """Get ptp status per interface .
@@ -1341,7 +1360,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)          
+            self.logger.info(ex)          
             
     def get_ptp_clock_domain(self,node):
         """Get ptp status per interface .
@@ -1359,7 +1378,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)   
+            self.logger.info(ex)   
 
     def get_ptp_clock_priority1(self,node):
         """Get ptp status per interface .
@@ -1377,7 +1396,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)   
+            self.logger.info(ex)   
 
     
     def get_ptp_clock_priority2(self,node):
@@ -1396,7 +1415,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)   
+            self.logger.info(ex)   
 
     def get_ptp_clock_class(self,node):
         """Get ptp status per interface .
@@ -1414,7 +1433,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)   
+            self.logger.info(ex)   
 
     def get_ptp_clock_profile(self,node):
         """Get ptp status per interface .
@@ -1432,7 +1451,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)   
+            self.logger.info(ex)   
 
     def get_ptp_clock_gmCapable(self,node):
         """Get ptp status per interface .
@@ -1450,7 +1469,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)   
+            self.logger.info(ex)   
 
     def get_ptp_clock_slaveOnly(self,node):
         """Get ptp status per interface .
@@ -1468,7 +1487,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)   
+            self.logger.info(ex)   
 
     
     def get_ptp_program(self,node):
@@ -1487,7 +1506,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)        
+            self.logger.info(ex)        
             
     def get_ptp_program_timestamping(self,node):
         """Get ptp status per interface .
@@ -1505,7 +1524,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)        
+            self.logger.info(ex)        
               
     def get_ptp_program_delayMechanism(self,node):
         """Get ptp status per interface .
@@ -1523,7 +1542,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)        
+            self.logger.info(ex)        
              
     def get_ptp_program_transport(self,node):
         """Get ptp status per interface .
@@ -1541,7 +1560,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)        
+            self.logger.info(ex)        
             
     def get_ptp_program_timeaware_bridge(self,node):
         """Get ptp status per interface .
@@ -1559,7 +1578,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)        
+            self.logger.info(ex)        
             
     def get_ptp_program_phydelay_compensate_in(self,node):
         """Get ptp status per interface .
@@ -1577,7 +1596,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)        
+            self.logger.info(ex)        
              
     def get_ptp_program_phydelay_compensate_out(self,node):
         """Get ptp status per interface .
@@ -1595,7 +1614,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)        
+            self.logger.info(ex)        
             
     def get_ptp_program_servo_locked_threshold(self,node):
         """Get ptp status per interface .
@@ -1613,7 +1632,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)        
+            self.logger.info(ex)        
 
     def tsn_ptp_display_time_properties(self,node):
         """Get ptp status per interface .
@@ -1631,7 +1650,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)        
+            self.logger.info(ex)        
 
     def get_tas_cycle_time(self,node,iface):
         """Get ptp status per interface .
@@ -1650,7 +1669,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)
+            self.logger.info(ex)
              
     def get_tas_entry(self,node,iface,entry):
         """Get ptp status per interface .
@@ -1670,7 +1689,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)
+            self.logger.info(ex)
         
     def get_tas_enable(self,node,iface):
         """Get ptp status per interface .
@@ -1689,7 +1708,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)    
+            self.logger.info(ex)    
             
     def get_tas_ptp_mode(self,node,iface):
         """Get ptp status per interface .
@@ -1708,7 +1727,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)
+            self.logger.info(ex)
             
     def get_tas_gate_ctrl_period(self,node):
         """Get ptp status per interface .
@@ -1726,7 +1745,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)
+            self.logger.info(ex)
             
     def get_tas_display_profile(self,node,iface):
         """Get ptp status per interface .
@@ -1745,7 +1764,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)
+            self.logger.info(ex)
             
             
     def get_tas_display_interface_status(self,node,iface):
@@ -1765,7 +1784,7 @@ class TSN_plugin(object):
             response=json.loads(response.text)
             return response
         except Exception as ex:
-            print(ex)
+            self.logger.info(ex)
 
 # ################################################################
 #                  SET method calls 
@@ -1802,7 +1821,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)
+            self.logger.info(ex)
 
     def set_ptp_LogSyncInterval (self,node,iface,LogSyncInterval):
         """Get ptp status per interface .
@@ -1832,7 +1851,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)
+            self.logger.info(ex)
 
     def set_ptp_LogAnnounceInterval(self,node,iface,LogAnnounceInterval):
         """Get ptp status per interface .
@@ -1862,7 +1881,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)
+            self.logger.info(ex)
 
     def set_ptp_LogMinDelayReqInterval(self,node,iface,LogMinDelayReqInterval):
         """Get ptp status per interface .
@@ -1892,7 +1911,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)
+            self.logger.info(ex)
  
     def set_ptp_SyncReceiptTimeout(self,node,iface,SyncReceiptTimeout):
         """Get ptp status per interface .
@@ -1925,7 +1944,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex) 
+            self.logger.info(ex) 
 
 
     def set_ptp_SyncdelayAsymmetry(self,node,iface,delayAsymmetry):
@@ -1960,7 +1979,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex) 
+            self.logger.info(ex) 
  
     def set_ptp_minNeighborPropDelayThreshold(self,node,iface,minNeighborPropDelayThreshold):
         """Get ptp status per interface .
@@ -1990,7 +2009,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex) 
+            self.logger.info(ex) 
  
  
     def set_ptp_maxNeighborPropDelayThreshold(self,node,iface,maxNeighborPropDelayThreshold):
@@ -2021,7 +2040,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex) 
+            self.logger.info(ex) 
   
     def set_ptp_clockDomain(self,node,clockDomain):
         """Get ptp status per interface .
@@ -2049,7 +2068,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex) 
+            self.logger.info(ex) 
             
     def set_ptp_clockPriority1(self,node,clockPriority):
         """Get ptp status per interface .
@@ -2080,7 +2099,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)             
+            self.logger.info(ex)             
             
     def set_ptp_clockPriority2(self,node,clockPriority):
         """Get ptp status per interface .
@@ -2108,7 +2127,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)
+            self.logger.info(ex)
             
             
     def set_ptp_clockClass(self,node,clockClass):
@@ -2137,7 +2156,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex) 
+            self.logger.info(ex) 
 
 
     def set_ptp_clockProfile(self,node,clockProfile):
@@ -2166,7 +2185,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex) 
+            self.logger.info(ex) 
 
     def set_ptp_gmCapable(self,node,gmCapable):
         """Get ptp status per interface .
@@ -2194,7 +2213,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex) 
+            self.logger.info(ex) 
  
     def set_ptp_slaveOnly(self,node,slaveOnly):
         """Get ptp status per interface .
@@ -2222,7 +2241,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex) 
+            self.logger.info(ex) 
                         
                         
     def set_ptp_timestamping(self,node,timestamping):
@@ -2251,7 +2270,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)                         
+            self.logger.info(ex)                         
                         
                         
     def set_ptp_delayMechanism(self,node,delayMechanism):
@@ -2280,7 +2299,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)                         
+            self.logger.info(ex)                         
 
     def set_ptp_timeaware_bridge(self,node,timeaware_bridge ):
         """Get ptp status per interface .
@@ -2308,7 +2327,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)                                                 
+            self.logger.info(ex)                                                 
                          
     def set_ptp_phydelay_compensate_in(self,node,phydelay_compensate_in):
         """Get ptp status per interface .
@@ -2336,7 +2355,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)                             
+            self.logger.info(ex)                             
                         
     def set_ptp_phydelay_compensate_out(self,node,phydelay_compensate_out):
         """Get ptp status per interface .
@@ -2364,7 +2383,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)                        
+            self.logger.info(ex)                        
                         
                         
                         
@@ -2394,7 +2413,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)                      
+            self.logger.info(ex)                      
                         
     def set_ptp_logging_level(self,node,logging_level):
         """Get ptp status per interface .
@@ -2422,7 +2441,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)                       
+            self.logger.info(ex)                       
                         
     def set_ptp_save_config(self,node):
         """Get ptp status per interface .
@@ -2453,7 +2472,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)                         
+            self.logger.info(ex)                         
                         
     def set_tas_cycle_time(self,node,iface,bts,btn,ct,en):
         """Get ptp status per interface .
@@ -2481,7 +2500,7 @@ class TSN_plugin(object):
                 }
             
             if(TESTING):
-                print(body)
+                self.logger.info(body)
                 self.logger.info("tas-set-cycle-called")
                 return
             
@@ -2492,7 +2511,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)           
+            self.logger.info(ex)           
 
     def set_tas_entry(self,node,iface,entry,hp,ti,gs):
         """Get ptp status per interface .
@@ -2522,7 +2541,7 @@ class TSN_plugin(object):
                 }
             
             if(TESTING):
-                print(body)
+                self.logger.info(body)
                 self.logger.info("tas-set-entry-called")
                 return
             response = requests.put(url,
@@ -2532,7 +2551,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)                   
+            self.logger.info(ex)                   
                         
                         
     def set_tas_enable(self,node,iface,status):
@@ -2563,7 +2582,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)                        
+            self.logger.info(ex)                        
                         
                         
     def set_tas_ptp_mode(self,node,iface,mode):                   
@@ -2594,7 +2613,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)                             
+            self.logger.info(ex)                             
 
     def set_tas_gate_ctrl_period(self,node,period):
         """Get ptp status per interface .
@@ -2622,7 +2641,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)                   
+            self.logger.info(ex)                   
                         
                         
 
@@ -2658,7 +2677,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)  
+            self.logger.info(ex)  
 
     def vlan_destroy(self,node,vid):
         """Get ptp status per interface .
@@ -2688,7 +2707,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)  
+            self.logger.info(ex)  
 
     def vlan_add(self,node,vid,pbm_list,ubm_list):
         """Get ptp status per interface .
@@ -2721,7 +2740,7 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)  
+            self.logger.info(ex)  
 
 
     def vlan_remove(self,node,vid,ports):
@@ -2754,9 +2773,24 @@ class TSN_plugin(object):
             
             return response.status_code
         except Exception as ex:
-            print(ex)  
+            self.logger.info(ex)  
 
+    def send_ack(self, ch, method, props, response, send_reply):
 
+        if send_reply:
+            response = json.dumps(response)
+            try:
+                ch.basic_publish(exchange='',
+                                 routing_key=props.reply_to,
+                                 properties=pika.BasicProperties(correlation_id= \
+                                                                     props.correlation_id),
+                                 body=str(response))
+                ch.basic_ack(delivery_tag=method.delivery_tag)
+            except pika_exceptions.ConnectionClosed:
+                pass
+            except Exception as ex:
+                self.logger.critical("Error while sending response: {}".format(ex))
+        self.logger.info(colored(' [*] Waiting for messages. To exit press CTRL+C', 'green'))
 
 
 if __name__ == '__main__':
@@ -2768,9 +2802,9 @@ if __name__ == '__main__':
 #     args = parser.parse_args()
     ts = TSN_plugin("debug")
     ts.build()
-    ts.build_tsn_slice()
+#     ts.build_tsn_slice()
 #     for line in sys.path:
-#         print (line)
+#         self.logger.info (line)
      
 #     result=ts.get_ptp_interface("new-netconf-device",0)
 #     result=ts.get_ptp_log_level("new-netconf-device")
@@ -2813,6 +2847,6 @@ if __name__ == '__main__':
 #     result=ts.vlan_remove("new-netconf-device",200,'ge2')
 #     result=ts.vlan_destroy("new-netconf-device",200)
 #     
-#     print(result)
+#     self.logger.info(result)
     t1 = Thread(target=ts.start_consuming).start()
 #     t2 = Thread(target=ts.start_notifications).start()        
