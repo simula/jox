@@ -208,6 +208,9 @@ class ResourcesController(object):
 				# create/add vlan
 				result = switch_object.create_add_vlan(request, slice_name)
 				return result
+			elif (request["vlan"]["operation"] == "remove"):
+				result = switch_object.remove_vlan(request, slice_name)
+				return result
 			elif (request["vlan"]["operation"] == "destroy"):
 				# destroy vlan
 				vlan_id = request["vlan"]["id"]

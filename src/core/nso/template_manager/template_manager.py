@@ -491,7 +491,11 @@ class TemplateManager():
 													 }]}
 
 			tmp_data = service_keys.copy()
+			print("service_keys={}".format(service_keys))
+			print("type_service_keys={}".format(type(service_keys)))
 			if bool(service_keys) == False:                    # Update local list & check if list is empty
+				service_keys.update({nsi_id: [{'service_keys': [service_name]}]})
+			elif nsi_id not in service_keys.keys():
 				service_keys.update({nsi_id: [{'service_keys': [service_name]}]})
 			else:
 				key_list = tmp_data[nsi_id][0]['service_keys']
@@ -502,7 +506,7 @@ class TemplateManager():
 							data.append(key_list[num])
 				data.append(service_name)
 				service_keys.update({nsi_id: [{'service_keys': data}]})  # Update local list
-
+			print("tmp_data={}".format(tmp_data))
 		self.jesearch.update_index_with_content('slice_keys_'+(self.get_NSI_ID()).lower(),
 												'service_keys', service_keys[nsi_id][0]['service_keys'])
 

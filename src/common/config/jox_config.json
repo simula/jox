@@ -171,21 +171,34 @@
   "switches": {   
     "tsn": [
       {
+        "access-rights":{
+          "user-1":{
+            "slice-name": "mosaic5g_slice_1",
+            "create": "0",
+            "add": "1",
+            "remove": "0",
+            "destroy": "0"
+          },
+          "user-2":{
+            "slice-name": "mosaic5g_slice_2",
+            "create": "1",
+            "add": "1",
+            "remove": "1",
+            "destroy": "1"
+          }
+        },
         "tsn-switch-name":"new-netconf-device2",
         "interface":[
           {
             "iface":  0,
             "tsnptp-interface":{               
               "enable": "enable", 
-              "_Comment_1": "The allowed values of sync-receipt-timeout are: <0-5>",
               "sync-receipt-timeout": 0,
-              "_Comment_2": "The allowed values of delay-asymmetry are: <-128-127>",
               "delay-asymmetry": 0,
               "priority1": 100
             },
             "tsntas-interface-enable":"enable",
             "tsntas-cycle-time":{
-              "_Comment_1": "The allowed values of base-time-sec are: <0-63>",
               "base-time-sec": 3,
               "base-time-ns": 0,
               "cycle-time": 800,
@@ -193,9 +206,7 @@
             },
             "tsntas-schedule-entries":[
               {
-                "_Comment_1": "The allowed values of entry are: <0-127>",
                 "entry": 0,          
-                "_Comment_2": "The allowed values of hold-preempt: <0-1>",
                 "hold-preempt":0, 
                 "time-interval": 5000,
                 "gate-state": 80
@@ -288,7 +299,7 @@
   },
   "ssh-config": {
     "_Comment": "ssh connection is needed when adding kvm machines",
-    "ssh-key-directory": "/home/perle/.ssh/",
+    "ssh-key-directory": "/home/adalia/.ssh/",
     "ssh-key-name": "id_rsa",
     "ssh-user": "ubuntu",
     "ssh-password": "linux"
