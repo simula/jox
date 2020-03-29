@@ -621,8 +621,8 @@ class server_RBMQ(object):
 			try:
 				####
 				"""
-				credentials=pika.PlainCredentials(username="adalia", password="linux")
-				parameters = pika.ConnectionParameters(self.host, self.port, '/', credentials)
+				cred=pika.PlainCredentials(username="adalia", password="linux")
+				parameters = pika.ConnectionParameters(host=self.host, port=self.port, credentials=cred, frame_max=10000)
 				connection = pika.BlockingConnection(parameters)
 				"""
 				#"""

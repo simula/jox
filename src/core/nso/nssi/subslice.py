@@ -105,8 +105,9 @@ class JSubSlice(JSONEncoder):
                 switch_name = ""
                 port_id = ""
                 if "switch" in machine['additional_requirements']["properties"].keys():    
-                    switch_name = machine['additional_requirements']["properties"]["switch"]["switch_name"] 
-                    port_id = machine['additional_requirements']["properties"]["switch"]["port_id"]
+                    if machine['additional_requirements']["properties"]["switch"] is not None:
+                        switch_name = machine['additional_requirements']["properties"]["switch"]["switch_name"] 
+                        port_id = machine['additional_requirements']["properties"]["switch"]["port_id"]
                 new_machine = {
 					'machine_name_userdefined': machine["machine_name"],
 					'machine_name_vnfm': None,
