@@ -1,4 +1,3 @@
-
 import atexit
 import pika
 import os, time, sys
@@ -72,7 +71,7 @@ class test_plugin(object):
         self.result = self.channel.queue_declare(self.gv.RBMQ_QUEUE_TSN,exclusive=False)
         self.callback_queue = self.result.method.queue
 
-        self.channel.basic_consume(self.callback_queue,self.on_response)
+        self.channel.basic_consume(self.callback_queue,self.on_response,auto_ack=True)
         
     def send_to_plugin(self, msg, rbmq_queue_name, reply=True):
         if reply:
