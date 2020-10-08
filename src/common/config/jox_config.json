@@ -79,7 +79,7 @@
   "suffix-vlan":"/yang-ext:mount/huawei-vlan:vlans/vlan/"
   },
   "flask-config":{
-    "flask-server": "10.42.0.4",
+    "flask-server": "localhost",
     "flask-port": 5000,
     "flask-debug": "FALSE"
   },
